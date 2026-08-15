@@ -1,0 +1,458 @@
+Table users {
+  id bigint [pk, increment]
+  name varchar
+  email varchar [unique]
+  email_verified_at timestamp [null]
+  phone_verified_at timestamp [null]
+  phone varchar [null]
+  country_code varchar [null]
+  address varchar [null]
+  bio text [null]
+  gender varchar [null]
+  password varchar
+  two_factor_secret text [null]
+  two_factor_recovery_codes text [null]
+  two_factor_confirmed_at timestamp [null]
+  otp varchar [null]
+  otp_expires_at timestamp [null]
+  status varchar [default: `active`]
+  remember_token varchar [null]
+  current_team_id bigint [null]
+  avatar_id bigint [null]
+  cover_photo_id bigint [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+  deleted_at timestamp [null]
+}
+
+Table password_reset_tokens {
+  email varchar [pk]
+  token varchar
+  created_at timestamp [null]
+}
+
+Table sessions {
+  id varchar [pk]
+  user_id bigint [null]
+  ip_address varchar(45) [null]
+  user_agent text [null]
+  payload text
+  last_activity int
+}
+
+Table cache {
+  key varchar [pk]
+  value text
+  expiration int
+}
+
+Table cache_locks {
+  key varchar [pk]
+  owner varchar
+  expiration int
+}
+
+Table jobs {
+  id bigint [pk, increment]
+  queue varchar
+  payload text
+  attempts int
+  reserved_at int [null]
+  available_at int
+  created_at int
+}
+
+Table job_batches {
+  id varchar [pk]
+  name varchar
+  total_jobs int
+  pending_jobs int
+  failed_jobs int
+  failed_job_ids text
+  options text [null]
+  cancelled_at int [null]
+  created_at int
+  finished_at int [null]
+}
+
+Table failed_jobs {
+  id bigint [pk, increment]
+  uuid varchar [unique]
+  connection text
+  queue text
+  payload text
+  exception text
+  failed_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table permissions {
+  id bigint [pk, increment]
+  name varchar
+  guard_name varchar
+  created_at timestamp [null]
+  updated_at timestamp [null]
+
+  indexes {
+    (name, guard_name) [unique]
+  }
+}
+
+Table roles {
+  id bigint [pk, increment]
+  team_id bigint [null, note: 'present only when permission.teams config enabled']
+  name varchar
+  guard_name varchar
+  created_at timestamp [null]
+  updated_at timestamp [null]
+
+  indexes {
+    (team_id, name, guard_name) [unique]
+  }
+}
+
+Table model_has_permissions {
+  permission_id bigint
+  model_type varchar
+  model_id bigint
+  team_id bigint [null, note: 'present only when permission.teams config enabled']
+
+  indexes {
+    (permission_id, model_id, model_type) [pk, note: 'composite primary key (team_id also included when teams enabled)']
+    (model_id, model_type)
+  }
+}
+
+Table model_has_roles {
+  role_id bigint
+  model_type varchar
+  model_id bigint
+  team_id bigint [null, note: 'present only when permission.teams config enabled']
+
+  indexes {
+    (role_id, model_id, model_type) [pk, note: 'composite primary key (team_id also included when teams enabled)']
+    (model_id, model_type)
+  }
+}
+
+Table role_has_permissions {
+  permission_id bigint
+  role_id bigint
+
+  indexes {
+    (permission_id, role_id) [pk]
+  }
+}
+
+Table personal_access_tokens {
+  id bigint [pk, increment]
+  tokenable_type varchar [note: 'polymorphic']
+  tokenable_id bigint [note: 'polymorphic']
+  name text
+  token varchar(64) [unique]
+  abilities text [null]
+  last_used_at timestamp [null]
+  expires_at timestamp [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table panels {
+  id bigint [pk, increment]
+  name varchar
+  slug varchar [unique]
+  description varchar [null]
+  route_name varchar [null]
+  is_active boolean [default: `true`]
+  sort_order int [default: `0`]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table panel_user {
+  id bigint [pk, increment]
+  panel_id bigint
+  user_id bigint
+}
+
+Table files {
+  id bigint [pk, increment]
+  name text [null]
+  caption text [null]
+  type varchar [null]
+  extension varchar [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+  deleted_at timestamp [null]
+}
+
+Table file_items {
+  id bigint [pk, increment]
+  file_id bigint
+  type varchar [null]
+  size varchar [null]
+  path text [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+  deleted_at timestamp [null]
+}
+
+Table settings {
+  id bigint [pk, increment]
+  group varchar [default: `general`]
+  key varchar
+  value text [null]
+  type varchar [default: `text`]
+  label varchar [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+
+  indexes {
+    (group, key) [unique]
+  }
+}
+
+Table countries {
+  id bigint [pk, increment]
+  name varchar
+  code varchar(3) [unique]
+  phone_code varchar(10) [null]
+  emoji_flag varchar(10) [null]
+  is_register_allowed boolean [default: `false`]
+  is_active boolean [default: `true`]
+  sort_order int [default: `0`]
+  currency_code varchar(10) [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table currencies {
+  id bigint [pk, increment]
+  name varchar
+  code varchar(10) [unique]
+  symbol varchar(10) [null]
+  decimal_places int [default: `2`]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table activity_log {
+  id bigint [pk, increment]
+  log_name varchar [null]
+  description text
+  subject_type varchar [null, note: 'polymorphic']
+  subject_id bigint [null, note: 'polymorphic']
+  event varchar [null]
+  causer_type varchar [null, note: 'polymorphic']
+  causer_id bigint [null, note: 'polymorphic']
+  properties json [null]
+  batch_uuid uuid [null]
+  ip_address varchar(45) [null]
+  user_agent text [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table genders {
+  id bigint [pk, increment]
+  name varchar
+  slug varchar [unique]
+  is_active boolean [default: `true`]
+  sort_order int [default: `0`]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table notifications {
+  id uuid [pk]
+  type varchar
+  notifiable_type varchar [note: 'polymorphic']
+  notifiable_id bigint [note: 'polymorphic']
+  data text
+  read_at timestamp [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table languages {
+  id bigint [pk, increment]
+  code varchar(10) [unique]
+  name varchar
+  native_name varchar
+  direction varchar(3) [default: `ltr`]
+  flag_emoji varchar(10) [null]
+  is_active boolean [default: `true`]
+  is_default boolean [default: `false`]
+  sort_order int [default: `0`]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table licenses {
+  id bigint [pk, increment]
+  license_key text [null]
+  status varchar [default: `unactivated`]
+  plan_name varchar [null]
+  plan_features json [null]
+  registered_domain varchar [null]
+  registered_company varchar [null]
+  activated_at timestamp [null]
+  expires_at timestamp [null]
+  last_checked_at timestamp [null]
+  last_response json [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table update_logs {
+  id bigint [pk, increment]
+  from_version varchar [null]
+  to_version varchar [null]
+  status varchar
+  output text [null]
+  started_at timestamp [null]
+  finished_at timestamp [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table sms_gateway_configs {
+  id bigint [pk, increment]
+  driver_key varchar [unique]
+  credentials text [null]
+  sender_id varchar [null]
+  default_country_code varchar [null]
+  timeout int [default: `30`]
+  retry_attempts int [default: `2`]
+  rate_limit_per_minute int [null]
+  is_active boolean [default: `false`]
+  last_tested_at timestamp [null]
+  last_balance_check_at timestamp [null]
+  last_balance decimal(12,4) [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table sms_logs {
+  id bigint [pk, increment]
+  driver_key varchar
+  to varchar
+  message text
+  status varchar
+  message_id varchar [null]
+  cost decimal(12,4) [null]
+  error_code varchar [null]
+  error_message varchar [null]
+  provider_response json [null]
+  raw_response json [null]
+  context varchar [null]
+  retry_count int [default: `0`]
+  sent_at timestamp [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table sms_templates {
+  id bigint [pk, increment]
+  key varchar [unique]
+  label varchar
+  body text
+  is_active boolean [default: `true`]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table email_logs {
+  id bigint [pk, increment]
+  mailer varchar
+  to varchar
+  subject varchar [null]
+  status varchar
+  error_message varchar [null]
+  raw_response json [null]
+  sent_at timestamp [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table email_templates {
+  id bigint [pk, increment]
+  key varchar [unique]
+  label varchar
+  subject varchar
+  body text
+  is_active boolean [default: `true`]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table notification_events {
+  id bigint [pk, increment]
+  event_key varchar [unique]
+  label varchar
+  channel_email boolean [default: `false`]
+  channel_sms boolean [default: `false`]
+  channel_push boolean [default: `false`]
+  channel_browser boolean [default: `false`]
+  channel_database boolean [default: `false`]
+  email_template_key varchar [null]
+  sms_template_key varchar [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table notification_logs {
+  id bigint [pk, increment]
+  event_key varchar
+  channel varchar
+  recipient varchar
+  status varchar
+  provider varchar [null]
+  error_message varchar [null]
+  provider_response json [null]
+  retry_count int [default: `0`]
+  sent_at timestamp [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table push_subscriptions {
+  id bigint [pk, increment]
+  user_id bigint
+  endpoint text
+  public_key varchar [null]
+  auth_token varchar [null]
+  content_encoding varchar [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table device_tokens {
+  id bigint [pk, increment]
+  user_id bigint
+  token text
+  platform varchar [null]
+  last_used_at timestamp [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table push_gateway_configs {
+  id bigint [pk, increment]
+  driver_key varchar [unique]
+  credentials text [null]
+  is_active boolean [default: `false`]
+  last_tested_at timestamp [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Ref: sessions.user_id > users.id
+Ref: model_has_permissions.permission_id > permissions.id
+Ref: model_has_roles.role_id > roles.id
+Ref: role_has_permissions.permission_id > permissions.id
+Ref: role_has_permissions.role_id > roles.id
+Ref: panel_user.panel_id > panels.id
+Ref: panel_user.user_id > users.id
+Ref: file_items.file_id > files.id
+Ref: push_subscriptions.user_id > users.id
+Ref: device_tokens.user_id > users.id

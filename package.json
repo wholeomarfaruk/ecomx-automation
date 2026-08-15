@@ -1,0 +1,40 @@
+{
+    "$schema": "https://www.schemastore.org/package.json",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "vite build",
+        "dev": "vite"
+    },
+    "dependencies": {
+        "@fancyapps/ui": "^6.1.10",
+        "@splidejs/splide": "^4.1.4",
+        "alpinejs": "^3.15.8",
+        "axios": "^1.7.4",
+        "boxicons": "^2.1.4",
+        "chart.js": "^4.5.1",
+        "concurrently": "^9.0.1",
+        "filepond": "^4.32.11",
+        "filepond-plugin-file-validate-type": "^1.2.9",
+        "filepond-plugin-image-preview": "^4.6.12",
+        "flatpickr": "^4.6.13",
+        "jquery": "^4.0.0",
+        "laravel-vite-plugin": "^2.0",
+        "notyf": "^3.10.0",
+        "sortablejs": "^1.15.7",
+        "sweetalert2": "^11.26.18",
+        "swiper": "^12.1.1",
+        "tailwind-scrollbar": "^4.0.2",
+        "vite": "^7.0.4"
+    },
+    "optionalDependencies": {
+        "@rollup/rollup-linux-x64-gnu": "4.9.5",
+        "@tailwindcss/oxide-linux-x64-gnu": "^4.0.1",
+        "lightningcss-linux-x64-gnu": "^1.29.1"
+    },
+    "devDependencies": {
+        "@tailwindcss/vite": "^4.2.0",
+        "sass": "^1.97.3",
+        "tailwindcss": "^4.2.0"
+    }
+}
