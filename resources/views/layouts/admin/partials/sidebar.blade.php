@@ -166,6 +166,54 @@
                 </div>
 
                 @php
+                    $customersActive = str_starts_with(Route::currentRouteName(), 'admin.customers.');
+                @endphp
+                <div x-data="dropdown" x-init="open = {{ $customersActive ? 'true' : 'false' }} && $store.sidebar.full" class="relative">
+                    <div @click="toggle('customers')" x-data="tooltip" @mouseover="show = true"
+                        @mouseleave="show = false"
+                        class="flex justify-between text-gray-400 hover:text-gray-200 hover:bg-gray-800 items-center space-x-2 rounded-md p-2 cursor-pointer
+                        {{ $customersActive ? 'text-gray-200 bg-gray-800' : '' }}"
+                        :class="{
+                            'justify-start': $store.sidebar.full,
+                            'sm:justify-center': !$store.sidebar.full
+                        }">
+                        <div class="relative flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                            </svg>
+                            <h1 x-cloak :class="!$store.sidebar.full ? (show ? visibleClass : 'sm:hidden') : ''">
+                                Customers
+                            </h1>
+                        </div>
+                        <svg x-cloak :class="$store.sidebar.full ? '' : 'sm:hidden'" xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div x-cloak x-show="open" @click.outside="open=false"
+                        :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
+                        <a href="{{ route('admin.customers.index') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.customers.index' ? 'text-gray-200' : '' }}">
+                            Customers
+                        </a>
+                        <a href="{{ route('admin.customers.carts') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.customers.carts') ? 'text-gray-200' : '' }}">
+                            Carts
+                        </a>
+                        <a href="{{ route('admin.customers.combo') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.customers.combo' ? 'text-gray-200' : '' }}">
+                            Combo
+                        </a>
+                        <a href="{{ route('admin.customers.loved') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.customers.loved' ? 'text-gray-200' : '' }}">
+                            Loved
+                        </a>
+                    </div>
+                </div>
+
+                @php
                     $purchaseActive = str_starts_with(Route::currentRouteName(), 'admin.purchase.');
                 @endphp
                 <div x-data="dropdown" x-init="open = {{ $purchaseActive ? 'true' : 'false' }} && $store.sidebar.full" class="relative">
@@ -198,9 +246,69 @@
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.purchase.suppliers') ? 'text-gray-200' : '' }}">
                             Suppliers
                         </a>
+                        <a href="{{ route('admin.purchase.invoices') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.purchase.invoices' ? 'text-gray-200' : '' }}">
+                            Invoices
+                        </a>
                         <a href="{{ route('admin.purchase.orders') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.purchase.orders' ? 'text-gray-200' : '' }}">
                             Purchase Orders
+                        </a>
+                    </div>
+                </div>
+
+                @php
+                    $salesActive = str_starts_with(Route::currentRouteName(), 'admin.sales.');
+                @endphp
+                <div x-data="dropdown" x-init="open = {{ $salesActive ? 'true' : 'false' }} && $store.sidebar.full" class="relative">
+                    <div @click="toggle('sales')" x-data="tooltip" @mouseover="show = true"
+                        @mouseleave="show = false"
+                        class="flex justify-between text-gray-400 hover:text-gray-200 hover:bg-gray-800 items-center space-x-2 rounded-md p-2 cursor-pointer
+                        {{ $salesActive ? 'text-gray-200 bg-gray-800' : '' }}"
+                        :class="{
+                            'justify-start': $store.sidebar.full,
+                            'sm:justify-center': !$store.sidebar.full
+                        }">
+                        <div class="relative flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 1.994-4.684 2.674-7.14a1.06 1.06 0 0 0-.999-1.335H5.85m4.5 8.475H5.85m0 0-.383-1.437M12 14.25l3.75-3.75M12 14.25l-3.75-3.75M12 14.25V6M9 19.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm10.5 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
+                            </svg>
+                            <h1 x-cloak :class="!$store.sidebar.full ? (show ? visibleClass : 'sm:hidden') : ''">
+                                Sales
+                            </h1>
+                        </div>
+                        <svg x-cloak :class="$store.sidebar.full ? '' : 'sm:hidden'" xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div x-cloak x-show="open" @click.outside="open=false"
+                        :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
+                        <a href="{{ route('admin.sales.orders') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.orders') ? 'text-gray-200' : '' }}">
+                            Orders
+                        </a>
+                        <a href="{{ route('admin.sales.coupons') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.coupons') ? 'text-gray-200' : '' }}">
+                            Coupons
+                        </a>
+                        <a href="{{ route('admin.sales.offers') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.offers') ? 'text-gray-200' : '' }}">
+                            Offers
+                        </a>
+                        <a href="{{ route('admin.sales.pos.screen') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.pos.screen') ? 'text-gray-200' : '' }}">
+                            POS Screen
+                        </a>
+                        <a href="{{ route('admin.sales.pos.sessions') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.pos.sessions') ? 'text-gray-200' : '' }}">
+                            POS Sessions
+                        </a>
+                        <a href="{{ route('admin.sales.pos.registers') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.pos.registers') ? 'text-gray-200' : '' }}">
+                            POS Registers
                         </a>
                     </div>
                 </div>

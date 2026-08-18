@@ -33,18 +33,6 @@ class Supplier extends Model
         return $this->hasMany(PurchaseOrder::class);
     }
 
-    /**
-     * Signed effect of an invoice type on the supplier's balance.
-     * purchase/return increase what is owed to the supplier; advance/payment reduce it.
-     */
-    public static function balanceDelta(string $type, float $amount): float
-    {
-        return match ($type) {
-            'purchase', 'return' => $amount,
-            'advance', 'payment' => -$amount,
-        };
-    }
-
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', 'active');

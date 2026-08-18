@@ -42,6 +42,7 @@
                         <option value="">All Types</option>
                         <option value="image">Images</option>
                         <option value="video">Videos</option>
+                        <option value="document">Documents</option>
                     </select>
                     <button wire:click="close" class="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -174,7 +175,11 @@
                                         {{-- Type badge --}}
                                         <div class="absolute bottom-7 left-1.5 z-10">
                                             <span class="text-[10px] font-medium px-1.5 py-0.5 rounded
-                                                {{ $file->type === 'video' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700' }}">
+                                                {{ match($file->type) {
+                                                    'video' => 'bg-purple-100 text-purple-700',
+                                                    'document' => 'bg-amber-100 text-amber-700',
+                                                    default => 'bg-blue-100 text-blue-700',
+                                                } }}">
                                                 {{ $file->type ?? 'file' }}
                                             </span>
                                         </div>
@@ -192,6 +197,10 @@
                                                         </svg>
                                                     </div>
                                                 </div>
+                                            @elseif($file->type === 'document')
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-amber-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                                                </svg>
                                             @else
                                                 <img
                                                     src="{{ file_path($file->id) }}"
@@ -238,6 +247,12 @@
                                     <div class="h-12 w-12 rounded-lg border border-gray-300 bg-gray-100 flex items-center justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                        </svg>
+                                    </div>
+                                @elseif($type === 'document')
+                                    <div class="h-12 w-12 rounded-lg border border-gray-300 bg-amber-50 flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                                         </svg>
                                     </div>
                                 @else

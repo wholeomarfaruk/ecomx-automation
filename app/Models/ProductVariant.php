@@ -14,7 +14,7 @@ class ProductVariant extends Model
 
     protected $fillable = [
         'product_id', 'sku', 'combination_key',
-        'price', 'sale_price', 'purchase_price', 'stock_quantity',
+        'price', 'sale_price', 'purchase_price', 'combo_price', 'stock_quantity',
         'status', 'sort_order',
     ];
 
@@ -24,6 +24,7 @@ class ProductVariant extends Model
             'price'          => 'decimal:2',
             'sale_price'     => 'decimal:2',
             'purchase_price' => 'decimal:2',
+            'combo_price'    => 'decimal:2',
             'stock_quantity' => 'decimal:3',
         ];
     }

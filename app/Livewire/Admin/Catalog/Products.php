@@ -16,6 +16,7 @@ class Products extends Component
     public string $filterStatus      = '';
     public string $filterBrand       = '';
     public string $filterStockStatus = '';
+    public string $filterProductType = '';
 
     protected string $paginationTheme = 'tailwind';
 
@@ -32,6 +33,7 @@ class Products extends Component
     public function updatingFilterStatus(): void      { $this->resetPage(); }
     public function updatingFilterBrand(): void       { $this->resetPage(); }
     public function updatingFilterStockStatus(): void { $this->resetPage(); }
+    public function updatingFilterProductType(): void { $this->resetPage(); }
 
     public function updatedNewName(string $value): void
     {
@@ -132,6 +134,7 @@ class Products extends Component
             ->when($this->filterStatus !== '', fn($q) => $q->where('status', $this->filterStatus))
             ->when($this->filterBrand !== '', fn($q) => $q->where('brand_id', $this->filterBrand))
             ->when($this->filterStockStatus !== '', fn($q) => $q->where('stock_status', $this->filterStockStatus))
+            ->when($this->filterProductType !== '', fn($q) => $q->where('product_type', $this->filterProductType))
             ->orderByDesc('id')
             ->paginate(15);
 

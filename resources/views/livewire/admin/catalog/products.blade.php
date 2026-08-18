@@ -64,6 +64,13 @@
                 <option value="out_of_stock">Out of Stock</option>
                 <option value="backorder">Backorder</option>
             </select>
+            <select wire:model.live="filterProductType"
+                class="text-sm rounded-lg border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                <option value="">All Product Types</option>
+                <option value="simple">Simple</option>
+                <option value="variable">Variable</option>
+                <option value="combo">Combo</option>
+            </select>
         </div>
 
         {{-- Table --}}
@@ -103,7 +110,12 @@
                                                 </svg>
                                             @endif
                                         </div>
-                                        <span class="text-xs font-mono text-gray-400 truncate">{{ $product->slug }}</span>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-xs font-mono text-gray-400 truncate">{{ $product->slug }}</span>
+                                            @if($product->product_type->value !== 'simple')
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-indigo-50 text-indigo-500">{{ $product->product_type->label() }}</span>
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
                             </td>

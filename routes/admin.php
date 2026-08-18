@@ -26,6 +26,7 @@ Route::get('/site-settings/states',     App\Livewire\Admin\Settings\States::clas
 Route::get('/site-settings/cities',     App\Livewire\Admin\Settings\Cities::class)->name('settings.cities');
 Route::get('/site-settings/genders',    App\Livewire\Admin\Settings\Genders::class)->name('settings.genders');
 Route::get('/site-settings/currencies', App\Livewire\Admin\Settings\Currencies::class)->name('settings.currencies');
+Route::get('/site-settings/branches',   App\Livewire\Admin\Settings\Branches::class)->name('settings.branches');
 Route::get('/site-settings/languages', App\Livewire\Admin\Localization\LanguageList::class)->name('settings.languages');
 Route::get('/site-settings/languages/create', App\Livewire\Admin\Localization\LanguageForm::class)->name('settings.languages.create');
 Route::get('/site-settings/languages/{id}/edit', App\Livewire\Admin\Localization\LanguageForm::class)->name('settings.languages.edit');
@@ -44,7 +45,41 @@ Route::prefix('catalog')->name('catalog.')->group(function () {
 Route::prefix('purchase')->name('purchase.')->group(function () {
     Route::get('/suppliers', App\Livewire\Admin\Purchase\Suppliers::class)->name('suppliers');
     Route::get('/suppliers/{supplierId}/ledger', App\Livewire\Admin\Purchase\SupplierLedger::class)->name('suppliers.ledger');
+    Route::get('/invoices', App\Livewire\Admin\Purchase\SupplierInvoices::class)->name('invoices');
     Route::get('/orders', App\Livewire\Admin\Purchase\PurchaseOrders::class)->name('orders');
+});
+
+// Customers
+Route::prefix('customers')->name('customers.')->group(function () {
+    Route::get('/', App\Livewire\Admin\Customers\CustomerList::class)->name('index');
+    Route::get('/carts', App\Livewire\Admin\Customers\Carts::class)->name('carts');
+    Route::get('/carts/{id}', App\Livewire\Admin\Customers\CartDetail::class)->name('carts.show');
+    Route::get('/combo', App\Livewire\Admin\Customers\ComboList::class)->name('combo');
+    Route::get('/loved', App\Livewire\Admin\Customers\LovedProducts::class)->name('loved');
+});
+
+// Sales
+Route::prefix('sales')->name('sales.')->group(function () {
+    Route::get('/orders', App\Livewire\Admin\Sales\Orders::class)->name('orders');
+    Route::get('/orders/create', App\Livewire\Admin\Sales\OrderCreate::class)->name('orders.create');
+    Route::get('/orders/{id}', App\Livewire\Admin\Sales\OrderDetail::class)->name('orders.show');
+
+    Route::get('/coupons', App\Livewire\Admin\Sales\Coupons::class)->name('coupons');
+    Route::get('/coupons/create', App\Livewire\Admin\Sales\CouponCreate::class)->name('coupons.create');
+    Route::get('/coupons/usages', App\Livewire\Admin\Sales\CouponUsages::class)->name('coupons.usages');
+    Route::get('/coupons/{id}', App\Livewire\Admin\Sales\CouponDetail::class)->name('coupons.show');
+
+    Route::get('/offers', App\Livewire\Admin\Sales\Offers::class)->name('offers');
+    Route::get('/offers/create', App\Livewire\Admin\Sales\OfferCreate::class)->name('offers.create');
+    Route::get('/offers/{id}', App\Livewire\Admin\Sales\OfferDetail::class)->name('offers.show');
+
+    Route::prefix('pos')->name('pos.')->group(function () {
+        Route::get('/registers', App\Livewire\Admin\Sales\PosRegisters::class)->name('registers');
+        Route::get('/sessions', App\Livewire\Admin\Sales\PosSessions::class)->name('sessions');
+        Route::get('/sessions/open', App\Livewire\Admin\Sales\PosSessionDetail::class)->name('sessions.open');
+        Route::get('/sessions/{id}', App\Livewire\Admin\Sales\PosSessionDetail::class)->name('sessions.show');
+        Route::get('/screen', App\Livewire\Admin\Sales\PosScreen::class)->name('screen');
+    });
 });
 
 // Advance

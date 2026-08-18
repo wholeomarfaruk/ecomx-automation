@@ -78,6 +78,9 @@ class SiteSettings extends Component
     public bool $restrict_by_country   = false;
     public bool $require_email_verify  = false;
 
+    // Pricing
+    public string $min_margin_percent = '15';
+
     /** @var array<int, string> */
     public array $timezoneOptions = [];
 
@@ -310,6 +313,20 @@ class SiteSettings extends Component
             ]);
         }
 
+        if ($this->activeGroup === 'pricing') {
+            $this->validate([
+                'min_margin_percent' => 'required|numeric|min:0|max:100',
+            ]);
+
+            $old = ['min_margin_percent' => Setting::get('min_margin_percent', '15', 'pricing')];
+
+            Setting::set('min_margin_percent', $this->min_margin_percent, 'pricing');
+
+            $this->logSettingsChange('Pricing settings were updated', $old, [
+                'min_margin_percent' => $this->min_margin_percent,
+            ]);
+        }
+
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Settings saved successfully']);
     }
 
@@ -394,5 +411,7 @@ class SiteSettings extends Component
         $this->allow_registration   = (bool) Setting::get('allow_registration',   '1', 'registration');
         $this->restrict_by_country  = (bool) Setting::get('restrict_by_country',  '0', 'registration');
         $this->require_email_verify = (bool) Setting::get('require_email_verify', '0', 'registration');
+
+        $this->min_margin_percent = Setting::get('min_margin_percent', '15', 'pricing');
     }
 }
