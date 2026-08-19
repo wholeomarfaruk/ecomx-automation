@@ -2,7 +2,7 @@
 
     {{-- Header --}}
     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div class="grid grid-cols-3 gap-3 flex-1 max-w-xl">
+        <div class="grid grid-cols-4 gap-3 flex-1 max-w-2xl">
             <div class="bg-white rounded-xl border border-gray-200 px-4 py-3">
                 <p class="text-xs text-gray-400">Total Customers</p>
                 <p class="text-xl font-semibold text-gray-800 mt-0.5">{{ $totalCount }}</p>
@@ -10,6 +10,10 @@
             <div class="bg-white rounded-xl border border-gray-200 px-4 py-3">
                 <p class="text-xs text-gray-400">Active</p>
                 <p class="text-xl font-semibold text-emerald-600 mt-0.5">{{ $activeCount }}</p>
+            </div>
+            <div class="bg-white rounded-xl border border-gray-200 px-4 py-3">
+                <p class="text-xs text-gray-400">Active Now</p>
+                <p class="text-xl font-semibold text-emerald-600 mt-0.5">{{ $onlineCount }}</p>
             </div>
             <div class="bg-white rounded-xl border border-gray-200 px-4 py-3">
                 <p class="text-xs text-gray-400">New This Month</p>
@@ -51,6 +55,12 @@
                 <option value="inactive">Inactive</option>
                 <option value="blocked">Blocked</option>
             </select>
+            <select wire:model.live="filterOnline"
+                class="text-sm rounded-lg border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                <option value="">All Activity</option>
+                <option value="online">Active now</option>
+                <option value="offline">Offline</option>
+            </select>
         </div>
 
         {{-- Table --}}
@@ -62,6 +72,7 @@
                         <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Contact</th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Group</th>
                         <th class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Activity</th>
                         <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
                     </tr>
                 </thead>
@@ -92,7 +103,33 @@
                                 </span>
                             </td>
                             <td class="px-5 py-3">
+                                @php
+                                    $lastActive = $customer->devices_max_last_active_at
+                                        ? \Illuminate\Support\Carbon::parse($customer->devices_max_last_active_at)
+                                        : null;
+                                    $isOnline = $lastActive && $lastActive->greaterThanOrEqualTo(now()->subMinutes(\App\Support\DeviceActivity::ACTIVE_WINDOW_MINUTES));
+                                @endphp
+                                @if($isOnline)
+                                    <span class="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        Active now
+                                    </span>
+                                @elseif($lastActive)
+                                    <span class="text-xs text-gray-400">Last seen {{ $lastActive->diffForHumans() }}</span>
+                                @else
+                                    <span class="text-xs text-gray-300 italic">Never seen</span>
+                                @endif
+                            </td>
+                            <td class="px-5 py-3">
                                 <div class="flex items-center justify-end gap-1">
+                                    <a href="{{ route('admin.users.show', ['customer_id' => $customer->id]) }}"
+                                        title="View details"
+                                        class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                                        </svg>
+                                    </a>
                                     @if($customer->status !== 'blocked')
                                         <button wire:click="toggleStatus({{ $customer->id }})" type="button"
                                             title="{{ $customer->status === 'active' ? 'Click to deactivate' : 'Click to activate' }}"
@@ -127,7 +164,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-5 py-16 text-center">
+                            <td colspan="6" class="px-5 py-16 text-center">
                                 <div class="flex flex-col items-center gap-3">
                                     <div class="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

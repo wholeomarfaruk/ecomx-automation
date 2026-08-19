@@ -1,0 +1,15 @@
+@use '../base/variables' as *;
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:$radius-sm;font-size:12.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:14px 26px;transition:all .2s;}
+.btn--primary{background:var(--pri);color:var(--sec);}
+.btn--primary:hover{background:var(--ac2);color:var(--sec);}
+.btn--outline{background:transparent;border:1.5px solid var(--pri);color:var(--pri);}
+.btn--outline:hover{background:var(--pri);color:var(--sec);}
+.btn--accent{background:var(--ac);color:#fff;}
+.btn--accent:hover{background:var(--ac2);}
+.btn--block{width:100%;}
+.btn--pill{border-radius:999px;}
+.icon-btn{width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:999px;background:var(--ac-soft);border:1px solid rgba(var(--pri-rgb),.1);color:var(--pri);transition:all .2s;}
+.icon-btn:hover{background:var(--pri);color:var(--sec);border-color:var(--pri);}
+.icon-btn.is-on svg{fill:var(--ac);stroke:var(--ac);}
+@include mobile{.icon-btn{width:38px;height:38px;}}
+.chip{display:inline-flex;align-items:center;gap:8px;background:var(--pri);color:var(--sec);border-radius:999px;padding:8px 14px;font-size:12px;cursor:pointer;}

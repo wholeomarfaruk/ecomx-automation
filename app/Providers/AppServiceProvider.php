@@ -16,6 +16,7 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -38,6 +39,10 @@ class AppServiceProvider extends ServiceProvider
         $this->registerAuthListeners();
         $this->registerNotificationListeners();
         $this->configureMailFromSettings();
+
+        // ecomx-fashion theme's own components (<x-ux-img>, <x-product-card>, ...),
+        // used bare (no namespace prefix) — matches how the theme's blade views call them.
+        Blade::anonymousComponentPath(resource_path('views/ecomx-fashion/components'), null);
 
         // Admins must always be able to reach the panel to turn maintenance mode
         // back off — without this, enabling it via Site Settings locks everyone

@@ -2,12 +2,33 @@
 
 use App\Http\Controllers\Admin\CompanyPrintController;
 use App\Http\Controllers\Admin\FileUploadController;
+use App\Livewire\Admin\Frontend\Appearance as FrontendAppearance;
+use App\Livewire\Admin\Frontend\Components as FrontendComponents;
+use App\Livewire\Admin\Frontend\Menus as FrontendMenus;
+use App\Livewire\Admin\Frontend\PageShow as FrontendPageShow;
+use App\Livewire\Admin\Frontend\Pages as FrontendPages;
+use App\Livewire\Admin\Frontend\Themes as FrontendThemes;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/dashboard', \App\Livewire\Admin\Dashboard\Dashboard::class)->name('dashboard');
 
+// Frontend Menu — registered pages of the active theme + per-page section settings.
+// The {page} wildcard must stay registered after the literal routes below it,
+// or it will shadow appearance/themes/menus/components.
+Route::get('/frontend', FrontendPages::class)->name('frontend.menu');
+Route::get('/frontend/appearance', FrontendAppearance::class)->name('frontend.appearance');
+Route::get('/frontend/themes', FrontendThemes::class)->name('frontend.themes');
+Route::get('/frontend/menus', FrontendMenus::class)->name('frontend.menus');
+Route::get('/frontend/components', FrontendComponents::class)->name('frontend.components');
+Route::get('/frontend/{page}', FrontendPageShow::class)->name('frontend.menu.show');
+
 //user managements
 Route::get('/users', App\Livewire\Admin\Users\Users::class)->name('users');
+Route::get('/users/devices', App\Livewire\Admin\Users\DeviceList::class)->name('users.devices');
+Route::get('/users/devices/{id}', App\Livewire\Admin\Users\DeviceDetail::class)->name('users.devices.show');
+Route::get('/users/details', App\Livewire\Admin\Users\UserDetail::class)->name('users.show');
+Route::get('/users/blocks', App\Livewire\Admin\Users\BlockList::class)->name('users.blocks');
+Route::get('/users/active', App\Livewire\Admin\Users\ActiveList::class)->name('users.active');
 
 // Profile and Settings
 Route::get('/profile', App\Livewire\Admin\Profile\Profile::class)->name('profile');

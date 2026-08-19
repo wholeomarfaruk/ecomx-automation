@@ -58,14 +58,23 @@
                     <option value="unverified">Unverified</option>
                 </select>
 
+                {{-- Active filter --}}
+                <select wire:model.live="filterActive"
+                    class="w-full sm:w-auto rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white text-gray-700 sm:min-w-36">
+                    <option value="">All Activity</option>
+                    <option value="active">Active now</option>
+                    <option value="inactive">Offline</option>
+                </select>
+
                 <span class="text-sm text-gray-400 sm:ml-auto whitespace-nowrap">
                     {{ $users->count() }} {{ Str::plural('user', $users->count()) }}
+                    <span class="text-emerald-500">· {{ $activeCount }} active</span>
                 </span>
             </div>
 
             {{-- Row 2: active filter chips (only shown when a filter is active) --}}
             @php
-                $hasFilters = $search || $filterRole || $filterPanel || $filterVerified;
+                $hasFilters = $search || $filterRole || $filterPanel || $filterVerified || $filterActive;
             @endphp
             @if($hasFilters)
                 <div class="flex flex-wrap items-center gap-2">
@@ -99,6 +108,13 @@
                         </span>
                     @endif
 
+                    @if($filterActive)
+                        <span class="inline-flex items-center gap-1 text-xs bg-emerald-100 text-emerald-700 rounded-full px-2.5 py-1">
+                            {{ $filterActive === 'active' ? 'Active now' : 'Offline' }}
+                            <button wire:click="$set('filterActive', '')" class="text-emerald-400 hover:text-emerald-700 ml-0.5">&times;</button>
+                        </span>
+                    @endif
+
                     <button wire:click="clearFilters"
                         class="text-xs text-red-500 hover:text-red-700 font-medium ml-1 underline underline-offset-2">
                         Clear all
@@ -117,6 +133,7 @@
                         <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Role</th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Panels</th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Verified</th>
+                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Activity</th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Joined</th>
                         <th class="sticky right-0 bg-gray-50/60 px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
                     </tr>
@@ -214,6 +231,26 @@
                                 </div>
                             </td>
 
+                            {{-- Activity --}}
+                            <td class="px-5 py-3.5">
+                                @php
+                                    $lastActive = $userItem->devices_max_last_active_at
+                                        ? \Illuminate\Support\Carbon::parse($userItem->devices_max_last_active_at)
+                                        : null;
+                                    $isActive = $lastActive && $lastActive->greaterThanOrEqualTo(now()->subMinutes(\App\Support\DeviceActivity::ACTIVE_WINDOW_MINUTES));
+                                @endphp
+                                @if($isActive)
+                                    <span class="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        Active now
+                                    </span>
+                                @elseif($lastActive)
+                                    <span class="text-xs text-gray-400">Last seen {{ $lastActive->diffForHumans() }}</span>
+                                @else
+                                    <span class="text-xs text-gray-300 italic">Never seen</span>
+                                @endif
+                            </td>
+
                             {{-- Joined --}}
                             <td class="px-5 py-3.5">
                                 <span class="text-sm text-gray-500">{{ local_time($userItem->created_at)?->format('d M Y') }}</span>
@@ -263,6 +300,13 @@
                                                 </svg>
                                                 View / Edit
                                             </button>
+                                            <a href="{{ route('admin.users.show', ['user_id' => $userItem->id]) }}"
+                                                class="flex items-center gap-2.5 w-full px-4 py-2 text-gray-700 hover:bg-gray-50 transition">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75"/>
+                                                </svg>
+                                                Full Details
+                                            </a>
                                             @endcan
 
                                             <a href="{{ route('admin.activity-log', ['filterCauser' => $userItem->email]) }}"

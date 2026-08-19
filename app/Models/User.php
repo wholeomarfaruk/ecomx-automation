@@ -86,6 +86,21 @@ class User extends Authenticatable
         return $this->belongsTo(File::class, 'avatar_id');
     }
 
+    public function customer()
+    {
+        return $this->hasOne(Customer::class);
+    }
+
+    public function blocks()
+    {
+        return $this->morphMany(Block::class, 'blockable');
+    }
+
+    public function devices()
+    {
+        return $this->hasMany(Device::class);
+    }
+
     public function coverPhoto()
     {
         return $this->belongsTo(File::class, 'cover_photo_id');

@@ -66,7 +66,7 @@
         </div>
 
         <div class="px-4 space-y-2">
-            <div class="h-[70vh] scrollbar scrollbar-thumb-gray-900 scrollbar-thin scrollbar-track-transparent"
+            <div class="h-[64vh] scrollbar scrollbar-thumb-gray-900 scrollbar-thin scrollbar-track-transparent"
                 :class="$store.sidebar.full ? 'overflow-y-scroll' : ''">
 
                 <div class="mt-4 mb-1">
@@ -99,18 +99,113 @@
                         Uploads</h1>
                 </a>
 
-                <a href="{{ route('admin.users') }}" x-data="tooltip" x-on:mouseover="show = true"
-                    x-on:mouseleave="show = false"
-                    class="relative flex items-center hover:text-gray-200 hover:bg-gray-800 space-x-2 rounded-md p-2 cursor-pointer justify-start text-gray-400
-                    {{ Route::currentRouteName() == 'admin.users' ? 'text-gray-200 bg-gray-800' : '' }}">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                        stroke="currentColor" class="h-6 w-6">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                    </svg>
-                    <h1 x-cloak x-bind:class="!$store.sidebar.full && show ? visibleClass : '' || !$store.sidebar.full ? 'sm:hidden' : ''">
-                        Users</h1>
-                </a>
+                @php
+                    $usersActive = in_array(Route::currentRouteName(), [
+                        'admin.users', 'admin.users.devices', 'admin.users.blocks', 'admin.users.active',
+                    ]) || str_starts_with(Route::currentRouteName(), 'admin.customers.');
+                @endphp
+                <div x-data="dropdown" x-init="open = {{ $usersActive ? 'true' : 'false' }} && $store.sidebar.full" class="relative">
+                    <div @click="toggle('users')" x-data="tooltip" @mouseover="show = true"
+                        @mouseleave="show = false"
+                        class="flex justify-between text-gray-400 hover:text-gray-200 hover:bg-gray-800 items-center space-x-2 rounded-md p-2 cursor-pointer
+                        {{ $usersActive ? 'text-gray-200 bg-gray-800' : '' }}"
+                        :class="{
+                            'justify-start': $store.sidebar.full,
+                            'sm:justify-center': !$store.sidebar.full
+                        }">
+                        <div class="relative flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                                stroke="currentColor" class="h-6 w-6">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                            </svg>
+                            <h1 x-cloak :class="!$store.sidebar.full ? (show ? visibleClass : 'sm:hidden') : ''">
+                                Users
+                            </h1>
+                        </div>
+                        <svg x-cloak :class="$store.sidebar.full ? '' : 'sm:hidden'" xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div x-cloak x-show="open" @click.outside="open=false"
+                        :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
+                        <a href="{{ route('admin.users') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.users' ? 'text-gray-200' : '' }}">
+                            Users
+                        </a>
+                        <a href="{{ route('admin.users.active') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.users.active' ? 'text-gray-200' : '' }}">
+                            Active
+                        </a>
+                        <a href="{{ route('admin.customers.index') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.customers.') ? 'text-gray-200' : '' }}">
+                            Customers
+                        </a>
+                        <a href="{{ route('admin.users.devices') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.users.devices' ? 'text-gray-200' : '' }}">
+                            Devices
+                        </a>
+                        <a href="{{ route('admin.users.blocks') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.users.blocks' ? 'text-gray-200' : '' }}">
+                            Blocks
+                        </a>
+                    </div>
+                </div>
+
+                @php
+                    $frontendActive = str_starts_with(Route::currentRouteName(), 'admin.frontend.');
+                @endphp
+                <div x-data="dropdown" x-init="open = {{ $frontendActive ? 'true' : 'false' }} && $store.sidebar.full" class="relative">
+                    <div @click="toggle('frontend')" x-data="tooltip" @mouseover="show = true"
+                        @mouseleave="show = false"
+                        class="flex justify-between text-gray-400 hover:text-gray-200 hover:bg-gray-800 items-center space-x-2 rounded-md p-2 cursor-pointer
+                        {{ $frontendActive ? 'text-gray-200 bg-gray-800' : '' }}"
+                        :class="{
+                            'justify-start': $store.sidebar.full,
+                            'sm:justify-center': !$store.sidebar.full
+                        }">
+                        <div class="relative flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h12A2.25 2.25 0 0 1 20.25 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h5.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM16.5 13.5a2.25 2.25 0 0 0-2.25 2.25V18a2.25 2.25 0 0 0 2.25 2.25h1.5A2.25 2.25 0 0 0 20.25 18v-2.25a2.25 2.25 0 0 0-2.25-2.25h-1.5Z" />
+                            </svg>
+                            <h1 x-cloak :class="!$store.sidebar.full ? (show ? visibleClass : 'sm:hidden') : ''">
+                                Frontend
+                            </h1>
+                        </div>
+                        <svg x-cloak :class="$store.sidebar.full ? '' : 'sm:hidden'" xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div x-cloak x-show="open" @click.outside="open=false"
+                        :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
+                        <a href="{{ route('admin.frontend.menu') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.frontend.menu' || Route::currentRouteName() === 'admin.frontend.menu.show' ? 'text-gray-200' : '' }}">
+                            Pages
+                        </a>
+                        <a href="{{ route('admin.frontend.themes') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.frontend.themes' ? 'text-gray-200' : '' }}">
+                            Themes
+                        </a>
+                        <a href="{{ route('admin.frontend.appearance') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.frontend.appearance' ? 'text-gray-200' : '' }}">
+                            Appearance
+                        </a>
+                        <a href="{{ route('admin.frontend.menus') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.frontend.menus' ? 'text-gray-200' : '' }}">
+                            Menus
+                        </a>
+                        <a href="{{ route('admin.frontend.components') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.frontend.components' ? 'text-gray-200' : '' }}">
+                            Components
+                        </a>
+                    </div>
+                </div>
 
                 <div class="mt-4 mb-1">
                     <h2 class="text-gray-500 text-md font-semibold" :class="{ 'hidden': !$store.sidebar.full }"

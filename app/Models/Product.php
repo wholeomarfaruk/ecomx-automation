@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Product\ProductType;
+use App\Http\Middleware\DeviceTracker;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -101,5 +102,23 @@ class Product extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', 'active')->orderBy('sort_order')->orderBy('name');
+    }
+
+    /**
+     * Whether this product is in the given device's wishlist. Pass the
+     * Device the DeviceTracker middleware already resolved for this request
+     * (request()->attributes->get('device')) — not a cookie value.
+     */
+    public function isWishedBy(Device|int|null $device): bool
+    {
+        if (! $device) {
+            return false;
+        }
+
+        $deviceId = $device instanceof Device ? $device->id : $device;
+
+        return $this->wishlistItems()
+            ->whereHas('wishlist', fn ($q) => $q->where('device_id', $deviceId))
+            ->exists();
     }
 }

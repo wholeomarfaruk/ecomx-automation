@@ -1,0 +1,14 @@
+@use '../base/variables' as *;
+.modal{position:fixed;inset:0;z-index:200;background:rgba(var(--pri-rgb),.55);display:flex;align-items:center;justify-content:center;padding:20px;animation:sh-fade .2s ease both;}
+.modal__box{background:var(--sec);border-radius:16px;width:100%;max-height:90vh;overflow-y:auto;padding:clamp(24px,4vw,32px);box-shadow:0 30px 80px rgba(var(--pri-rgb),.35);animation:alertPop .3s cubic-bezier(.2,.9,.3,1.2) both;}
+.modal__box--sm{max-width:380px;}
+.modal__box--md{max-width:480px;}
+.modal__box--lg{max-width:640px;}
+.modal__head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.modal__title{font-family:$font-head;font-size:24px;}
+.modal__close{width:36px;height:36px;border-radius:999px;border:1px solid rgba(var(--pri-rgb),.15);background:none;color:var(--pri);font-size:14px;transition:all .2s;}
+.modal__close:hover{background:var(--pri);color:var(--sec);}
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:12px;font-weight:600;margin-bottom:7px;}
+.field input{width:100%;padding:13px 15px;border:1px solid rgba(var(--pri-rgb),.15);border-radius:$radius-sm;background:var(--sec);font-size:14px;color:var(--pri);outline:none;}
+.field input:focus{border-color:var(--ac);}

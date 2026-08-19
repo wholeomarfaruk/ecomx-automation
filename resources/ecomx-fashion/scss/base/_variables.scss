@@ -1,0 +1,23 @@
+// Static SCSS tokens (spacing, radius, type). Colours are themable CSS vars — see _palettes.scss.
+$radius: 14px;
+$radius-sm: 10px;
+
+// 8px spacing system
+$space: (0:0, 1:4px, 2:8px, 3:12px, 4:16px, 5:20px, 6:24px, 8:32px, 10:40px, 12:48px, 16:64px);
+@function sp($k) { @return map-get($space, $k); }
+
+$maxw: 1440px;
+$gutter: clamp(12px, 4vw, 56px);
+
+$font-head: 'Playfair Display', Georgia, serif;
+$font-body: 'Inter', system-ui, sans-serif;
+
+$bp-mobile: 900px;
+$bp-wide: 1180px;
+
+@mixin mobile { @media (max-width: #{$bp-mobile - 1px}) { @content; } }
+@mixin desktop { @media (min-width: $bp-mobile) { @content; } }
+
+// Secondary breakpoint for wider-only elements (search bar, topbar links).
+@mixin narrow { @media (max-width: #{$bp-wide - 1px}) { @content; } }
+@mixin wide { @media (min-width: $bp-wide) { @content; } }

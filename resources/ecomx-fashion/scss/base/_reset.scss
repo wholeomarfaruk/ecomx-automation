@@ -1,0 +1,12 @@
+@use 'variables' as *;
+*,*::before,*::after{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{margin:0;background:var(--sec);color:var(--pri);font-family:$font-body;-webkit-font-smoothing:antialiased;}
+img,video{display:block;max-width:100%;}
+a{color:var(--pri);text-decoration:none;}
+a:hover{color:var(--ac2);}
+button{font-family:inherit;cursor:pointer;}
+input,select,textarea{font-family:inherit;}
+[x-cloak]{display:none !important;}
+div::-webkit-scrollbar{display:none;}
+.no-scrollbar{scrollbar-width:none;}

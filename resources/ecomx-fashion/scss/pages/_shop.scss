@@ -1,0 +1,20 @@
+@use '../base/variables' as *;
+.shop-layout{display:grid;gap:clamp(20px,3vw,48px);align-items:start;}
+@include desktop{.shop-layout{grid-template-columns:264px 1fr;}}
+.filters{position:sticky;top:16px;display:flex;flex-direction:column;gap:28px;padding:24px;background:#fff;border-radius:$radius;border:1px solid rgba(var(--pri-rgb),.06);box-shadow:0 10px 30px rgba(var(--pri-rgb),.04);}
+@include mobile{.filters{display:none;}}
+.filters-toggle{position:relative;}
+@include desktop{.filters-toggle{display:none;}}
+.filters-toggle__count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;margin-left:6px;border-radius:999px;background:var(--pri);color:var(--sec);font-size:10.5px;font-weight:700;}
+.filter-check{display:flex;justify-content:space-between;align-items:center;background:none;border:none;font-size:13.5px;color:var(--pri);padding:2px 0;text-align:left;}
+.filter-box{width:17px;height:17px;border-radius:5px;border:1.5px solid rgba(var(--pri-rgb),.25);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--sec);}
+.filter-box.is-on{background:var(--pri);border-color:var(--pri);}
+.chip{display:flex;align-items:center;gap:7px;border:none;background:var(--pri);color:var(--sec);border-radius:999px;padding:8px 14px;font-size:12px;}
+// Mobile: bottom sheet, slides up. Desktop: right-side drawer, fixed max-width — see .sheet desktop override below.
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--sec);border-radius:20px 20px 0 0;padding:20px;max-height:82vh;overflow-y:auto;animation:sh-slide-up .3s ease both;}
+@include desktop{
+    .sheet{top:0;bottom:0;left:auto;right:0;width:92%;max-width:400px;max-height:none;border-radius:0;animation:sh-slide-r .3s ease both;}
+}
+.sheet__head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.sheet__title{font-size:15px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;}
+.sheet__foot{position:sticky;bottom:-20px;background:var(--sec);margin:20px -20px -20px;padding:16px 20px;box-shadow:0 -8px 20px rgba(var(--pri-rgb),.06);}

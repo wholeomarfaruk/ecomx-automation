@@ -21,7 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->name('admin.login');
 
             // 1. Admin Panel: accessible via /admin
-            Route::middleware(['web', 'auth', 'panel:admin'])
+            Route::middleware(['web', 'auth', 'panel:admin', 'block.scope:account_panel'])
                 ->prefix('admin')
                 ->name('admin.')
                 ->group(base_path('routes/admin.php'));
@@ -31,6 +31,18 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
          $middleware->alias([
             'panel' => \App\Http\Middleware\PanelMiddleware::class,
+            'device.track' => \App\Http\Middleware\DeviceTracker::class,
+            'block.scope' => \App\Http\Middleware\BlockScope::class,
+        ]);
+
+        $middleware->appendToGroup('web', \App\Http\Middleware\DeviceTracker::class);
+
+        // Full-site block enforcement — storefront only, never /admin (an
+        // IP/device block on a shopper must not be able to lock out staff
+        // sharing that network/browser). Must run after DeviceTracker, which
+        // it depends on for $request->attributes->get('device').
+        $middleware->web(append: [
+            \App\Http\Middleware\EnforceBlocks::class,
         ]);
 
         // frontend_locale must stay plaintext so client-side JS can read/write it directly.

@@ -1,0 +1,22 @@
+@use '../base/variables' as *;
+
+.skel{
+  position:relative;
+  overflow:hidden;
+  border-radius:$radius-sm;
+  background:rgba(var(--sec-rgb),.08);
+}
+.skel::after{
+  content:'';
+  position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(var(--sec-rgb),.10),transparent);
+  animation:skelShimmer 1.6s ease-in-out infinite;
+}
+.skel--text{border-radius:6px;}
+.skel--pill{border-radius:999px;}
+.skel-marquee{display:flex;align-items:center;justify-content:center;}
+
+@keyframes skelShimmer{
+  0%{transform:translateX(-100%);}
+  100%{transform:translateX(100%);}
+}

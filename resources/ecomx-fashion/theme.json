@@ -1,0 +1,262 @@
+{
+    "manifest": {
+        "id": "ecomx-fashion",
+        "name": "Ecomx Fashion Theme",
+        "schemaVersion": "1.0",
+        "version": "1.0.0",
+        "author": "ecomX Automation",
+        "license": "proprietary",
+        "description": "Claude-designed Livewire UI port with demo data, isolated from the main Seldom Fashion storefront under the /ecomx-fashion route prefix.",
+        "engine": "ecomxFashion"
+    },
+    "preview": {
+        "thumbnail": "https://images.unsplash.com/photo-1445205170230-053b83016050?q=80&w=600&auto=format&fit=crop",
+        "cover": "https://images.unsplash.com/photo-1445205170230-053b83016050?q=80&w=1600&auto=format&fit=crop"
+    },
+    "assets": {
+        "sass": {
+            "version": "1.0.0",
+            "from": "themes/ecomx-fashion/sass",
+            "to": "resources/ecomx-fashion/sass"
+        },
+        "js": {
+            "version": "1.0.0",
+            "from": "themes/ecomx-fashion/js",
+            "to": "resources/ecomx-fashion/js"
+        },
+        "fonts": {
+            "version": "1.0.0",
+            "from": "themes/ecomx-fashion/fonts",
+            "to": "public/ecomx-fashion/fonts"
+        },
+        "images": {
+            "version": "1.0.0",
+            "from": "themes/ecomx-fashion/images",
+            "to": "public/ecomx-fashion/images"
+        },
+        "icons": {
+            "version": "1.0.0",
+            "from": "themes/ecomx-fashion/icons",
+            "to": "public/ecomx-fashion/icons"
+        },
+        "videos": {
+            "version": "1.0.0",
+            "from": "themes/ecomx-fashion/videos",
+            "to": "public/ecomx-fashion/videos"
+        },
+        "audio": {
+            "version": "1.0.0",
+            "from": "themes/ecomx-fashion/audio",
+            "to": "public/ecomx-fashion/audio"
+        },
+        "downloads": {
+            "version": "1.0.0",
+            "from": "themes/ecomx-fashion/downloads",
+            "to": "public/ecomx-fashion/downloads"
+        }
+    },
+    "components": {
+        "flash-card": {
+            "version": "1.0.0",
+            "view": {
+                "from": "components/flash-card.blade.php",
+                "to": "resources/views/ecomx-fashion/components/flash-card.blade.php"
+            }
+        },
+        "icon": {
+            "version": "1.0.0",
+            "view": {
+                "from": "components/icon.blade.php",
+                "to": "resources/views/ecomx-fashion/components/icon.blade.php"
+            }
+        },
+        "product-card": {
+            "version": "1.0.0",
+            "view": {
+                "from": "components/product-card.blade.php",
+                "to": "resources/views/ecomx-fashion/components/product-card.blade.php"
+            }
+        },
+        "review-slider": {
+            "version": "1.0.0",
+            "view": {
+                "from": "components/review-slider.blade.php",
+                "to": "resources/views/ecomx-fashion/components/review-slider.blade.php"
+            }
+        },
+        "section-head": {
+            "version": "1.0.0",
+            "view": {
+                "from": "components/section-head.blade.php",
+                "to": "resources/views/ecomx-fashion/components/section-head.blade.php"
+            }
+        },
+        "ux-img": {
+            "version": "1.0.0",
+            "view": {
+                "from": "components/ux-img.blade.php",
+                "to": "resources/views/ecomx-fashion/components/ux-img.blade.php"
+            }
+        }
+    },
+    "sections": {
+        "hero-banner": {
+            "version": "1.0.0",
+            "component": "hero-banner",
+            "type": "static",
+            "source": "banner",
+            "multiple": false
+        },
+        "featured-products": {
+            "version": "1.0.0",
+            "component": "product-slider",
+            "type": "dynamic",
+            "source": "products",
+            "multiple": true
+        }
+    },
+    "pages": {
+        "home": {
+            "version": "1.0.0",
+            "route": "ecomx-fashion.home",
+            "view": "resources/views/ecomx-fashion/livewire/home.blade.php",
+            "livewire": "App\\Livewire\\EcomxFashion\\Home"
+        },
+        "shop": {
+            "version": "1.0.0",
+            "route": "ecomx-fashion.shop",
+            "view": "resources/views/ecomx-fashion/livewire/shop.blade.php",
+            "livewire": "App\\Livewire\\EcomxFashion\\Shop"
+        },
+        "category": {
+            "version": "1.0.0",
+            "route": "ecomx-fashion.category",
+            "view": "resources/views/ecomx-fashion/livewire/category.blade.php",
+            "livewire": "App\\Livewire\\EcomxFashion\\Category"
+        },
+        "product": {
+            "version": "1.0.0",
+            "route": "ecomx-fashion.product",
+            "view": "resources/views/ecomx-fashion/livewire/product.blade.php",
+            "livewire": "App\\Livewire\\EcomxFashion\\Product"
+        },
+        "reviews": {
+            "version": "1.0.0",
+            "route": "ecomx-fashion.reviews",
+            "view": "resources/views/ecomx-fashion/livewire/reviews.blade.php",
+            "livewire": "App\\Livewire\\EcomxFashion\\Reviews"
+        },
+        "track": {
+            "version": "1.0.0",
+            "route": "ecomx-fashion.track",
+            "view": "resources/views/ecomx-fashion/livewire/track.blade.php",
+            "livewire": "App\\Livewire\\EcomxFashion\\Track"
+        },
+        "checkout": {
+            "version": "1.0.0",
+            "route": "ecomx-fashion.checkout",
+            "view": "resources/views/ecomx-fashion/livewire/checkout.blade.php",
+            "livewire": "App\\Livewire\\EcomxFashion\\Checkout"
+        }
+    },
+    "layouts": {
+        "master": {
+            "version": "1.0.0",
+            "view": "resources/views/ecomx-fashion/layouts/ecomx_fashion.blade.php"
+        },
+        "header": {
+            "version": "1.0.0",
+            "view": "resources/views/ecomx-fashion/partials/header.blade.php"
+        },
+        "footer": {
+            "version": "1.0.0",
+            "view": "resources/views/ecomx-fashion/partials/footer.blade.php"
+        },
+        "mega-menu": {
+            "version": "1.0.0",
+            "view": "resources/views/ecomx-fashion/partials/mega-menu.blade.php"
+        },
+        "bottom-nav": {
+            "version": "1.0.0",
+            "view": "resources/views/ecomx-fashion/partials/bottom-nav.blade.php"
+        },
+        "search-modal": {
+            "version": "1.0.0",
+            "view": "resources/views/livewire/ecomx-fashion/search-modal.blade.php",
+            "livewire": "App\\Livewire\\EcomxFashion\\SearchModal"
+        },
+        "cart-drawer": {
+            "version": "1.0.0",
+            "view": "resources/views/livewire/ecomx-fashion/cart-manager.blade.php",
+            "livewire": "App\\Livewire\\EcomxFashion\\CartManager"
+        },
+        "wishlist-drawer": {
+            "version": "1.0.0",
+            "view": "resources/views/livewire/ecomx-fashion/wishlist-drawer.blade.php",
+            "livewire": "App\\Livewire\\EcomxFashion\\WishlistDrawer"
+        },
+        "auth-modal": {
+            "version": "1.0.0",
+            "view": "resources/views/ecomx-fashion/partials/auth-modal.blade.php"
+        },
+        "support-modal": {
+            "version": "1.0.0",
+            "view": "resources/views/ecomx-fashion/partials/support-modal.blade.php"
+        }
+    },
+    "routes": {
+        "file": "routes/frontend/ecomxFashion.php"
+    },
+    "sectionComponents": {
+        "version": "1.0.0",
+        "namespace": "App\\Livewire\\EcomxFashion\\Sections",
+        "registry": [
+            "App\\Livewire\\EcomxFashion\\Sections\\Hero",
+            "App\\Livewire\\EcomxFashion\\Sections\\Marquee",
+            "App\\Livewire\\EcomxFashion\\Sections\\Categories",
+            "App\\Livewire\\EcomxFashion\\Sections\\FlashSale",
+            "App\\Livewire\\EcomxFashion\\Sections\\PromoStrip",
+            "App\\Livewire\\EcomxFashion\\Sections\\Trending",
+            "App\\Livewire\\EcomxFashion\\Sections\\ShopByStyle",
+            "App\\Livewire\\EcomxFashion\\Sections\\Reviews",
+            "App\\Livewire\\EcomxFashion\\Sections\\Instagram",
+            "App\\Livewire\\EcomxFashion\\Sections\\WhyFaq"
+        ]
+    },
+    "themeSettings": {
+        "defaultPalette": "terracotta",
+        "palettesFile": "resources/ecomx-fashion/scss/base/_palettes.scss",
+        "paletteAttribute": "data-pal",
+        "paletteStore": "Alpine.store('ui').palette"
+    },
+    "dependencies": {
+        "php": ">=8.1",
+        "composer": {
+            "laravel/framework": ">=10.0",
+            "livewire/livewire": "^3.0 || ^4.0"
+        },
+        "npm": {
+            "alpinejs": "^3.15.8",
+            "sweetalert2": "^11.26.18"
+        },
+        "modules": [],
+        "addons": []
+    },
+    "vite": {
+        "buildDirectory": {
+            "from": "themes/ecomx-fashion/build",
+            "to": "public/build/ecomx-fashion"
+        },
+        "input": [
+            "resources/themes/ecomx-fashion/css/app.css",
+            "resources/themes/ecomx-fashion/js/app.js"
+        ]
+    },
+    "config": {
+        "theme": {
+            "version": "1.0.0",
+            "from": "config/theme.php",
+            "to": "config/ecomx-fashion.php"
+        }
+    }
+}

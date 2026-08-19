@@ -1,13 +1,27 @@
 {
-  "_fancybox-C6HAUHTn.css": {
-    "file": "assets/fancybox-C6HAUHTn.css",
-    "src": "_fancybox-C6HAUHTn.css"
-  },
-  "_fancybox-OdU4McDn.js": {
-    "file": "assets/fancybox-OdU4McDn.js",
+  "_fancybox-D7x6Cxtm.js": {
+    "file": "assets/fancybox-D7x6Cxtm.js",
     "name": "fancybox",
     "css": [
-      "assets/fancybox-C6HAUHTn.css"
+      "assets/fancybox-DT4f8r2K.css"
+    ]
+  },
+  "_fancybox-DT4f8r2K.css": {
+    "file": "assets/fancybox-DT4f8r2K.css",
+    "src": "_fancybox-DT4f8r2K.css"
+  },
+  "_sortable-BO2gS9_2.css": {
+    "file": "assets/sortable-BO2gS9_2.css",
+    "src": "_sortable-BO2gS9_2.css"
+  },
+  "_sortable.esm-DhTXR9hL.js": {
+    "file": "assets/sortable.esm-DhTXR9hL.js",
+    "name": "sortable.esm",
+    "imports": [
+      "_fancybox-D7x6Cxtm.js"
+    ],
+    "css": [
+      "assets/sortable-BO2gS9_2.css"
     ]
   },
   "node_modules/boxicons/fonts/boxicons.eot": {
@@ -31,7 +45,7 @@
     "src": "node_modules/boxicons/fonts/boxicons.woff2"
   },
   "resources/css/admin.css": {
-    "file": "assets/app-Bl9t-KbB.css",
+    "file": "assets/app-BgyirvDL.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "admin",
@@ -41,7 +55,7 @@
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-Bl9t-KbB.css",
+    "file": "assets/app-BgyirvDL.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "admin",
@@ -50,22 +64,45 @@
       "admin.css"
     ]
   },
+  "resources/ecomx-fashion/js/app.js": {
+    "file": "assets/app-Cnk8MeIL.js",
+    "name": "app",
+    "src": "resources/ecomx-fashion/js/app.js",
+    "isEntry": true,
+    "imports": [
+      "_fancybox-D7x6Cxtm.js"
+    ],
+    "css": [
+      "assets/app-C0WW7OKH.css"
+    ]
+  },
+  "resources/ecomx-fashion/scss/app.scss": {
+    "file": "assets/app-D4Pw-U2L.css",
+    "src": "resources/ecomx-fashion/scss/app.scss",
+    "isEntry": true,
+    "name": "app",
+    "names": [
+      "app.css"
+    ]
+  },
   "resources/js/admin.js": {
-    "file": "assets/admin-Cx8QRYHB.js",
+    "file": "assets/admin-D7xWr72O.js",
     "name": "admin",
     "src": "resources/js/admin.js",
     "isEntry": true,
     "imports": [
-      "_fancybox-OdU4McDn.js"
+      "_sortable.esm-DhTXR9hL.js",
+      "_fancybox-D7x6Cxtm.js"
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-Dj-Vm6AA.js",
+    "file": "assets/app-2AAa27-7.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "imports": [
-      "_fancybox-OdU4McDn.js"
+      "_sortable.esm-DhTXR9hL.js",
+      "_fancybox-D7x6Cxtm.js"
     ]
   },
   "resources/sass/admin.scss": {

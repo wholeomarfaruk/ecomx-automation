@@ -8,6 +8,7 @@ use App\Models\Gender;
 use App\Models\Panel;
 use App\Models\User;
 use App\Services\UserService;
+use App\Support\DeviceActivity;
 use Illuminate\Support\Facades\Password;
 use Livewire\Component;
 use Spatie\Permission\Models\Role;
@@ -34,6 +35,7 @@ class Users extends Component
     public string $filterRole     = '';
     public string $filterPanel    = '';
     public string $filterVerified = '';
+    public string $filterActive   = '';
     public $panels;
     public $countries;
     public $genders;
@@ -147,12 +149,15 @@ class Users extends Component
 
     public function clearFilters(): void
     {
-        $this->reset(['search', 'filterRole', 'filterPanel', 'filterVerified']);
+        $this->reset(['search', 'filterRole', 'filterPanel', 'filterVerified', 'filterActive']);
     }
 
     public function render(): mixed
     {
+        $activeSince = DeviceActivity::threshold();
+
         $this->users = User::with('roles', 'panels', 'avatar')
+            ->withMax('devices', 'last_active_at')
             ->when($this->search, fn($q) => $q
                 ->where(fn($s) => $s
                     ->where('name', 'LIKE', "%{$this->search}%")
@@ -163,10 +168,14 @@ class Users extends Component
             ->when($this->filterPanel, fn($q) => $q->whereHas('panels', fn($p) => $p->where('panels.id', (int) $this->filterPanel)))
             ->when($this->filterVerified === 'verified', fn($q) => $q->whereNotNull('email_verified_at'))
             ->when($this->filterVerified === 'unverified', fn($q) => $q->whereNull('email_verified_at'))
+            ->when($this->filterActive === 'active', fn($q) => $q->whereHas('devices', fn($d) => $d->where('last_active_at', '>=', $activeSince)))
+            ->when($this->filterActive === 'inactive', fn($q) => $q->whereDoesntHave('devices', fn($d) => $d->where('last_active_at', '>=', $activeSince)))
             ->latest()
             ->get();
 
-        return view('livewire.admin.users.users')->layout('layouts.admin.admin');
+        return view('livewire.admin.users.users', [
+            'activeCount' => User::whereHas('devices', fn($d) => $d->where('last_active_at', '>=', $activeSince))->count(),
+        ])->layout('layouts.admin.admin');
     }
 
     public function deleteUser(int $id, UserService $userService): void

@@ -1,0 +1,16 @@
+@use 'variables' as *;
+// Themable colour system. Swap [data-pal] on <html> to retheme the whole site.
+:root {
+  --pri:#2A100C; --pri-rgb:42,16,12; --sec:#FBEEE8; --sec-rgb:251,238,232;
+  --ac:#B04D45; --ac2:#92271C; --ac3:#E07C4D; --ac4:#C7604A; --ac-soft:#F3DDD2; --ac-rgb:176,77,69;
+}
+[data-pal="terracotta"]{--pri:#1A1310;--pri-rgb:26,19,16;--sec:#F8F5F2;--sec-rgb:248,245,242;--ac:#B5654A;--ac2:#9C4A30;--ac3:#D8977B;--ac4:#C97A5C;--ac-soft:#F0E5DF;--ac-rgb:181,101,74;}
+[data-pal="rust"]{--pri:#2A100C;--pri-rgb:42,16,12;--sec:#FBEEE8;--sec-rgb:251,238,232;--ac:#B04D45;--ac2:#92271C;--ac3:#E07C4D;--ac4:#C7604A;--ac-soft:#F3DDD2;--ac-rgb:176,77,69;}
+[data-pal="midnight"]{--pri:#241634;--pri-rgb:36,22,52;--sec:#E8FBF5;--sec-rgb:232,251,245;--ac:#2E7D78;--ac2:#24605C;--ac3:#66DAD5;--ac4:#3E6180;--ac-soft:#DBFBF2;--ac-rgb:46,125,120;}
+[data-pal="coral"]{--pri:#3E2A2A;--pri-rgb:62,42,42;--sec:#FDF3F0;--sec-rgb:253,243,240;--ac:#E8746F;--ac2:#C24B46;--ac3:#FFC6A8;--ac4:#F0968D;--ac-soft:#FFE7DC;--ac-rgb:232,116,111;}
+[data-pal="peach"]{--pri:#3B2E22;--pri-rgb:59,46,34;--sec:#FFF8ED;--sec-rgb:255,248,237;--ac:#E39158;--ac2:#C06E38;--ac3:#FCC397;--ac4:#EDAE78;--ac-soft:#FCE4B8;--ac-rgb:227,145,88;}
+[data-pal="blush"]{--pri:#2E2333;--pri-rgb:46,35,51;--sec:#FDF3F4;--sec-rgb:253,243,244;--ac:#9C6E93;--ac2:#7E5476;--ac3:#F4CDCB;--ac4:#D9A9C0;--ac-soft:#FCE0DD;--ac-rgb:156,110,147;}
+[data-pal="sage"]{--pri:#232414;--pri-rgb:35,36,20;--sec:#FBF3E2;--sec-rgb:251,243,226;--ac:#7E8A54;--ac2:#5E663B;--ac3:#A6BB84;--ac4:#E39B76;--ac-soft:#ECEFDD;--ac-rgb:126,138,84;}
+[data-pal="olive"]{--pri:#14170F;--pri-rgb:20,23,15;--sec:#F4F6F1;--sec-rgb:244,246,241;--ac:#6B7250;--ac2:#4C5334;--ac3:#A9B088;--ac4:#838A63;--ac-soft:#ECEDE4;--ac-rgb:107,114,80;}
+[data-pal="wine"]{--pri:#1A0F13;--pri-rgb:26,15,19;--sec:#F7F3F4;--sec-rgb:247,243,244;--ac:#8E4257;--ac2:#6E2E40;--ac3:#C08498;--ac4:#A45A6E;--ac-soft:#F1E6E9;--ac-rgb:142,66,87;}
+[data-pal="slate"]{--pri:#0F131A;--pri-rgb:15,19,26;--sec:#F2F4F7;--sec-rgb:242,244,247;--ac:#3E5171;--ac2:#2A3A55;--ac3:#8A9BB8;--ac4:#566E93;--ac-soft:#E5E9F0;--ac-rgb:62,81,113;}

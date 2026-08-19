@@ -1,0 +1,54 @@
+{
+    "home": [
+        {
+            "key": "hero",
+            "active": true,
+            "order": 0
+        },
+        {
+            "key": "marquee",
+            "active": true,
+            "order": 1
+        },
+        {
+            "key": "categories",
+            "active": true,
+            "order": 2
+        },
+        {
+            "key": "flash-sale",
+            "active": true,
+            "order": 3
+        },
+        {
+            "key": "promo-strip",
+            "active": true,
+            "order": 4
+        },
+        {
+            "key": "trending",
+            "active": true,
+            "order": 5
+        },
+        {
+            "key": "shop-by-style",
+            "active": true,
+            "order": 6
+        },
+        {
+            "key": "reviews",
+            "active": true,
+            "order": 7
+        },
+        {
+            "key": "instagram",
+            "active": true,
+            "order": 8
+        },
+        {
+            "key": "why-faq",
+            "active": true,
+            "order": 9
+        }
+    ]
+}

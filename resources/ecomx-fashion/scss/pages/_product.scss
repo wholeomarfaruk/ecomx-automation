@@ -1,0 +1,35 @@
+@use '../base/variables' as *;
+.pdp{display:grid;gap:clamp(24px,4vw,64px);align-items:start;}
+@include desktop{.pdp{grid-template-columns:1.15fr 1fr;}}
+.gallery{display:grid;gap:12px;align-items:start;position:sticky;top:16px;}
+@include desktop{.gallery{grid-template-columns:72px 1fr;}}
+@include mobile{.gallery{position:static;}}
+.gallery__thumbs{display:flex;flex-direction:column;gap:10px;}
+@include mobile{.gallery__thumbs{flex-direction:row;overflow-x:auto;gap:10px;padding-bottom:2px;}}
+.gallery__thumb{position:relative;width:72px;aspect-ratio:3/4;border-radius:$radius-sm;overflow:hidden;border:2px solid transparent;padding:0;background:#ECE9E3;flex:none;}
+.gallery__thumb.is-active{border-color:var(--ac);}
+.gallery__main{position:relative;border-radius:$radius;overflow:hidden;background:#ECE9E3;aspect-ratio:3/4;cursor:zoom-in;}
+.gallery__main img{width:100%;height:100%;object-fit:cover;}
+.pdp__info{display:flex;flex-direction:column;gap:22px;}
+.pdp__info > *{animation:fadeUp .6s cubic-bezier(.2,.6,.2,1) both;}
+.swatch-sq{position:relative;width:52px;height:60px;border-radius:$radius-sm;overflow:hidden;border:2px solid rgba(var(--pri-rgb),.12);padding:0;background:#ECE9E3;transition:all .2s;}
+.swatch-sq.is-on{border-color:var(--ac);box-shadow:0 4px 14px rgba(var(--ac-rgb),.35);}
+.size-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+.size-btn{padding:13px 0;border-radius:$radius-sm;border:1px solid rgba(var(--pri-rgb),.15);background:#fff;font-size:13px;transition:all .2s;}
+.size-btn.is-on{background:var(--pri);color:var(--sec);border-color:var(--pri);}
+.size-btn:disabled{color:rgba(var(--pri-rgb),.3);text-decoration:line-through;cursor:not-allowed;}
+
+// PDP variant picker only — selected size stays white-filled, matching the
+// colour swatch (.swatch-sq.is-on) treatment: accent-coloured outline plus
+// the same small filled-circle checkmark badge, instead of the solid fill
+// above (that plain .size-btn.is-on style is still used as-is by the
+// shop/category size *filter* chips, which share this class but aren't a
+// variant picker).
+.size-btn--outline{position:relative;}
+.size-btn--outline.is-on{background:#fff;color:var(--pri);border-color:var(--ac);border-width:2px;padding:12px 0;box-shadow:0 4px 14px rgba(var(--ac-rgb),.35);}
+.size-btn__check{position:absolute;right:3px;bottom:3px;width:16px;height:16px;border-radius:999px;background:var(--ac);color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center;}
+.timeline{display:flex;align-items:flex-start;border-top:1px solid rgba(var(--pri-rgb),.08);border-bottom:1px solid rgba(var(--pri-rgb),.08);padding:8px 0;}
+.timeline__step{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;}
+.timeline__dot{width:28px;height:28px;border-radius:999px;display:flex;align-items:center;justify-content:center;margin-bottom:5px;z-index:1;}
+.timeline__bar{position:absolute;top:14px;left:50%;width:100%;height:1.5px;}
+.accordion__head{width:100%;display:flex;justify-content:space-between;align-items:center;padding:17px 2px;border:none;background:none;font-size:13.5px;font-weight:600;color:var(--pri);}

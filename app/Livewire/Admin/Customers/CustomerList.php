@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Customers;
 
 use App\Models\Customer;
 use App\Models\CustomerGroup;
+use App\Support\DeviceActivity;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -15,6 +16,7 @@ class CustomerList extends Component
     public string $search              = '';
     public string $filterStatus        = '';
     public string $filterCustomerGroup = '';
+    public string $filterOnline        = '';
 
     protected string $paginationTheme = 'tailwind';
 
@@ -45,6 +47,7 @@ class CustomerList extends Component
     public function updatingSearch(): void              { $this->resetPage(); }
     public function updatingFilterStatus(): void        { $this->resetPage(); }
     public function updatingFilterCustomerGroup(): void { $this->resetPage(); }
+    public function updatingFilterOnline(): void        { $this->resetPage(); }
 
     public function openCreateModal(): void
     {
@@ -186,8 +189,11 @@ class CustomerList extends Component
 
     public function render(): mixed
     {
+        $onlineSince = DeviceActivity::threshold();
+
         $customers = Customer::query()
             ->with('customerGroup')
+            ->withMax('devices', 'last_active_at')
             ->when($this->search, fn($q) => $q->where(fn($s) => $s
                 ->where('full_name', 'like', "%{$this->search}%")
                 ->orWhere('customer_code', 'like', "%{$this->search}%")
@@ -196,6 +202,8 @@ class CustomerList extends Component
             ))
             ->when($this->filterStatus !== '', fn($q) => $q->where('status', $this->filterStatus))
             ->when($this->filterCustomerGroup !== '', fn($q) => $q->where('customer_group_id', $this->filterCustomerGroup))
+            ->when($this->filterOnline === 'online', fn($q) => $q->whereHas('devices', fn($d) => $d->where('last_active_at', '>=', $onlineSince)))
+            ->when($this->filterOnline === 'offline', fn($q) => $q->whereDoesntHave('devices', fn($d) => $d->where('last_active_at', '>=', $onlineSince)))
             ->orderByDesc('id')
             ->paginate(15);
 
@@ -204,6 +212,7 @@ class CustomerList extends Component
             'customerGroups' => CustomerGroup::orderBy('name')->get(['id', 'name']),
             'totalCount'     => Customer::count(),
             'activeCount'    => Customer::where('status', 'active')->count(),
+            'onlineCount'    => Customer::whereHas('devices', fn($d) => $d->where('last_active_at', '>=', $onlineSince))->count(),
             'newThisMonth'   => Customer::whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
         ])->layout('layouts.admin.admin');
     }

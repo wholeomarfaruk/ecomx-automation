@@ -1,0 +1,12 @@
+@use '../base/variables' as *;
+.fcard{display:flex;flex-direction:column;gap:10px;background:#1D1D1B;border:1px solid rgba(248,247,245,.08);border-radius:$radius;padding:10px;transition:transform .3s ease;}
+.fcard:hover{transform:translateY(-4px);}
+.fcard__media{position:relative;display:block;border-radius:$radius-sm;overflow:hidden;background:#26251F;aspect-ratio:3/4;}
+.fcard__img{width:100%;height:100%;object-fit:cover;transition:transform .5s;}
+.fcard:hover .fcard__img{transform:scale(1.05);}
+.fcard__save{position:absolute;top:10px;left:10px;background:var(--ac);color:#fff;font-size:11px;font-weight:700;padding:6px 11px;border-radius:999px;box-shadow:0 4px 14px rgba(var(--ac-rgb),.4);}
+.fcard__save .sym{font-size:12px;font-weight:800;}
+.fcard__name{font-size:13px;font-weight:500;color:#F8F7F5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fcard__price{font-size:14px;font-weight:600;color:var(--ac3);}
+.fcard__price .sym{font-size:14.5px;font-weight:700;}
+.fcard__old{font-size:11.5px;color:rgba(248,247,245,.45);text-decoration:line-through;}
