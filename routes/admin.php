@@ -77,6 +77,7 @@ Route::prefix('customers')->name('customers.')->group(function () {
     Route::get('/carts/{id}', App\Livewire\Admin\Customers\CartDetail::class)->name('carts.show');
     Route::get('/combo', App\Livewire\Admin\Customers\ComboList::class)->name('combo');
     Route::get('/loved', App\Livewire\Admin\Customers\LovedProducts::class)->name('loved');
+    Route::get('/groups', App\Livewire\Admin\Customers\CustomerGroups::class)->name('groups');
 });
 
 // Sales

@@ -305,6 +305,10 @@
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.customers.loved' ? 'text-gray-200' : '' }}">
                             Loved
                         </a>
+                        <a href="{{ route('admin.customers.groups') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.customers.groups' ? 'text-gray-200' : '' }}">
+                            Customer Group
+                        </a>
                     </div>
                 </div>
 

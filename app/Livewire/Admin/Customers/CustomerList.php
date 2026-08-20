@@ -44,10 +44,96 @@ class CustomerList extends Component
     public string $editCustomerGroupId  = '';
     public string $editStatus           = 'active';
 
-    public function updatingSearch(): void              { $this->resetPage(); }
-    public function updatingFilterStatus(): void        { $this->resetPage(); }
-    public function updatingFilterCustomerGroup(): void { $this->resetPage(); }
-    public function updatingFilterOnline(): void        { $this->resetPage(); }
+    // bulk selection
+    public array   $selected      = [];
+    public bool    $selectPage     = false;
+    public bool    $bulkGroupModal = false;
+    public string  $bulkGroupId    = '';
+
+    public function updatingSearch(): void              { $this->resetPage(); $this->clearSelection(); }
+    public function updatingFilterStatus(): void        { $this->resetPage(); $this->clearSelection(); }
+    public function updatingFilterCustomerGroup(): void { $this->resetPage(); $this->clearSelection(); }
+    public function updatingFilterOnline(): void        { $this->resetPage(); $this->clearSelection(); }
+    public function updatedSelectPage(bool $value): void
+    {
+        $ids = $this->currentPageIds();
+        $this->selected = $value
+            ? array_values(array_unique([...$this->selected, ...$ids]))
+            : array_values(array_diff($this->selected, $ids));
+    }
+
+    protected function currentPageIds(): array
+    {
+        return $this->buildQuery()
+            ->forPage($this->getPage(), 15)
+            ->pluck('id')
+            ->all();
+    }
+
+    protected function buildQuery()
+    {
+        $onlineSince = DeviceActivity::threshold();
+
+        return Customer::query()
+            ->when($this->search, fn ($q) => $q->where(fn ($s) => $s
+                ->where('full_name', 'like', "%{$this->search}%")
+                ->orWhere('customer_code', 'like', "%{$this->search}%")
+                ->orWhere('phone', 'like', "%{$this->search}%")
+                ->orWhere('email', 'like', "%{$this->search}%")
+            ))
+            ->when($this->filterStatus !== '', fn ($q) => $q->where('status', $this->filterStatus))
+            ->when($this->filterCustomerGroup !== '', fn ($q) => $q->where('customer_group_id', $this->filterCustomerGroup))
+            ->when($this->filterOnline === 'online', fn ($q) => $q->whereHas('devices', fn ($d) => $d->where('last_active_at', '>=', $onlineSince)))
+            ->when($this->filterOnline === 'offline', fn ($q) => $q->whereDoesntHave('devices', fn ($d) => $d->where('last_active_at', '>=', $onlineSince)))
+            ->orderByDesc('id');
+    }
+
+    public function clearSelection(): void
+    {
+        $this->selected    = [];
+        $this->selectPage  = false;
+    }
+
+    public function openBulkGroupModal(): void
+    {
+        if (empty($this->selected)) {
+            $this->dispatch('toast', ['type' => 'error', 'message' => 'Select at least one customer first']);
+            return;
+        }
+
+        $this->bulkGroupId    = '';
+        $this->bulkGroupModal = true;
+    }
+
+    public function assignBulkGroup(): void
+    {
+        if (empty($this->selected)) {
+            $this->dispatch('toast', ['type' => 'error', 'message' => 'Select at least one customer first']);
+            return;
+        }
+
+        $groupId = $this->bulkGroupId ?: null;
+        $group   = $groupId ? CustomerGroup::find($groupId) : null;
+
+        $customers = Customer::whereIn('id', $this->selected)->get();
+
+        Customer::whereIn('id', $this->selected)->update(['customer_group_id' => $groupId]);
+
+        activity('customers')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'customer_ids'   => $this->selected,
+                'customer_names' => $customers->pluck('full_name'),
+                'group'          => $group?->name ?? 'None',
+            ])
+            ->event('updated')
+            ->log(count($this->selected) . ' customer(s) ' . ($group ? "assigned to group \"{$group->name}\"" : 'removed from their group'));
+
+        $count = count($this->selected);
+        $this->bulkGroupModal = false;
+        $this->clearSelection();
+        $this->dispatch('toast', ['type' => 'success', 'message' => $group ? "{$count} customer(s) added to {$group->name}" : "{$count} customer(s) removed from their group"]);
+    }
 
     public function openCreateModal(): void
     {
@@ -191,20 +277,9 @@ class CustomerList extends Component
     {
         $onlineSince = DeviceActivity::threshold();
 
-        $customers = Customer::query()
+        $customers = $this->buildQuery()
             ->with('customerGroup')
             ->withMax('devices', 'last_active_at')
-            ->when($this->search, fn($q) => $q->where(fn($s) => $s
-                ->where('full_name', 'like', "%{$this->search}%")
-                ->orWhere('customer_code', 'like', "%{$this->search}%")
-                ->orWhere('phone', 'like', "%{$this->search}%")
-                ->orWhere('email', 'like', "%{$this->search}%")
-            ))
-            ->when($this->filterStatus !== '', fn($q) => $q->where('status', $this->filterStatus))
-            ->when($this->filterCustomerGroup !== '', fn($q) => $q->where('customer_group_id', $this->filterCustomerGroup))
-            ->when($this->filterOnline === 'online', fn($q) => $q->whereHas('devices', fn($d) => $d->where('last_active_at', '>=', $onlineSince)))
-            ->when($this->filterOnline === 'offline', fn($q) => $q->whereDoesntHave('devices', fn($d) => $d->where('last_active_at', '>=', $onlineSince)))
-            ->orderByDesc('id')
             ->paginate(15);
 
         return view('livewire.admin.customers.customer-list', [

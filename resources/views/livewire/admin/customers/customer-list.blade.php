@@ -63,11 +63,32 @@
             </select>
         </div>
 
+        {{-- Bulk action bar --}}
+        @if(count($selected) > 0)
+            <div class="flex items-center justify-between gap-3 px-5 py-3 bg-indigo-50 border-b border-indigo-100">
+                <span class="text-sm text-indigo-700 font-medium">{{ count($selected) }} selected</span>
+                <div class="flex items-center gap-2">
+                    <button wire:click="openBulkGroupModal" type="button"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">
+                        Assign to Group
+                    </button>
+                    <button wire:click="clearSelection" type="button"
+                        class="text-xs text-indigo-500 hover:text-indigo-700 font-medium underline underline-offset-2">
+                        Clear selection
+                    </button>
+                </div>
+            </div>
+        @endif
+
         {{-- Table --}}
         <div class="overflow-x-auto">
             <table class="min-w-full">
                 <thead>
                     <tr class="border-b border-gray-100 bg-gray-50/40">
+                        <th class="px-5 py-3 text-left w-10">
+                            <input type="checkbox" wire:model.live="selectPage"
+                                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        </th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Customer</th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Contact</th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Group</th>
@@ -79,6 +100,10 @@
                 <tbody class="divide-y divide-gray-100">
                     @forelse($customers as $customer)
                         <tr class="hover:bg-gray-50/50 transition group">
+                            <td class="px-5 py-3">
+                                <input type="checkbox" wire:model.live="selected" value="{{ $customer->id }}"
+                                    class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            </td>
                             <td class="px-5 py-3">
                                 <span class="text-sm font-medium text-gray-800">{{ $customer->full_name }}</span>
                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono bg-gray-100 text-gray-600 mt-1">{{ $customer->customer_code }}</span>
@@ -164,7 +189,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-5 py-16 text-center">
+                            <td colspan="7" class="px-5 py-16 text-center">
                                 <div class="flex flex-col items-center gap-3">
                                     <div class="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -351,6 +376,42 @@
                     <button type="submit" class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">Save Changes</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    {{-- Bulk Assign to Group Modal --}}
+    <div x-cloak x-data="{ open: @entangle('bulkGroupModal') }" x-show="open" x-transition
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden" @click.outside="open = false">
+            <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
+                <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.375 21c-2.331 0-4.512-.645-6.374-1.766Z"/>
+                    </svg>
+                </div>
+                <div class="flex-1"><h2 class="text-base font-semibold text-gray-900">Assign {{ count($selected) }} Customer(s) to Group</h2></div>
+                <button @click="open = false" type="button" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="px-6 py-5 space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Customer Group</label>
+                    <select wire:model="bulkGroupId" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                        <option value="">— None (remove from group) —</option>
+                        @foreach($customerGroups as $group)
+                            <option value="{{ $group->id }}">{{ $group->name }}</option>
+                        @endforeach
+                    </select>
+                    <p class="text-xs text-gray-400 mt-1.5">This will overwrite the current group for all selected customers.</p>
+                </div>
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+                    <button @click="open = false" type="button" class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
+                    <button wire:click="assignBulkGroup" type="button" class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">Assign</button>
+                </div>
+            </div>
         </div>
     </div>
 
