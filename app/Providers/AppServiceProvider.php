@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -78,6 +79,12 @@ class AppServiceProvider extends ServiceProvider
         // (not bare storage/) — web-reachable via the storage:link symlink
         // at public/storage, matching every other public upload area
         // (uploads/, frontend/) — see LandingPageTemplate::basePath().
+        // loadViewsFrom() uses Symfony Finder under the hood, which throws
+        // if a path doesn't exist yet — ensure the custom-templates
+        // directory (nothing creates it until the first custom template
+        // is uploaded) is present before registering it.
+        File::ensureDirectoryExists(storage_path('app/public/landingpage-templates'));
+
         $this->loadViewsFrom([
             resource_path('landingpage-templates'),
             storage_path('app/public/landingpage-templates'),
