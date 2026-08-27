@@ -19,7 +19,7 @@ use Illuminate\Support\Str;
 
 class ImportSeldomFashionFeed extends Command
 {
-    protected $signature = 'import:seldom-fashion-feed {--limit=0 : Import only the first N products (0 = all)}';
+    protected $signature = 'import:seldom-fashion-feed {--limit=0 : Import only the first N products (0 = all)} {--category=Women : Category name to assign imported products to}';
 
     protected $description = 'Import products from seldomfashion.com/facebook-product-feed.xml into the catalog';
 
@@ -66,7 +66,12 @@ class ImportSeldomFashionFeed extends Command
             ['name' => 'Seldom Fashion', 'status' => 'active']
         );
 
-        $category = Category::where('name', 'Fashion')->first();
+        $categoryName = (string) $this->option('category');
+        $category = Category::where('name', $categoryName)->first();
+
+        if (! $category) {
+            $this->warn("Category '{$categoryName}' not found — imported products will not be assigned to any category.");
+        }
 
         $maxSort = Product::max('sort_order') ?? 0;
         $imported = 0;
