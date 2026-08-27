@@ -32,10 +32,11 @@ class DatabaseSeeder extends Seeder
             EmailTemplateSeeder::class,
             NotificationEventSeeder::class,
         ]);
-        User::factory()->create([
+        User::create([
             'name' => 'superadmin',
             'email' => 'superadmin@gmail.com',
             'password' => bcrypt('password'),
+            'email_verified_at' => now(),
         ]);
         $user = User::find(1);
         $user->assignRole('superadmin');
