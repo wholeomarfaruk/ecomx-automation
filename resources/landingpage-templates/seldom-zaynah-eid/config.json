@@ -1,0 +1,22 @@
+{
+    "key": "seldom-zaynah-eid",
+    "name": "Seldom Zaynah Eid",
+    "category": "fashion",
+    "description": "Eid fashion campaign landing page with product gallery, reviews, FAQ, and materials section.",
+    "preview_image": "preview.jpg",
+    "version": "1.0.3",
+    "author": "Seldom Tech",
+    "author_url": "https://seldomtechsolutions.com",
+    "status": "active",
+    "source": "system",
+    "capabilities": {
+        "products": true,
+        "packages": false,
+        "delivery_offers": false,
+        "bkash_checkout": false,
+        "video_gallery": true,
+        "testimonial_gallery": true
+    },
+    "created_at": "2026-08-25",
+    "updated_at": "2026-08-25"
+}

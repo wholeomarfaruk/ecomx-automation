@@ -2,13 +2,19 @@
     'field',
     'value'       => '',
     'options'     => [],
+    'images'      => null,
     'placeholder' => 'All',
     'searchPlaceholder' => 'Search…',
 ])
 
 @php
+    $imageMap = collect($images ?? []);
     $optionsJson = json_encode(
-        collect($options)->map(fn ($label, $val) => ['value' => (string) $val, 'label' => $label])->values()
+        collect($options)->map(fn ($label, $val) => [
+            'value' => (string) $val,
+            'label' => $label,
+            'image' => $imageMap->get($val),
+        ])->values()
     );
 @endphp
 
@@ -18,9 +24,11 @@
         query: '',
         options: {{ $optionsJson }},
         value: @entangle($field).live,
+        get selectedOption() {
+            return this.options.find(o => o.value === String(this.value ?? '')) ?? null;
+        },
         get selectedLabel() {
-            const match = this.options.find(o => o.value === String(this.value ?? ''));
-            return match ? match.label : '{{ $placeholder }}';
+            return this.selectedOption ? this.selectedOption.label : '{{ $placeholder }}';
         },
         get filtered() {
             if (!this.query) return this.options;
@@ -39,7 +47,12 @@
     <button type="button" @click="open = !open"
         class="flex items-center justify-between gap-2 text-sm rounded-lg border border-gray-300 px-3 py-2 bg-white hover:border-gray-400 transition w-full min-w-[160px]
                focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-        <span x-text="selectedLabel" :class="value ? 'text-gray-700' : 'text-gray-400'" class="truncate"></span>
+        <span class="flex items-center gap-2 min-w-0">
+            <template x-if="selectedOption && selectedOption.image">
+                <img :src="selectedOption.image" alt="" class="w-5 h-5 rounded object-cover shrink-0">
+            </template>
+            <span x-text="selectedLabel" :class="value ? 'text-gray-700' : 'text-gray-400'" class="truncate"></span>
+        </span>
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
         </svg>
@@ -65,9 +78,12 @@
             </button>
             <template x-for="option in filtered" :key="option.value">
                 <button type="button" @click="select(option.value)"
-                    class="w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50 transition truncate"
-                    :class="value === option.value ? 'text-indigo-600 font-medium bg-indigo-50/50' : 'text-gray-600'"
-                    x-text="option.label">
+                    class="w-full flex items-center gap-2 text-left px-3 py-1.5 text-sm hover:bg-gray-50 transition"
+                    :class="value === option.value ? 'text-indigo-600 font-medium bg-indigo-50/50' : 'text-gray-600'">
+                    <template x-if="option.image">
+                        <img :src="option.image" alt="" class="w-6 h-6 rounded object-cover shrink-0">
+                    </template>
+                    <span class="truncate" x-text="option.label"></span>
                 </button>
             </template>
             <p x-show="filtered.length === 0" class="px-3 py-2 text-xs text-gray-400">No matches</p>

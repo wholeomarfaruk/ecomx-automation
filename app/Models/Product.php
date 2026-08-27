@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
@@ -64,6 +65,11 @@ class Product extends Model
         return $this->belongsTo(File::class, 'featured_image_id');
     }
 
+    public function getFeaturedImageAttribute(): ?string
+    {
+        return $this->featured_image_id ? file_path($this->featured_image_id) : null;
+    }
+
     public function metaImage(): BelongsTo
     {
         return $this->belongsTo(File::class, 'meta_image_id');
@@ -97,6 +103,16 @@ class Product extends Model
     public function wishlistItems(): HasMany
     {
         return $this->hasMany(WishlistItem::class);
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class);
+    }
+
+    public function reviewStatistic(): HasOne
+    {
+        return $this->hasOne(ProductReviewStatistic::class);
     }
 
     public function scopeActive(Builder $query): Builder

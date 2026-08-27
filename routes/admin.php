@@ -8,19 +8,35 @@ use App\Livewire\Admin\Frontend\Menus as FrontendMenus;
 use App\Livewire\Admin\Frontend\PageShow as FrontendPageShow;
 use App\Livewire\Admin\Frontend\Pages as FrontendPages;
 use App\Livewire\Admin\Frontend\Themes as FrontendThemes;
+use App\Livewire\Admin\LandingPages\PageForm as LandingPageForm;
+use App\Livewire\Admin\LandingPages\PageList as LandingPageList;
+use App\Livewire\Admin\LandingPages\Settings as LandingPageSettings;
+use App\Livewire\Admin\LandingPages\TemplateList as LandingPageTemplateList;
+use App\Livewire\Admin\ThemeEngine\SectionConfigPage;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/dashboard', \App\Livewire\Admin\Dashboard\Dashboard::class)->name('dashboard');
 
 // Frontend Menu — registered pages of the active theme + per-page section settings.
 // The {page} wildcard must stay registered after the literal routes below it,
-// or it will shadow appearance/themes/menus/components.
+// or it will shadow appearance/themes/menus/components. Likewise
+// {page}/{section}/edit must stay above the bare {page} wildcard.
 Route::get('/frontend', FrontendPages::class)->name('frontend.menu');
 Route::get('/frontend/appearance', FrontendAppearance::class)->name('frontend.appearance');
 Route::get('/frontend/themes', FrontendThemes::class)->name('frontend.themes');
 Route::get('/frontend/menus', FrontendMenus::class)->name('frontend.menus');
 Route::get('/frontend/components', FrontendComponents::class)->name('frontend.components');
+Route::get('/frontend/{page}/{section}/edit', SectionConfigPage::class)->name('frontend.section.edit');
 Route::get('/frontend/{page}', FrontendPageShow::class)->name('frontend.menu.show');
+
+Route::prefix('landing-pages')->name('landingpages.')->group(function () {
+    Route::get('/', LandingPageList::class)->name('pages');
+    Route::get('/create', LandingPageForm::class)->name('pages.create');
+    Route::get('/{id}/edit', LandingPageForm::class)->name('pages.edit');
+    Route::get('/{id}/preview', [\App\Http\Controllers\Admin\LandingPagePreviewController::class, 'show'])->name('pages.preview');
+    Route::get('/templates', LandingPageTemplateList::class)->name('templates');
+    Route::get('/settings', LandingPageSettings::class)->name('settings');
+});
 
 //user managements
 Route::get('/users', App\Livewire\Admin\Users\Users::class)->name('users');
@@ -68,6 +84,8 @@ Route::prefix('purchase')->name('purchase.')->group(function () {
     Route::get('/suppliers/{supplierId}/ledger', App\Livewire\Admin\Purchase\SupplierLedger::class)->name('suppliers.ledger');
     Route::get('/invoices', App\Livewire\Admin\Purchase\SupplierInvoices::class)->name('invoices');
     Route::get('/orders', App\Livewire\Admin\Purchase\PurchaseOrders::class)->name('orders');
+    Route::get('/orders/create', App\Livewire\Admin\Purchase\PurchaseOrderForm::class)->name('orders.create');
+    Route::get('/orders/{id}/edit', App\Livewire\Admin\Purchase\PurchaseOrderForm::class)->name('orders.edit');
 });
 
 // Customers
@@ -78,6 +96,10 @@ Route::prefix('customers')->name('customers.')->group(function () {
     Route::get('/combo', App\Livewire\Admin\Customers\ComboList::class)->name('combo');
     Route::get('/loved', App\Livewire\Admin\Customers\LovedProducts::class)->name('loved');
     Route::get('/groups', App\Livewire\Admin\Customers\CustomerGroups::class)->name('groups');
+
+    Route::get('/reviews', App\Livewire\Admin\Customers\Reviews\ReviewList::class)->name('reviews.index');
+    Route::get('/reviews/settings', App\Livewire\Admin\Customers\Reviews\ReviewSettings::class)->name('reviews.settings');
+    Route::get('/reviews/{id}', App\Livewire\Admin\Customers\Reviews\ReviewDetail::class)->name('reviews.show');
 });
 
 // Sales
@@ -102,6 +124,47 @@ Route::prefix('sales')->name('sales.')->group(function () {
         Route::get('/sessions/{id}', App\Livewire\Admin\Sales\PosSessionDetail::class)->name('sessions.show');
         Route::get('/screen', App\Livewire\Admin\Sales\PosScreen::class)->name('screen');
     });
+});
+
+Route::prefix('marketing')->name('marketing.')->group(function () {
+    Route::get('/', App\Livewire\Admin\Marketing\Dashboard::class)->name('dashboard');
+
+    Route::get('/journeys/visitors', App\Livewire\Admin\Marketing\JourneyExplorer::class)->name('journeys.visitors')->defaults('mode', 'visitors');
+    Route::get('/journeys/customers', App\Livewire\Admin\Marketing\JourneyExplorer::class)->name('journeys.customers')->defaults('mode', 'customers');
+    Route::get('/journeys/anonymous', App\Livewire\Admin\Marketing\JourneyExplorer::class)->name('journeys.anonymous')->defaults('mode', 'anonymous');
+    Route::get('/journeys/detail', App\Livewire\Admin\Marketing\JourneyDetail::class)->name('journeys.detail');
+
+    Route::get('/campaigns', App\Livewire\Admin\Marketing\Campaigns::class)->name('campaigns.index');
+    Route::get('/campaigns/meta', App\Livewire\Admin\Marketing\Campaigns::class)->name('campaigns.meta')->defaults('platform', 'meta');
+    Route::get('/campaigns/google', App\Livewire\Admin\Marketing\Campaigns::class)->name('campaigns.google')->defaults('platform', 'google');
+    Route::get('/campaigns/tiktok', App\Livewire\Admin\Marketing\Campaigns::class)->name('campaigns.tiktok')->defaults('platform', 'tiktok');
+    Route::get('/campaigns/other', App\Livewire\Admin\Marketing\Campaigns::class)->name('campaigns.other')->defaults('platform', 'other');
+
+    Route::get('/sources', App\Livewire\Admin\Marketing\SourceAnalytics::class)->name('sources.index');
+
+    Route::get('/products', App\Livewire\Admin\Marketing\ProductPerformance::class)->name('products.performance');
+    Route::get('/products/journeys', App\Livewire\Admin\Marketing\ProductJourneys::class)->name('products.journeys');
+    Route::get('/customers', App\Livewire\Admin\Marketing\CustomerTracking::class)->name('customers.tracking');
+    Route::get('/customers/returning', App\Livewire\Admin\Marketing\ReturningCustomers::class)->name('customers.returning');
+
+    Route::get('/audience/devices', App\Livewire\Admin\Marketing\AudienceDevices::class)->name('audience.devices');
+    Route::get('/audience/ip', App\Livewire\Admin\Marketing\AudienceIp::class)->name('audience.ip');
+
+    Route::get('/events', App\Livewire\Admin\Marketing\EventExplorer::class)->name('events.index');
+
+    Route::get('/attribution', App\Livewire\Admin\Marketing\Attribution::class)->name('attribution.index');
+
+    Route::get('/reports', App\Livewire\Admin\Marketing\Reports::class)->name('reports.index');
+    Route::get('/settings', App\Livewire\Admin\Marketing\Settings::class)->name('settings.index');
+});
+
+Route::prefix('inventory')->name('inventory.')->group(function () {
+    Route::get('/', App\Livewire\Admin\Inventory\StockList::class)->name('stock');
+    Route::get('/stock-in', App\Livewire\Admin\Inventory\StockIn::class)->name('stock-in');
+    Route::get('/batches', App\Livewire\Admin\Inventory\Batches::class)->name('batches');
+    Route::get('/movements', App\Livewire\Admin\Inventory\MovementList::class)->name('movements');
+    Route::get('/warehouses', App\Livewire\Admin\Inventory\Warehouses::class)->name('warehouses');
+    Route::get('/settings', App\Livewire\Admin\Inventory\InventorySettings::class)->name('settings');
 });
 
 // Advance

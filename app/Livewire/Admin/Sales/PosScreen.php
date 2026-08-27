@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Sales;
 
+use App\Exceptions\Inventory\InsufficientStockException;
 use App\Exceptions\Sales\CouponNotApplicableException;
 use App\Models\Combo;
 use App\Models\Coupon;
@@ -12,7 +13,10 @@ use App\Models\PosSession;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Setting;
+use App\Models\Warehouse;
 use App\Services\CouponShippingService;
+use App\Services\StockService;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class PosScreen extends Component
@@ -318,69 +322,118 @@ class PosScreen extends Component
             return;
         }
 
-        $order = Order::create([
-            'customer_id'     => $this->customerId ?: null,
-            'source'          => 'pos',
-            'status'          => 'confirmed',
-            'payment_status'  => 'paid',
-            'fulfillment_status' => 'fulfilled',
-            'discount_amount' => $this->discountAmountClamped,
-            'placed_at'       => now(),
-            'confirmed_at'    => now(),
-        ]);
+        $warehouse = $this->session->register?->branch_id
+            ? Warehouse::where('branch_id', $this->session->register->branch_id)->first()
+            : null;
+        $warehouse ??= Warehouse::default();
 
-        foreach ($this->items as $item) {
+        $stockService = app(StockService::class);
+
+        // Pre-flight every line before creating anything, so a failed sale
+        // doesn't leave a half-built order behind.
+        foreach ($this->items as $index => $item) {
+            if (! $item['product_id']) {
+                continue; // combo line — stock is derived from its components, not tracked directly
+            }
+
             $product = Product::find($item['product_id']);
             $variant = $item['variant_id'] ? ProductVariant::find($item['variant_id']) : null;
 
-            $quantity  = (float) $item['quantity'];
-            $unitPrice = (float) $item['unit_price'];
-
-            $order->items()->create([
-                'product_id'     => $item['product_id'],
-                'variant_id'     => $item['variant_id'] ?: null,
-                'product_name'   => $product?->name ?? 'Unknown product',
-                'variant_name'   => $variant?->sku,
-                'sku'            => $variant?->sku ?? $product?->code,
-                'quantity'       => $quantity,
-                'unit_price'     => $unitPrice,
-                'purchase_price' => $item['purchase_price'] !== '' ? $item['purchase_price'] : null,
-                'total_amount'   => $unitPrice * $quantity,
-            ]);
-        }
-
-        if ($this->couponCode !== '' && $this->couponError === '') {
-            try {
-                app(CouponShippingService::class)->applyToOrder($order, $this->couponCode);
-            } catch (CouponNotApplicableException $e) {
-                $order->recalculateTotals();
+            if (! $product) {
+                continue;
             }
-        } else {
-            $order->recalculateTotals();
+
+            $available = $stockService->available($product, $variant, $warehouse);
+
+            if ($available < (float) $item['quantity']) {
+                $this->addError(
+                    "items.{$index}.quantity",
+                    sprintf('Only %s in stock for "%s".', $available, $item['label'])
+                );
+                return;
+            }
         }
 
-        $order->payments()->create([
-            'payment_method' => $this->paymentMethod,
-            'amount'         => $order->total_amount,
-            'status'         => 'paid',
-            'paid_at'        => now(),
-        ]);
-        $order->recalculateTotals();
+        try {
+            $order = DB::transaction(function () use ($warehouse, $stockService) {
+                $order = Order::create([
+                    'customer_id'     => $this->customerId ?: null,
+                    'source'          => 'pos',
+                    'status'          => 'confirmed',
+                    'payment_status'  => 'paid',
+                    'fulfillment_status' => 'fulfilled',
+                    'discount_amount' => $this->discountAmountClamped,
+                    'placed_at'       => now(),
+                    'confirmed_at'    => now(),
+                ]);
 
-        PosSale::create([
-            'session_id'  => $this->session->id,
-            'order_id'    => $order->id,
-            'customer_id' => $this->customerId ?: null,
-            'created_by'  => auth()->id(),
-        ]);
+                foreach ($this->items as $item) {
+                    $product = Product::find($item['product_id']);
+                    $variant = $item['variant_id'] ? ProductVariant::find($item['variant_id']) : null;
 
-        if ($this->paymentMethod === 'cash') {
-            $this->session->cashMovements()->create([
-                'type'       => 'cash_in',
-                'amount'     => $order->total_amount,
-                'reason'     => "POS sale — Order #{$order->id}",
-                'created_by' => auth()->id(),
-            ]);
+                    $quantity  = (float) $item['quantity'];
+                    $unitPrice = (float) $item['unit_price'];
+
+                    $orderItem = $order->items()->create([
+                        'product_id'     => $item['product_id'],
+                        'variant_id'     => $item['variant_id'] ?: null,
+                        'product_name'   => $product?->name ?? 'Unknown product',
+                        'variant_name'   => $variant?->sku,
+                        'sku'            => $variant?->sku ?? $product?->code,
+                        'quantity'       => $quantity,
+                        'unit_price'     => $unitPrice,
+                        'purchase_price' => $item['purchase_price'] !== '' ? $item['purchase_price'] : null,
+                        'total_amount'   => $unitPrice * $quantity,
+                    ]);
+
+                    if ($product) {
+                        $stockService->decrease(
+                            $product, $variant, $quantity, 'sale',
+                            warehouse: $warehouse, reference: $orderItem,
+                            note: "POS sale — Order #{$order->id}",
+                        );
+                    }
+                }
+
+                if ($this->couponCode !== '' && $this->couponError === '') {
+                    try {
+                        app(CouponShippingService::class)->applyToOrder($order, $this->couponCode);
+                    } catch (CouponNotApplicableException $e) {
+                        $order->recalculateTotals();
+                    }
+                } else {
+                    $order->recalculateTotals();
+                }
+
+                $order->payments()->create([
+                    'payment_method' => $this->paymentMethod,
+                    'amount'         => $order->total_amount,
+                    'status'         => 'paid',
+                    'paid_at'        => now(),
+                ]);
+                $order->recalculateTotals();
+
+                PosSale::create([
+                    'session_id'  => $this->session->id,
+                    'order_id'    => $order->id,
+                    'customer_id' => $this->customerId ?: null,
+                    'created_by'  => auth()->id(),
+                ]);
+
+                if ($this->paymentMethod === 'cash') {
+                    $this->session->cashMovements()->create([
+                        'type'       => 'cash_in',
+                        'amount'     => $order->total_amount,
+                        'reason'     => "POS sale — Order #{$order->id}",
+                        'created_by' => auth()->id(),
+                    ]);
+                }
+
+                return $order;
+            });
+        } catch (InsufficientStockException $e) {
+            $this->dispatch('toast', ['type' => 'error', 'message' => $e->getMessage()]);
+            return;
         }
 
         activity('sales')

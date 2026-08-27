@@ -3,10 +3,12 @@
 namespace App\Livewire\EcomxFashion\Sections;
 
 use App\Support\EcomxFashion\PageSectionConfigRegistry;
-use Livewire\Attributes\Lazy;
 use Livewire\Component;
 
-#[Lazy]
+/**
+ * Eager (not #[Lazy]) — this is the first thing visitors see, so it renders
+ * in the initial HTML response rather than waiting for a follow-up request.
+ */
 class Hero extends Component
 {
     protected const DEFAULT_UNSPLASH_IDS = [
@@ -40,11 +42,6 @@ class Hero extends Component
         $this->sideSlides = ! empty($config['sideSlides'])
             ? array_map(fn ($item) => ['url' => $item['url'], 'link' => $item['link'] ?? ''], $config['sideSlides'])
             : array_map(fn ($id) => ['url' => config('ecomx-fashion.unsplash') . $id . '?q=80&w=800&auto=format&fit=crop', 'link' => ''], static::DEFAULT_UNSPLASH_IDS['side']);
-    }
-
-    public function placeholder()
-    {
-        return view('ecomx-fashion.livewire.sections.skeletons.hero');
     }
 
     public function render()

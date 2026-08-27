@@ -2,7 +2,7 @@
 
 namespace App\Livewire\EcomxFashion\Sections;
 
-use App\Models\Review;
+use App\Models\ProductReview;
 use App\Support\EcomxFashion\Catalog;
 use App\Support\EcomxFashion\PageSectionConfigRegistry;
 use Livewire\Attributes\Lazy;
@@ -27,7 +27,7 @@ class Reviews extends Component
         $this->heading = $config['heading'] ?? '' ?: static::DEFAULT_HEADING;
         $this->linkLabel = $config['linkLabel'] ?? '' ?: static::DEFAULT_LINK_LABEL;
 
-        $approved = Review::approved()->with(['media', 'product']);
+        $approved = ProductReview::approved()->with(['media', 'product', 'customer']);
 
         $count = (clone $approved)->count();
         $average = $count > 0 ? (clone $approved)->avg('rating') : null;
@@ -39,24 +39,26 @@ class Reviews extends Component
         $mapped = $approved->latest()
             ->limit(static::LIMIT)
             ->get()
-            ->map(fn (Review $review) => $this->mapReview($review))
+            ->map(fn (ProductReview $review) => $this->mapReview($review))
             ->all();
 
         $this->reviews = ! empty($mapped) ? $mapped : Catalog::reviews();
     }
 
-    protected function mapReview(Review $review): array
+    protected function mapReview(ProductReview $review): array
     {
+        $media = $review->media->first();
+
         return [
             'id' => $review->id,
-            'name' => $review->name,
-            'verified' => true,
+            'name' => $review->authorName(),
+            'verified' => $review->is_verified_purchase,
             'rating' => $review->rating,
             'product' => $review->product->name ?? '',
-            'video' => $review->media?->isVideo() ?? false,
-            'img' => $review->media?->getUrl(),
+            'video' => $media?->isVideo() ?? false,
+            'img' => $media?->getUrl(),
             'avatar' => null,
-            'text' => $review->body,
+            'text' => $review->comment,
         ];
     }
 

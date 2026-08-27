@@ -39,4 +39,13 @@ return [
         'server_url' => env('LICENSE_SERVER_URL', 'https://license.example.com/api'),
     ],
 
+    'meta' => [
+        'api_version' => env('META_API_VERSION', 'v23.0'),
+        'pixel_id' => env('META_PIXEL_ID'),
+        'access_token' => env('META_ACCESS_TOKEN'),
+        // Only set in non-production — routes CAPI events to Meta's Test
+        // Events tool instead of counting them as real conversions.
+        'test_event_code' => env('META_TEST_EVENT_CODE'),
+    ],
+
 ];

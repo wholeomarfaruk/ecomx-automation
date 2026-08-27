@@ -8,6 +8,7 @@ use App\Events\PasswordResetRequested;
 use App\Events\UserRegistered;
 use App\Listeners\AuthActivityListener;
 use App\Listeners\NotificationEventListener;
+use App\Marketing\Context\MarketingContextBuilder;
 use App\Models\ActivityLog;
 use App\Models\Setting;
 use Carbon\CarbonImmutable;
@@ -30,6 +31,11 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(LoginResponse::class, \App\Http\Responses\LoginResponse::class);
+
+        $this->app->scoped(
+            MarketingContextBuilder::class,
+            fn ($app) => new MarketingContextBuilder($app['request'])
+        );
     }
 
     public function boot(): void
@@ -43,6 +49,41 @@ class AppServiceProvider extends ServiceProvider
         // ecomx-fashion theme's own components (<x-ux-img>, <x-product-card>, ...),
         // used bare (no namespace prefix) — matches how the theme's blade views call them.
         Blade::anonymousComponentPath(resource_path('views/ecomx-fashion/components'), null);
+
+        // Registers resources/views/layouts/landingpage/ as an anonymous
+        // component path (no prefix — same bare-tag convention as the
+        // ecomx-fashion components path above) so <x-landingpage-layout>
+        // is resolvable — needed by
+        // App\Http\Controllers\Admin\LandingPagePreviewController (a plain
+        // controller, no Livewire #[Layout] attribute to rely on, so it
+        // invokes the layout as a genuine Blade component instead; see
+        // resources/views/livewire/landingpage-engine/landingpage-preview.blade.php).
+        // Laravel only auto-discovers anonymous components under
+        // resources/views/components/ by default — layouts/landingpage/
+        // needs this explicit registration. A registered prefix would
+        // require the unusual <x-prefix::name> tag syntax instead of the
+        // normal dotted <x-prefix.name> form — using null here avoids that.
+        Blade::anonymousComponentPath(resource_path('views/layouts/landingpage'), null);
+
+        // Landing page template packages may ship their own per-template
+        // Livewire component + view (e.g. an order-form embedded in
+        // template.blade.php via @livewire()) — kept inside the template's
+        // own folder rather than resources/views, matching the "everything
+        // about a template lives in its own package" rule. Registered as a
+        // view namespace, resolved as landingpage-template::{key}.{view}.
+        // Both roots share one namespace: Blade's View::addNamespace()
+        // accepts multiple paths and tries them in order, so a custom
+        // template's view is found the same way a system (resources/)
+        // template's is. Custom templates live under storage/app/public
+        // (not bare storage/) — web-reachable via the storage:link symlink
+        // at public/storage, matching every other public upload area
+        // (uploads/, frontend/) — see LandingPageTemplate::basePath().
+        $this->loadViewsFrom([
+            resource_path('landingpage-templates'),
+            storage_path('app/public/landingpage-templates'),
+        ], 'landingpage-template');
+
+        $this->registerLandingPageTemplateComponents();
 
         // Admins must always be able to reach the panel to turn maintenance mode
         // back off — without this, enabling it via Site Settings locks everyone
@@ -147,6 +188,24 @@ class AppServiceProvider extends ServiceProvider
                 'mail.from.name' => $fromName ?? config('mail.from.name'),
             ]);
         }
+    }
+
+    // Template packages' optional per-template Livewire components (see
+    // App\LandingPageEngine\TemplateComponentRegistrar) — guarded like
+    // configureMailFromSettings() above, since this runs on every boot
+    // including migrations/artisan commands before the table exists on a
+    // fresh install.
+    protected function registerLandingPageTemplateComponents(): void
+    {
+        try {
+            if (! Schema::hasTable('landing_page_templates')) {
+                return;
+            }
+        } catch (\Throwable $e) {
+            return;
+        }
+
+        app(\App\LandingPageEngine\TemplateComponentRegistrar::class)->registerAll();
     }
 
     protected function configureDefaults(): void

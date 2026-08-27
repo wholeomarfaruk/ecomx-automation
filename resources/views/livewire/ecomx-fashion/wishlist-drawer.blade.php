@@ -27,7 +27,7 @@
                         @endphp
                         <div class="wish-item" wire:key="wish-item-{{ $item->id }}">
                             <a href="{{ $product?->url ?? '#' }}" class="cart-item__media">
-                                <x-ux-img :id="$product?->featured_image" :w="200" :alt="$product?->name ?? ''" />
+                                <x-ux-img :id="$item->display_image" :w="200" :alt="$product?->name ?? ''" />
                             </a>
                             <div class="cart-item__body">
                                 <div class="cart-item__row">

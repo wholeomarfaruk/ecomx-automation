@@ -29,7 +29,7 @@ class ShopByStyle extends Component
     protected function stylesFromCategories(array $categoryIds): array
     {
         $categories = Category::whereIn('id', $categoryIds)
-            ->where('is_active', true)
+            ->where('status', 'active')
             ->withCount('products')
             ->with('banner')
             ->get()

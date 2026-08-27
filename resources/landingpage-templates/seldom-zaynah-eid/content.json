@@ -1,0 +1,174 @@
+{
+    "seo": {
+        "meta_title": "Zaynah – Our First Eid Icon | Seldom",
+        "meta_description": "প্রিমিয়াম ফেব্রিক, স্টাইলিশ ডিজাইন ও ক্যাশ অন ডেলিভারি সুবিধাসহ Zaynah Eid Collection",
+        "meta_image": "/uploads/landing/meta/zaynah-meta.jpg"
+    },
+    "hero": {
+        "title": "✨🌙 Zaynah — Our First Eid Icon 🌙✨",
+        "description": "এই ঈদে শুরু হোক নতুন স্টাইলের গল্প Zaynah 💛 এর সাথে — Seldom-এর প্রথম Eid release, যা আপনার উৎসবকে করবে আরও বিশেষ ও এলিগ্যান্ট। গ্রেসফুল প্রিন্ট, সফট প্রিমিয়াম ফ্যাব্রিক এবং টাইমলেস ডিজাইন আপনাকে দেবে ক্লাসি ও কমফোর্টেবল লুক।",
+        "features": [
+            "Premium Fabric",
+            "Soft Cotton",
+            "Comfort Fit",
+            "Cash Delivery",
+            "Elegant Floral",
+            "Classy Look",
+            "Limited Stock",
+            "Luxury Finish",
+            "Kashmiri Silk",
+            "Eid Special",
+            "Fast Delivery",
+            "Timeless Style"
+        ],
+        "cta_text": "অর্ডার করুন",
+        "cta_icons": [
+            "whatsapp",
+            "phone"
+        ],
+        "video": {
+            "embed_type": "facebook",
+            "embed_code": "https%3A%2F%2Fwww.facebook.com%2Freel%2F1555837552798947%2F",
+            "thumbnail": "https://i.postimg.cc/T3td81Xt/ROSE-RADIANCE-THUMB.webp"
+        }
+    },
+    "promo_banner_top": {
+        "image": "https://i.postimg.cc/kg2z4Dqj/101545d06.jpg",
+        "link": "#order"
+    },
+    "product_gallery": {
+        "type": "swiper",
+        "images": [
+            "https://i.postimg.cc/XJGTzJDv/IMG_5667_jpg.jpg",
+            "https://i.postimg.cc/qRh95RZh/IMG_5668_jpg.jpg",
+            "https://i.postimg.cc/DZJtMZY4/IMG_5670_jpg.jpg",
+            "https://i.postimg.cc/85Jq05nd/IMG_5671_jpg.jpg",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+        ]
+    },
+    "why_us": {
+        "title": "কেন আমরাই সেরা",
+        "items": [
+            {
+                "icon": "ribbon",
+                "title": "অথেন্টিক ডিজাইন",
+                "text": " ইউনিক ও এক্সক্লুসিভ ডিজাইনের ড্রেস, যা আপনাকে দেবে এলিগ্যান্ট ও স্টাইলিশ লুক"
+            },
+            {
+                "icon": "crown",
+                "title": "প্রিমিয়াম কোয়ালিটি",
+                "text": " ইম্পোর্টেড সফট ফ্যাব্রিক ও ফাইন ফিনিশিং — কমফোর্ট ও ক্লাসের পারফেক্ট কম্বিনেশন"
+            },
+            {
+                "icon": "clock-rotate-left",
+                "title": "এক্সচেঞ্জ পলিসি",
+                "text": "যেকোন সমস্যার ক্ষেত্রে ২৪ ঘন্টার মধ্যে জানালে এক্সচেঞ্জ সুবিধা প্রযোজ্য"
+            },
+            {
+                "icon": "truck",
+                "title": "ক্যাশ অন ডেলিভারি",
+                "text": "পণ্য হাতে পেয়ে তারপর পেমেন্ট করার সুবিধা — সারাদেশে ডেলিভারি সুবিধা"
+            }
+        ]
+    },
+    "promo_banner_middle": {
+        "image": "https://i.postimg.cc/kg2z4Dqj/101545d06.jpg"
+    },
+    "reviews": {
+        "title": "What Our Fashionistas Say",
+        "description": "why our customers keep coming back for more",
+        "items": [
+            "https://i.postimg.cc/SK1kWSJG/r2.jpg",
+            "https://i.postimg.cc/R0p4cSN1/r3.jpg",
+            "https://i.postimg.cc/BvnJLLQV/r4.jpg",
+            "https://i.postimg.cc/QMdj99xn/r5.jpg",
+            "https://i.postimg.cc/TP3TLLYN/r6.jpg",
+            "https://i.postimg.cc/yN87ggYj/r7.jpg",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+        ],
+        "cta_text": "অর্ডার করুন"
+    },
+    "faq": {
+        "title": "সচরাচর জিজ্ঞাসা প্রশ্নাবলি",
+        "items": [
+            {
+                "question": "ক্যাশ অন ডেলিভারিতে অর্ডার করতে পারব ?",
+                "answer": "হ্যা আমরা সারা বাংলাদেশে ক্যাশ ও ডেলিভারিতে প্রোডাক্ট পাঠিয়ে থাকি , প্রোডাক্ট হাতে পেয়ে পেমেন্ট করলেই হবে"
+            },
+            {
+                "question": "ডেলিভারি চার্জ কত টাকা ?",
+                "answer": "ঢাকার ভিতরে ৮০ টাকা , ঢাকার বাইরে ১৫০ টাকা"
+            },
+            {
+                "question": "কয়দিনে ডেলিভারি পাবো ?",
+                "answer": "ঢাকার ভিতরে ১/২ দিনে ও ঢাকার বাহিরে ২/৪ দিনে ডেলিভারি হয়"
+            },
+            {
+                "question": "আপনাদের এক্সচেঞ্জ পলিসি আছে ?",
+                "answer": "হ্যা , প্রোডাক্ট পাওয়ার ২৪ ঘণ্টার মধ্যে সাইজের অথবা যেকোন সমস্যার জন্যে জানাতে হবে , ২৪ ঘণ্টা পর কোন সমস্যা গ্রহণযোগ্য হবে না , এক্সচেঞ্জ এ পুনরায় ডেলিভারি চার্জ যোগ হবে"
+            },
+            {
+                "question": "আপনাদের রিটার্ন পলিসি আছে ?",
+                "answer": "হ্যা যদি কোনো কারণে আপনার ক্রয়কৃত ড্রেসটি নিয়ে সন্তুষ্ট না হন, তবে শুধু ডেলিভারি চার্জ প্রদান করে ডেলিভারি ম্যানের কাছে সহজেই ফেরত দিতে পারবেন, ডেলিভারি ম্যান চলে আসার পর কোন ভাবেই রিটার্ন গ্রহণযোগ্য হবে না|"
+            }
+        ]
+    },
+    "related_gallery": {
+        "title": "SELDOM গ্যালারি",
+        "items": [
+            "https://i.postimg.cc/XJGTzJDv/IMG_5667_jpg.jpg",
+            "https://i.postimg.cc/qRh95RZh/IMG_5668_jpg.jpg",
+            "https://i.postimg.cc/DZJtMZY4/IMG_5670_jpg.jpg",
+            "https://i.postimg.cc/85Jq05nd/IMG_5671_jpg.jpg",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+        ]
+    },
+    "order_section": {
+        "title": "অর্ডার করুন এখুনি"
+    },
+    "products": [
+        { "id": 1, "is_primary": 1 },
+        { "id": 2, "is_primary": 0 },
+        { "id": 0, "is_primary": 0 },
+        { "id": 0, "is_primary": 0 }
+    ],
+    "footer_cta": {
+        "title": "অর্ডার করুন এখুনি",
+        "text": "যেকোন জিজ্ঞাসা ও অর্ডারজনিত সমস্যায় কল করুন আমাদের হেল্পলাইনে অথবা নক করুন আমাদের হোয়াটসঅ্যাপ বা ফেসবুক পেজে। আমরা আছি সকাল ১০ টা থেকে রাত ৮ টা পর্যন্ত আপনার সেবায়।"
+    },
+    "materials_section": {
+        "title": "Materials & Measurements",
+        "description": "ইউনিক ও এক্সক্লুসিভ ডিজাইনের ড্রেস, যা আপনাকে দেবে এলিগ্যান্ট ও স্টাইলিশ লুক",
+        "items": [
+            "Body & Dupatta- Kashmiri Silk",
+            "Salwar - Soft Silk",
+            "Long - 48 Inches",
+            "Slives - 3 quater",
+            "Type - Unstitched Dress",
+            "Included: Kamiz,Dupatta,Salwar,inner attached",
+            "",
+            "",
+            "",
+            ""
+        ]
+    }
+}

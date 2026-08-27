@@ -48,11 +48,11 @@
                     $options = $variant?->options_map ?? [];
                     $comparePrice = $variant ? $variant->price : $product?->price;
                     $hasSale = ((float) $comparePrice) > (float) $item->price;
-                    $productHasVariants = $product && $product->variants()->where('is_active', true)->exists();
+                    $productHasVariants = $product && $product->variants()->where('status', 'active')->exists();
                 @endphp
                 <div class="cart-item" wire:key="cart-item-{{ $item->id }}">
                     <div class="cart-item__media">
-                        <x-ux-img :id="$product?->featured_image" :w="200" :alt="$product?->name ?? ''" />
+                        <x-ux-img :id="$item->display_image" :w="200" :alt="$product?->name ?? ''" />
                     </div>
                     <div class="cart-item__body">
                         <div class="cart-item__row">

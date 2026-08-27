@@ -43,22 +43,72 @@
                                 </svg>
                             </button>
                         </div>
-                        <div class="px-4 py-3 flex flex-wrap gap-2">
-                            @forelse($productAttribute->attribute->values as $attrValue)
-                                @php
-                                    $selected = $productAttribute->values->firstWhere('attribute_value_id', $attrValue->id);
-                                @endphp
-                                <button wire:click="toggleValue({{ $productAttribute->id }}, {{ $attrValue->id }})" type="button"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition
-                                        {{ $selected ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-indigo-300' }}">
-                                    @if($attrValue->swatch_type === 'color')
-                                        <span class="h-3 w-3 rounded-full border border-white/50 shrink-0" style="background-color: {{ $attrValue->swatch_value }}"></span>
-                                    @endif
-                                    {{ $attrValue->value }}
-                                </button>
-                            @empty
+                        @php
+                            $selectedValues = $productAttribute->values->sortBy('sort_order')->values();
+                            $unselectedValues = $productAttribute->attribute->values
+                                ->whereNotIn('id', $selectedValues->pluck('attribute_value_id'));
+                        @endphp
+                        <div class="px-4 py-3">
+                            @if($selectedValues->isNotEmpty())
+                                <p class="text-[11px] text-gray-400 mb-2">Drag to set the order these show in on the product page</p>
+                                <ul data-product-attribute-id="{{ $productAttribute->id }}" class="product-value-sortable flex flex-wrap gap-2 mb-2">
+                                    @foreach($selectedValues as $selected)
+                                        @php $attrValue = $selected->attributeValue; @endphp
+                                        <li data-id="{{ $attrValue->id }}" class="inline-flex items-center rounded-lg border bg-indigo-600 border-indigo-600 text-white overflow-hidden">
+                                            <span class="drag-handle cursor-grab active:cursor-grabbing pl-2 text-white/60 hover:text-white/90">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path d="M7 4a1 1 0 11-2 0 1 1 0 012 0zM7 10a1 1 0 11-2 0 1 1 0 012 0zM7 16a1 1 0 11-2 0 1 1 0 012 0zM15 4a1 1 0 11-2 0 1 1 0 012 0zM15 10a1 1 0 11-2 0 1 1 0 012 0zM15 16a1 1 0 11-2 0 1 1 0 012 0z"/>
+                                                </svg>
+                                            </span>
+                                            <button wire:click="toggleValue({{ $productAttribute->id }}, {{ $attrValue->id }})" type="button"
+                                                class="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium">
+                                                @if($selected->swatch_image_url)
+                                                    <img src="{{ $selected->swatch_image_url }}" alt="" class="h-3.5 w-3.5 rounded-full object-cover border border-white/50 shrink-0">
+                                                @elseif($attrValue->swatch_type === 'color')
+                                                    <span class="h-3 w-3 rounded-full border border-white/50 shrink-0" style="background-color: {{ $attrValue->swatch_value }}"></span>
+                                                @endif
+                                                {{ $attrValue->value }}
+                                            </button>
+                                            {{-- Per-product swatch image override — shows this product's own photo for
+                                                 this colour instead of the shared/global attribute-value swatch. --}}
+                                            <button wire:click="openSwatchImagePicker({{ $selected->id }})" type="button"
+                                                title="{{ $selected->swatch_image_url ? 'Change swatch image' : 'Set a product-specific swatch image' }}"
+                                                class="px-2 py-1.5 border-l {{ $selected->swatch_image_url ? 'border-white/30' : 'border-gray-200' }} hover:bg-black/10 transition">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                                                </svg>
+                                            </button>
+                                            @if($selected->swatch_image_url)
+                                                <button wire:click="removeSwatchImage({{ $selected->id }})" type="button"
+                                                    title="Remove swatch image (use the shared swatch again)"
+                                                    class="px-2 py-1.5 border-l border-white/30 hover:bg-black/10 transition">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                                                    </svg>
+                                                </button>
+                                            @endif
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @endif
+
+                            @if($unselectedValues->isNotEmpty())
+                                <div class="flex flex-wrap gap-2">
+                                    @foreach($unselectedValues as $attrValue)
+                                        <button wire:click="toggleValue({{ $productAttribute->id }}, {{ $attrValue->id }})" type="button"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border bg-white border-gray-200 text-gray-600 hover:border-indigo-300 transition">
+                                            @if($attrValue->swatch_type === 'color')
+                                                <span class="h-3 w-3 rounded-full border border-white/50 shrink-0" style="background-color: {{ $attrValue->swatch_value }}"></span>
+                                            @endif
+                                            {{ $attrValue->value }}
+                                        </button>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            @if($selectedValues->isEmpty() && $unselectedValues->isEmpty())
                                 <p class="text-xs text-gray-400">This attribute has no values yet — add some from Catalog → Attributes.</p>
-                            @endforelse
+                            @endif
                         </div>
                     </li>
                 @endforeach
@@ -107,7 +157,9 @@
                             <div class="flex items-center gap-2 flex-wrap">
                                 @foreach($variant->values as $val)
                                     <span class="inline-flex items-center gap-1 text-xs font-medium text-gray-600">
-                                        @if($val->productAttributeValue->attributeValue->swatch_type === 'color')
+                                        @if($val->productAttributeValue->swatch_image_url)
+                                            <img src="{{ $val->productAttributeValue->swatch_image_url }}" alt="" class="h-2.5 w-2.5 rounded-full object-cover border border-gray-200">
+                                        @elseif($val->productAttributeValue->attributeValue->swatch_type === 'color')
                                             <span class="h-2.5 w-2.5 rounded-full border border-gray-200" style="background-color: {{ $val->productAttributeValue->attributeValue->swatch_value }}"></span>
                                         @endif
                                         {{ $val->productAttributeValue->attributeValue->value }}
@@ -171,8 +223,9 @@
 
     {{-- Variant Edit Modal --}}
     <div x-cloak x-data="{ open: @entangle('variantModal') }" x-show="open" x-transition
+        @click.self="open = false"
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog">
-        <div class="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col" @click.outside="open = false">
+        <div class="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
 
             <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100 shrink-0">
                 <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
@@ -230,6 +283,20 @@
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
                         </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Reorder Level</label>
+                        <input wire:model="variantReorderLevel" type="number" step="1" min="0" placeholder="0"
+                            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                        <p class="text-xs text-gray-400 mt-1">Flags as low stock at or below this — 0 uses the store default.</p>
+                        @error('variantReorderLevel') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Reorder Quantity</label>
+                        <input wire:model="variantReorderQuantity" type="number" step="1" min="0" placeholder="0"
+                            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                        <p class="text-xs text-gray-400 mt-1">Suggested quantity to reorder — shown on the Low Stock alert list.</p>
+                        @error('variantReorderQuantity') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
@@ -323,11 +390,26 @@
             });
         }
 
+        let valueSortables = [];
+        function initValueSortables() {
+            valueSortables.forEach(s => s.destroy());
+            valueSortables = Array.from(document.querySelectorAll('.product-value-sortable')).map(el => new window.Sortable(el, {
+                handle: '.drag-handle',
+                animation: 150,
+                onEnd() {
+                    const orderedIds = Array.from(el.children).map(li => parseInt(li.dataset.id, 10)).filter(Boolean);
+                    $wire.reorderValues(parseInt(el.dataset.productAttributeId, 10), orderedIds);
+                },
+            }));
+        }
+
         initAttrOrderSortable();
         initVariantSortable();
+        initValueSortables();
         Livewire.hook('morph.updated', ({ el }) => {
             if (el.id === 'product-attribute-list' || el.closest?.('#product-attribute-list')) {
                 initAttrOrderSortable();
+                initValueSortables();
             }
             if (el.id === 'product-variant-list' || el.closest?.('#product-variant-list')) {
                 initVariantSortable();

@@ -3,10 +3,9 @@
 namespace App\Livewire\EcomxFashion\Sections;
 
 use App\Support\EcomxFashion\PageSectionConfigRegistry;
-use Livewire\Attributes\Lazy;
 use Livewire\Component;
 
-#[Lazy]
+/** Eager (not #[Lazy]) — sits directly under Hero, so it should appear immediately too, not pop in after. */
 class Marquee extends Component
 {
     protected const DEFAULT_ITEMS = [
@@ -26,11 +25,6 @@ class Marquee extends Component
         $this->items = ! empty($config['items'])
             ? array_values(array_filter(array_column($config['items'], 'text')))
             : static::DEFAULT_ITEMS;
-    }
-
-    public function placeholder()
-    {
-        return view('ecomx-fashion.livewire.sections.skeletons.marquee');
     }
 
     public function render()

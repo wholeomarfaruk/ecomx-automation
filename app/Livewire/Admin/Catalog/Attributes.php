@@ -39,6 +39,13 @@ class Attributes extends Component
     public $newSwatchImageId        = null;
     public bool   $valueSlugLocked  = false;
 
+    // edit value (inline, within the values manager modal)
+    public ?int   $editingValueId    = null;
+    public string $editValueText     = '';
+    public string $editValueSlug     = '';
+    public string $editSwatchColor   = '#000000';
+    public $editSwatchImageId        = null;
+
     public function updatedNewName(string $value): void
     {
         if (! $this->slugLocked) {
@@ -172,6 +179,7 @@ class Attributes extends Component
     {
         $this->valuesAttributeId = $attributeId;
         $this->resetValueForm();
+        $this->cancelEditValue();
         $this->valuesModal = true;
     }
 
@@ -219,7 +227,62 @@ class Attributes extends Component
     public function deleteValue(int $id): void
     {
         AttributeValue::findOrFail($id)->delete();
+
+        if ($this->editingValueId === $id) {
+            $this->cancelEditValue();
+        }
+
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Value removed']);
+    }
+
+    public function editValue(int $id): void
+    {
+        $value = AttributeValue::findOrFail($id);
+
+        $this->editingValueId   = $value->id;
+        $this->editValueText    = $value->value;
+        $this->editValueSlug    = $value->slug;
+        $this->editSwatchColor  = $value->swatch_type === 'color' ? ($value->swatch_value ?: '#000000') : '#000000';
+        $this->editSwatchImageId = $value->swatch_type === 'image' ? $value->swatch_value : null;
+        $this->resetValidation();
+    }
+
+    public function cancelEditValue(): void
+    {
+        $this->reset(['editingValueId', 'editValueText', 'editValueSlug', 'editSwatchImageId']);
+        $this->editSwatchColor = '#000000';
+    }
+
+    public function updateValue(): void
+    {
+        $value = AttributeValue::findOrFail($this->editingValueId);
+        $attribute = $value->attribute;
+
+        $this->validate([
+            'editValueText' => 'required|string|max:100',
+            'editValueSlug' => 'required|string|max:120|unique:attribute_values,slug,' . $value->id . ',id,attribute_id,' . $attribute->id,
+        ]);
+
+        $swatchType  = $value->swatch_type;
+        $swatchValue = $value->swatch_value;
+
+        if ($attribute->type === 'color') {
+            $swatchType  = 'color';
+            $swatchValue = $this->editSwatchColor;
+        } elseif ($attribute->type === 'image') {
+            $swatchType  = 'image';
+            $swatchValue = $this->editSwatchImageId ?: null;
+        }
+
+        $value->update([
+            'value'        => $this->editValueText,
+            'slug'         => $this->editValueSlug,
+            'swatch_type'  => $swatchType,
+            'swatch_value' => $swatchValue,
+        ]);
+
+        $this->cancelEditValue();
+        $this->dispatch('toast', ['type' => 'success', 'message' => 'Value updated']);
     }
 
     public function reorderValues(array $orderedIds): void

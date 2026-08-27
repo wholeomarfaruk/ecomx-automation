@@ -1,4 +1,4 @@
-@props(['reviews'])
+@props(['reviews', 'enableHelpful' => false])
 <div x-data="{
         reviews: {{ Illuminate\Support\Js::from($reviews) }},
         box: null,
@@ -10,6 +10,11 @@
         avatarUrl(id,w){
             if (!id) return '{{ asset('icons/avater-icon.jpg') }}';
             return this.u(id,w);
+        },
+        initials(name){
+            if (!name) return '?';
+            const parts = name.trim().split(/\s+/).filter(Boolean);
+            return ((parts[0]?.[0] ?? '') + (parts.length > 1 ? parts[parts.length-1][0] : '')).toUpperCase();
         },
         stars(n){ return '★'.repeat(n)+'☆'.repeat(5-n); },
         scroll(d){ this.$refs.row.scrollBy({left:d*320,behavior:'smooth'}); },
@@ -30,7 +35,21 @@
                         <span style="position:absolute;top:12px;right:12px;background:rgba(var(--pri-rgb),.65);color:var(--sec);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:5px 10px;border-radius:999px">Video</span>
                     </template>
                     <div class="rcard__foot">
-                        <img class="rcard__avatar" :src="avatarUrl(r.avatar,100)" :alt="r.name">
+                        <template x-if="r.avatar">
+                            <img class="rcard__avatar" :src="avatarUrl(r.avatar,100)" :alt="r.name">
+                        </template>
+                        <template x-if="!r.avatar">
+                            <span class="rcard__avatar" x-text="initials(r.name)"
+                                style="display:flex;align-items:center;justify-content:center;background:var(--ac2);color:var(--sec);font-size:12px;font-weight:700;line-height:1"></span>
+                        </template>
+                        {{-- @if($enableHelpful)
+                        <button type="button" @click.stop="$wire.toggleHelpful(r.id)"
+                            style="position:absolute;top:12px;left:12px;z-index:2;display:inline-flex;align-items:center;gap:4px;max-width:calc(100% - 24px);background:rgba(0,0,0,.55);color:#fff;font-size:10.5px;font-weight:600;line-height:1;padding:6px 10px;border:none;border-radius:999px;cursor:pointer;white-space:nowrap"
+                            :style="r.voted_helpful ? 'background:var(--ac);color:#fff' : ''">
+                            <span x-text="r.voted_helpful ? '✓ Helpful' : '👍 Helpful'"></span>
+                            <span x-text="'('+(r.helpful_count ?? r.helpful ?? 0)+')'"></span>
+                        </button>
+                    @endif --}}
                         <div style="flex:1;min-width:0">
                             <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600">
                                 <span x-text="r.name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
@@ -39,6 +58,7 @@
                         </div>
                         <span class="rcard__stars" x-text="stars(r.rating)"></span>
                     </div>
+
                 </div>
             </article>
         </template>
@@ -55,7 +75,13 @@
                     <img :src="u(item.img,900)" :alt="item.product" style="width:100%;height:100%;object-fit:cover">
                 </div>
                 <figcaption style="display:flex;align-items:center;gap:12px;color:#fff;margin-top:12px">
-                    <img :src="avatarUrl(item.avatar,100)" style="width:36px;height:36px;border-radius:999px;object-fit:cover">
+                    <template x-if="item.avatar">
+                        <img :src="avatarUrl(item.avatar,100)" :alt="item.name" style="width:36px;height:36px;border-radius:999px;object-fit:cover">
+                    </template>
+                    <template x-if="!item.avatar">
+                        <span x-text="initials(item.name)"
+                            style="width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:var(--ac2);color:var(--sec);font-size:13px;font-weight:700;flex-shrink:0"></span>
+                    </template>
                     <div style="flex:1"><span x-text="item.name" style="font-size:13.5px;font-weight:600"></span><br><span x-text="'On: '+item.product" style="font-size:12px;opacity:.6"></span></div>
                     <span class="rcard__stars" x-text="stars(item.rating)"></span>
                 </figcaption>

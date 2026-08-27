@@ -37,6 +37,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->appendToGroup('web', \App\Http\Middleware\DeviceTracker::class);
 
+        // Marketing tracking (session/attribution/PageView capture) reads
+        // $request->attributes->get('device') set by DeviceTracker above, so
+        // it must run after it. Both defer their DB writes to terminate().
+        $middleware->appendToGroup('web', \App\Http\Middleware\MarketingTracker::class);
+
         // Full-site block enforcement — storefront only, never /admin (an
         // IP/device block on a shopper must not be able to lock out staff
         // sharing that network/browser). Must run after DeviceTracker, which

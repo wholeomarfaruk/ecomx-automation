@@ -9,8 +9,16 @@
 @keyframes kenburns{from{transform:scale(1);}to{transform:scale(1.07);}}
 @keyframes floaty{0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}
 @keyframes flashPulse{0%,100%{box-shadow:0 0 0 3px rgba(var(--ac-rgb),.25),0 6px 20px rgba(var(--ac-rgb),.45);}50%{box-shadow:0 0 0 6px rgba(var(--ac-rgb),.12),0 6px 28px rgba(var(--ac-rgb),.65);}}
+@keyframes spin{to{transform:rotate(360deg);}}
 .reveal{opacity:0;transform:translateY(28px);transition:opacity .8s cubic-bezier(.2,.6,.2,1),transform .8s cubic-bezier(.2,.6,.2,1);}
 .reveal.is-in{opacity:1;transform:none;}
+
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(var(--pri-rgb),.25);border-top-color:var(--pri);border-radius:50%;animation:spin .6s linear infinite;}
+.btn--outline .spinner,.btn--pill .spinner{border-color:rgba(var(--pri-rgb),.25);border-top-color:var(--pri);}
+
+.btn .btn__loading{display:none;align-items:center;gap:8px;}
+.btn.is-loading .btn__label{display:none;}
+.btn.is-loading .btn__loading{display:inline-flex;}
 
 @media (prefers-reduced-motion: reduce) {
   *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;}

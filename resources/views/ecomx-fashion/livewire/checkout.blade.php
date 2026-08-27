@@ -7,7 +7,9 @@
         <div class="checkout__success">
             <div class="checkout__success-icon">✓</div>
             <h2 style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:8px">Order placed — thank you!</h2>
-            <p class="muted" style="font-size:13.5px;margin-bottom:20px">This is a demo checkout — no real order was created. A confirmation would normally be sent to {{ $phone ?: 'your phone' }}.</p>
+            <p class="muted" style="font-size:13.5px;margin-bottom:20px">
+                Order #{{ $orderId }} has been placed. We'll contact you at {{ $phone ?: 'your phone' }} to confirm delivery.
+            </p>
             <a href="{{ route('ecomx-fashion.home') }}" class="btn btn--primary btn--pill">Continue shopping</a>
         </div>
     @else
@@ -113,7 +115,7 @@
                         @endphp
                         <div class="checkout__item" wire:key="checkout-item-{{ $item->id }}">
                             <div class="checkout__item-media">
-                                <x-ux-img :id="$product?->featured_image" :w="160" :alt="$product?->name ?? ''" />
+                                <x-ux-img :id="$item->display_image" :w="160" :alt="$product?->name ?? ''" />
                             </div>
                             <div class="checkout__item-body">
                                 <span class="checkout__item-name">{{ $product?->name ?? 'Deleted product' }}</span>
@@ -152,4 +154,6 @@
         </div>
     </div>
     @endif
+
+    <x-marketing.events :events="$marketingEvents" />
 </div>

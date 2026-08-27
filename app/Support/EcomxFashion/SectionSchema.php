@@ -4,8 +4,9 @@ namespace App\Support\EcomxFashion;
 
 /**
  * Declares editable field schemas per section key, consumed by the admin
- * SectionConfigEditor modal to render a dynamic form and by each section's
- * frontend Livewire component to read saved values with sane defaults.
+ * SectionConfigPage (/admin/frontend/{page}/{section}/edit) to render a
+ * dynamic form and by each section's frontend Livewire component to read
+ * saved values with sane defaults.
  *
  * Field shape: ['key' => string, 'label' => string, 'type' => ..., ...].
  * Supported types:

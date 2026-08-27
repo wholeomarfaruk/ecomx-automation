@@ -172,7 +172,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h12A2.25 2.25 0 0 1 20.25 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h5.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM16.5 13.5a2.25 2.25 0 0 0-2.25 2.25V18a2.25 2.25 0 0 0 2.25 2.25h1.5A2.25 2.25 0 0 0 20.25 18v-2.25a2.25 2.25 0 0 0-2.25-2.25h-1.5Z" />
                             </svg>
                             <h1 x-cloak :class="!$store.sidebar.full ? (show ? visibleClass : 'sm:hidden') : ''">
-                                Frontend
+                                Frontend Engine
                             </h1>
                         </div>
                         <svg x-cloak :class="$store.sidebar.full ? '' : 'sm:hidden'" xmlns="http://www.w3.org/2000/svg"
@@ -203,6 +203,50 @@
                         <a href="{{ route('admin.frontend.components') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.frontend.components' ? 'text-gray-200' : '' }}">
                             Components
+                        </a>
+                    </div>
+                </div>
+
+                @php
+                    $landingPageActive = str_starts_with(Route::currentRouteName(), 'admin.landingpages.');
+                @endphp
+                <div x-data="dropdown" x-init="open = {{ $landingPageActive ? 'true' : 'false' }} && $store.sidebar.full" class="relative">
+                    <div @click="toggle('landing-page')" x-data="tooltip" @mouseover="show = true"
+                        @mouseleave="show = false"
+                        class="flex justify-between text-gray-400 hover:text-gray-200 hover:bg-gray-800 items-center space-x-2 rounded-md p-2 cursor-pointer
+                        {{ $landingPageActive ? 'text-gray-200 bg-gray-800' : '' }}"
+                        :class="{
+                            'justify-start': $store.sidebar.full,
+                            'sm:justify-center': !$store.sidebar.full
+                        }">
+                        <div class="relative flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5m-16.5 4.5h16.5m-16.5 4.5h9.75m-9.75 4.5h9.75M18 15.75l2.25 2.25L18 20.25" />
+                            </svg>
+                            <h1 x-cloak :class="!$store.sidebar.full ? (show ? visibleClass : 'sm:hidden') : ''">
+                                Landing Page
+                            </h1>
+                        </div>
+                        <svg x-cloak :class="$store.sidebar.full ? '' : 'sm:hidden'" xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div x-cloak x-show="open" @click.outside="open=false"
+                        :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
+                        <a href="{{ route('admin.landingpages.pages') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.landingpages.pages' || str_starts_with(Route::currentRouteName(), 'admin.landingpages.pages.') ? 'text-gray-200' : '' }}">
+                            All Pages
+                        </a>
+                        <a href="{{ route('admin.landingpages.templates') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.landingpages.templates' ? 'text-gray-200' : '' }}">
+                            Templates
+                        </a>
+                        <a href="{{ route('admin.landingpages.settings') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.landingpages.settings' ? 'text-gray-200' : '' }}">
+                            Settings
                         </a>
                     </div>
                 </div>
@@ -309,6 +353,10 @@
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.customers.groups' ? 'text-gray-200' : '' }}">
                             Customer Group
                         </a>
+                        <a href="{{ route('admin.customers.reviews.index') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.customers.reviews.') ? 'text-gray-200' : '' }}">
+                            Reviews
+                        </a>
                     </div>
                 </div>
 
@@ -352,6 +400,62 @@
                         <a href="{{ route('admin.purchase.orders') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.purchase.orders' ? 'text-gray-200' : '' }}">
                             Purchase Orders
+                        </a>
+                    </div>
+                </div>
+
+                @php
+                    $inventoryActive = str_starts_with(Route::currentRouteName(), 'admin.inventory.');
+                @endphp
+                <div x-data="dropdown" x-init="open = {{ $inventoryActive ? 'true' : 'false' }} && $store.sidebar.full" class="relative">
+                    <div @click="toggle('inventory')" x-data="tooltip" @mouseover="show = true"
+                        @mouseleave="show = false"
+                        class="flex justify-between text-gray-400 hover:text-gray-200 hover:bg-gray-800 items-center space-x-2 rounded-md p-2 cursor-pointer
+                        {{ $inventoryActive ? 'text-gray-200 bg-gray-800' : '' }}"
+                        :class="{
+                            'justify-start': $store.sidebar.full,
+                            'sm:justify-center': !$store.sidebar.full
+                        }">
+                        <div class="relative flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5m6 4.125 2.25 2.25m0 0 2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                            </svg>
+                            <h1 x-cloak :class="!$store.sidebar.full ? (show ? visibleClass : 'sm:hidden') : ''">
+                                Inventory
+                            </h1>
+                        </div>
+                        <svg x-cloak :class="$store.sidebar.full ? '' : 'sm:hidden'" xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div x-cloak x-show="open" @click.outside="open=false"
+                        :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
+                        <a href="{{ route('admin.inventory.stock') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.inventory.stock' ? 'text-gray-200' : '' }}">
+                            Stock
+                        </a>
+                        <a href="{{ route('admin.inventory.stock-in') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.inventory.stock-in' ? 'text-gray-200' : '' }}">
+                            Stock In
+                        </a>
+                        <a href="{{ route('admin.inventory.batches') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.inventory.batches' ? 'text-gray-200' : '' }}">
+                            Batches
+                        </a>
+                        <a href="{{ route('admin.inventory.movements') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.inventory.movements' ? 'text-gray-200' : '' }}">
+                            Movements
+                        </a>
+                        <a href="{{ route('admin.inventory.warehouses') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.inventory.warehouses' ? 'text-gray-200' : '' }}">
+                            Warehouses
+                        </a>
+                        <a href="{{ route('admin.inventory.settings') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.inventory.settings' ? 'text-gray-200' : '' }}">
+                            Settings
                         </a>
                     </div>
                 </div>
@@ -408,6 +512,150 @@
                         <a href="{{ route('admin.sales.pos.registers') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.pos.registers') ? 'text-gray-200' : '' }}">
                             POS Registers
+                        </a>
+                    </div>
+                </div>
+
+                @php
+                    $marketingActive = str_starts_with(Route::currentRouteName(), 'admin.marketing.');
+                @endphp
+                <div x-data="dropdown" x-init="open = {{ $marketingActive ? 'true' : 'false' }} && $store.sidebar.full" class="relative">
+                    <div @click="toggle('marketing')" x-data="tooltip" @mouseover="show = true"
+                        @mouseleave="show = false"
+                        class="flex justify-between text-gray-400 hover:text-gray-200 hover:bg-gray-800 items-center space-x-2 rounded-md p-2 cursor-pointer
+                        {{ $marketingActive ? 'text-gray-200 bg-gray-800' : '' }}"
+                        :class="{
+                            'justify-start': $store.sidebar.full,
+                            'sm:justify-center': !$store.sidebar.full
+                        }">
+                        <div class="relative flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z" />
+                            </svg>
+                            <h1 x-cloak :class="!$store.sidebar.full ? (show ? visibleClass : 'sm:hidden') : ''">
+                                Marketing
+                            </h1>
+                        </div>
+                        <svg x-cloak :class="$store.sidebar.full ? '' : 'sm:hidden'" xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div x-cloak x-show="open" @click.outside="open=false"
+                        :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
+                        <a href="{{ route('admin.marketing.dashboard') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.dashboard' ? 'text-gray-200' : '' }}">
+                            Dashboard
+                        </a>
+
+                        <div class="pt-1">
+                            <span class="block text-[10px] uppercase tracking-wider text-gray-600 mb-1.5">Journey Explorer</span>
+                            <div class="space-y-2.5 pl-1">
+                                <a href="{{ route('admin.marketing.journeys.visitors') }}"
+                                    class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.journeys.visitors' ? 'text-gray-200' : '' }}">
+                                    Visitor Journeys
+                                </a>
+                                <a href="{{ route('admin.marketing.journeys.customers') }}"
+                                    class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.journeys.customers' ? 'text-gray-200' : '' }}">
+                                    Customer Journeys
+                                </a>
+                                <a href="{{ route('admin.marketing.journeys.anonymous') }}"
+                                    class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.journeys.anonymous' ? 'text-gray-200' : '' }}">
+                                    Anonymous Visitors
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="pt-1">
+                            <span class="block text-[10px] uppercase tracking-wider text-gray-600 mb-1.5">Campaign Tracking</span>
+                            <div class="space-y-2.5 pl-1">
+                                <a href="{{ route('admin.marketing.campaigns.index') }}"
+                                    class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.campaigns.index' ? 'text-gray-200' : '' }}">
+                                    All Campaigns
+                                </a>
+                                <a href="{{ route('admin.marketing.campaigns.meta') }}"
+                                    class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.campaigns.meta' ? 'text-gray-200' : '' }}">
+                                    Meta Campaigns
+                                </a>
+                                <a href="{{ route('admin.marketing.campaigns.google') }}"
+                                    class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.campaigns.google' ? 'text-gray-200' : '' }}">
+                                    Google Campaigns
+                                </a>
+                                <a href="{{ route('admin.marketing.campaigns.tiktok') }}"
+                                    class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.campaigns.tiktok' ? 'text-gray-200' : '' }}">
+                                    TikTok Campaigns
+                                </a>
+                                <a href="{{ route('admin.marketing.campaigns.other') }}"
+                                    class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.campaigns.other' ? 'text-gray-200' : '' }}">
+                                    Other / UTM
+                                </a>
+                            </div>
+                        </div>
+
+                        <a href="{{ route('admin.marketing.sources.index') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.sources.index' ? 'text-gray-200' : '' }}">
+                            Source Analytics
+                        </a>
+
+                        <div class="pt-1">
+                            <span class="block text-[10px] uppercase tracking-wider text-gray-600 mb-1.5">Product Analytics</span>
+                            <div class="space-y-2.5 pl-1">
+                                <a href="{{ route('admin.marketing.products.performance') }}"
+                                    class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.products.performance' ? 'text-gray-200' : '' }}">
+                                    Product Performance
+                                </a>
+                                <a href="{{ route('admin.marketing.products.journeys') }}"
+                                    class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.products.journeys' ? 'text-gray-200' : '' }}">
+                                    Product Journeys
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="pt-1">
+                            <span class="block text-[10px] uppercase tracking-wider text-gray-600 mb-1.5">Customer Analytics</span>
+                            <div class="space-y-2.5 pl-1">
+                                <a href="{{ route('admin.marketing.customers.tracking') }}"
+                                    class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.customers.tracking' ? 'text-gray-200' : '' }}">
+                                    Customer Tracking
+                                </a>
+                                <a href="{{ route('admin.marketing.customers.returning') }}"
+                                    class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.customers.returning' ? 'text-gray-200' : '' }}">
+                                    Returning Customers
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="pt-1">
+                            <span class="block text-[10px] uppercase tracking-wider text-gray-600 mb-1.5">Audience &amp; Devices</span>
+                            <div class="space-y-2.5 pl-1">
+                                <a href="{{ route('admin.marketing.audience.devices') }}"
+                                    class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.audience.devices' ? 'text-gray-200' : '' }}">
+                                    Devices
+                                </a>
+                                <a href="{{ route('admin.marketing.audience.ip') }}"
+                                    class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.audience.ip' ? 'text-gray-200' : '' }}">
+                                    IP Analysis
+                                </a>
+                            </div>
+                        </div>
+
+                        <a href="{{ route('admin.marketing.events.index') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.events.index' ? 'text-gray-200' : '' }}">
+                            Event Explorer
+                        </a>
+                        <a href="{{ route('admin.marketing.attribution.index') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.attribution.index' ? 'text-gray-200' : '' }}">
+                            Attribution
+                        </a>
+                        <a href="{{ route('admin.marketing.reports.index') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.reports.index' ? 'text-gray-200' : '' }}">
+                            Reports
+                        </a>
+                        <a href="{{ route('admin.marketing.settings.index') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.settings.index' ? 'text-gray-200' : '' }}">
+                            Tracking Settings
                         </a>
                     </div>
                 </div>

@@ -1,0 +1,223 @@
+{
+    "seo": {
+        "label": "SEO Settings",
+        "order": 1,
+        "collapsible": true,
+        "fields": {
+            "meta_title": {
+                "type": "text",
+                "label": "Meta Title",
+                "placeholder": "Best 3 Piece Dress in Bangladesh",
+                "rules": "required|string|max:60",
+                "key": "seo.meta_title"
+            },
+            "meta_description": {
+                "type": "textarea",
+                "label": "Meta Description",
+                "placeholder": "Premium quality 3 piece dress with fast delivery",
+                "rules": "required|string|max:160",
+                "key": "seo.meta_description"
+            },
+            "meta_image": {
+                "type": "text",
+                "label": "Meta Image",
+                "rules": "nullable|string",
+                "key": "seo.meta_image"
+            }
+        }
+    },
+    "hero": {
+        "label": "Hero Section",
+        "order": 2,
+        "collapsible": true,
+        "fields": {
+            "title": {
+                "type": "text",
+                "label": "Main Heading",
+                "rules": "required|string|max:120",
+                "key": "hero.title"
+            },
+            "description": {
+                "type": "textarea",
+                "label": "Description",
+                "placeholder": "write something..",
+                "rules": "nullable|string",
+                "key": "hero.description"
+            },
+            "embed_code": {
+                "type": "textarea",
+                "label": "Video 1 — URL / Embed Code",
+                "rules": "nullable|string",
+                "key": "hero.video.embed_code"
+            },
+            "thumbnail": {
+                "type": "text",
+                "label": "Video 1 — Thumbnail URL",
+                "rules": "nullable|string",
+                "key": "hero.video.thumbnail"
+            },
+            "embed_code2": {
+                "type": "textarea",
+                "label": "Video 2 — URL / Embed Code",
+                "rules": "nullable|string",
+                "key": "hero.video2.embed_code"
+            },
+            "thumbnail2": {
+                "type": "text",
+                "label": "Video 2 — Thumbnail URL",
+                "rules": "nullable|string",
+                "key": "hero.video2.thumbnail"
+            },
+            "cta_text": {
+                "type": "text",
+                "label": "CTA Button Text",
+                "rules": "nullable|string|max:60",
+                "key": "hero.cta_text"
+            },
+            "features": {
+                "label": "Features",
+                "child": true,
+                "fields": [
+                    { "label": "Feature 1",  "type": "text", "rules": "nullable|string", "key": "hero.features.0" },
+                    { "label": "Feature 2",  "type": "text", "rules": "nullable|string", "key": "hero.features.1" },
+                    { "label": "Feature 3",  "type": "text", "rules": "nullable|string", "key": "hero.features.2" },
+                    { "label": "Feature 4",  "type": "text", "rules": "nullable|string", "key": "hero.features.3" },
+                    { "label": "Feature 5",  "type": "text", "rules": "nullable|string", "key": "hero.features.4" },
+                    { "label": "Feature 6",  "type": "text", "rules": "nullable|string", "key": "hero.features.5" },
+                    { "label": "Feature 7",  "type": "text", "rules": "nullable|string", "key": "hero.features.6" },
+                    { "label": "Feature 8",  "type": "text", "rules": "nullable|string", "key": "hero.features.7" },
+                    { "label": "Feature 9",  "type": "text", "rules": "nullable|string", "key": "hero.features.8" },
+                    { "label": "Feature 10", "type": "text", "rules": "nullable|string", "key": "hero.features.9" },
+                    { "label": "Feature 11", "type": "text", "rules": "nullable|string", "key": "hero.features.10" },
+                    { "label": "Feature 12", "type": "text", "rules": "nullable|string", "key": "hero.features.11" }
+                ]
+            }
+        }
+    },
+    "promo_banner_top": {
+        "label": "Promo Banner Top",
+        "order": 3,
+        "fields": {
+            "image": {
+                "type": "text",
+                "label": "Image URL",
+                "rules": "nullable|string",
+                "key": "promo_banner_top.image"
+            },
+            "link": {
+                "type": "text",
+                "label": "Link (href)",
+                "rules": "nullable|string",
+                "key": "promo_banner_top.link"
+            }
+        }
+    },
+    "product_gallery": {
+        "label": "Slider Images",
+        "order": 4,
+        "fields": [
+            { "type": "text", "label": "Slider Image 1",  "rules": "nullable|string", "key": "product_gallery.images.0" },
+            { "type": "text", "label": "Slider Image 2",  "rules": "nullable|string", "key": "product_gallery.images.1" },
+            { "type": "text", "label": "Slider Image 3",  "rules": "nullable|string", "key": "product_gallery.images.2" },
+            { "type": "text", "label": "Slider Image 4",  "rules": "nullable|string", "key": "product_gallery.images.3" },
+            { "type": "text", "label": "Slider Image 5",  "rules": "nullable|string", "key": "product_gallery.images.4" },
+            { "type": "text", "label": "Slider Image 6",  "rules": "nullable|string", "key": "product_gallery.images.5" },
+            { "type": "text", "label": "Slider Image 7",  "rules": "nullable|string", "key": "product_gallery.images.6" },
+            { "type": "text", "label": "Slider Image 8",  "rules": "nullable|string", "key": "product_gallery.images.7" },
+            { "type": "text", "label": "Slider Image 9",  "rules": "nullable|string", "key": "product_gallery.images.8" },
+            { "type": "text", "label": "Slider Image 10", "rules": "nullable|string", "key": "product_gallery.images.9" },
+            { "type": "text", "label": "Slider Image 11", "rules": "nullable|string", "key": "product_gallery.images.10" },
+            { "type": "text", "label": "Slider Image 12", "rules": "nullable|string", "key": "product_gallery.images.11" }
+        ]
+    },
+    "gallery": {
+        "label": "Related Gallery",
+        "order": 5,
+        "fields": [
+            { "type": "text", "label": "Gallery Image 1",  "rules": "nullable|string", "key": "related_gallery.items.0" },
+            { "type": "text", "label": "Gallery Image 2",  "rules": "nullable|string", "key": "related_gallery.items.1" },
+            { "type": "text", "label": "Gallery Image 3",  "rules": "nullable|string", "key": "related_gallery.items.2" },
+            { "type": "text", "label": "Gallery Image 4",  "rules": "nullable|string", "key": "related_gallery.items.3" },
+            { "type": "text", "label": "Gallery Image 5",  "rules": "nullable|string", "key": "related_gallery.items.4" },
+            { "type": "text", "label": "Gallery Image 6",  "rules": "nullable|string", "key": "related_gallery.items.5" },
+            { "type": "text", "label": "Gallery Image 7",  "rules": "nullable|string", "key": "related_gallery.items.6" },
+            { "type": "text", "label": "Gallery Image 8",  "rules": "nullable|string", "key": "related_gallery.items.7" },
+            { "type": "text", "label": "Gallery Image 9",  "rules": "nullable|string", "key": "related_gallery.items.8" },
+            { "type": "text", "label": "Gallery Image 10", "rules": "nullable|string", "key": "related_gallery.items.9" },
+            { "type": "text", "label": "Gallery Image 11", "rules": "nullable|string", "key": "related_gallery.items.10" },
+            { "type": "text", "label": "Gallery Image 12", "rules": "nullable|string", "key": "related_gallery.items.11" }
+        ]
+    },
+    "products": {
+        "label": "Assign Products",
+        "order": 6,
+        "fields": [
+            { "type": "text", "label": "Product 1 — ID",              "rules": "nullable|integer", "key": "products.0.id" },
+            { "type": "text", "label": "Product 1 — Is Primary (1/0)","rules": "nullable|string",  "key": "products.0.is_primary" },
+            { "type": "text", "label": "Product 2 — ID",              "rules": "nullable|integer", "key": "products.1.id" },
+            { "type": "text", "label": "Product 2 — Is Primary (1/0)","rules": "nullable|string",  "key": "products.1.is_primary" },
+            { "type": "text", "label": "Product 3 — ID",              "rules": "nullable|integer", "key": "products.2.id" },
+            { "type": "text", "label": "Product 3 — Is Primary (1/0)","rules": "nullable|string",  "key": "products.2.is_primary" },
+            { "type": "text", "label": "Product 4 — ID",              "rules": "nullable|integer", "key": "products.3.id" },
+            { "type": "text", "label": "Product 4 — Is Primary (1/0)","rules": "nullable|string",  "key": "products.3.is_primary" }
+        ]
+    },
+    "reviews": {
+        "label": "Customer Reviews",
+        "order": 7,
+        "fields": [
+            { "type": "text", "label": "Review Image 1",  "rules": "nullable|string", "key": "reviews.items.0" },
+            { "type": "text", "label": "Review Image 2",  "rules": "nullable|string", "key": "reviews.items.1" },
+            { "type": "text", "label": "Review Image 3",  "rules": "nullable|string", "key": "reviews.items.2" },
+            { "type": "text", "label": "Review Image 4",  "rules": "nullable|string", "key": "reviews.items.3" },
+            { "type": "text", "label": "Review Image 5",  "rules": "nullable|string", "key": "reviews.items.4" },
+            { "type": "text", "label": "Review Image 6",  "rules": "nullable|string", "key": "reviews.items.5" },
+            { "type": "text", "label": "Review Image 7",  "rules": "nullable|string", "key": "reviews.items.6" },
+            { "type": "text", "label": "Review Image 8",  "rules": "nullable|string", "key": "reviews.items.7" },
+            { "type": "text", "label": "Review Image 9",  "rules": "nullable|string", "key": "reviews.items.8" },
+            { "type": "text", "label": "Review Image 10", "rules": "nullable|string", "key": "reviews.items.9" },
+            { "type": "text", "label": "Review Image 11", "rules": "nullable|string", "key": "reviews.items.10" },
+            { "type": "text", "label": "Review Image 12", "rules": "nullable|string", "key": "reviews.items.11" }
+        ]
+    },
+    "promo_banner_middle": {
+        "label": "Promo Banner Middle",
+        "order": 8,
+        "fields": {
+            "image": {
+                "type": "text",
+                "label": "Image URL",
+                "rules": "nullable|string",
+                "key": "promo_banner_middle.image"
+            }
+        }
+    },
+    "materials_section": {
+        "label": "Materials & Measurements",
+        "order": 9,
+        "fields": {
+            "title": {
+                "type": "text",
+                "label": "Title",
+                "rules": "nullable|string",
+                "key": "materials_section.title"
+            },
+            "description": {
+                "type": "textarea",
+                "label": "Description",
+                "rules": "nullable|string",
+                "key": "materials_section.description"
+            },
+            "item0": { "type": "text", "label": "Material Item 1",  "rules": "nullable|string", "key": "materials_section.items.0" },
+            "item1": { "type": "text", "label": "Material Item 2",  "rules": "nullable|string", "key": "materials_section.items.1" },
+            "item2": { "type": "text", "label": "Material Item 3",  "rules": "nullable|string", "key": "materials_section.items.2" },
+            "item3": { "type": "text", "label": "Material Item 4",  "rules": "nullable|string", "key": "materials_section.items.3" },
+            "item4": { "type": "text", "label": "Material Item 5",  "rules": "nullable|string", "key": "materials_section.items.4" },
+            "item5": { "type": "text", "label": "Material Item 6",  "rules": "nullable|string", "key": "materials_section.items.5" },
+            "item6": { "type": "text", "label": "Material Item 7",  "rules": "nullable|string", "key": "materials_section.items.6" },
+            "item7": { "type": "text", "label": "Material Item 8",  "rules": "nullable|string", "key": "materials_section.items.7" },
+            "item8": { "type": "text", "label": "Material Item 9",  "rules": "nullable|string", "key": "materials_section.items.8" },
+            "item9": { "type": "text", "label": "Material Item 10", "rules": "nullable|string", "key": "materials_section.items.9" }
+        }
+    }
+}

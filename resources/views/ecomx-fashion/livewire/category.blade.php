@@ -10,7 +10,7 @@
     </div>
 
     <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;padding:20px 0 4px">
-        <p class="muted" style="font-size:13px">{{ number_format($paginator->total()) }} pieces</p>
+        <p class="muted" style="font-size:13px">{{ number_format($total) }} pieces</p>
         <div style="display:flex;align-items:center;gap:10px" x-data="{ sheet:false }">
             <div class="cat-search">
                 <input type="search" wire:model.live.debounce.400ms="q" placeholder="Search products" aria-label="Search products">
@@ -35,7 +35,7 @@
 
                         <div style="display:flex;flex-direction:column;gap:24px">
                             <div style="display:flex;justify-content:space-between;align-items:center">
-                                <span class="muted" style="font-size:12px">{{ number_format($paginator->total()) }} results</span>
+                                <span class="muted" style="font-size:12px">{{ number_format($total) }} results</span>
                                 <button type="button" wire:click="clearAll" style="border:none;background:none;font-size:12px;color:var(--ac2)">Clear all</button>
                             </div>
                             <div style="display:flex;flex-direction:column;gap:12px">
@@ -77,7 +77,7 @@
                         </div>
 
                         <div class="sheet__foot">
-                            <button type="button" class="btn btn--primary btn--block" @click="sheet=false">Show {{ number_format($paginator->total()) }} results</button>
+                            <button type="button" class="btn btn--primary btn--block" @click="sheet=false">Show {{ number_format($total) }} results</button>
                         </div>
                     </div>
                 </div>
@@ -95,19 +95,20 @@
             </div>
         @endif
 
-        <div wire:loading.remove wire:target="toggleCat,toggleSize,toggleOffer,clearAll,q,maxPrice,gotoPage,nextPage,previousPage">
+        <div wire:loading.remove wire:target="toggleCat,toggleSize,toggleOffer,clearAll,q,maxPrice">
             @if(count($items))
                 <div class="grid-auto">
                     @foreach($items as $p)<x-product-card :product="$p" wire:key="c-{{ $p['id'] }}" />@endforeach
                 </div>
 
-                @if($paginator->hasPages())
-                    <div style="display:flex;justify-content:center;gap:8px;margin-top:44px">
-                        <button type="button" class="btn btn--outline btn--pill" style="padding:10px 18px"
-                                wire:click="previousPage" @disabled($paginator->onFirstPage())>← Prev</button>
-                        <span class="muted" style="display:flex;align-items:center;font-size:13px">Page {{ $paginator->currentPage() }} of {{ $paginator->lastPage() }}</span>
-                        <button type="button" class="btn btn--outline btn--pill" style="padding:10px 18px"
-                                wire:click="nextPage" @disabled(! $paginator->hasMorePages())>Next →</button>
+                @if($hasMore)
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:44px">
+                        <button type="button" class="btn btn--outline btn--pill" style="padding:12px 28px"
+                                wire:click="loadMore" wire:loading.attr="disabled" wire:loading.class="is-loading" wire:target="loadMore">
+                            <span class="btn__label">Load more</span>
+                            <span class="btn__loading"><span class="spinner"></span> Loading…</span>
+                        </button>
+                        <span class="muted" style="font-size:12px">Showing {{ number_format(count($items)) }} of {{ number_format($total) }}</span>
                     </div>
                 @endif
             @else
@@ -118,7 +119,7 @@
             @endif
         </div>
 
-        <div wire:loading wire:target="toggleCat,toggleSize,toggleOffer,clearAll,q,maxPrice,gotoPage,nextPage,previousPage" class="grid-auto">
+        <div wire:loading wire:target="toggleCat,toggleSize,toggleOffer,clearAll,q,maxPrice" class="grid-auto">
             @foreach(range(1, 8) as $skeletonIndex)
                 <div class="skel" style="aspect-ratio:3/4;border-radius:var(--radius)"></div>
             @endforeach

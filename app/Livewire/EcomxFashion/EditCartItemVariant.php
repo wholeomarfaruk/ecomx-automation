@@ -3,7 +3,6 @@
 namespace App\Livewire\EcomxFashion;
 
 use App\Models\CartItem;
-use App\Models\ProductAttributeValueOrder;
 use Livewire\Component;
 
 /**
@@ -54,7 +53,7 @@ class EditCartItemVariant extends Component
 
     private function loadVariants($product): void
     {
-        $variants = $product->variants()->with('values.attribute')->where('is_active', true)->get();
+        $variants = $product->variants()->with('values.productAttributeValue.attributeValue.attribute')->where('status', 'active')->get();
 
         if ($variants->isEmpty()) {
             return;
@@ -64,12 +63,17 @@ class EditCartItemVariant extends Component
         $sizeValues = [];
 
         foreach ($variants as $variant) {
-            foreach ($variant->values as $value) {
-                $attrName = $value->attribute?->name;
-                if ($attrName === 'Color' && ! isset($colorValues[$value->id])) {
-                    $colorValues[$value->id] = $value;
-                } elseif ($attrName === 'Size' && ! isset($sizeValues[$value->id])) {
-                    $sizeValues[$value->id] = $value;
+            foreach ($variant->values as $variantValue) {
+                $av = $variantValue->productAttributeValue?->attributeValue;
+                if (! $av) {
+                    continue;
+                }
+
+                $attrName = $av->attribute?->name;
+                if ($attrName === 'Color' && ! isset($colorValues[$av->id])) {
+                    $colorValues[$av->id] = $av;
+                } elseif ($attrName === 'Size' && ! isset($sizeValues[$av->id])) {
+                    $sizeValues[$av->id] = $av;
                 }
             }
         }
@@ -80,21 +84,17 @@ class EditCartItemVariant extends Component
 
         $this->hasVariants = true;
 
-        $productOrder = ProductAttributeValueOrder::where('product_id', $product->id)
-            ->pluck('sort_order', 'product_attribute_value_id');
-        $orderFor = fn ($v) => [$productOrder[$v->id] ?? (1_000_000 + $v->sort_order), $v->id];
-
         if (! empty($colorValues)) {
             $this->colors = collect($colorValues)
-                ->sortBy($orderFor)
+                ->sortBy('sort_order')
                 ->values()
-                ->map(fn ($v) => ['name' => $v->value, 'hex' => $v->meta ?: '#CCCCCC'])
+                ->map(fn ($v) => ['name' => $v->value, 'hex' => $v->swatch_value ?: '#CCCCCC'])
                 ->all();
         }
 
         if (! empty($sizeValues)) {
             $this->sizes = collect($sizeValues)
-                ->sortBy($orderFor)
+                ->sortBy('sort_order')
                 ->values()
                 ->pluck('value')
                 ->all();
@@ -103,18 +103,23 @@ class EditCartItemVariant extends Component
         foreach ($variants as $variant) {
             $colorName = null;
             $sizeName = null;
-            foreach ($variant->values as $value) {
-                if ($value->attribute?->name === 'Color') {
-                    $colorName = $value->value;
-                } elseif ($value->attribute?->name === 'Size') {
-                    $sizeName = $value->value;
+            foreach ($variant->values as $variantValue) {
+                $av = $variantValue->productAttributeValue?->attributeValue;
+                if (! $av) {
+                    continue;
+                }
+
+                if ($av->attribute?->name === 'Color') {
+                    $colorName = $av->value;
+                } elseif ($av->attribute?->name === 'Size') {
+                    $sizeName = $av->value;
                 }
             }
 
             $key = ($colorName ?? '*') . '|' . ($sizeName ?? '*');
             $this->variantMatrix[$key] = [
                 'variantId' => $variant->id,
-                'stock' => $variant->stock,
+                'stock' => $variant->stock_quantity,
             ];
         }
     }

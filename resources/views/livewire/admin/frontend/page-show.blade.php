@@ -6,6 +6,4 @@
 
         @livewire('admin.theme-engine.page-section-manager', ['page' => $page])
     </div>
-
-    @livewire('admin.theme-engine.section-config-editor')
 </div>

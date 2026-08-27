@@ -6,6 +6,10 @@ import { Fancybox } from '@fancyapps/ui';
 import '@fancyapps/ui/dist/fancybox/fancybox.css';
 import { Notyf } from 'notyf';
 import 'notyf/notyf.min.css';
+import { flushPendingMarketingEvents, pushMarketingEvent } from './marketing/index.js';
+
+document.addEventListener('DOMContentLoaded', flushPendingMarketingEvents);
+document.addEventListener('livewire:navigated', flushPendingMarketingEvents);
 
 // Global lightbox for every `[data-fancybox]` element on the page (product
 // image/video gallery, video-gallery row, etc). Fancybox v6's bind() delegates
@@ -80,6 +84,13 @@ document.addEventListener('livewire:init', () => {
     Livewire.on('cart-open', () => {
         window.Alpine.store('ui').cartOpen = true;
     });
+
+    // Marketing events recorded mid-request by a Livewire action (e.g.
+    // CartManager::addToCart) — pushed directly since there's no fresh
+    // page render for the pending-events blade component to run on.
+    Livewire.on('marketing-event', ({ payload }) => {
+        pushMarketingEvent(payload);
+    });
 });
 
 document.addEventListener('alpine:init', () => {
@@ -124,47 +135,77 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
-    // PDP gallery: wraps a Swiper instance (arrows + drag/swipe) and keeps its
-    // active slide two-way synced with the given Alpine root's `active` index
-    // (thumbnails / colour-pick set `active` directly; Swiper drives it back
-    // on swipe/arrow). `guard` breaks the slideTo <-> slideChange feedback loop.
-    Alpine.data('gallerySwiper', (root) => ({
+    // PDP gallery: Swiper instance (arrows + drag/swipe) over server-rendered
+    // slides (see product-gallery-buy-box.blade.php — plain @foreach, not
+    // Alpine x-for, so the slide *elements* are never missing at init time).
+    // The gallery container's wire:key is a hash of the current $media array
+    // — when selectColor() swaps to a different colour's images, the key
+    // changes and Livewire remounts this whole element fresh (destroy +
+    // recreate), which naturally re-fires x-init/Swiper init against the new
+    // slides. No manual Swiper slide-array surgery needed. Every slide
+    // change within one gallery — drag, nav arrows, thumbnail click — ends
+    // up calling Swiper's slideTo/slideNext/slidePrev, so `slideChange` is
+    // the single place that reports the new index back to the server via
+    // $wire.selectImage(); no separate wire:click on the thumbnails needed.
+    Alpine.data('gallerySwiper', () => ({
         swiper: null,
-        guard: false,
-        init() {
-            this.swiper = new Swiper(this.$el, {
-                modules: [Navigation],
-                observer: true,
-                observeParents: true,
-                autoHeight: true,
-                navigation: {
-                    nextEl: this.$el.querySelector('.swiper-button-next'),
-                    prevEl: this.$el.querySelector('.swiper-button-prev'),
-                },
-                initialSlide: root.active,
-                on: {
-                    slideChange: (sw) => {
-                        this.guard = true;
-                        root.active = sw.activeIndex;
-                        this.guard = false;
+        slideCount: 0,
+        init(initialSlide) {
+            // Slides are server-rendered (no x-for), so they already exist
+            // in the DOM here — but this element is swapped in by a
+            // Livewire #[Lazy] morph, and x-init can still fire in the same
+            // synchronous tick as that swap, before the browser has actually
+            // laid the element out (0 width/height). Swiper measuring a
+            // zero-size container bakes garbage width/height math into
+            // permanent inline styles. $nextTick waits one frame so layout
+            // has actually happened before Swiper measures anything.
+            this.$nextTick(() => {
+                this.slideCount = this.$el.querySelectorAll('.swiper-slide').length;
+
+                this.swiper = new Swiper(this.$el, {
+                    modules: [Navigation],
+                    observer: true,
+                    observeParents: true,
+                    navigation: {
+                        nextEl: this.$el.querySelector('.swiper-button-next'),
+                        prevEl: this.$el.querySelector('.swiper-button-prev'),
                     },
-                },
-            });
-            // Images load after Swiper's initial measurement — re-measure once they
-            // do so autoHeight isn't baked in from a zero-height (not-yet-loaded) img.
-            this.$el.querySelectorAll('img').forEach((img) => {
-                if (img.complete) return;
-                img.addEventListener('load', () => this.swiper && this.swiper.update(), { once: true });
-            });
-            Alpine.effect(() => {
-                const val = root.active;
-                if (!this.guard && this.swiper && this.swiper.activeIndex !== val) {
-                    this.swiper.slideTo(val);
-                }
+                    initialSlide,
+                    on: {
+                        slideChange: (sw) => this.$wire.selectImage(sw.activeIndex),
+                    },
+                });
+
+                // Alpine's $dispatch sends detail as the raw value; Livewire's
+                // dispatch() (server-side, e.g. selectColor jumping the image)
+                // wraps named params as [{ index }] — normalize both shapes.
+                window.addEventListener('gallery-goto', (e) => {
+                    const index = typeof e.detail === 'object' ? e.detail[0]?.index : e.detail;
+                    if (typeof index === 'number' && this.swiper) this.swiper.slideTo(index);
+                });
             });
         },
         destroy() {
             if (this.swiper) this.swiper.destroy(true, false);
+        },
+    }));
+
+    // PDP gallery thumbnails: tracks the active index purely client-side so
+    // the highlighted thumbnail updates the instant Swiper slides — not
+    // after the selectImage() network round trip. Stays in sync with
+    // Swiper/colour-pick either way since both go through the same
+    // 'gallery-goto' event this also listens for.
+    Alpine.data('gallerySwiperThumbs', (initial) => ({
+        active: initial,
+        goto(index) {
+            this.active = index;
+            this.$dispatch('gallery-goto', index);
+        },
+        init() {
+            window.addEventListener('gallery-goto', (e) => {
+                const index = typeof e.detail === 'object' ? e.detail[0]?.index : e.detail;
+                if (typeof index === 'number') this.active = index;
+            });
         },
     }));
 

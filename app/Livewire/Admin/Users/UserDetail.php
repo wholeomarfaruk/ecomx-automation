@@ -44,6 +44,36 @@ class UserDetail extends Component
     public string $editDateOfBirth      = '';
     public string $editCustomerGroupId  = '';
     public string $editStatus           = 'active';
+    public string $editNotes            = '';
+
+    // edit (customer info tab) — socials, physical, personal (all stored in customers.metadata)
+    public string $editFacebook         = '';
+    public string $editInstagram        = '';
+    public string $editTwitter          = '';
+    public string $editLinkedin         = '';
+    public string $editWhatsapp         = '';
+    public string $editTelegram         = '';
+
+    public string $editHeightCm         = '';
+    public string $editWeightKg         = '';
+    public string $editBloodGroup       = '';
+
+    public string $editOccupation       = '';
+    public string $editMaritalStatus    = '';
+    public string $editNationality      = '';
+    public string $editNidNumber        = '';
+    public string $editAnniversaryDate  = '';
+
+    /**
+     * Admin-defined key/value pairs beyond the declared schema above —
+     * stored in customers.metadata['custom']. Managed inline on the Info
+     * tab's Custom Fields card (its own edit/save lifecycle), independent
+     * of the main "Edit Customer" modal. Each row: ['key' => ..., 'value' => ...].
+     *
+     * @var array<int, array{key: string, value: string}>
+     */
+    public bool  $customFieldsEditing   = false;
+    public array $editCustomFields      = [];
 
     // orders tab filters
     #[Url] public string $orderStatus = '';
@@ -106,8 +136,105 @@ class UserDetail extends Component
         $this->editDateOfBirth     = $customer->date_of_birth?->format('Y-m-d') ?? '';
         $this->editCustomerGroupId = (string) ($customer->customer_group_id ?? '');
         $this->editStatus          = $customer->status;
+        $this->editNotes           = $customer->notes ?? '';
+
+        $meta = $customer->metadata ?? [];
+        $socials = $meta['socials'] ?? [];
+        $physical = $meta['physical'] ?? [];
+        $personal = $meta['personal'] ?? [];
+
+        $this->editFacebook        = $socials['facebook'] ?? '';
+        $this->editInstagram       = $socials['instagram'] ?? '';
+        $this->editTwitter         = $socials['twitter'] ?? '';
+        $this->editLinkedin        = $socials['linkedin'] ?? '';
+        $this->editWhatsapp        = $socials['whatsapp'] ?? '';
+        $this->editTelegram        = $socials['telegram'] ?? '';
+
+        $this->editHeightCm        = $physical['height_cm'] ?? '';
+        $this->editWeightKg        = $physical['weight_kg'] ?? '';
+        $this->editBloodGroup      = $physical['blood_group'] ?? '';
+
+        $this->editOccupation      = $personal['occupation'] ?? '';
+        $this->editMaritalStatus   = $personal['marital_status'] ?? '';
+        $this->editNationality     = $personal['nationality'] ?? '';
+        $this->editNidNumber       = $personal['nid_number'] ?? '';
+        $this->editAnniversaryDate = $personal['anniversary_date'] ?? '';
+
         $this->resetValidation();
         $this->editModal           = true;
+    }
+
+    /** Custom Fields card lives on the Info tab itself, edited/saved independently of the "Edit Customer" modal. */
+    public function openCustomFieldsEditor(): void
+    {
+        $customer = Customer::findOrFail($this->customerId);
+        $custom = ($customer->metadata ?? [])['custom'] ?? [];
+
+        $this->editCustomFields = collect($custom)
+            ->map(fn ($value, $key) => ['key' => $key, 'value' => $value])
+            ->values()
+            ->all();
+
+        $this->resetValidation();
+        $this->customFieldsEditing = true;
+    }
+
+    public function cancelCustomFieldsEditor(): void
+    {
+        $this->customFieldsEditing = false;
+        $this->reset('editCustomFields');
+        $this->resetValidation();
+    }
+
+    public function addCustomField(): void
+    {
+        $this->editCustomFields[] = ['key' => '', 'value' => ''];
+    }
+
+    public function removeCustomField(int $index): void
+    {
+        unset($this->editCustomFields[$index]);
+        $this->editCustomFields = array_values($this->editCustomFields);
+    }
+
+    public function saveCustomFields(): void
+    {
+        $customer = Customer::findOrFail($this->customerId);
+
+        $this->validate([
+            'editCustomFields'         => 'array',
+            'editCustomFields.*.key'   => 'nullable|string|max:100',
+            'editCustomFields.*.value' => 'nullable|string|max:1000',
+        ]);
+
+        $reservedKeys = ['socials', 'physical', 'personal', 'custom'];
+        $customFields = collect($this->editCustomFields)
+            ->map(fn ($row) => ['key' => trim($row['key'] ?? ''), 'value' => trim($row['value'] ?? '')])
+            ->filter(fn ($row) => $row['key'] !== '');
+
+        if ($invalid = $customFields->firstWhere(fn ($row) => in_array(strtolower($row['key']), $reservedKeys, true))) {
+            $this->addError('editCustomFields', "\"{$invalid['key']}\" is a reserved field name.");
+
+            return;
+        }
+
+        $metadata = $customer->metadata ?? [];
+        $metadata['custom'] = $customFields->pluck('value', 'key')->all();
+
+        if (empty($metadata['custom'])) {
+            unset($metadata['custom']);
+        }
+
+        $customer->update(['metadata' => $metadata ?: null]);
+
+        activity('customers')
+            ->causedBy(auth()->user())
+            ->performedOn($customer)
+            ->event('updated')
+            ->log("Custom fields updated for customer \"{$customer->full_name}\"");
+
+        $this->customFieldsEditing = false;
+        $this->dispatch('toast', ['type' => 'success', 'message' => 'Custom fields updated']);
     }
 
     public function updateCustomer(): void
@@ -124,9 +251,53 @@ class UserDetail extends Component
             'editDateOfBirth'     => 'nullable|date',
             'editCustomerGroupId' => 'nullable|integer|exists:customer_groups,id',
             'editStatus'          => 'required|in:active,inactive,blocked',
+            'editNotes'           => 'nullable|string|max:2000',
+            'editFacebook'        => 'nullable|string|max:255',
+            'editInstagram'       => 'nullable|string|max:255',
+            'editTwitter'         => 'nullable|string|max:255',
+            'editLinkedin'        => 'nullable|string|max:255',
+            'editWhatsapp'        => 'nullable|string|max:50',
+            'editTelegram'        => 'nullable|string|max:255',
+            'editHeightCm'        => 'nullable|numeric|min:0|max:999',
+            'editWeightKg'        => 'nullable|numeric|min:0|max:999',
+            'editBloodGroup'      => 'nullable|string|max:10',
+            'editOccupation'      => 'nullable|string|max:150',
+            'editMaritalStatus'   => 'nullable|string|max:50',
+            'editNationality'     => 'nullable|string|max:100',
+            'editNidNumber'       => 'nullable|string|max:50',
+            'editAnniversaryDate' => 'nullable|date',
         ]);
 
         $fullName = trim($this->editFirstName . ' ' . $this->editLastName);
+
+        // Custom fields are managed independently on the Info tab's own
+        // card (see openCustomFieldsEditor/saveCustomFields) — preserve
+        // whatever is already stored rather than overwriting it here.
+        $existingCustom = ($customer->metadata ?? [])['custom'] ?? [];
+
+        $metadata = array_filter([
+            'socials' => array_filter([
+                'facebook'  => $this->editFacebook ?: null,
+                'instagram' => $this->editInstagram ?: null,
+                'twitter'   => $this->editTwitter ?: null,
+                'linkedin'  => $this->editLinkedin ?: null,
+                'whatsapp'  => $this->editWhatsapp ?: null,
+                'telegram'  => $this->editTelegram ?: null,
+            ]),
+            'physical' => array_filter([
+                'height_cm'   => $this->editHeightCm !== '' ? (float) $this->editHeightCm : null,
+                'weight_kg'   => $this->editWeightKg !== '' ? (float) $this->editWeightKg : null,
+                'blood_group' => $this->editBloodGroup ?: null,
+            ], fn ($v) => $v !== null),
+            'personal' => array_filter([
+                'occupation'        => $this->editOccupation ?: null,
+                'marital_status'    => $this->editMaritalStatus ?: null,
+                'nationality'       => $this->editNationality ?: null,
+                'nid_number'        => $this->editNidNumber ?: null,
+                'anniversary_date'  => $this->editAnniversaryDate ?: null,
+            ]),
+            'custom' => $existingCustom,
+        ]);
 
         $customer->update([
             'customer_code'      => $this->editCode,
@@ -139,6 +310,8 @@ class UserDetail extends Component
             'date_of_birth'      => $this->editDateOfBirth ?: null,
             'customer_group_id'  => $this->editCustomerGroupId ?: null,
             'status'             => $this->editStatus,
+            'notes'              => $this->editNotes ?: null,
+            'metadata'           => $metadata ?: null,
         ]);
 
         activity('customers')
@@ -325,6 +498,7 @@ class UserDetail extends Component
         $data = [
             'user'            => $user,
             'customer'        => $customer,
+            'deviceIds'       => $deviceIds,
             'customerGroups'  => CustomerGroup::orderBy('name')->get(['id', 'name']),
             'entityIsActive'  => $entityLastSeen !== null && $entityLastSeen->greaterThanOrEqualTo(DeviceActivity::threshold()),
             'entityLastSeen'  => $entityLastSeen,

@@ -1,0 +1,375 @@
+{
+    "seo": {
+        "label": "SEO Settings",
+        "order": 1,
+        "collapsible": true,
+        "fields": {
+            "meta_title": {
+                "type": "text",
+                "label": "Meta Title",
+                "placeholder": "Season Fresh Mango — সরাসরি বাগান থেকে",
+                "rules": "required|string|max:70",
+                "key": "seo.meta_title"
+            },
+            "meta_description": {
+                "type": "textarea",
+                "label": "Meta Description",
+                "placeholder": "রাজশাহীর সেরা গাছপাকা আম।",
+                "rules": "required|string|max:160",
+                "key": "seo.meta_description"
+            },
+            "meta_image": {
+                "type": "text",
+                "label": "Meta Image URL",
+                "rules": "nullable|string",
+                "key": "seo.meta_image"
+            },
+            "favicon_url": {
+                "type": "text",
+                "label": "Favicon URL (.ico / .png)",
+                "rules": "nullable|string",
+                "key": "seo.favicon_url"
+            }
+        }
+    },
+    "nav": {
+        "label": "Navigation Menus",
+        "order": 2,
+        "fields": [
+            { "type": "text", "label": "Menu 1 — Label", "rules": "nullable|string", "key": "nav.menus.0.label" },
+            { "type": "text", "label": "Menu 1 — Link (href)", "rules": "nullable|string", "key": "nav.menus.0.href" },
+            { "type": "text", "label": "Menu 2 — Label", "rules": "nullable|string", "key": "nav.menus.1.label" },
+            { "type": "text", "label": "Menu 2 — Link (href)", "rules": "nullable|string", "key": "nav.menus.1.href" },
+            { "type": "text", "label": "Menu 3 — Label", "rules": "nullable|string", "key": "nav.menus.2.label" },
+            { "type": "text", "label": "Menu 3 — Link (href)", "rules": "nullable|string", "key": "nav.menus.2.href" },
+            { "type": "text", "label": "Menu 4 — Label", "rules": "nullable|string", "key": "nav.menus.3.label" },
+            { "type": "text", "label": "Menu 4 — Link (href)", "rules": "nullable|string", "key": "nav.menus.3.href" },
+            { "type": "text", "label": "Menu 5 — Label", "rules": "nullable|string", "key": "nav.menus.4.label" },
+            { "type": "text", "label": "Menu 5 — Link (href)", "rules": "nullable|string", "key": "nav.menus.4.href" },
+            { "type": "text", "label": "Menu 6 — Label", "rules": "nullable|string", "key": "nav.menus.5.label" },
+            { "type": "text", "label": "Menu 6 — Link (href)", "rules": "nullable|string", "key": "nav.menus.5.href" },
+            { "type": "text", "label": "Menu 7 — Label", "rules": "nullable|string", "key": "nav.menus.6.label" },
+            { "type": "text", "label": "Menu 7 — Link (href)", "rules": "nullable|string", "key": "nav.menus.6.href" },
+            { "type": "text", "label": "Menu 8 — Label", "rules": "nullable|string", "key": "nav.menus.7.label" },
+            { "type": "text", "label": "Menu 8 — Link (href)", "rules": "nullable|string", "key": "nav.menus.7.href" }
+        ]
+    },
+    "hero": {
+        "label": "Hero Section",
+        "order": 3,
+        "collapsible": true,
+        "fields": {
+            "logo_url": {
+                "type": "text",
+                "label": "Logo Image URL",
+                "rules": "nullable|string",
+                "key": "hero.logo_url"
+            },
+            "bg_url": {
+                "type": "text",
+                "label": "Hero Background Image URL",
+                "rules": "nullable|string",
+                "key": "hero.bg_url"
+            },
+            "badge": {
+                "type": "text",
+                "label": "Badge Text",
+                "rules": "required|string|max:80",
+                "key": "hero.badge"
+            },
+            "type_line1_raw": {
+                "type": "text",
+                "label": "Typewriter Line 1 (plain text)",
+                "rules": "required|string|max:80",
+                "key": "hero.type_line1_raw"
+            },
+            "type_line1_html": {
+                "type": "text",
+                "label": "Typewriter Line 1 (HTML — after typing finishes)",
+                "rules": "required|string",
+                "key": "hero.type_line1_html"
+            },
+            "type_line2": {
+                "type": "text",
+                "label": "Typewriter Line 2",
+                "rules": "required|string|max:80",
+                "key": "hero.type_line2"
+            },
+            "subtitle": {
+                "type": "textarea",
+                "label": "Hero Subtitle (HTML allowed for <br>)",
+                "rules": "required|string",
+                "key": "hero.subtitle"
+            },
+            "cta_text": {
+                "type": "text",
+                "label": "CTA Button Text",
+                "rules": "required|string|max:60",
+                "key": "hero.cta_text"
+            }
+        }
+    },
+    "contact": {
+        "label": "Contact & Payment",
+        "order": 4,
+        "fields": {
+            "bkash_number": {
+                "type": "text",
+                "label": "bKash Number",
+                "rules": "required|string|max:20",
+                "key": "contact.bkash_number"
+            },
+            "phone": {
+                "type": "text",
+                "label": "Phone Number (for Call button)",
+                "rules": "required|string|max:20",
+                "key": "contact.phone"
+            },
+            "whatsapp_url": {
+                "type": "text",
+                "label": "WhatsApp URL (for floating button, e.g. https://wa.me/8801XXXXXXXXX)",
+                "rules": "nullable|string",
+                "key": "contact.whatsapp_url"
+            }
+        }
+    },
+    "features": {
+        "label": "Feature Cards",
+        "order": 5,
+        "fields": {
+            "badge": {
+                "type": "text",
+                "label": "Section Badge",
+                "rules": "nullable|string|max:60",
+                "key": "features.badge"
+            },
+            "title": {
+                "type": "text",
+                "label": "Section Title (HTML allowed, e.g. <em> for gold)",
+                "rules": "nullable|string",
+                "key": "features.title"
+            },
+            "desc": {
+                "type": "textarea",
+                "label": "Section Description",
+                "rules": "nullable|string",
+                "key": "features.desc"
+            },
+            "item1_icon":  { "type": "text", "label": "Feature 1 — Icon (emoji)", "rules": "nullable|string", "key": "features.items.0.icon" },
+            "item1_title": { "type": "text", "label": "Feature 1 — Title",         "rules": "nullable|string", "key": "features.items.0.title" },
+            "item1_desc":  { "type": "text", "label": "Feature 1 — Description",   "rules": "nullable|string", "key": "features.items.0.desc" },
+            "item2_icon":  { "type": "text", "label": "Feature 2 — Icon (emoji)", "rules": "nullable|string", "key": "features.items.1.icon" },
+            "item2_title": { "type": "text", "label": "Feature 2 — Title",         "rules": "nullable|string", "key": "features.items.1.title" },
+            "item2_desc":  { "type": "text", "label": "Feature 2 — Description",   "rules": "nullable|string", "key": "features.items.1.desc" },
+            "item3_icon":  { "type": "text", "label": "Feature 3 — Icon (emoji)", "rules": "nullable|string", "key": "features.items.2.icon" },
+            "item3_title": { "type": "text", "label": "Feature 3 — Title",         "rules": "nullable|string", "key": "features.items.2.title" },
+            "item3_desc":  { "type": "text", "label": "Feature 3 — Description",   "rules": "nullable|string", "key": "features.items.2.desc" },
+            "item4_icon":  { "type": "text", "label": "Feature 4 — Icon (emoji)", "rules": "nullable|string", "key": "features.items.3.icon" },
+            "item4_title": { "type": "text", "label": "Feature 4 — Title",         "rules": "nullable|string", "key": "features.items.3.title" },
+            "item4_desc":  { "type": "text", "label": "Feature 4 — Description",   "rules": "nullable|string", "key": "features.items.3.desc" },
+            "item5_icon":  { "type": "text", "label": "Feature 5 — Icon (emoji)", "rules": "nullable|string", "key": "features.items.4.icon" },
+            "item5_title": { "type": "text", "label": "Feature 5 — Title",         "rules": "nullable|string", "key": "features.items.4.title" },
+            "item5_desc":  { "type": "text", "label": "Feature 5 — Description",   "rules": "nullable|string", "key": "features.items.4.desc" },
+            "item6_icon":  { "type": "text", "label": "Feature 6 — Icon (emoji)", "rules": "nullable|string", "key": "features.items.5.icon" },
+            "item6_title": { "type": "text", "label": "Feature 6 — Title",         "rules": "nullable|string", "key": "features.items.5.title" },
+            "item6_desc":  { "type": "text", "label": "Feature 6 — Description",   "rules": "nullable|string", "key": "features.items.5.desc" }
+        }
+    },
+    "videos": {
+        "label": "YouTube Videos",
+        "order": 6,
+        "fields": [
+            { "type": "text", "label": "Video 1 — YouTube ID",                   "rules": "nullable|string", "key": "videos.0.id" },
+            { "type": "text", "label": "Video 1 — Type (shorts / landscape)",    "rules": "nullable|string", "key": "videos.0.type" },
+            { "type": "text", "label": "Video 2 — YouTube ID",                   "rules": "nullable|string", "key": "videos.1.id" },
+            { "type": "text", "label": "Video 2 — Type",                         "rules": "nullable|string", "key": "videos.1.type" },
+            { "type": "text", "label": "Video 3 — YouTube ID",                   "rules": "nullable|string", "key": "videos.2.id" },
+            { "type": "text", "label": "Video 3 — Type",                         "rules": "nullable|string", "key": "videos.2.type" },
+            { "type": "text", "label": "Video 4 — YouTube ID",                   "rules": "nullable|string", "key": "videos.3.id" },
+            { "type": "text", "label": "Video 4 — Type",                         "rules": "nullable|string", "key": "videos.3.type" },
+            { "type": "text", "label": "Video 5 — YouTube ID",                   "rules": "nullable|string", "key": "videos.4.id" },
+            { "type": "text", "label": "Video 5 — Type",                         "rules": "nullable|string", "key": "videos.4.type" },
+            { "type": "text", "label": "Video 6 — YouTube ID",                   "rules": "nullable|string", "key": "videos.5.id" },
+            { "type": "text", "label": "Video 6 — Type",                         "rules": "nullable|string", "key": "videos.5.type" },
+            { "type": "text", "label": "Video 7 — YouTube ID",                   "rules": "nullable|string", "key": "videos.6.id" },
+            { "type": "text", "label": "Video 7 — Type",                         "rules": "nullable|string", "key": "videos.6.type" },
+            { "type": "text", "label": "Video 8 — YouTube ID",                   "rules": "nullable|string", "key": "videos.7.id" },
+            { "type": "text", "label": "Video 8 — Type",                         "rules": "nullable|string", "key": "videos.7.type" },
+            { "type": "text", "label": "Video 9 — YouTube ID",                   "rules": "nullable|string", "key": "videos.8.id" },
+            { "type": "text", "label": "Video 9 — Type",                         "rules": "nullable|string", "key": "videos.8.type" },
+            { "type": "text", "label": "Video 10 — YouTube ID",                  "rules": "nullable|string", "key": "videos.9.id" },
+            { "type": "text", "label": "Video 10 — Type",                        "rules": "nullable|string", "key": "videos.9.type" }
+        ]
+    },
+    "strip_images": {
+        "label": "Image Strip (Gallery)",
+        "order": 7,
+        "fields": [
+            { "type": "text", "label": "Image 1 URL",     "rules": "nullable|string", "key": "strip_images.0.src" },
+            { "type": "text", "label": "Image 1 Caption", "rules": "nullable|string", "key": "strip_images.0.cap" },
+            { "type": "text", "label": "Image 2 URL",     "rules": "nullable|string", "key": "strip_images.1.src" },
+            { "type": "text", "label": "Image 2 Caption", "rules": "nullable|string", "key": "strip_images.1.cap" },
+            { "type": "text", "label": "Image 3 URL",     "rules": "nullable|string", "key": "strip_images.2.src" },
+            { "type": "text", "label": "Image 3 Caption", "rules": "nullable|string", "key": "strip_images.2.cap" },
+            { "type": "text", "label": "Image 4 URL",     "rules": "nullable|string", "key": "strip_images.3.src" },
+            { "type": "text", "label": "Image 4 Caption", "rules": "nullable|string", "key": "strip_images.3.cap" },
+            { "type": "text", "label": "Image 5 URL",     "rules": "nullable|string", "key": "strip_images.4.src" },
+            { "type": "text", "label": "Image 5 Caption", "rules": "nullable|string", "key": "strip_images.4.cap" },
+            { "type": "text", "label": "Image 6 URL",     "rules": "nullable|string", "key": "strip_images.5.src" },
+            { "type": "text", "label": "Image 6 Caption", "rules": "nullable|string", "key": "strip_images.5.cap" },
+            { "type": "text", "label": "Image 7 URL",     "rules": "nullable|string", "key": "strip_images.6.src" },
+            { "type": "text", "label": "Image 7 Caption", "rules": "nullable|string", "key": "strip_images.6.cap" },
+            { "type": "text", "label": "Image 8 URL",     "rules": "nullable|string", "key": "strip_images.7.src" },
+            { "type": "text", "label": "Image 8 Caption", "rules": "nullable|string", "key": "strip_images.7.cap" },
+            { "type": "text", "label": "Image 9 URL",     "rules": "nullable|string", "key": "strip_images.8.src" },
+            { "type": "text", "label": "Image 9 Caption", "rules": "nullable|string", "key": "strip_images.8.cap" },
+            { "type": "text", "label": "Image 10 URL",    "rules": "nullable|string", "key": "strip_images.9.src" },
+            { "type": "text", "label": "Image 10 Caption","rules": "nullable|string", "key": "strip_images.9.cap" }
+        ]
+    },
+    "testimonials": {
+        "label": "Customer Review Screenshots",
+        "order": 8,
+        "fields": [
+            { "type": "text", "label": "Review 1 Image URL",  "rules": "nullable|string", "key": "testimonials.0.src" },
+            { "type": "text", "label": "Review 1 Caption",    "rules": "nullable|string", "key": "testimonials.0.cap" },
+            { "type": "text", "label": "Review 2 Image URL",  "rules": "nullable|string", "key": "testimonials.1.src" },
+            { "type": "text", "label": "Review 2 Caption",    "rules": "nullable|string", "key": "testimonials.1.cap" },
+            { "type": "text", "label": "Review 3 Image URL",  "rules": "nullable|string", "key": "testimonials.2.src" },
+            { "type": "text", "label": "Review 3 Caption",    "rules": "nullable|string", "key": "testimonials.2.cap" },
+            { "type": "text", "label": "Review 4 Image URL",  "rules": "nullable|string", "key": "testimonials.3.src" },
+            { "type": "text", "label": "Review 4 Caption",    "rules": "nullable|string", "key": "testimonials.3.cap" },
+            { "type": "text", "label": "Review 5 Image URL",  "rules": "nullable|string", "key": "testimonials.4.src" },
+            { "type": "text", "label": "Review 5 Caption",    "rules": "nullable|string", "key": "testimonials.4.cap" },
+            { "type": "text", "label": "Review 6 Image URL",  "rules": "nullable|string", "key": "testimonials.5.src" },
+            { "type": "text", "label": "Review 6 Caption",    "rules": "nullable|string", "key": "testimonials.5.cap" },
+            { "type": "text", "label": "Review 7 Image URL",  "rules": "nullable|string", "key": "testimonials.6.src" },
+            { "type": "text", "label": "Review 7 Caption",    "rules": "nullable|string", "key": "testimonials.6.cap" },
+            { "type": "text", "label": "Review 8 Image URL",  "rules": "nullable|string", "key": "testimonials.7.src" },
+            { "type": "text", "label": "Review 8 Caption",    "rules": "nullable|string", "key": "testimonials.7.cap" },
+            { "type": "text", "label": "Review 9 Image URL",  "rules": "nullable|string", "key": "testimonials.8.src" },
+            { "type": "text", "label": "Review 9 Caption",    "rules": "nullable|string", "key": "testimonials.8.cap" },
+            { "type": "text", "label": "Review 10 Image URL", "rules": "nullable|string", "key": "testimonials.9.src" },
+            { "type": "text", "label": "Review 10 Caption",   "rules": "nullable|string", "key": "testimonials.9.cap" }
+        ]
+    },
+    "packages": {
+        "label": "Packages & Offers",
+        "order": 9,
+        "fields": [
+            { "type": "text",     "label": "Package 1 — Weight (kg)",              "rules": "required|string",   "key": "packages.0.kg" },
+            { "type": "text",     "label": "Package 1 — Label",                    "rules": "required|string",   "key": "packages.0.label" },
+            { "type": "text",     "label": "Package 1 — Badge (e.g. জনপ্রিয়)",    "rules": "nullable|string",   "key": "packages.0.badge" },
+            { "type": "text",     "label": "Package 1 — Description",              "rules": "nullable|string",   "key": "packages.0.desc" },
+            { "type": "text",     "label": "Package 1 — Price display (e.g. ৳ ৬৫০)", "rules": "required|string", "key": "packages.0.price" },
+            { "type": "text",     "label": "Package 1 — Price (number)",           "rules": "required|numeric",  "key": "packages.0.priceNum" },
+            { "type": "text",     "label": "Package 1 — Linked Product ID",        "rules": "nullable|integer",  "key": "packages.0.product_id" },
+            { "type": "text",     "label": "Package 1 — Default Selected (true / false)", "rules": "nullable|string", "key": "packages.0.default_selected" },
+            { "type": "text",     "label": "Package 1 — Default Quantity",         "rules": "nullable|integer",  "key": "packages.0.default_qty" },
+            { "type": "text",     "label": "Package 1 — Home Offer Type (flat / percent)", "rules": "nullable|string", "key": "packages.0.offers.home.type" },
+            { "type": "text",     "label": "Package 1 — Home Offer Value",         "rules": "nullable|numeric",  "key": "packages.0.offers.home.value" },
+            { "type": "text",     "label": "Package 1 — Pickup Offer Type (flat / percent)", "rules": "nullable|string", "key": "packages.0.offers.pickup.type" },
+            { "type": "text",     "label": "Package 1 — Pickup Offer Value",       "rules": "nullable|numeric",  "key": "packages.0.offers.pickup.value" },
+
+            { "type": "text",     "label": "Package 2 — Weight (kg)",              "rules": "required|string",   "key": "packages.1.kg" },
+            { "type": "text",     "label": "Package 2 — Label",                    "rules": "required|string",   "key": "packages.1.label" },
+            { "type": "text",     "label": "Package 2 — Badge",                    "rules": "nullable|string",   "key": "packages.1.badge" },
+            { "type": "text",     "label": "Package 2 — Description",              "rules": "nullable|string",   "key": "packages.1.desc" },
+            { "type": "text",     "label": "Package 2 — Price display",            "rules": "required|string",   "key": "packages.1.price" },
+            { "type": "text",     "label": "Package 2 — Price (number)",           "rules": "required|numeric",  "key": "packages.1.priceNum" },
+            { "type": "text",     "label": "Package 2 — Linked Product ID",        "rules": "nullable|integer",  "key": "packages.1.product_id" },
+            { "type": "text",     "label": "Package 2 — Default Selected (true / false)", "rules": "nullable|string", "key": "packages.1.default_selected" },
+            { "type": "text",     "label": "Package 2 — Default Quantity",         "rules": "nullable|integer",  "key": "packages.1.default_qty" },
+            { "type": "text",     "label": "Package 2 — Home Offer Type (flat / percent)", "rules": "nullable|string", "key": "packages.1.offers.home.type" },
+            { "type": "text",     "label": "Package 2 — Home Offer Value",         "rules": "nullable|numeric",  "key": "packages.1.offers.home.value" },
+            { "type": "text",     "label": "Package 2 — Pickup Offer Type (flat / percent)", "rules": "nullable|string", "key": "packages.1.offers.pickup.type" },
+            { "type": "text",     "label": "Package 2 — Pickup Offer Value",       "rules": "nullable|numeric",  "key": "packages.1.offers.pickup.value" },
+
+            { "type": "text",     "label": "Package 3 — Weight (kg)",              "rules": "required|string",   "key": "packages.2.kg" },
+            { "type": "text",     "label": "Package 3 — Label",                    "rules": "required|string",   "key": "packages.2.label" },
+            { "type": "text",     "label": "Package 3 — Badge",                    "rules": "nullable|string",   "key": "packages.2.badge" },
+            { "type": "text",     "label": "Package 3 — Description",              "rules": "nullable|string",   "key": "packages.2.desc" },
+            { "type": "text",     "label": "Package 3 — Price display",            "rules": "required|string",   "key": "packages.2.price" },
+            { "type": "text",     "label": "Package 3 — Price (number)",           "rules": "required|numeric",  "key": "packages.2.priceNum" },
+            { "type": "text",     "label": "Package 3 — Linked Product ID",        "rules": "nullable|integer",  "key": "packages.2.product_id" },
+            { "type": "text",     "label": "Package 3 — Default Selected (true / false)", "rules": "nullable|string", "key": "packages.2.default_selected" },
+            { "type": "text",     "label": "Package 3 — Default Quantity",         "rules": "nullable|integer",  "key": "packages.2.default_qty" },
+            { "type": "text",     "label": "Package 3 — Home Offer Type (flat / percent)", "rules": "nullable|string", "key": "packages.2.offers.home.type" },
+            { "type": "text",     "label": "Package 3 — Home Offer Value",         "rules": "nullable|numeric",  "key": "packages.2.offers.home.value" },
+            { "type": "text",     "label": "Package 3 — Pickup Offer Type (flat / percent)", "rules": "nullable|string", "key": "packages.2.offers.pickup.type" },
+            { "type": "text",     "label": "Package 3 — Pickup Offer Value",       "rules": "nullable|numeric",  "key": "packages.2.offers.pickup.value" },
+
+            { "type": "text",     "label": "Package 4 — Weight (kg)",              "rules": "required|string",   "key": "packages.3.kg" },
+            { "type": "text",     "label": "Package 4 — Label",                    "rules": "required|string",   "key": "packages.3.label" },
+            { "type": "text",     "label": "Package 4 — Badge",                    "rules": "nullable|string",   "key": "packages.3.badge" },
+            { "type": "text",     "label": "Package 4 — Description",              "rules": "nullable|string",   "key": "packages.3.desc" },
+            { "type": "text",     "label": "Package 4 — Price display",            "rules": "required|string",   "key": "packages.3.price" },
+            { "type": "text",     "label": "Package 4 — Price (number)",           "rules": "required|numeric",  "key": "packages.3.priceNum" },
+            { "type": "text",     "label": "Package 4 — Linked Product ID",        "rules": "nullable|integer",  "key": "packages.3.product_id" },
+            { "type": "text",     "label": "Package 4 — Default Selected (true / false)", "rules": "nullable|string", "key": "packages.3.default_selected" },
+            { "type": "text",     "label": "Package 4 — Default Quantity",         "rules": "nullable|integer",  "key": "packages.3.default_qty" },
+            { "type": "text",     "label": "Package 4 — Home Offer Type (flat / percent)", "rules": "nullable|string", "key": "packages.3.offers.home.type" },
+            { "type": "text",     "label": "Package 4 — Home Offer Value",         "rules": "nullable|numeric",  "key": "packages.3.offers.home.value" },
+            { "type": "text",     "label": "Package 4 — Pickup Offer Type (flat / percent)", "rules": "nullable|string", "key": "packages.3.offers.pickup.type" },
+            { "type": "text",     "label": "Package 4 — Pickup Offer Value",       "rules": "nullable|numeric",  "key": "packages.3.offers.pickup.value" },
+
+            { "type": "text",     "label": "Package 5 — Weight (kg)",              "rules": "required|string",   "key": "packages.4.kg" },
+            { "type": "text",     "label": "Package 5 — Label",                    "rules": "required|string",   "key": "packages.4.label" },
+            { "type": "text",     "label": "Package 5 — Badge",                    "rules": "nullable|string",   "key": "packages.4.badge" },
+            { "type": "text",     "label": "Package 5 — Description",              "rules": "nullable|string",   "key": "packages.4.desc" },
+            { "type": "text",     "label": "Package 5 — Price display",            "rules": "required|string",   "key": "packages.4.price" },
+            { "type": "text",     "label": "Package 5 — Price (number)",           "rules": "required|numeric",  "key": "packages.4.priceNum" },
+            { "type": "text",     "label": "Package 5 — Linked Product ID",        "rules": "nullable|integer",  "key": "packages.4.product_id" },
+            { "type": "text",     "label": "Package 5 — Default Selected (true / false)", "rules": "nullable|string", "key": "packages.4.default_selected" },
+            { "type": "text",     "label": "Package 5 — Default Quantity",         "rules": "nullable|integer",  "key": "packages.4.default_qty" },
+            { "type": "text",     "label": "Package 5 — Home Offer Type (flat / percent)", "rules": "nullable|string", "key": "packages.4.offers.home.type" },
+            { "type": "text",     "label": "Package 5 — Home Offer Value",         "rules": "nullable|numeric",  "key": "packages.4.offers.home.value" },
+            { "type": "text",     "label": "Package 5 — Pickup Offer Type (flat / percent)", "rules": "nullable|string", "key": "packages.4.offers.pickup.type" },
+            { "type": "text",     "label": "Package 5 — Pickup Offer Value",       "rules": "nullable|numeric",  "key": "packages.4.offers.pickup.value" },
+
+            { "type": "text",     "label": "Package 6 — Weight (kg)",              "rules": "required|string",   "key": "packages.5.kg" },
+            { "type": "text",     "label": "Package 6 — Label",                    "rules": "required|string",   "key": "packages.5.label" },
+            { "type": "text",     "label": "Package 6 — Badge",                    "rules": "nullable|string",   "key": "packages.5.badge" },
+            { "type": "text",     "label": "Package 6 — Description",              "rules": "nullable|string",   "key": "packages.5.desc" },
+            { "type": "text",     "label": "Package 6 — Price display",            "rules": "required|string",   "key": "packages.5.price" },
+            { "type": "text",     "label": "Package 6 — Price (number)",           "rules": "required|numeric",  "key": "packages.5.priceNum" },
+            { "type": "text",     "label": "Package 6 — Linked Product ID",        "rules": "nullable|integer",  "key": "packages.5.product_id" },
+            { "type": "text",     "label": "Package 6 — Default Selected (true / false)", "rules": "nullable|string", "key": "packages.5.default_selected" },
+            { "type": "text",     "label": "Package 6 — Default Quantity",         "rules": "nullable|integer",  "key": "packages.5.default_qty" },
+            { "type": "text",     "label": "Package 6 — Home Offer Type (flat / percent)", "rules": "nullable|string", "key": "packages.5.offers.home.type" },
+            { "type": "text",     "label": "Package 6 — Home Offer Value",         "rules": "nullable|numeric",  "key": "packages.5.offers.home.value" },
+            { "type": "text",     "label": "Package 6 — Pickup Offer Type (flat / percent)", "rules": "nullable|string", "key": "packages.5.offers.pickup.type" },
+            { "type": "text",     "label": "Package 6 — Pickup Offer Value",       "rules": "nullable|numeric",  "key": "packages.5.offers.pickup.value" }
+        ]
+    },
+    "footer": {
+        "label": "Footer",
+        "order": 10,
+        "fields": {
+            "brand": {
+                "type": "text",
+                "label": "Brand Name",
+                "rules": "required|string|max:60",
+                "key": "footer.brand"
+            },
+            "copyright": {
+                "type": "text",
+                "label": "Copyright Text",
+                "rules": "required|string|max:80",
+                "key": "footer.copyright"
+            },
+            "facebook_url": {
+                "type": "text",
+                "label": "Facebook URL",
+                "rules": "nullable|string",
+                "key": "footer.facebook_url"
+            },
+            "whatsapp_url": {
+                "type": "text",
+                "label": "WhatsApp URL",
+                "rules": "nullable|string",
+                "key": "footer.whatsapp_url"
+            }
+        }
+    }
+}

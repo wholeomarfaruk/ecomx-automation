@@ -75,12 +75,13 @@
                         'pos'       => ['POS Sessions', 'M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.625c.621 0 1.125.504 1.125 1.125V6h-.75a.75.75 0 0 1-.75-.75V4.5M3.75 4.5h16.5'],
                         'tokens'    => ['Device Tokens', 'M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5'],
                         'activity'  => ['Activity Log', 'M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z'],
+                        'marketing' => ['Marketing', 'M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941'],
                         'blocks'    => ['Blocks', 'M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z'],
                     ];
                 @endphp
                 @foreach($navItems as $key => [$label, $icon])
                     @php
-                        $deviceLinkedTabs   = ['devices', 'ips', 'visits', 'activity', 'blocks'];
+                        $deviceLinkedTabs   = ['devices', 'ips', 'visits', 'activity', 'blocks', 'marketing'];
                         $userOnlyTabs       = ['pos', 'tokens'];
                         $customerOnlyTabs   = ['info', 'orders', 'products', 'carts', 'combos', 'wishlist', 'addresses'];
                         $disabled = ($key !== 'user') && match (true) {
@@ -130,25 +131,160 @@
 
             @if($tab === 'info')
                 @if($customer)
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                        <dl class="grid grid-cols-2 gap-x-8 gap-y-5">
-                            <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Full Name</dt><dd class="mt-1 text-sm text-gray-800">{{ $customer->full_name }}</dd></div>
-                            <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Customer Code</dt><dd class="mt-1 text-sm text-gray-800 font-mono">{{ $customer->customer_code }}</dd></div>
-                            <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Email</dt><dd class="mt-1 text-sm text-gray-800">{{ $customer->email ?? '—' }}</dd></div>
-                            <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Phone</dt><dd class="mt-1 text-sm text-gray-800">{{ $customer->phone }}</dd></div>
-                            <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Alternative Phone</dt><dd class="mt-1 text-sm text-gray-800">{{ $customer->alternative_phone ?? '—' }}</dd></div>
-                            <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Gender</dt><dd class="mt-1 text-sm text-gray-800">{{ $customer->gender ?? '—' }}</dd></div>
-                            <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Date of Birth</dt><dd class="mt-1 text-sm text-gray-800">{{ $customer->date_of_birth?->format('d M Y') ?? '—' }}</dd></div>
-                            <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Customer Group</dt><dd class="mt-1 text-sm text-gray-800">{{ $customer->customerGroup?->name ?? '—' }}</dd></div>
-                            <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Reward Points</dt><dd class="mt-1 text-sm text-gray-800">{{ number_format($customer->reward_points) }}</dd></div>
-                            <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Wallet Balance</dt><dd class="mt-1 text-sm text-gray-800">৳{{ number_format($customer->wallet_balance, 2) }}</dd></div>
-                            <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Email Verified</dt><dd class="mt-1 text-sm text-gray-800">{{ $customer->email_verified_at?->format('d M Y, h:i A') ?? 'Not verified' }}</dd></div>
-                            <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Phone Verified</dt><dd class="mt-1 text-sm text-gray-800">{{ $customer->phone_verified_at?->format('d M Y, h:i A') ?? 'Not verified' }}</dd></div>
-                            <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Joined</dt><dd class="mt-1 text-sm text-gray-800">{{ $customer->created_at?->format('d M Y, h:i A') }}</dd></div>
-                            @if($customer->notes)
-                                <div class="col-span-2"><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Notes</dt><dd class="mt-1 text-sm text-gray-600">{{ $customer->notes }}</dd></div>
+                    @php
+                        $meta = $customer->metadata ?? [];
+                        $socials = $meta['socials'] ?? [];
+                        $physical = $meta['physical'] ?? [];
+                        $personal = $meta['personal'] ?? [];
+                        $socialIcons = [
+                            'facebook'  => 'M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 1.879-.287 1.788h-3.246v8.245',
+                            'instagram' => 'M12 2c2.717 0 3.056.01 4.122.06 1.065.05 1.79.217 2.428.465.66.254 1.216.598 1.772 1.153a4.908 4.908 0 0 1 1.153 1.772c.247.637.415 1.363.465 2.428.047 1.066.06 1.405.06 4.122 0 2.717-.01 3.056-.06 4.122-.05 1.065-.218 1.79-.465 2.428a4.883 4.883 0 0 1-1.153 1.772 4.915 4.915 0 0 1-1.772 1.153c-.637.247-1.363.415-2.428.465-1.066.047-1.405.06-4.122.06-2.717 0-3.056-.01-4.122-.06-1.065-.05-1.79-.218-2.428-.465a4.89 4.89 0 0 1-1.772-1.153 4.904 4.904 0 0 1-1.153-1.772c-.248-.637-.415-1.363-.465-2.428C2.013 15.056 2 14.717 2 12c0-2.717.01-3.056.06-4.122.05-1.066.217-1.79.465-2.428a4.88 4.88 0 0 1 1.153-1.772A4.897 4.897 0 0 1 5.45 2.525c.638-.248 1.362-.415 2.428-.465C8.944 2.013 9.283 2 12 2Zm0 5a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm6.4-.2a1.2 1.2 0 1 0-2.4 0 1.2 1.2 0 0 0 2.4 0Z',
+                            'twitter'   => 'M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3Z',
+                            'linkedin'  => 'M6.94 5a2 2 0 1 1-4-.002 2 2 0 0 1 4 .002ZM7 8.48H3V21h4V8.48Zm6.32 0H9.34V21h3.94v-6.57c0-3.66 4.77-4 4.77 0V21H22v-7.93c0-6.17-7.06-5.94-8.68-2.91V8.48Z',
+                            'whatsapp'  => 'M17.6 6.32A7.85 7.85 0 0 0 12.05 4a7.94 7.94 0 0 0-6.9 11.9L4 20l4.2-1.1a7.9 7.9 0 0 0 3.85 1h.01a7.94 7.94 0 0 0 7.94-7.94 7.9 7.9 0 0 0-2.4-5.64ZM12.06 18.4a6.5 6.5 0 0 1-3.33-.91l-.24-.14-2.49.65.67-2.43-.16-.25a6.55 6.55 0 1 1 12.16-3.4 6.55 6.55 0 0 1-6.61 6.48Z',
+                            'telegram'  => 'M21.5 3.5 2.75 10.9c-1.28.51-1.28 1.24-.24 1.56l4.8 1.5 1.85 5.66c.22.6.37.84.75.84.3 0 .43-.14.6-.3l2.55-2.45 5.02 3.7c.92.5 1.58.24 1.82-.85l3.3-15.5c.34-1.34-.5-1.94-1.6-1.5Z',
+                        ];
+                    @endphp
+
+                    <div class="space-y-6">
+                        {{-- Core details --}}
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                            <h3 class="text-sm font-semibold text-gray-900 mb-4">Core Details</h3>
+                            <dl class="grid grid-cols-2 gap-x-8 gap-y-5">
+                                <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Full Name</dt><dd class="mt-1 text-sm text-gray-800">{{ $customer->full_name }}</dd></div>
+                                <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Customer Code</dt><dd class="mt-1 text-sm text-gray-800 font-mono">{{ $customer->customer_code }}</dd></div>
+                                <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Email</dt><dd class="mt-1 text-sm text-gray-800">{{ $customer->email ?? '—' }}</dd></div>
+                                <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Phone</dt><dd class="mt-1 text-sm text-gray-800">{{ $customer->phone }}</dd></div>
+                                <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Alternative Phone</dt><dd class="mt-1 text-sm text-gray-800">{{ $customer->alternative_phone ?? '—' }}</dd></div>
+                                <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Gender</dt><dd class="mt-1 text-sm text-gray-800">{{ $customer->gender ?? '—' }}</dd></div>
+                                <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Date of Birth</dt><dd class="mt-1 text-sm text-gray-800">{{ $customer->date_of_birth?->format('d M Y') ?? '—' }}</dd></div>
+                                <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Customer Group</dt><dd class="mt-1 text-sm text-gray-800">{{ $customer->customerGroup?->name ?? '—' }}</dd></div>
+                                <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Reward Points</dt><dd class="mt-1 text-sm text-gray-800">{{ number_format($customer->reward_points) }}</dd></div>
+                                <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Wallet Balance</dt><dd class="mt-1 text-sm text-gray-800">৳{{ number_format($customer->wallet_balance, 2) }}</dd></div>
+                                <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Email Verified</dt><dd class="mt-1 text-sm text-gray-800">{{ $customer->email_verified_at?->format('d M Y, h:i A') ?? 'Not verified' }}</dd></div>
+                                <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Phone Verified</dt><dd class="mt-1 text-sm text-gray-800">{{ $customer->phone_verified_at?->format('d M Y, h:i A') ?? 'Not verified' }}</dd></div>
+                                <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Joined</dt><dd class="mt-1 text-sm text-gray-800">{{ $customer->created_at?->format('d M Y, h:i A') }}</dd></div>
+                            </dl>
+                        </div>
+
+                        {{-- Social profiles --}}
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                            <h3 class="text-sm font-semibold text-gray-900 mb-4">Social Profiles</h3>
+                            @if (empty(array_filter($socials)))
+                                <p class="text-sm text-gray-400">No social profiles added yet.</p>
+                            @else
+                                <div class="grid grid-cols-2 gap-x-8 gap-y-4">
+                                    @foreach (['facebook' => 'Facebook', 'instagram' => 'Instagram', 'twitter' => 'Twitter / X', 'linkedin' => 'LinkedIn', 'whatsapp' => 'WhatsApp', 'telegram' => 'Telegram'] as $key => $label)
+                                        @if (!empty($socials[$key]))
+                                            <div class="flex items-center gap-2.5">
+                                                <span class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="{{ $socialIcons[$key] }}"/></svg>
+                                                </span>
+                                                <div class="min-w-0">
+                                                    <dt class="text-xs font-medium text-gray-400">{{ $label }}</dt>
+                                                    <dd class="text-sm text-gray-800 truncate">{{ $socials[$key] }}</dd>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
                             @endif
-                        </dl>
+                        </div>
+
+                        {{-- Physical & personal details --}}
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                                <h3 class="text-sm font-semibold text-gray-900 mb-4">Physical Details</h3>
+                                <dl class="grid grid-cols-2 gap-x-6 gap-y-4">
+                                    <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Height</dt><dd class="mt-1 text-sm text-gray-800">{{ isset($physical['height_cm']) ? $physical['height_cm'] . ' cm' : '—' }}</dd></div>
+                                    <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Weight</dt><dd class="mt-1 text-sm text-gray-800">{{ isset($physical['weight_kg']) ? $physical['weight_kg'] . ' kg' : '—' }}</dd></div>
+                                    <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Blood Group</dt><dd class="mt-1 text-sm text-gray-800">{{ $physical['blood_group'] ?? '—' }}</dd></div>
+                                </dl>
+                            </div>
+                            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                                <h3 class="text-sm font-semibold text-gray-900 mb-4">Personal Details</h3>
+                                <dl class="grid grid-cols-2 gap-x-6 gap-y-4">
+                                    <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Occupation</dt><dd class="mt-1 text-sm text-gray-800">{{ $personal['occupation'] ?? '—' }}</dd></div>
+                                    <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Marital Status</dt><dd class="mt-1 text-sm text-gray-800">{{ $personal['marital_status'] ?? '—' }}</dd></div>
+                                    <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Nationality</dt><dd class="mt-1 text-sm text-gray-800">{{ $personal['nationality'] ?? '—' }}</dd></div>
+                                    <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">NID Number</dt><dd class="mt-1 text-sm text-gray-800 font-mono">{{ $personal['nid_number'] ?? '—' }}</dd></div>
+                                    <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">Anniversary</dt><dd class="mt-1 text-sm text-gray-800">{{ !empty($personal['anniversary_date']) ? \Illuminate\Support\Carbon::parse($personal['anniversary_date'])->format('d M Y') : '—' }}</dd></div>
+                                </dl>
+                            </div>
+                        </div>
+
+                        {{-- Custom fields (admin-added, no fixed schema) — managed inline, independent of the Edit Customer modal --}}
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-sm font-semibold text-gray-900">Custom Fields</h3>
+                                @if (!$customFieldsEditing)
+                                    <button wire:click="openCustomFieldsEditor" type="button" class="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/>
+                                        </svg>
+                                        Manage
+                                    </button>
+                                @endif
+                            </div>
+
+                            @php $custom = $meta['custom'] ?? []; @endphp
+
+                            @if (!$customFieldsEditing)
+                                @if (empty($custom))
+                                    <p class="text-sm text-gray-400">No custom fields added yet. Click "Manage" to add any information not covered above.</p>
+                                @else
+                                    <dl class="grid grid-cols-2 gap-x-8 gap-y-4">
+                                        @foreach ($custom as $key => $value)
+                                            <div><dt class="text-xs font-medium text-gray-400 uppercase tracking-wide">{{ $key }}</dt><dd class="mt-1 text-sm text-gray-800">{{ $value }}</dd></div>
+                                        @endforeach
+                                    </dl>
+                                @endif
+                            @else
+                                <div wire:key="custom-fields-editor">
+                                    @error('editCustomFields') <p class="text-xs text-red-500 mb-2">{{ $message }}</p> @enderror
+                                    <div class="space-y-2">
+                                        @forelse ($editCustomFields as $i => $field)
+                                            <div class="flex items-start gap-2" wire:key="custom-field-{{ $i }}">
+                                                <div class="flex-1">
+                                                    <input wire:model="editCustomFields.{{ $i }}.key" type="text" placeholder="Field name" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                                    @error('editCustomFields.' . $i . '.key') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                                </div>
+                                                <div class="flex-1">
+                                                    <input wire:model="editCustomFields.{{ $i }}.value" type="text" placeholder="Value" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                                    @error('editCustomFields.' . $i . '.value') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                                </div>
+                                                <button wire:click="removeCustomField({{ $i }})" type="button" class="w-9 h-9 shrink-0 flex items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        @empty
+                                            <p class="text-sm text-gray-400">No custom fields yet. Click "Add Field" below to add anything not covered above.</p>
+                                        @endforelse
+                                    </div>
+
+                                    <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                                        <button wire:click="addCustomField" type="button" class="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                                            </svg>
+                                            Add Field
+                                        </button>
+                                        <div class="flex items-center gap-2">
+                                            <button wire:click="cancelCustomFieldsEditor" type="button" class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
+                                            <button wire:click="saveCustomFields" type="button" class="px-4 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">Save</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- Notes --}}
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                            <h3 class="text-sm font-semibold text-gray-900 mb-4">Notes</h3>
+                            <p class="text-sm text-gray-600 whitespace-pre-line">{{ $customer->notes ?? 'No notes added yet.' }}</p>
+                        </div>
                     </div>
                 @else
                     @include('livewire.admin.users.partials.no-customer')
@@ -665,6 +801,18 @@
                 @endif
             @endif
 
+            @if($tab === 'marketing')
+                @if($customer || $user)
+                    @livewire('admin.users.user-marketing', [
+                        'customerId' => $customer?->id,
+                        'userId' => $user?->id,
+                        'deviceIds' => $deviceIds->all(),
+                    ], key('user-marketing-' . ($customer?->id ?? 'none') . '-' . ($user?->id ?? 'none')))
+                @else
+                    @include('livewire.admin.users.partials.no-customer')
+                @endif
+            @endif
+
             @if($tab === 'blocks')
                 @if($customer || $user)
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
@@ -850,7 +998,7 @@
     @if($customer)
     <div x-cloak x-data="{ open: @entangle('editModal') }" x-show="open" x-transition
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog">
-        <div class="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col" @click.outside="open = false">
+        <div class="w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col" @click.outside="open = false">
             <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100 shrink-0">
                 <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -921,6 +1069,114 @@
                         </select>
                     </div>
                 </div>
+
+                {{-- Social profiles --}}
+                <div class="pt-2 border-t border-gray-100">
+                    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Social Profiles</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Facebook</label>
+                            <input wire:model="editFacebook" type="text" placeholder="facebook.com/username" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            @error('editFacebook') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Instagram</label>
+                            <input wire:model="editInstagram" type="text" placeholder="@username" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            @error('editInstagram') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Twitter / X</label>
+                            <input wire:model="editTwitter" type="text" placeholder="@username" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            @error('editTwitter') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">LinkedIn</label>
+                            <input wire:model="editLinkedin" type="text" placeholder="linkedin.com/in/username" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            @error('editLinkedin') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">WhatsApp</label>
+                            <input wire:model="editWhatsapp" type="text" placeholder="+8801XXXXXXXXX" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            @error('editWhatsapp') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Telegram</label>
+                            <input wire:model="editTelegram" type="text" placeholder="@username" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            @error('editTelegram') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Physical details --}}
+                <div class="pt-2 border-t border-gray-100">
+                    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Physical Details</h3>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Height (cm)</label>
+                            <input wire:model="editHeightCm" type="number" step="0.1" min="0" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            @error('editHeightCm') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Weight (kg)</label>
+                            <input wire:model="editWeightKg" type="number" step="0.1" min="0" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            @error('editWeightKg') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Blood Group</label>
+                            <select wire:model="editBloodGroup" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                <option value="">— Unknown —</option>
+                                @foreach (['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as $bg)
+                                    <option value="{{ $bg }}">{{ $bg }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Personal details --}}
+                <div class="pt-2 border-t border-gray-100">
+                    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Personal Details</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Occupation</label>
+                            <input wire:model="editOccupation" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            @error('editOccupation') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Marital Status</label>
+                            <select wire:model="editMaritalStatus" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                <option value="">— Not specified —</option>
+                                <option value="Single">Single</option>
+                                <option value="Married">Married</option>
+                                <option value="Divorced">Divorced</option>
+                                <option value="Widowed">Widowed</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Nationality</label>
+                            <input wire:model="editNationality" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            @error('editNationality') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">NID Number</label>
+                            <input wire:model="editNidNumber" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            @error('editNidNumber') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Anniversary Date</label>
+                            <input wire:model="editAnniversaryDate" type="date" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            @error('editAnniversaryDate') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Notes --}}
+                <div class="pt-2 border-t border-gray-100">
+                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Notes</label>
+                    <textarea wire:model="editNotes" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"></textarea>
+                    @error('editNotes') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                </div>
+
                 <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
                     <button @click="open = false" type="button" class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
                     <button type="submit" class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">Save Changes</button>

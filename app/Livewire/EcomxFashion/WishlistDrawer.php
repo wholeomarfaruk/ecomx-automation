@@ -22,7 +22,7 @@ class WishlistDrawer extends Component
 
         return WishlistItem::query()
             ->forDevice($device)
-            ->with(['product', 'variant.values.productAttributeValue.attributeValue.attribute'])
+            ->with(['product', 'variant.values.productAttributeValue.attributeValue.attribute', 'variant.media'])
             ->latest()
             ->get();
     }

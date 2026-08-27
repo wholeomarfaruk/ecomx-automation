@@ -3,6 +3,7 @@
     $productUrl = $product['url'] ?? route('ecomx-fashion.product', $product['slug'] ?? '');
     $productId = $product['id'] ?? null;
     $isWished = $product['is_wished'] ?? false;
+    $hasSale = !empty($product['sale']);
 @endphp
 <div class="pcard" x-data="{ added:false }">
     <a href="{{ $productUrl }}" class="pcard__media">
@@ -15,12 +16,16 @@
         @endif
     </a>
     <div class="pcard__body">
+        <a href="{{ $productUrl }}" class="pcard__name">{{ $product['name'] }}</a>
         <div class="pcard__row">
-            <a href="{{ $productUrl }}" class="pcard__name">{{ $product['name'] }}</a>
-            <span class="price">৳{{ number_format($product['price']) }}</span>
-        </div>
-        <div class="pcard__row">
-            <span class="muted" style="font-size:12px">{{ $product['cat'] }}</span>
+            @if ($hasSale)
+                <span style="display:flex;gap:8px;align-items:baseline">
+                    <span class="price">৳{{ number_format($product['sale']) }}</span>
+                    <span class="price price--old">৳{{ number_format($product['price']) }}</span>
+                </span>
+            @else
+                <span class="price">৳{{ number_format($product['price']) }}</span>
+            @endif
             <div class="pcard__swatches">
                 @foreach($product['colors'] as $col)<span class="pcard__swatch" style="background:{{ $col }}"></span>@endforeach
             </div>

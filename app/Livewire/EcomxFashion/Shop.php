@@ -9,12 +9,10 @@ use App\Models\Product;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 #[Layout('ecomx-fashion.layouts.ecomx_fashion')]
 class Shop extends Component
 {
-    use WithPagination;
     use TogglesWishlist;
 
     protected const DEFAULT_MAX_PRICE = 15000;
@@ -26,6 +24,8 @@ class Shop extends Component
     #[Url(as: 'price')] public int $maxPrice = self::DEFAULT_MAX_PRICE;
     #[Url] public string $sort = 'Featured';
     #[Url] public string $q = '';
+
+    public int $perPage = self::PER_PAGE;
 
     public array $allCats = [];
     public array $allSizes = [];
@@ -46,33 +46,38 @@ class Shop extends Component
     public function updating($property): void
     {
         if (in_array($property, ['cats', 'sizes', 'offers', 'maxPrice', 'sort', 'q'], true)) {
-            $this->resetPage();
+            $this->perPage = static::PER_PAGE;
         }
     }
 
     public function toggleCat(string $c): void
     {
         $this->cats = in_array($c, $this->cats) ? array_values(array_diff($this->cats, [$c])) : [...$this->cats, $c];
-        $this->resetPage();
+        $this->perPage = static::PER_PAGE;
     }
 
     public function toggleSize(string $s): void
     {
         $this->sizes = in_array($s, $this->sizes) ? array_values(array_diff($this->sizes, [$s])) : [...$this->sizes, $s];
-        $this->resetPage();
+        $this->perPage = static::PER_PAGE;
     }
 
     public function toggleOffer(string $o): void
     {
         $this->offers = in_array($o, $this->offers) ? array_values(array_diff($this->offers, [$o])) : [...$this->offers, $o];
-        $this->resetPage();
+        $this->perPage = static::PER_PAGE;
     }
 
     public function clearAll(): void
     {
         $this->reset('cats', 'sizes', 'offers', 'q');
         $this->maxPrice = static::DEFAULT_MAX_PRICE;
-        $this->resetPage();
+        $this->perPage = static::PER_PAGE;
+    }
+
+    public function loadMore(): void
+    {
+        $this->perPage += static::PER_PAGE;
     }
 
     protected function query()
@@ -102,11 +107,17 @@ class Shop extends Component
         };
     }
 
+    public function getTotalProperty(): int
+    {
+        return $this->query()->count();
+    }
+
     public function getItemsProperty()
     {
         return $this->query()
             ->with(['categories', 'variants.values.productAttributeValue.attributeValue.attribute'])
-            ->paginate(static::PER_PAGE);
+            ->limit($this->perPage)
+            ->get();
     }
 
     protected function mapProduct(Product $p): array
@@ -124,6 +135,7 @@ class Shop extends Component
             'name' => $p->name,
             'url' => $p->url,
             'price' => (float) $p->price,
+            'sale' => $p->sale_price !== null ? (float) $p->sale_price : null,
             'tag' => $p->sale_price !== null ? 'Sale' : '',
             'cat' => $p->categories->first()->name ?? '',
             'img' => $p->featured_image,
@@ -134,11 +146,13 @@ class Shop extends Component
 
     public function render()
     {
-        $paginated = $this->items;
+        $items = $this->items;
+        $total = $this->total;
 
         return view('ecomx-fashion.livewire.shop', [
-            'items' => $paginated->getCollection()->map(fn (Product $p) => $this->mapProduct($p))->all(),
-            'paginator' => $paginated,
+            'items' => $items->map(fn (Product $p) => $this->mapProduct($p))->all(),
+            'total' => $total,
+            'hasMore' => $items->count() < $total,
         ]);
     }
 }

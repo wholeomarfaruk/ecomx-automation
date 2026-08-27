@@ -2,10 +2,11 @@
 
 namespace App\Livewire\EcomxFashion;
 
-use App\CAPI\AddToCartEvent;
-use App\Jobs\SendMetaCapiEventJob;
+use App\Marketing\Events\AddToCart as AddToCartEvent;
+use App\Marketing\Services\MarketingEventService;
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\Device;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use Livewire\Attributes\On;
@@ -27,7 +28,7 @@ class CartManager extends Component
     public function mount()
     {
         $this->cart = $this->getCart();
-        $this->cart->load('items.product', 'items.variant.values.productAttributeValue.attributeValue.attribute');
+        $this->cart->load('items.product', 'items.variant.values.productAttributeValue.attributeValue.attribute', 'items.variant.media');
         $this->refreshBadge();
     }
 
@@ -120,41 +121,39 @@ class CartManager extends Component
         $this->updateCartTotals($cart);
         $this->refreshBadgeAndOpenDrawer();
 
-        // Meta CAPI AddToCart Event
-        $categoryName = $product->categories->first()->name ?? null;
-        $segment = $categoryName ? strtolower($categoryName) : null;
-        $itemTotal = $item->quantity * $item->price;
-
-        $contents = [[
-            'id' => $item->product_id,
-            'quantity' => $item->quantity,
-            'item_price' => $item->price,
-        ]];
-        $ecommerce = [
-            'currency' => 'BDT',
-            'value' => $itemTotal,
-            'delivery_category' => 'home_delivery',
-            'contents' => $contents,
-        ];
-        $thisAddToCartEvent = new AddToCartEvent();
-        $thisAddToCartEvent->push(
-            null,
-            currency: 'BDT',
-            contentPrice: $itemTotal,
-            contentId: $item->product_id,
-            contentName: $product->name,
-            contentType: 'product',
-            contentCategory: $segment,
-        );
-        $currentUrl = request()->headers->get('referer');
-        $thisAddToCartEvent->set('event_source_url', $currentUrl);
-        $thisAddToCartEvent->set('contents', $contents);
-        $thisAddToCartEvent->set('ecommerce', $ecommerce);
-        SendMetaCapiEventJob::dispatch($thisAddToCartEvent->serverPayload())->onQueue(env('META_CAPI_QUEUE', 'metacapi'));
-        $browserEventPayload = $thisAddToCartEvent->browserEventPayload();
-        $this->dispatch('add-to-cart-event', payload: $browserEventPayload);
+        $this->recordAddToCart($product, $item);
 
         $this->dispatch('notify', type: 'success', message: 'Added to cart successfully.');
+    }
+
+    private function recordAddToCart(Product $product, CartItem $item): void
+    {
+        /** @var Device|null $device */
+        $device = request()->attributes->get('device');
+
+        if (! $device) {
+            return;
+        }
+
+        $event = AddToCartEvent::create(
+            contentId: $item->product_id,
+            contentName: $product->name,
+            quantity: $item->quantity,
+            value: (float) ($item->quantity * $item->price),
+            currency: 'BDT',
+        );
+
+        $result = app(MarketingEventService::class)->recordForCurrentRequest(
+            event: $event,
+            device: $device,
+            customer: auth()->check() ? auth()->user()->customer : null,
+        );
+
+        // Mid-request Livewire action (AJAX, not a full page load) — the
+        // pending-events blade component only fires on a fresh render, so
+        // the payload is pushed via a browser event instead (see
+        // Livewire.on('marketing-event', ...) in app.js).
+        $this->dispatch('marketing-event', payload: $result['browserPayload']);
     }
 
     #[On('cart-clear')]

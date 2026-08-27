@@ -6,6 +6,7 @@ use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\OrderStatus;
 use App\Enums\Sales\PaymentStatus;
 use App\Enums\Sales\FulfillmentStatus;
+use App\Exceptions\Inventory\InsufficientStockException;
 use App\Exceptions\Sales\CouponNotApplicableException;
 use App\Models\Combo;
 use App\Models\Coupon;
@@ -14,7 +15,10 @@ use App\Models\DeliveryAddress;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Setting;
 use App\Services\CouponShippingService;
+use App\Services\StockService;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class OrderCreate extends Component
@@ -230,71 +234,88 @@ class OrderCreate extends Component
     {
         $this->validate();
 
-        $order = Order::create([
-            'customer_id'         => $this->customerId ?: null,
-            'source'              => $this->source,
-            'status'              => $this->status,
-            'payment_status'      => $this->paymentStatus,
-            'fulfillment_status'  => $this->fulfillmentStatus,
-            'discount_amount'     => $this->discountAmount ?: 0,
-            'shipping_amount'     => $this->shippingAmount ?: 0,
-            'tax_amount'          => $this->taxAmount ?: 0,
-            'customer_note'       => $this->customerNote ?: null,
-            'admin_note'          => $this->adminNote ?: null,
-            'billing_address_id'  => $this->billingAddressId ?: null,
-            'shipping_address_id' => $this->shippingAddressId ?: null,
-            'placed_at'           => now(),
-        ]);
+        try {
+            $order = DB::transaction(function () {
+                $order = Order::create([
+                    'customer_id'         => $this->customerId ?: null,
+                    'source'              => $this->source,
+                    'status'              => $this->status,
+                    'payment_status'      => $this->paymentStatus,
+                    'fulfillment_status'  => $this->fulfillmentStatus,
+                    'discount_amount'     => $this->discountAmount ?: 0,
+                    'shipping_amount'     => $this->shippingAmount ?: 0,
+                    'tax_amount'          => $this->taxAmount ?: 0,
+                    'customer_note'       => $this->customerNote ?: null,
+                    'admin_note'          => $this->adminNote ?: null,
+                    'billing_address_id'  => $this->billingAddressId ?: null,
+                    'shipping_address_id' => $this->shippingAddressId ?: null,
+                    'placed_at'           => now(),
+                    'confirmed_at'        => $this->status === 'confirmed' ? now() : null,
+                ]);
 
-        foreach ($this->items as $item) {
-            $productName  = null;
-            $variantName  = null;
-            $sku          = null;
+                foreach ($this->items as $item) {
+                    $productName  = null;
+                    $variantName  = null;
+                    $sku          = null;
 
-            if ($item['kind'] === 'combo') {
-                $combo = Combo::find($item['combo_id']);
-                $productName = $combo?->name ?? "Custom Combo #{$item['combo_id']}";
-            } else {
-                $product = Product::find($item['product_id']);
-                $productName = $product?->name ?? 'Unknown product';
-                $sku = $product?->code;
+                    if ($item['kind'] === 'combo') {
+                        $combo = Combo::find($item['combo_id']);
+                        $productName = $combo?->name ?? "Custom Combo #{$item['combo_id']}";
+                    } else {
+                        $product = Product::find($item['product_id']);
+                        $productName = $product?->name ?? 'Unknown product';
+                        $sku = $product?->code;
 
-                if ($item['variant_id']) {
-                    $variant = ProductVariant::find($item['variant_id']);
-                    $variantName = $variant?->sku;
-                    $sku = $variant?->sku ?? $sku;
+                        if ($item['variant_id']) {
+                            $variant = ProductVariant::find($item['variant_id']);
+                            $variantName = $variant?->sku;
+                            $sku = $variant?->sku ?? $sku;
+                        }
+                    }
+
+                    $quantity  = (float) $item['quantity'];
+                    $unitPrice = $item['is_gift'] ? 0 : (float) $item['unit_price'];
+
+                    $order->items()->create([
+                        'product_id'     => $item['product_id'] ?: null,
+                        'variant_id'     => $item['variant_id'] ?: null,
+                        'combo_id'       => $item['combo_id'] ?: null,
+                        'is_gift'        => $item['is_gift'],
+                        'product_name'   => $productName,
+                        'variant_name'   => $variantName,
+                        'sku'            => $sku,
+                        'quantity'       => $quantity,
+                        'unit_price'     => $unitPrice,
+                        'purchase_price' => $item['purchase_price'] !== '' ? $item['purchase_price'] : null,
+                        'total_amount'   => $unitPrice * $quantity,
+                    ]);
                 }
-            }
 
-            $quantity  = (float) $item['quantity'];
-            $unitPrice = $item['is_gift'] ? 0 : (float) $item['unit_price'];
+                if ($this->couponCode !== '' && $this->couponError === '') {
+                    try {
+                        app(CouponShippingService::class)->applyToOrder($order, $this->couponCode);
+                    } catch (CouponNotApplicableException $e) {
+                        // Coupon became invalid between preview and save (e.g. usage
+                        // limit reached by a concurrent order) — proceed without it
+                        // rather than losing the order the admin just built.
+                        $order->recalculateTotals();
+                    }
+                } else {
+                    $order->recalculateTotals();
+                }
 
-            $order->items()->create([
-                'product_id'     => $item['product_id'] ?: null,
-                'variant_id'     => $item['variant_id'] ?: null,
-                'combo_id'       => $item['combo_id'] ?: null,
-                'is_gift'        => $item['is_gift'],
-                'product_name'   => $productName,
-                'variant_name'   => $variantName,
-                'sku'            => $sku,
-                'quantity'       => $quantity,
-                'unit_price'     => $unitPrice,
-                'purchase_price' => $item['purchase_price'] !== '' ? $item['purchase_price'] : null,
-                'total_amount'   => $unitPrice * $quantity,
-            ]);
-        }
+                $deductOnConfirm = (bool) Setting::get('deduct_on_order_confirm', true, 'inventory');
 
-        if ($this->couponCode !== '' && $this->couponError === '') {
-            try {
-                app(CouponShippingService::class)->applyToOrder($order, $this->couponCode);
-            } catch (CouponNotApplicableException $e) {
-                // Coupon became invalid between preview and save (e.g. usage
-                // limit reached by a concurrent order) — proceed without it
-                // rather than losing the order the admin just built.
-                $order->recalculateTotals();
-            }
-        } else {
-            $order->recalculateTotals();
+                if ($deductOnConfirm && $this->status === 'confirmed') {
+                    $order->load('items');
+                    app(StockService::class)->commitOrder($order);
+                }
+
+                return $order;
+            });
+        } catch (InsufficientStockException $e) {
+            $this->addError('items', $e->getMessage());
+            return;
         }
 
         activity('sales')

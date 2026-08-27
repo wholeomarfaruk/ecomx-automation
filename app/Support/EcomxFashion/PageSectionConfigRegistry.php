@@ -3,29 +3,50 @@
 namespace App\Support\EcomxFashion;
 
 /**
- * File-backed (no DB) registry of per-section field config (arbitrary JSON,
- * shaped per section's field schema — see SectionSchema). Storage:
- * resources/{active theme}/config/section-config.json, keyed by "{page}.{section}".
- * Mirrors PageSectionRegistry's read/write pattern (flock + atomic rename).
+ * File-backed (no DB) registry of per-section field *data* (arbitrary JSON,
+ * shaped per section's field schema — see SectionSchema, which stays under
+ * resources/{theme}/config/ as it's code-level field definitions, not data).
+ *
+ * Storage: one file per "{page}.{section}" under
+ * public/storage/frontend/{active theme}/{page}.{section}.json — i.e.
+ * storage/app/public/frontend/{theme}/... on disk, symlinked to public/storage
+ * by `php artisan storage:link`. Deliberately public/ (not resources/) and
+ * split per-section (not one combined file) so content edits are visible
+ * assets independent of the codebase and never require a project deploy to
+ * take effect, and a re-save of one section can't race a concurrent save of
+ * another.
+ *
+ * Reads/writes use flock() so concurrent admin requests can't interleave and
+ * corrupt a file; writes go to a temp file first and are renamed into place
+ * (atomic on the same filesystem) so a crash mid-write never leaves a
+ * half-written JSON file behind.
  */
 class PageSectionConfigRegistry
 {
-    protected static function path(): string
+    protected static function directory(): string
     {
-        return ActiveTheme::resourcePath('config/section-config.json');
+        return storage_path('app/public/frontend/' . ActiveTheme::slug());
     }
 
-    protected static function read(): array
+    protected static function storageKey(string $page, string $section): string
     {
-        $path = static::path();
+        return $page . '.' . $section;
+    }
 
+    protected static function path(string $page, string $section): string
+    {
+        return static::directory() . '/' . static::storageKey($page, $section) . '.json';
+    }
+
+    protected static function readFile(string $path): ?array
+    {
         if (! file_exists($path)) {
-            return [];
+            return null;
         }
 
         $handle = fopen($path, 'r');
         if ($handle === false) {
-            return [];
+            return null;
         }
 
         try {
@@ -38,12 +59,11 @@ class PageSectionConfigRegistry
 
         $data = json_decode($contents, true);
 
-        return is_array($data) ? $data : [];
+        return is_array($data) ? $data : null;
     }
 
-    protected static function write(array $data): void
+    protected static function writeFile(string $path, array $data): void
     {
-        $path = static::path();
         $dir = dirname($path);
 
         if (! is_dir($dir)) {
@@ -55,22 +75,14 @@ class PageSectionConfigRegistry
         rename($tmp, $path);
     }
 
-    protected static function storageKey(string $page, string $section): string
-    {
-        return $page . '.' . $section;
-    }
-
     /** Saved config for a page's section, or null if never configured. */
     public static function find(string $page, string $section): ?array
     {
-        return static::read()[static::storageKey($page, $section)] ?? null;
+        return static::readFile(static::path($page, $section));
     }
 
     public static function save(string $page, string $section, array $config): void
     {
-        $data = static::read();
-        $data[static::storageKey($page, $section)] = $config;
-
-        static::write($data);
+        static::writeFile(static::path($page, $section), $config);
     }
 }

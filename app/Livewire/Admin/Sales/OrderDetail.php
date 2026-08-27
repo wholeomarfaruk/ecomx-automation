@@ -6,7 +6,11 @@ use App\Enums\Sales\CourierStatus;
 use App\Enums\Sales\FulfillmentStatus;
 use App\Enums\Sales\OrderStatus;
 use App\Enums\Sales\PaymentStatus;
+use App\Exceptions\Inventory\InsufficientStockException;
 use App\Models\Order;
+use App\Models\Setting;
+use App\Services\StockService;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class OrderDetail extends Component
@@ -52,13 +56,31 @@ class OrderDetail extends Component
 
     public function updateStatus(): void
     {
-        $order = Order::findOrFail($this->orderId);
+        $order = Order::with('items')->findOrFail($this->orderId);
+        $previousStatus = $order->status->value;
+        $stockService = app(StockService::class);
 
-        $order->update([
-            'status'             => $this->status,
-            'payment_status'     => $this->paymentStatus,
-            'fulfillment_status' => $this->fulfillmentStatus,
-        ]);
+        try {
+            DB::transaction(function () use ($order, $previousStatus, $stockService) {
+                $order->update([
+                    'status'             => $this->status,
+                    'payment_status'     => $this->paymentStatus,
+                    'fulfillment_status' => $this->fulfillmentStatus,
+                ]);
+
+                $deductOnConfirm = (bool) Setting::get('deduct_on_order_confirm', true, 'inventory');
+                $restockOnRelease = (bool) Setting::get('restock_on_cancel_or_return', true, 'inventory');
+
+                if ($deductOnConfirm && $this->status === 'confirmed' && $previousStatus !== 'confirmed') {
+                    $stockService->commitOrder($order);
+                } elseif ($restockOnRelease && in_array($this->status, ['cancelled', 'returned'], true) && $previousStatus === 'confirmed') {
+                    $stockService->releaseOrder($order);
+                }
+            });
+        } catch (InsufficientStockException $e) {
+            $this->dispatch('toast', ['type' => 'error', 'message' => $e->getMessage()]);
+            return;
+        }
 
         activity('sales')
             ->causedBy(auth()->user())
@@ -133,14 +155,22 @@ class OrderDetail extends Component
     public function saveReturns(): void
     {
         $order = Order::with('items')->findOrFail($this->orderId);
+        $stockService = app(StockService::class);
+        $restockOnReturn = (bool) Setting::get('restock_on_cancel_or_return', true, 'inventory');
 
-        foreach ($order->items as $item) {
-            $value = $this->returnedQuantities[$item->id] ?? '0';
-            $qty   = min((float) $value, (float) $item->quantity);
-            $qty   = max(0, $qty);
+        DB::transaction(function () use ($order, $stockService, $restockOnReturn) {
+            foreach ($order->items as $item) {
+                $value = $this->returnedQuantities[$item->id] ?? '0';
+                $qty   = min((float) $value, (float) $item->quantity);
+                $qty   = max(0, $qty);
 
-            $item->update(['returned_quantity' => $qty]);
-        }
+                $item->update(['returned_quantity' => $qty]);
+
+                if ($restockOnReturn && $qty > 0) {
+                    $stockService->restockReturnedItem($item, $qty);
+                }
+            }
+        });
 
         $order->syncReturnStatus();
         $this->status = $order->fresh()->status->value;

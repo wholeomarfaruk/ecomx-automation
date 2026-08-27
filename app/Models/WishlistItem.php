@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasDisplayImage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class WishlistItem extends Model
 {
+    use HasDisplayImage;
+
     protected $fillable = [
         'wishlist_id', 'product_id', 'variant_id',
     ];

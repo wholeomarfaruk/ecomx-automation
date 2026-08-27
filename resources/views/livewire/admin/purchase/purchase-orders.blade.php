@@ -16,13 +16,13 @@
                 <p class="text-xl font-semibold text-emerald-600 mt-0.5">{{ $receivedCount }}</p>
             </div>
         </div>
-        <button wire:click="openCreateModal" type="button"
+        <a href="{{ route('admin.purchase.orders.create') }}" wire:navigate
             class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition shadow-sm shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
             </svg>
             New Purchase Order
-        </button>
+        </a>
     </div>
 
     {{-- Card --}}
@@ -60,8 +60,7 @@
                     <tr class="border-b border-gray-100 bg-gray-50/40">
                         <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Order</th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Supplier</th>
-                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Product</th>
-                        <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Qty</th>
+                        <th class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Items</th>
                         <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Total</th>
                         <th class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                         <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
@@ -76,7 +75,7 @@
                                 'cancelled' => 'bg-red-50 text-red-500',
                             ];
                         @endphp
-                        <tr class="hover:bg-gray-50/50 transition">
+                        <tr class="hover:bg-gray-50/50 transition cursor-pointer" onclick="window.location='{{ route('admin.purchase.orders.edit', $order->id) }}'">
                             <td class="px-5 py-3">
                                 <span class="text-sm font-medium text-gray-800 font-mono">{{ $order->order_number }}</span>
                                 @if($order->deadline)
@@ -84,55 +83,49 @@
                                 @endif
                             </td>
                             <td class="px-5 py-3">
-                                <a href="{{ route('admin.purchase.suppliers.ledger', $order->supplier_id) }}" wire:navigate class="text-sm text-gray-600 hover:text-indigo-600 hover:underline">
+                                <a href="{{ route('admin.purchase.suppliers.ledger', $order->supplier_id) }}" wire:navigate onclick="event.stopPropagation()" class="text-sm text-gray-600 hover:text-indigo-600 hover:underline">
                                     {{ $order->supplier->name }}
                                 </a>
                             </td>
-                            <td class="px-5 py-3">
-                                <span class="text-sm text-gray-600">{{ $order->variant->product->name }}</span>
-                                <span class="block text-xs font-mono text-gray-400">{{ $order->variant->sku }}</span>
+                            <td class="px-5 py-3 text-center">
+                                <span class="text-sm text-gray-600">{{ $order->items_count }} {{ $order->items_count === 1 ? 'item' : 'items' }}</span>
                             </td>
                             <td class="px-5 py-3 text-right">
-                                <span class="text-sm text-gray-700">{{ rtrim(rtrim(number_format($order->quantity, 3), '0'), '.') }}</span>
-                            </td>
-                            <td class="px-5 py-3 text-right">
-                                <span class="text-sm font-medium text-gray-800">{{ $order->total_amount ? number_format($order->total_amount, 2) : '—' }}</span>
+                                <span class="text-sm font-medium text-gray-800">{{ number_format($order->total_amount, 2) }}</span>
                             </td>
                             <td class="px-5 py-3 text-center">
-                                <div class="flex items-center justify-center gap-1">
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize {{ $statusStyles[$order->status] ?? 'bg-gray-100 text-gray-500' }}">
-                                        {{ $order->status }}
-                                    </span>
-                                    @if($order->status === 'pending')
-                                        <div x-data="{ open: false }" class="relative">
-                                            <button @click="open = !open" type="button" class="text-gray-400 hover:text-gray-600 transition">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                                                </svg>
-                                            </button>
-                                            <div x-show="open" x-cloak @click.outside="open = false" x-transition
-                                                class="absolute right-0 mt-1 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-10 py-1">
-                                                <button wire:click="setStatus({{ $order->id }}, 'received')" type="button"
-                                                    class="w-full text-left px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50">Mark Received</button>
-                                                <button wire:click="setStatus({{ $order->id }}, 'cancelled')" type="button"
-                                                    class="w-full text-left px-3 py-1.5 text-xs text-red-500 hover:bg-red-50">Cancel Order</button>
-                                            </div>
-                                        </div>
-                                    @endif
-                                </div>
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize {{ $statusStyles[$order->status] ?? 'bg-gray-100 text-gray-500' }}">
+                                    {{ $order->status }}
+                                </span>
                             </td>
-                            <td class="px-5 py-3">
+                            <td class="px-5 py-3" onclick="event.stopPropagation()">
                                 <div class="flex items-center justify-end gap-1">
-                                    <button wire:click="editOrder({{ $order->id }})" type="button"
+                                    <a href="{{ route('admin.purchase.orders.edit', $order->id) }}" wire:navigate
                                         class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/>
                                         </svg>
-                                    </button>
+                                    </a>
+                                    @if($order->status === 'pending')
+                                        <button type="button" x-data
+                                            @click="Swal.fire({
+                                                title: 'Cancel purchase order?',
+                                                text: '{{ $order->order_number }} will be marked cancelled.',
+                                                icon: 'warning',
+                                                showCancelButton: true,
+                                                confirmButtonColor: '#ef4444',
+                                                confirmButtonText: 'Cancel Order'
+                                            }).then(r => { if (r.isConfirmed) $wire.cancelOrder({{ $order->id }}) })"
+                                            class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:bg-amber-50 hover:text-amber-600 transition">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636"/>
+                                            </svg>
+                                        </button>
+                                    @endif
                                     <button type="button" x-data
                                         @click="Swal.fire({
                                             title: 'Delete purchase order?',
-                                            text: '{{ $order->order_number }} will be removed permanently.',
+                                            text: '{{ $order->order_number }} and its items will be removed permanently.',
                                             icon: 'warning',
                                             showCancelButton: true,
                                             confirmButtonColor: '#ef4444',
@@ -148,7 +141,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-5 py-16 text-center">
+                            <td colspan="6" class="px-5 py-16 text-center">
                                 <div class="flex flex-col items-center gap-3">
                                     <div class="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -159,10 +152,10 @@
                                         <p class="text-sm font-semibold text-gray-700">No purchase orders found</p>
                                         <p class="text-xs text-gray-400 mt-0.5">Try adjusting filters or create a new order</p>
                                     </div>
-                                    <button wire:click="openCreateModal"
+                                    <a href="{{ route('admin.purchase.orders.create') }}" wire:navigate
                                         class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">
                                         New Purchase Order
-                                    </button>
+                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -176,127 +169,6 @@
                 {{ $orders->links() }}
             </div>
         @endif
-    </div>
-
-    {{-- Create/Edit Modal --}}
-    <div x-cloak x-data="{ open: @entangle('formModal') }" x-show="open" x-transition
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog">
-        <div class="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col" @click.outside="open = false">
-
-            <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100 shrink-0">
-                <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-                    </svg>
-                </div>
-                <div class="flex-1">
-                    <h2 class="text-base font-semibold text-gray-900">{{ $editingId ? 'Edit Purchase Order' : 'New Purchase Order' }}</h2>
-                </div>
-                <button @click="open = false" type="button" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="overflow-y-auto px-6 py-5 space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Order Number <span class="text-red-500">*</span></label>
-                        <input wire:model="orderNumber" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                        @error('orderNumber') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Supplier <span class="text-red-500">*</span></label>
-                        <select wire:model="supplierId" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                            <option value="">— Select —</option>
-                            @foreach($suppliers as $supplier)
-                                <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
-                            @endforeach
-                        </select>
-                        @error('supplierId') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Product Variant <span class="text-red-500">*</span></label>
-                    @if($variantLabel)
-                        <div class="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2.5 bg-gray-50/60">
-                            <span class="text-sm text-gray-700">{{ $variantLabel }}</span>
-                            <button wire:click="$set('variantLabel', '')" type="button" class="text-gray-400 hover:text-red-500 transition">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
-                                </svg>
-                            </button>
-                        </div>
-                    @else
-                        <input wire:model.live.debounce.300ms="variantSearch" type="text" placeholder="Search product by name or SKU…"
-                            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                        @if($variantSearch !== '')
-                            <div class="mt-2 border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-40 overflow-y-auto">
-                                @forelse($variantOptions as $variant)
-                                    <button wire:click="selectVariant({{ $variant->id }})" type="button"
-                                        class="w-full flex items-center justify-between px-3 py-2 hover:bg-gray-50 transition text-left">
-                                        <div>
-                                            <span class="text-sm text-gray-800">{{ $variant->product->name }}</span>
-                                            <span class="block text-xs font-mono text-gray-400">{{ $variant->sku }}</span>
-                                        </div>
-                                    </button>
-                                @empty
-                                    <p class="px-3 py-2 text-xs text-gray-400">No matching variants.</p>
-                                @endforelse
-                            </div>
-                        @endif
-                    @endif
-                    @error('variantId') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Quantity <span class="text-red-500">*</span></label>
-                        <input wire:model.live="quantity" type="number" step="0.001" min="0"
-                            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                        @error('quantity') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Unit Price</label>
-                        <input wire:model.live="unitPrice" type="number" step="0.01" min="0"
-                            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                        @error('unitPrice') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                    </div>
-                </div>
-
-                @if($quantity !== '' && $unitPrice !== '')
-                    <div class="flex items-center justify-between rounded-lg bg-indigo-50 px-3 py-2.5">
-                        <span class="text-xs text-indigo-600">Total Amount</span>
-                        <span class="text-sm font-semibold text-indigo-700">{{ number_format($this->totalAmount, 2) }}</span>
-                    </div>
-                @endif
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Order Date</label>
-                        <input wire:model="orderDate" type="date" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Deadline</label>
-                        <input wire:model="deadline" type="date" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Notes</label>
-                    <textarea wire:model="notes" rows="2" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"></textarea>
-                </div>
-            </div>
-
-            <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 shrink-0">
-                <button @click="open = false" type="button" class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
-                <button wire:click="saveOrder" type="button" class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">
-                    {{ $editingId ? 'Save Changes' : 'Create Order' }}
-                </button>
-            </div>
-        </div>
     </div>
 
 </div>

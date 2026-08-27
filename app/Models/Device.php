@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Marketing\MarketingEvent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -51,6 +52,11 @@ class Device extends Model
     public function visits(): HasMany
     {
         return $this->hasMany(DeviceVisit::class);
+    }
+
+    public function marketingEvents(): HasMany
+    {
+        return $this->hasMany(MarketingEvent::class);
     }
 
     public function blocks(): MorphMany

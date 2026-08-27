@@ -10,6 +10,7 @@ use App\Models\ProductAttributeValue;
 use App\Models\ProductVariant;
 use App\Models\ProductVariantLink;
 use App\Models\ProductVariantValue;
+use App\Services\StockService;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
@@ -29,6 +30,8 @@ class ProductVariants extends Component
     public string $variantSalePrice    = '';
     public string $variantPurchasePrice = '';
     public string $variantStockQuantity = '0';
+    public string $variantReorderLevel = '0';
+    public string $variantReorderQuantity = '0';
     public string $variantStatus       = 'active';
     public array  $variantImageIds     = [];
 
@@ -36,9 +39,51 @@ class ProductVariants extends Component
     public string $linkProductSearch = '';
     public string $linkType          = 'color';
 
+    // per-product swatch image override (see ProductAttributeValue::swatch_image_id)
+    public ?int $swatchImageTargetId = null;
+
     public function mount(int $productId): void
     {
         $this->productId = $productId;
+    }
+
+    /**
+     * Opens the shared media picker for one selected colour chip's
+     * per-product swatch image override. `swatchImageTargetId` remembers
+     * which product_attribute_values row this picker call is for, since
+     * the picker's mediaSelected event only round-trips the `target`
+     * string it was opened with (here a fixed marker, not the row id) —
+     * WithMediaPicker's own mediaSelected() would try to write that
+     * marker string as a component property and silently no-op, so this
+     * is handled here instead, before the trait's listener runs.
+     */
+    public function openSwatchImagePicker(int $productAttributeValueId): void
+    {
+        $this->swatchImageTargetId = $productAttributeValueId;
+        $this->dispatch('openMediaPicker', target: 'swatchImage', multiple: false, type: 'image');
+    }
+
+    public function mediaSelected($field, $id)
+    {
+        if ($field === 'swatchImage') {
+            if ($this->swatchImageTargetId) {
+                ProductAttributeValue::whereKey($this->swatchImageTargetId)->update(['swatch_image_id' => $id]);
+                $this->swatchImageTargetId = null;
+            }
+            return;
+        }
+
+        $existing = $this->$field ?? [];
+        if (is_array($id)) {
+            $this->$field = array_values(array_unique(array_merge($existing, $id), SORT_REGULAR));
+        } else {
+            $this->$field = $id;
+        }
+    }
+
+    public function removeSwatchImage(int $productAttributeValueId): void
+    {
+        ProductAttributeValue::whereKey($productAttributeValueId)->update(['swatch_image_id' => null]);
     }
 
     public function addAttribute(): void
@@ -105,6 +150,21 @@ class ProductVariants extends Component
             'attribute_value_id'   => $attributeValueId,
             'sort_order'           => $maxOrder + 1,
         ]);
+    }
+
+    /**
+     * Reorders this product's selected values for one attribute (e.g. which
+     * colour shows first on the storefront) — product_attribute_values.sort_order
+     * is per-product, independent of the value's own global sort_order on
+     * attribute_values (shared across every product that uses that colour).
+     */
+    public function reorderValues(int $productAttributeId, array $orderedAttributeValueIds): void
+    {
+        foreach ($orderedAttributeValueIds as $index => $attributeValueId) {
+            ProductAttributeValue::where('product_attribute_id', $productAttributeId)
+                ->where('attribute_value_id', $attributeValueId)
+                ->update(['sort_order' => $index + 1]);
+        }
     }
 
     public function generateVariants(): void
@@ -200,6 +260,8 @@ class ProductVariants extends Component
         $this->variantSalePrice       = $variant->sale_price !== null ? (string) $variant->sale_price : '';
         $this->variantPurchasePrice   = $variant->purchase_price !== null ? (string) $variant->purchase_price : '';
         $this->variantStockQuantity   = (string) $variant->stock_quantity;
+        $this->variantReorderLevel    = (string) $variant->reorder_level;
+        $this->variantReorderQuantity = (string) $variant->reorder_quantity;
         $this->variantStatus          = $variant->status;
         $this->variantImageIds        = $variant->media()->pluck('media_id')->all();
         $this->linkProductSearch      = '';
@@ -222,17 +284,30 @@ class ProductVariants extends Component
             'variantSalePrice'       => 'nullable|numeric|min:0',
             'variantPurchasePrice'   => 'nullable|numeric|min:0',
             'variantStockQuantity'   => 'required|numeric|min:0',
+            'variantReorderLevel'    => 'required|numeric|min:0',
+            'variantReorderQuantity' => 'required|numeric|min:0',
             'variantStatus'          => 'required|in:active,inactive',
         ]);
 
         $variant->update([
-            'sku'             => $this->variantSku,
-            'price'           => $this->variantPrice !== '' ? $this->variantPrice : null,
-            'sale_price'      => $this->variantSalePrice !== '' ? $this->variantSalePrice : null,
-            'purchase_price'  => $this->variantPurchasePrice !== '' ? $this->variantPurchasePrice : null,
-            'stock_quantity'  => $this->variantStockQuantity,
-            'status'          => $this->variantStatus,
+            'sku'               => $this->variantSku,
+            'price'             => $this->variantPrice !== '' ? $this->variantPrice : null,
+            'sale_price'        => $this->variantSalePrice !== '' ? $this->variantSalePrice : null,
+            'purchase_price'    => $this->variantPurchasePrice !== '' ? $this->variantPurchasePrice : null,
+            'reorder_level'     => $this->variantReorderLevel,
+            'reorder_quantity'  => $this->variantReorderQuantity,
+            'status'            => $this->variantStatus,
         ]);
+
+        if ((float) $this->variantStockQuantity !== (float) $variant->stock_quantity) {
+            app(StockService::class)->setAbsolute(
+                $variant->product,
+                $variant,
+                (float) $this->variantStockQuantity,
+                reference: $variant,
+                note: 'Set via variant editor',
+            );
+        }
 
         $variant->media()->delete();
         foreach ($this->variantImageIds as $index => $mediaId) {
@@ -284,12 +359,13 @@ class ProductVariants extends Component
             'productAttributes.values.attributeValue',
             'attributeOrder',
             'variants.values.productAttributeValue.attributeValue.attribute',
+            'variants.values.productAttributeValue.swatchImage',
             'variants.media',
             'variants.links.linkedProduct',
         ])->findOrFail($this->productId);
 
         $orderedAttributes = $product->attributeOrder()
-            ->with('productAttribute.attribute', 'productAttribute.values.attributeValue')
+            ->with('productAttribute.attribute', 'productAttribute.values.attributeValue', 'productAttribute.values.swatchImage')
             ->orderBy('sort_order')
             ->get()
             ->pluck('productAttribute');

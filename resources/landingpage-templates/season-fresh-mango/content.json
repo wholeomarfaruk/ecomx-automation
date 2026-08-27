@@ -1,0 +1,147 @@
+{
+    "seo": {
+        "meta_title": "Season Fresh Mango — সরাসরি বাগান থেকে আপনার দরজায়",
+        "meta_description": "রাজশাহীর সেরা গাছপাকা আম। কেমিক্যাল মুক্ত, দ্রুত ডেলিভারি। অর্ডার করুন এখনই।",
+        "meta_image": "",
+        "favicon_url": ""
+    },
+    "hero": {
+        "logo_url": "season_fresh_mango_logo.png",
+        "bg_url": "mango_forest.jpg",
+        "badge": "সরাসরি বাগান থেকে আপনার দরজায়",
+        "type_line1_raw": "এই মৌসুমের সেরা আম",
+        "type_line1_html": "<i>এই মৌসুমের</i> <em>সেরা আম</em>",
+        "type_line2": "এখন আপনার হাতের নাগালে",
+        "subtitle": "খাঁটি দেশি আম — কোনো কেমিক্যাল নেই, কোনো কৃত্রিম রঙ নেই।<br>প্রকৃতির মিষ্টতা সরাসরি আপনার পরিবারের জন্য।",
+        "cta_text": "এখনই অর্ডার করুন →"
+    },
+    "contact": {
+        "bkash_number": "01712-345678",
+        "phone": "01712345678",
+        "whatsapp_url": "https://wa.me/8801712345678"
+    },
+    "features": {
+        "badge": "কেন আমরা আলাদা",
+        "title": "সেরা আমের <em>নিশ্চয়তা</em>",
+        "desc": "প্রতিটি আম হওয়া উচিত সতেজ, মিষ্টি এবং স্বাস্থ্যকর — কোনো আপোষ ছাড়াই।",
+        "items": [
+            { "icon": "🌿", "title": "কেমিক্যাল মুক্ত",    "desc": "কোনো ফরমালিন, কৃত্রিম পাকানো নেই। গাছে পাকা আম সরাসরি সংগ্রহ।" },
+            { "icon": "🚚", "title": "দ্রুত ডেলিভারি",      "desc": "অর্ডারের ২৪ ঘণ্টার মধ্যে আপনার দরজায়। সারা বাংলাদেশে।" },
+            { "icon": "📦", "title": "নিরাপদ প্যাকেজিং",    "desc": "প্রতিটি আম যত্ন সহকারে প্যাক করা হয়, ক্ষতি হয় না।" },
+            { "icon": "⭐", "title": "মানের গ্যারান্টি",    "desc": "আম পছন্দ না হলে সম্পূর্ণ অর্থ ফেরত। পূর্ণ আস্থা।" },
+            { "icon": "", "title": "", "desc": "" },
+            { "icon": "", "title": "", "desc": "" }
+        ]
+    },
+    "videos": [
+        { "id": "Mi0Gji06v4I", "type": "shorts" },
+        { "id": "7cw5hFLT2jk", "type": "shorts" },
+        { "id": "dQw4w9WgXcQ", "type": "shorts" },
+        { "id": "kJQP7kiw5Fk", "type": "shorts" },
+        { "id": "", "type": "shorts" },
+        { "id": "", "type": "shorts" },
+        { "id": "", "type": "shorts" },
+        { "id": "", "type": "shorts" },
+        { "id": "", "type": "shorts" },
+        { "id": "", "type": "shorts" }
+    ],
+    "strip_images": [
+        { "src": "https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?w=900&q=80&fit=crop", "cap": "আম বাগান" },
+        { "src": "https://images.unsplash.com/photo-1591073113125-e46713c829ed?w=900&q=80&fit=crop", "cap": "পাকা আম" },
+        { "src": "https://images.unsplash.com/photo-1553279768-865429fa0078?w=900&q=80&fit=crop", "cap": "তাজা আম" },
+        { "src": "https://images.unsplash.com/photo-1605027990121-cbae9e0642db?w=900&q=80&fit=crop", "cap": "হাতে বাছাই" },
+        { "src": "https://images.unsplash.com/photo-1580639172658-5169c0fbe2c0?w=900&q=80&fit=crop", "cap": "প্যাকেজিং" },
+        { "src": "https://images.unsplash.com/photo-1623930154261-37f0e09b417d?w=900&q=80&fit=crop", "cap": "ডেলিভারি" },
+        { "src": "", "cap": "" },
+        { "src": "", "cap": "" },
+        { "src": "", "cap": "" },
+        { "src": "", "cap": "" }
+    ],
+    "testimonials": [
+        { "src": "https://images.unsplash.com/photo-1556742205-e10c9486e506?w=900&q=80&fit=crop", "cap": "রাহেলা বেগম — ঢাকা" },
+        { "src": "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=900&q=80&fit=crop", "cap": "করিম সাহেব — চট্টগ্রাম" },
+        { "src": "https://images.unsplash.com/photo-1611174743420-3d7df880ce32?w=900&q=80&fit=crop", "cap": "তানভীর হোসেন — সিলেট" },
+        { "src": "https://images.unsplash.com/photo-1611174743420-3d7df880ce32?w=900&q=80&fit=crop&hue=20", "cap": "নাসিমা আক্তার — রাজশাহী" },
+        { "src": "https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=900&q=80&fit=crop", "cap": "জামিল আহমেদ — খুলনা" },
+        { "src": "https://images.unsplash.com/photo-1517495306984-f84210f9daa8?w=900&q=80&fit=crop", "cap": "শাহিন সার্চি — নারায়ণগঞ্জ" },
+        { "src": "https://images.unsplash.com/photo-1556742212-5b321f3c261b?w=900&q=80&fit=crop", "cap": "সাদিয়া ইসলাম — ময়মনসিংহ" },
+        { "src": "https://images.unsplash.com/photo-1554224312-3f1e90b2d8e3?w=900&q=80&fit=crop", "cap": "রুমানা আক্তার — বরিশাল" },
+        { "src": "", "cap": "" },
+        { "src": "", "cap": "" }
+    ],
+    "products": {},
+    "packages": [
+        {
+            "kg": "৫", "label": "পারিবারিক প্যাক", "price": "৳ ৬৫০", "priceNum": 650,
+            "badge": null, "desc": "ছোট পরিবারের জন্য আদর্শ", "product_id": null,
+            "default_selected": false, "default_qty": 1,
+            "offers": {
+                "home":   { "type": "flat",    "value": 30 },
+                "pickup": { "type": "flat",    "value": 60 }
+            }
+        },
+        {
+            "kg": "১০", "label": "কর্পোরেট গিফট বক্স", "price": "৳ ১,২০০", "priceNum": 1200,
+            "badge": "জনপ্রিয়", "desc": "অফিস গিফটের সেরা পছন্দ", "product_id": null,
+            "default_selected": true, "default_qty": 1,
+            "offers": {
+                "home":   { "type": "flat",    "value": 50 },
+                "pickup": { "type": "percent", "value": 7  }
+            }
+        },
+        {
+            "kg": "১২", "label": "কর্পোরেট গিফট বক্স", "price": "৳ ১,৪৫০", "priceNum": 1450,
+            "badge": null, "desc": "প্রিমিয়াম গিফট প্যাকেজিং", "product_id": null,
+            "default_selected": false, "default_qty": 1,
+            "offers": {
+                "home":   { "type": "flat",    "value": 80 },
+                "pickup": { "type": "percent", "value": 8  }
+            }
+        },
+        {
+            "kg": "২০", "label": "কর্পোরেট গিফট বক্স", "price": "৳ ২,৩০০", "priceNum": 2300,
+            "badge": null, "desc": "বড় পরিবার বা অফিসের জন্য", "product_id": null,
+            "default_selected": false, "default_qty": 1,
+            "offers": {
+                "home":   { "type": "percent", "value": 5  },
+                "pickup": { "type": "percent", "value": 10 }
+            }
+        },
+        {
+            "kg": "২২", "label": "কর্পোরেট গিফট বক্স", "price": "৳ ২,৫০০", "priceNum": 2500,
+            "badge": "বেস্ট ভ্যালু", "desc": "সবচেয়ে সাশ্রয়ী বড় বক্স", "product_id": null,
+            "default_selected": false, "default_qty": 1,
+            "offers": {
+                "home":   { "type": "percent", "value": 6  },
+                "pickup": { "type": "percent", "value": 12 }
+            }
+        },
+        {
+            "kg": "২৪", "label": "কর্পোরেট গিফট বক্স", "price": "৳ ২,৭০০", "priceNum": 2700,
+            "badge": null, "desc": "সর্বোচ্চ পরিমাণ, বিশেষ ছাড়", "product_id": null,
+            "default_selected": false, "default_qty": 1,
+            "offers": {
+                "home":   { "type": "flat",    "value": 200 },
+                "pickup": { "type": "percent", "value": 12  }
+            }
+        }
+    ],
+    "nav": {
+        "menus": [
+            { "label": "বৈশিষ্ট্য", "href": "#features" },
+            { "label": "আমাদের বাগান", "href": "#media" },
+            { "label": "অর্ডার", "href": "#packages" },
+            { "label": "", "href": "" },
+            { "label": "", "href": "" },
+            { "label": "", "href": "" },
+            { "label": "", "href": "" },
+            { "label": "", "href": "" }
+        ]
+    },
+    "footer": {
+        "brand": "🥭 Season Fresh Mango",
+        "copyright": "© ২০২৫ সিজন ফ্রেশ ম্যাঙ্গো",
+        "facebook_url": "#",
+        "whatsapp_url": "#"
+    }
+}

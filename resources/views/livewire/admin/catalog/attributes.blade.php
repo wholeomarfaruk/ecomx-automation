@@ -301,32 +301,77 @@
                     @else
                         <ul id="attribute-value-list" class="border border-gray-200 rounded-lg divide-y divide-gray-100">
                             @foreach($valuesAttribute->values->sortBy('sort_order') as $value)
-                                <li data-id="{{ $value->id }}" class="flex items-center gap-3 px-3 py-2.5 bg-white">
-                                    <span class="drag-handle cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-400 shrink-0">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                                            <path d="M7 4a1 1 0 11-2 0 1 1 0 012 0zM7 10a1 1 0 11-2 0 1 1 0 012 0zM7 16a1 1 0 11-2 0 1 1 0 012 0zM15 4a1 1 0 11-2 0 1 1 0 012 0zM15 10a1 1 0 11-2 0 1 1 0 012 0zM15 16a1 1 0 11-2 0 1 1 0 012 0z"/>
-                                        </svg>
-                                    </span>
+                                @if($editingValueId === $value->id)
+                                    <li data-id="{{ $value->id }}" class="px-3 py-3 bg-indigo-50/40 space-y-3">
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-600 mb-1.5">Value</label>
+                                                <input wire:model="editValueText" type="text"
+                                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                                @error('editValueText') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-600 mb-1.5">Slug</label>
+                                                <input wire:model="editValueSlug" type="text"
+                                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                                @error('editValueSlug') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                            </div>
+                                        </div>
 
-                                    @if($value->swatch_type === 'color')
-                                        <span class="h-6 w-6 rounded-full border border-gray-200 shrink-0" style="background-color: {{ $value->swatch_value }}"></span>
-                                    @elseif($value->swatch_type === 'image' && $value->swatch_value)
-                                        <span class="h-6 w-6 rounded-full overflow-hidden border border-gray-200 shrink-0">
-                                            <img src="{{ file_path($value->swatch_value) }}" alt="" class="h-full w-full object-cover">
+                                        @if($valuesAttribute->type === 'color')
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-600 mb-1.5">Swatch Color</label>
+                                                <div class="flex items-center gap-2">
+                                                    <input wire:model="editSwatchColor" type="color" class="w-10 h-9 rounded-lg border border-gray-300 cursor-pointer p-0.5">
+                                                    <input wire:model="editSwatchColor" type="text" placeholder="#000000"
+                                                        class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                                </div>
+                                            </div>
+                                        @elseif($valuesAttribute->type === 'image')
+                                            <x-media-picker-field field="editSwatchImageId" :value="$editSwatchImageId" label="Swatch Image" type="image" placeholder="Select swatch image" />
+                                        @endif
+
+                                        <div class="flex items-center gap-2">
+                                            <button wire:click="updateValue" type="button"
+                                                class="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">Save</button>
+                                            <button wire:click="cancelEditValue" type="button"
+                                                class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
+                                        </div>
+                                    </li>
+                                @else
+                                    <li data-id="{{ $value->id }}" class="flex items-center gap-3 px-3 py-2.5 bg-white">
+                                        <span class="drag-handle cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-400 shrink-0">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M7 4a1 1 0 11-2 0 1 1 0 012 0zM7 10a1 1 0 11-2 0 1 1 0 012 0zM7 16a1 1 0 11-2 0 1 1 0 012 0zM15 4a1 1 0 11-2 0 1 1 0 012 0zM15 10a1 1 0 11-2 0 1 1 0 012 0zM15 16a1 1 0 11-2 0 1 1 0 012 0z"/>
+                                            </svg>
                                         </span>
-                                    @endif
 
-                                    <div class="min-w-0 flex-1">
-                                        <p class="text-sm text-gray-800 truncate">{{ $value->value }}</p>
-                                        <p class="text-xs font-mono text-gray-400">{{ $value->slug }}</p>
-                                    </div>
-                                    <button wire:click="deleteValue({{ $value->id }})" type="button"
-                                        class="w-7 h-7 inline-flex items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition shrink-0">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
-                                        </svg>
-                                    </button>
-                                </li>
+                                        @if($value->swatch_type === 'color')
+                                            <span class="h-6 w-6 rounded-full border border-gray-200 shrink-0" style="background-color: {{ $value->swatch_value }}"></span>
+                                        @elseif($value->swatch_type === 'image' && $value->swatch_value)
+                                            <span class="h-6 w-6 rounded-full overflow-hidden border border-gray-200 shrink-0">
+                                                <img src="{{ file_path($value->swatch_value) }}" alt="" class="h-full w-full object-cover">
+                                            </span>
+                                        @endif
+
+                                        <div class="min-w-0 flex-1">
+                                            <p class="text-sm text-gray-800 truncate">{{ $value->value }}</p>
+                                            <p class="text-xs font-mono text-gray-400">{{ $value->slug }}</p>
+                                        </div>
+                                        <button wire:click="editValue({{ $value->id }})" type="button"
+                                            class="w-7 h-7 inline-flex items-center justify-center rounded-lg text-gray-400 hover:bg-indigo-50 hover:text-indigo-500 transition shrink-0">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/>
+                                            </svg>
+                                        </button>
+                                        <button wire:click="deleteValue({{ $value->id }})" type="button"
+                                            class="w-7 h-7 inline-flex items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition shrink-0">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                                            </svg>
+                                        </button>
+                                    </li>
+                                @endif
                             @endforeach
                         </ul>
                     @endif

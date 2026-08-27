@@ -7,6 +7,10 @@ use Illuminate\Support\Facades\Route;
 // for the whole request; never builds a path from request input.
 \App\FrontendEngine\EngineManager::loadActiveThemeRoute();
 
+// Landing Page Engine — deliberately separate from the theme/engine system
+// above (see routes/landingpage.php docblock and docs/landing-page-engine/).
+require __DIR__.'/landingpage.php';
+
 // Legacy site — superseded by the ecomxFashion theme/engine, which now owns
 // the site root (/, /shop, /product/{slug}, …, loaded above via
 // EngineManager::loadActiveThemeRoute()). Kept reachable at /legacy rather
