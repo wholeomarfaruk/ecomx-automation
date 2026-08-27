@@ -89,9 +89,33 @@ class ImportSeldomFashionFeed extends Command
             $title = trim((string) $c->title);
             $link = trim((string) $c->link);
             $slug = Str::slug(basename(rtrim($link, '/')));
+            $imageUrl = trim((string) $c->image_link);
 
-            if (Product::where('slug', $slug)->exists()) {
-                $this->line("Skip (exists): {$title}");
+            $existingProduct = Product::where('slug', $slug)->first();
+            if ($existingProduct) {
+                if (! $existingProduct->featured_image_id) {
+                    $file = $this->downloadImage($imageUrl, $slug);
+                    if ($file) {
+                        $existingProduct->update([
+                            'featured_image_id' => $file->id,
+                            'image_ids' => [$file->id],
+                        ]);
+
+                        $variant = $existingProduct->variants()->first();
+                        if ($variant) {
+                            $variant->media()->create([
+                                'media_id' => $file->id,
+                                'is_primary' => true,
+                                'sort_order' => 1,
+                            ]);
+                        }
+
+                        $this->info("Image added for existing product: {$title}");
+                    }
+                } else {
+                    $this->line("Skip (exists): {$title}");
+                }
+
                 $skipped++;
                 continue;
             }
@@ -103,7 +127,6 @@ class ImportSeldomFashionFeed extends Command
             }
 
             $description = html_entity_decode((string) $c->description, ENT_QUOTES | ENT_HTML5);
-            $imageUrl = trim((string) $c->image_link);
             $feedId = trim((string) $c->id);
 
             $code = 'SF-' . str_pad($feedId, 4, '0', STR_PAD_LEFT);
@@ -236,18 +259,24 @@ class ImportSeldomFashionFeed extends Command
     private function downloadImage(string $url, string $slug): ?File
     {
         if ($url === '') {
+            $this->warn("  Image download skipped for {$slug}: feed had no image_link");
             return null;
         }
 
         try {
             $response = Http::withHeaders(['User-Agent' => 'Mozilla/5.0'])->timeout(30)->get($url);
         } catch (\Throwable $e) {
-            $this->warn("  Image download failed for {$slug}: {$e->getMessage()}");
+            $this->warn("  Image download failed for {$slug}: {$url} — " . $e->getMessage());
             return null;
         }
 
         if (! $response->ok()) {
-            $this->warn("  Image download failed for {$slug}: HTTP {$response->status()}");
+            $this->warn("  Image download failed for {$slug}: {$url} — HTTP {$response->status()} " . Str::limit($response->body(), 150));
+            return null;
+        }
+
+        if ($response->body() === '') {
+            $this->warn("  Image download failed for {$slug}: {$url} — empty response body");
             return null;
         }
 
@@ -257,7 +286,12 @@ class ImportSeldomFashionFeed extends Command
         $storedName = uniqid() . '-' . $fileName;
         $relativePath = 'uploads/' . $storedName;
 
-        Storage::disk('public')->put($relativePath, $response->body());
+        $stored = Storage::disk('public')->put($relativePath, $response->body());
+
+        if (! $stored) {
+            $this->warn("  Image download failed for {$slug}: {$url} — could not write to storage/app/public/{$relativePath} (check disk permissions/space)");
+            return null;
+        }
 
         $file = File::create([
             'name' => $fileName,
