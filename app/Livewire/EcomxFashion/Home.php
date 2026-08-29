@@ -5,6 +5,7 @@ namespace App\Livewire\EcomxFashion;
 use App\Support\EcomxFashion\ActiveTheme;
 use App\Support\EcomxFashion\PageSectionRegistry;
 use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Lazy;
 use Livewire\Mechanisms\ComponentRegistry;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
@@ -46,6 +47,32 @@ class Home extends Component
                 return true;
             }
         ));
+    }
+
+    /**
+     * Whether the given section key's Livewire component is #[Lazy] — if so,
+     * the home view passes it `lazy: 'on-load'` so it starts fetching as
+     * soon as it mounts (right after the initial page load) instead of
+     * waiting for the visitor to scroll it into view. Below-fold sections
+     * then finish loading in the background while the visitor is still
+     * reading the top of the page, so scrolling down finds them already
+     * rendered instead of popping in skeleton-then-content.
+     */
+    public function sectionIsLazy(string $key): bool
+    {
+        $tag = config(ActiveTheme::slug() . '.sections', [])[$key] ?? null;
+
+        if ($tag === null) {
+            return false;
+        }
+
+        try {
+            $class = app(ComponentRegistry::class)->getClass($tag);
+        } catch (\Throwable $e) {
+            return false;
+        }
+
+        return (new \ReflectionClass($class))->getAttributes(Lazy::class) !== [];
     }
 
     public function render()
