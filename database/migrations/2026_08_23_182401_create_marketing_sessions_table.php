@@ -38,8 +38,8 @@ return new class extends Migration
             $table->string('browser')->nullable();
             $table->string('operating_system')->nullable();
 
-            $table->string('language', 20)->nullable();
-            $table->string('timezone', 64)->nullable();
+            $table->string('language')->nullable();
+            $table->string('timezone')->nullable();
 
             $table->string('utm_source')->nullable();
             $table->string('utm_medium')->nullable();
