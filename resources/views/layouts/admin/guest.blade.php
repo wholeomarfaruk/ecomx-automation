@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>{{ $title ?? 'Admin' }} — {{ \App\Models\Setting::get('site_name', config('app.name'), 'general') }}</title>
+    @php $title = $title ?? 'Admin'; @endphp
+    @include('layouts.admin.partials.head-meta')
     @vite(['resources/sass/admin.scss', 'resources/css/admin.css', 'resources/js/admin.js'])
     @livewireStyles
     @stack('styles')

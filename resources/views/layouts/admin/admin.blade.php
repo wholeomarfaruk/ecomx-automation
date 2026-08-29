@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Laravel Starter Kit</title>
+    @include('layouts.admin.partials.head-meta')
     @vite(['resources/sass/admin.scss', 'resources/css/admin.css', 'resources/js/admin.js'])
     @livewireStyles
     @stack('styles')
@@ -54,6 +54,14 @@
     </script>
 
     <script>
+        // Keeps the browser tab title in sync with whichever admin page is
+        // active — every admin Livewire view already sets $store.pageName
+        // on mount (x-init="$store.pageName = { name: '...', slug: '...' }"),
+        // originally just for the topbar heading. Reusing that single
+        // existing per-page value here means the tab title stays correct
+        // across all ~110 admin pages without touching each one individually.
+        const ecomxAdminSiteName = @json(\App\Models\Setting::get('site_name', config('app.name'), 'general') ?: config('app.name'));
+
         document.addEventListener('alpine:init', () => {
             // Stores variable globally
             Alpine.store('sidebar', {
@@ -65,6 +73,11 @@
                 slug: '',
                 name: '',
 
+            });
+
+            Alpine.effect(() => {
+                const name = Alpine.store('pageName')?.name;
+                document.title = name ? `${name} — ${ecomxAdminSiteName}` : ecomxAdminSiteName;
             });
             // Creating component Dropdown
             Alpine.data('dropdown', () => ({
