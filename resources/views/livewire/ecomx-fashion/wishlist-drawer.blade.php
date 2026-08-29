@@ -23,7 +23,11 @@
                     @foreach ($group['items'] as $item)
                         @php
                             $product = $item->product;
-                            $options = $item->variant?->options_map ?? [];
+                            $variant = $item->variant;
+                            $options = $variant?->options_map ?? [];
+                            $comparePrice = $variant ? $variant->price : $product?->price;
+                            $salePrice = $variant ? ($variant->sale_price ?? $variant->price) : ($product?->sale_price ?? $product?->price);
+                            $hasSale = $comparePrice !== null && $salePrice !== null && (float) $salePrice < (float) $comparePrice;
                         @endphp
                         <div class="wish-item" wire:key="wish-item-{{ $item->id }}">
                             <a href="{{ $product?->url ?? '#' }}" class="cart-item__media">
@@ -33,10 +37,10 @@
                                 <div class="cart-item__row">
                                     <a href="{{ $product?->url ?? '#' }}" class="cart-item__name">{{ $product?->name ?? 'Deleted product' }}</a>
                                     <span>
-                                        @if ($product?->discount_price)
-                                            <span class="cart-item__price--old">৳{{ number_format($product->price) }}</span>
+                                        @if ($hasSale)
+                                            <span class="cart-item__price--old">৳{{ number_format($comparePrice) }}</span>
                                         @endif
-                                        <span class="cart-item__price">৳{{ number_format($product?->discounted_price ?? 0) }}</span>
+                                        <span class="cart-item__price">৳{{ number_format($salePrice ?? 0) }}</span>
                                     </span>
                                 </div>
                                 @if (! empty($options))
