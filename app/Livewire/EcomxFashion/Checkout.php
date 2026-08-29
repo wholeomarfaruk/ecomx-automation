@@ -32,6 +32,7 @@ class Checkout extends Component
     public string $name = '';
     public string $phone = '';
     public string $address = '';
+    public string $address_type = '';
     public string $note = '';
     public string $delivery_area = 'dhaka';
     public string $payment_method = 'cod';
@@ -115,8 +116,23 @@ class Checkout extends Component
 
     public function showAddAddressForm(): void
     {
-        $this->selectedAddressId = null;
+        // Only clear the current selection for a customer with no saved
+        // addresses yet (the inline-form case) — for the modal case
+        // (savedAddresses not empty) opening the modal must not drop
+        // whichever card was already selected, in case the customer just
+        // closes it again without saving a new one.
+        if ($this->savedAddresses->isEmpty()) {
+            $this->selectedAddressId = null;
+        }
+
         $this->showNewAddressForm = true;
+    }
+
+    public function closeAddAddressForm(): void
+    {
+        $this->showNewAddressForm = false;
+        $this->reset(['name', 'phone', 'address', 'address_type', 'setAsDefault']);
+        $this->resetErrorBag(['name', 'phone', 'address']);
     }
 
     private function recordInitiateCheckout(): void
@@ -175,6 +191,7 @@ class Checkout extends Component
                 'name' => 'required|string|max:255',
                 'phone' => 'required|string|max:20',
                 'address' => 'required|string',
+                'address_type' => 'nullable|string|max:50',
             ];
 
         return $addressRules + [
@@ -384,6 +401,18 @@ class Checkout extends Component
             return $selectedAddress;
         }
 
+        return $this->storeAddressFromForm($customer);
+    }
+
+    /**
+     * Builds a DeliveryAddress row from the current name/phone/address/
+     * delivery_area/setAsDefault fields. Shared by the checkout-time path
+     * (guest, or a logged-in customer with no saved addresses yet) and
+     * saveNewAddress() (the "Add new address" modal, for a logged-in
+     * customer who already has at least one saved address).
+     */
+    private function storeAddressFromForm(Customer $customer): DeliveryAddress
+    {
         $country = Country::whereRaw('LOWER(name) = ?', ['bangladesh'])->first();
 
         $city = $this->delivery_area === 'dhaka'
@@ -394,11 +423,11 @@ class Checkout extends Component
 
         $state = $city?->state;
 
-        // address_type is a free-text label the customer can rename later
-        // (no fixed list) — default a new customer's first address to
-        // "Home". A brand-new address becomes the default whenever it's
-        // the customer's first one, or when they explicitly checked
-        // "set as default" in the add-address form.
+        // address_type is a free-text label ("Home", "Office", ...) the
+        // customer types in the form — defaults to "Home" for their very
+        // first address if left blank. A brand-new address becomes the
+        // default whenever it's the customer's first one, or when they
+        // explicitly checked "set as default" in the add-address form.
         $isFirstAddress = ! DeliveryAddress::where('customer_id', $customer->id)->exists();
         $makeDefault = $isFirstAddress || $this->setAsDefault;
 
@@ -409,7 +438,7 @@ class Checkout extends Component
 
         return DeliveryAddress::create([
             'customer_id' => $customer->id,
-            'address_type' => $isFirstAddress ? 'Home' : null,
+            'address_type' => trim($this->address_type) ?: ($isFirstAddress ? 'Home' : null),
             'name' => $this->name,
             'phone' => $this->phone,
             'country_id' => $country?->id,
@@ -420,6 +449,37 @@ class Checkout extends Component
             'is_default_billing' => $makeDefault,
             'is_active' => true,
         ]);
+    }
+
+    /**
+     * "Add new address" modal action — logged-in customers who already have
+     * at least one saved address get a modal instead of the inline form
+     * (see showAddAddressForm()/that form only shows inline for guests and
+     * first-time customers). Saves immediately, closes the modal, and
+     * selects the new address in the picker, same as clicking an existing
+     * card — Place Order never sees the raw form fields in this path.
+     */
+    public function saveNewAddress(): void
+    {
+        $this->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+            'address' => 'required|string',
+            'address_type' => 'nullable|string|max:50',
+        ]);
+
+        $customer = auth()->check() ? auth()->user()->customer : null;
+
+        if (! $customer) {
+            return;
+        }
+
+        $address = $this->storeAddressFromForm($customer);
+
+        $this->selectedAddressId = $address->id;
+        $this->showNewAddressForm = false;
+
+        $this->reset(['name', 'phone', 'address', 'address_type', 'setAsDefault']);
     }
 
     private function promoteToDefault(Customer $customer, DeliveryAddress $address): void
