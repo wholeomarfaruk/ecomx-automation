@@ -10,6 +10,21 @@
 
     $active = $active ?? '';
 
+    // Symbol/mark logo (Admin > Site Settings > General > Branding). Falls
+    // back to the theme's bundled mark whenever site_logo_symbol isn't set,
+    // or points at a File row that's missing/deleted/has no image — never
+    // let a bad setting break the header.
+    $brandMarkUrl = null;
+    try {
+        if ($logoSymbolId = \App\Models\Setting::get('site_logo_symbol')) {
+            $brandMarkUrl = file_path($logoSymbolId);
+        }
+    } catch (\Throwable $e) {
+        $brandMarkUrl = null;
+    }
+    $brandMarkUrl ??= asset('frontend/img/seldom-rounded.png');
+    $siteName = \App\Models\Setting::get('site_name', 'Seldom Fashion') ?: 'Seldom Fashion';
+
     $isNavActive = function ($n) use ($active) {
         // Explicit active key থাকলে সেটা priority পাবে
         if ($active === $n['key']) {
@@ -53,7 +68,7 @@
             <button class="icon-btn header__hamburger" style="background:none;border:none" @click="drawer=true" aria-label="Menu">☰</button>
 
             <a href="{{ route('ecomx-fashion.home') }}" class="brand" @mouseenter="mega=null">
-                <img src="{{ asset('frontend/img/seldom-rounded.png') }}" alt="Seldom Fashion" class="brand__mark">
+                <img src="{{ $brandMarkUrl }}" alt="{{ $siteName }}" class="brand__mark">
                 <span class="brand__text">
                     <span class="brand__name">SELDOM</span>
                     <span class="brand__sub" aria-hidden="true"><span>F</span><span>A</span><span>S</span><span>H</span><span>I</span><span>O</span><span>N</span></span>

@@ -149,10 +149,15 @@ class Shop extends Component
         $items = $this->items;
         $total = $this->total;
 
+        $siteName = \App\Models\Setting::get('site_name', 'Seldom Fashion') ?: 'Seldom Fashion';
+
         return view('ecomx-fashion.livewire.shop', [
             'items' => $items->map(fn (Product $p) => $this->mapProduct($p))->all(),
             'total' => $total,
             'hasMore' => $items->count() < $total,
+        ])->layout('ecomx-fashion.layouts.ecomx_fashion', [
+            'title' => "Shop — {$siteName}",
+            'metaDescription' => 'Browse the full collection — new arrivals, best sellers, and flash sale picks.',
         ]);
     }
 }

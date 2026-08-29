@@ -28,6 +28,10 @@ class Product extends Component
 
     public array $marketingEvents = [];
 
+    public ?string $pageTitle = null;
+    public ?string $pageMetaDescription = null;
+    public ?string $pageMetaImage = null;
+
     public function mount(?string $slug = null): void
     {
         $p = ProductModel::where('slug', $slug)->where('status', 'active')->firstOrFail();
@@ -38,7 +42,30 @@ class Product extends Component
             'cat' => $p->categories->first()->name ?? '',
         ];
 
+        $this->buildSeo($p);
         $this->recordViewContent($p);
+    }
+
+    /**
+     * Falls back to the product's own name/short description/featured image
+     * whenever meta_title/meta_description/meta_image_id aren't set in
+     * Admin > Products > SEO — the product page must never show a blank or
+     * broken <title>/description just because SEO fields were left empty.
+     */
+    private function buildSeo(ProductModel $p): void
+    {
+        $siteName = \App\Models\Setting::get('site_name', 'Seldom Fashion') ?: 'Seldom Fashion';
+
+        $this->pageTitle = $p->meta_title ?: "{$p->name} — {$siteName}";
+        $this->pageMetaDescription = $p->meta_description ?: ($p->short_description ?: null);
+
+        try {
+            $this->pageMetaImage = $p->meta_image_id
+                ? file_path($p->meta_image_id)
+                : ($p->featured_image_id ? file_path($p->featured_image_id) : null);
+        } catch (\Throwable $e) {
+            $this->pageMetaImage = null;
+        }
     }
 
     private function recordViewContent(ProductModel $product): void
@@ -69,6 +96,11 @@ class Product extends Component
 
     public function render()
     {
-        return view('ecomx-fashion.livewire.product');
+        return view('ecomx-fashion.livewire.product')
+            ->layout('ecomx-fashion.layouts.ecomx_fashion', array_filter([
+                'title' => $this->pageTitle,
+                'metaDescription' => $this->pageMetaDescription,
+                'metaImage' => $this->pageMetaImage,
+            ]));
     }
 }

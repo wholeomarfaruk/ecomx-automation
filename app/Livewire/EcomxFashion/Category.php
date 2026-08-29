@@ -158,12 +158,34 @@ class Category extends Component
     {
         $items = $this->items;
         $total = $this->total;
+        $category = $this->category;
+
+        $siteName = \App\Models\Setting::get('site_name', 'Seldom Fashion') ?: 'Seldom Fashion';
+
+        $title = $category?->meta_title
+            ?: ($category?->name ? "{$category->name} — {$siteName}" : "Shop — {$siteName}");
+
+        $metaDescription = $category?->meta_description
+            ?: ($category?->description ?: null);
+
+        $metaImage = null;
+        try {
+            $metaImage = $category?->meta_image_id
+                ? file_path($category->meta_image_id)
+                : ($category?->featured_image_id ? file_path($category->featured_image_id) : null);
+        } catch (\Throwable $e) {
+            $metaImage = null;
+        }
 
         return view('ecomx-fashion.livewire.category', [
-            'category' => $this->category,
+            'category' => $category,
             'items' => $items->map(fn (Product $p) => $this->mapProduct($p))->all(),
             'total' => $total,
             'hasMore' => $items->count() < $total,
-        ]);
+        ])->layout('ecomx-fashion.layouts.ecomx_fashion', array_filter([
+            'title' => $title,
+            'metaDescription' => $metaDescription,
+            'metaImage' => $metaImage,
+        ]));
     }
 }
