@@ -5,12 +5,14 @@ namespace App\Livewire\Admin\Sales;
 use App\Enums\Sales\CourierStatus;
 use App\Enums\Sales\FulfillmentStatus;
 use App\Enums\Sales\OrderStatus;
+use App\Enums\Sales\PaymentMethod;
 use App\Enums\Sales\PaymentStatus;
 use App\Exceptions\Inventory\InsufficientStockException;
 use App\Models\Order;
 use App\Models\Setting;
 use App\Services\StockService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class OrderDetail extends Component
@@ -124,7 +126,7 @@ class OrderDetail extends Component
     public function addPayment(): void
     {
         $this->validate([
-            'paymentMethod'    => 'required|string|max:50',
+            'paymentMethod'    => ['required', Rule::enum(PaymentMethod::class)],
             'transactionId'    => 'nullable|string|max:255',
             'paymentAmount'    => 'required|numeric|min:0.01',
             'paymentStatusNew' => 'required|in:pending,partial,paid,failed,refunded',
@@ -201,6 +203,7 @@ class OrderDetail extends Component
             'order'               => $order,
             'statuses'            => OrderStatus::cases(),
             'paymentStatuses'     => PaymentStatus::cases(),
+            'paymentMethods'      => PaymentMethod::cases(),
             'fulfillmentStatuses' => FulfillmentStatus::cases(),
             'courierStatuses'     => CourierStatus::cases(),
         ])->layout('layouts.admin.admin');

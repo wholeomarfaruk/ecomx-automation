@@ -136,7 +136,7 @@
                     @forelse($order->payments as $payment)
                         <div class="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-2.5">
                             <div>
-                                <span class="text-sm text-gray-700 capitalize">{{ $payment->payment_method }}</span>
+                                <span class="text-sm text-gray-700">{{ $payment->payment_method?->label() ?? '—' }}</span>
                                 @if($payment->transaction_id)
                                     <span class="text-xs text-gray-400 font-mono ml-2">{{ $payment->transaction_id }}</span>
                                 @endif
@@ -179,6 +179,8 @@
                 @if($order->shippingAddress)
                     <div class="mt-4 pt-4 border-t border-gray-100">
                         <p class="text-xs font-medium text-gray-500 mb-1">Shipping Address</p>
+                        <p class="text-xs font-medium text-gray-800">{{ $order->shippingAddress->name }}</p>
+                        <p class="text-xs text-gray-400 mb-1">{{ $order->shippingAddress->phone }}</p>
                         <p class="text-xs text-gray-600">{{ $order->shippingAddress->full_address }}</p>
                     </div>
                 @endif
@@ -280,8 +282,11 @@
             <form wire:submit.prevent="addPayment" class="px-6 py-5 space-y-4">
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1.5">Payment Method</label>
-                    <input wire:model="paymentMethod" type="text" placeholder="cash, card, bkash, nagad…"
-                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                    <select wire:model="paymentMethod" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                        @foreach($paymentMethods as $pm)
+                            <option value="{{ $pm->value }}">{{ $pm->label() }}</option>
+                        @endforeach
+                    </select>
                     @error('paymentMethod') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div>
