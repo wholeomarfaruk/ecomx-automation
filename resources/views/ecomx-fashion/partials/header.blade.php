@@ -108,8 +108,25 @@
                     <span class="cart-badge" x-text="$store.ui.cart" x-show="$store.ui.cart > 0"></span>
                 </button>
                 @auth
+                    @php
+                        $authUser = auth()->user();
+                        $authAvatarUrl = null;
+                        try {
+                            $authAvatarUrl = $authUser->avatar_id ? file_path($authUser->avatar_id) : null;
+                        } catch (\Throwable $e) {
+                            $authAvatarUrl = null;
+                        }
+                        $authInitial = strtoupper(mb_substr(trim($authUser->name) ?: '?', 0, 1));
+                    @endphp
                     <div class="dropdown-wrap" x-data="{ open: false }" style="position:relative">
-                        <button class="icon-btn" @click="open=!open" aria-label="Account" aria-haspopup="true" :aria-expanded="open"><x-icon name="user" /></button>
+                        <button class="account-trigger" @click="open=!open" aria-label="Account" aria-haspopup="true" :aria-expanded="open">
+                            @if ($authAvatarUrl)
+                                <img src="{{ $authAvatarUrl }}" alt="{{ $authUser->name }}" class="account-trigger__avatar">
+                            @else
+                                <span class="account-trigger__initial">{{ $authInitial }}</span>
+                            @endif
+                            <span class="account-trigger__chevron"><x-icon name="chevron-down" /></span>
+                        </button>
                         <div class="dropdown" x-show="open" x-cloak @click.outside="open=false" x-transition style="right:0;left:auto">
                             <div style="padding:10px 12px;border-bottom:1px solid rgba(var(--pri-rgb),.08);margin-bottom:4px">
                                 <p style="font-size:13px;font-weight:600;color:var(--pri);margin:0">{{ auth()->user()->name }}</p>
