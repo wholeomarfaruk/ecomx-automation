@@ -37,6 +37,17 @@ class Checkout extends Component
     public string $payment_method = 'cod';
     public string $transaction_id = '';
 
+    /**
+     * Logged-in address picker state. selectedAddressId set = the customer
+     * picked one of their saved DeliveryAddress rows, so the free-text
+     * name/phone/address fields below are ignored on submit — see rules()
+     * and createDeliveryProfile(). Guests, and logged-in customers with no
+     * saved addresses yet, never set this and use the plain form as before.
+     */
+    public ?int $selectedAddressId = null;
+    public bool $showNewAddressForm = false;
+    public bool $setAsDefault = false;
+
     public bool $placed = false;
 
     public array $deliveryAreas = [
@@ -51,6 +62,61 @@ class Checkout extends Component
     public function mount(): void
     {
         $this->recordInitiateCheckout();
+        $this->initAddressSelection();
+    }
+
+    /**
+     * Logged-in customers with at least one saved address start on the
+     * picker with their default (or most recent) address pre-selected and
+     * the new-address form collapsed. Everyone else (guests, or a logged-in
+     * customer with zero saved addresses) sees the plain form right away —
+     * there's nothing to pick from yet.
+     */
+    private function initAddressSelection(): void
+    {
+        $customer = auth()->check() ? auth()->user()->customer : null;
+
+        if (! $customer) {
+            $this->showNewAddressForm = true;
+
+            return;
+        }
+
+        $default = $this->savedAddresses->firstWhere('is_default_shipping', true)
+            ?? $this->savedAddresses->first();
+
+        if ($default) {
+            $this->selectedAddressId = $default->id;
+            $this->showNewAddressForm = false;
+        } else {
+            $this->showNewAddressForm = true;
+        }
+    }
+
+    public function getSavedAddressesProperty(): \Illuminate\Support\Collection
+    {
+        if (! auth()->check() || ! auth()->user()->customer) {
+            return collect();
+        }
+
+        return DeliveryAddress::where('customer_id', auth()->user()->customer->id)
+            ->where('is_active', true)
+            ->orderByDesc('is_default_shipping')
+            ->latest()
+            ->get();
+    }
+
+    public function selectAddress(int $addressId): void
+    {
+        $this->selectedAddressId = $addressId;
+        $this->showNewAddressForm = false;
+        $this->resetErrorBag(['name', 'phone', 'address']);
+    }
+
+    public function showAddAddressForm(): void
+    {
+        $this->selectedAddressId = null;
+        $this->showNewAddressForm = true;
     }
 
     private function recordInitiateCheckout(): void
@@ -96,12 +162,22 @@ class Checkout extends Component
         $this->marketingEvents[] = $result['browserPayload'];
     }
 
+    /**
+     * name/phone/address only need to come from the form when the customer
+     * is actually filling it in — a selected saved address already carries
+     * that data in the DeliveryAddress row (see createDeliveryProfile()).
+     */
     protected function rules(): array
     {
-        return [
-            'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'address' => 'required|string',
+        $addressRules = $this->selectedAddressId
+            ? ['selectedAddressId' => 'required|integer|exists:delivery_addresses,id']
+            : [
+                'name' => 'required|string|max:255',
+                'phone' => 'required|string|max:20',
+                'address' => 'required|string',
+            ];
+
+        return $addressRules + [
             'delivery_area' => 'required|in:dhaka,outside',
             'payment_method' => 'required|in:cod,bkash',
             'transaction_id' => 'required_if:payment_method,bkash|nullable|string|max:100',
@@ -118,6 +194,31 @@ class Checkout extends Component
 
         $this->validate();
 
+        $selectedAddress = null;
+
+        if ($this->selectedAddressId) {
+            // Ownership check — a selectedAddressId is a plain public id sent
+            // from the browser, so guard against one customer's session
+            // referencing another customer's saved address.
+            $customerId = auth()->check() ? auth()->user()->customer?->id : null;
+
+            $selectedAddress = $customerId
+                ? DeliveryAddress::where('id', $this->selectedAddressId)->where('customer_id', $customerId)->first()
+                : null;
+
+            if (! $selectedAddress) {
+                $this->addError('selectedAddressId', 'That address is no longer available — please pick another or add a new one.');
+
+                return;
+            }
+
+            // findOrCreateCustomer() below matches/logs in by phone number,
+            // and the success screen displays $this->phone — both need to
+            // reflect the address actually being used for this order.
+            $this->name = $selectedAddress->name;
+            $this->phone = $selectedAddress->phone ?: $this->phone;
+        }
+
         $cart = $this->cart;
 
         if ($cart->items->isEmpty()) {
@@ -129,9 +230,9 @@ class Checkout extends Component
         $deliveryCharge = collect($this->deliveryAreas)->firstWhere('id', $this->delivery_area)['charge'] ?? 0;
 
         try {
-            $order = DB::transaction(function () use ($cart, $deliveryCharge) {
+            $order = DB::transaction(function () use ($cart, $deliveryCharge, $selectedAddress) {
                 $customer = $this->findOrCreateCustomer();
-                $address = $this->createDeliveryProfile($customer);
+                $address = $this->createDeliveryProfile($customer, $selectedAddress);
 
                 $order = Order::create([
                     'customer_id' => $customer->id,
@@ -261,16 +362,28 @@ class Checkout extends Component
     }
 
     /**
-     * Creates a real, reusable DeliveryAddress for this customer from what
-     * checkout actually collects (a free-text address + a coarse Dhaka /
-     * outside-Dhaka choice — no location picker). full_address always
-     * carries the real text the customer typed; the structured geo columns
-     * (country/state/city — ps/area/zip_code/street have no location data
-     * or models in this codebase at all) are set only when they can
-     * genuinely be resolved, left null otherwise rather than guessed.
+     * Resolves the delivery address to actually bill/ship this order to.
+     * If the customer picked a saved address in the picker, reuse that row
+     * as-is (optionally promoting it to default) instead of creating a
+     * duplicate. Otherwise creates a real, reusable DeliveryAddress from
+     * what the form actually collects (a free-text address + a coarse
+     * Dhaka / outside-Dhaka choice — no location picker). full_address
+     * always carries the real text the customer typed; the structured geo
+     * columns (country/state/city — ps/area/zip_code/street have no
+     * location data or models in this codebase at all) are set only when
+     * they can genuinely be resolved, left null otherwise rather than
+     * guessed.
      */
-    private function createDeliveryProfile(Customer $customer): DeliveryAddress
+    private function createDeliveryProfile(Customer $customer, ?DeliveryAddress $selectedAddress = null): DeliveryAddress
     {
+        if ($selectedAddress) {
+            if ($this->setAsDefault && ! $selectedAddress->is_default_shipping) {
+                $this->promoteToDefault($customer, $selectedAddress);
+            }
+
+            return $selectedAddress;
+        }
+
         $country = Country::whereRaw('LOWER(name) = ?', ['bangladesh'])->first();
 
         $city = $this->delivery_area === 'dhaka'
@@ -283,12 +396,16 @@ class Checkout extends Component
 
         // address_type is a free-text label the customer can rename later
         // (no fixed list) — default a new customer's first address to
-        // "Home" and mark it as their default shipping/billing address.
-        // A returning customer's new address is saved alongside their
-        // existing one(s) without touching which is default — only one
-        // address should ever be "the" default, and this form has no way
-        // to let the customer choose to replace it.
+        // "Home". A brand-new address becomes the default whenever it's
+        // the customer's first one, or when they explicitly checked
+        // "set as default" in the add-address form.
         $isFirstAddress = ! DeliveryAddress::where('customer_id', $customer->id)->exists();
+        $makeDefault = $isFirstAddress || $this->setAsDefault;
+
+        if ($makeDefault && ! $isFirstAddress) {
+            DeliveryAddress::where('customer_id', $customer->id)
+                ->update(['is_default_shipping' => false, 'is_default_billing' => false]);
+        }
 
         return DeliveryAddress::create([
             'customer_id' => $customer->id,
@@ -299,10 +416,18 @@ class Checkout extends Component
             'state_id' => $state?->id,
             'city_id' => $city?->id,
             'full_address' => $this->address,
-            'is_default_shipping' => $isFirstAddress,
-            'is_default_billing' => $isFirstAddress,
+            'is_default_shipping' => $makeDefault,
+            'is_default_billing' => $makeDefault,
             'is_active' => true,
         ]);
+    }
+
+    private function promoteToDefault(Customer $customer, DeliveryAddress $address): void
+    {
+        DeliveryAddress::where('customer_id', $customer->id)
+            ->update(['is_default_shipping' => false, 'is_default_billing' => false]);
+
+        $address->update(['is_default_shipping' => true, 'is_default_billing' => true]);
     }
 
     private function recordPurchase(Order $order): void

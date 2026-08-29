@@ -16,23 +16,68 @@
     <div class="checkout__grid">
         <div class="checkout__form">
             <form wire:submit.prevent="placeOrder">
-                <div class="field-grid">
-                    <div class="field">
-                        <label>Full name</label>
-                        <input type="text" wire:model="name" placeholder="Enter your full name" required>
-                        @error('name') <span class="field__error">{{ $message }}</span> @enderror
-                    </div>
-                    <div class="field">
-                        <label>Phone number</label>
-                        <input type="text" inputmode="tel" wire:model="phone" placeholder="01XXXXXXXXX" required>
-                        @error('phone') <span class="field__error">{{ $message }}</span> @enderror
-                    </div>
-                </div>
+                @auth
+                    <div class="field" style="margin-bottom:20px">
+                        <label>Delivery address</label>
 
-                <div class="field">
-                    <label>Delivery address</label>
-                    <textarea wire:model="address" rows="3" placeholder="House, road, area, city" required></textarea>
-                    @error('address') <span class="field__error">{{ $message }}</span> @enderror
+                        @error('selectedAddressId') <span class="field__error">{{ $message }}</span> @enderror
+
+                        @if ($this->savedAddresses->isNotEmpty())
+                            <div class="address-list">
+                                @foreach ($this->savedAddresses as $savedAddress)
+                                    <label class="address-card {{ $selectedAddressId === $savedAddress->id ? 'is-on' : '' }}" wire:key="address-{{ $savedAddress->id }}">
+                                        <input type="radio" name="selectedAddressId" value="{{ $savedAddress->id }}" wire:click="selectAddress({{ $savedAddress->id }})" @checked($selectedAddressId === $savedAddress->id)>
+                                        <div class="address-card__body">
+                                            <div class="address-card__head">
+                                                <strong>{{ $savedAddress->name }}</strong>
+                                                @if ($savedAddress->address_type)
+                                                    <span class="address-card__tag">{{ $savedAddress->address_type }}</span>
+                                                @endif
+                                                @if ($savedAddress->is_default_shipping)
+                                                    <span class="address-card__default">Default</span>
+                                                @endif
+                                            </div>
+                                            <span class="address-card__phone">{{ $savedAddress->phone }}</span>
+                                            <span class="address-card__text">{{ $savedAddress->full_address }}</span>
+                                        </div>
+                                    </label>
+                                @endforeach
+
+                                <button type="button" class="address-card address-card--add {{ $showNewAddressForm ? 'is-on' : '' }}" wire:click="showAddAddressForm">
+                                    <span class="address-card__plus">+</span>
+                                    <span>Add new address</span>
+                                </button>
+                            </div>
+                        @endif
+                    </div>
+                @endauth
+
+                <div class="address-form" x-show="{{ $showNewAddressForm ? 'true' : 'false' }}" @if(!$showNewAddressForm) x-cloak @endif x-collapse>
+                    <div class="field-grid">
+                        <div class="field">
+                            <label>Full name</label>
+                            <input type="text" wire:model="name" placeholder="Enter your full name" @if($showNewAddressForm) required @endif>
+                            @error('name') <span class="field__error">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="field">
+                            <label>Phone number</label>
+                            <input type="text" inputmode="tel" wire:model="phone" placeholder="01XXXXXXXXX" @if($showNewAddressForm) required @endif>
+                            @error('phone') <span class="field__error">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label>Delivery address</label>
+                        <textarea wire:model="address" rows="3" placeholder="House, road, area, city" @if($showNewAddressForm) required @endif></textarea>
+                        @error('address') <span class="field__error">{{ $message }}</span> @enderror
+                    </div>
+
+                    @auth
+                        <label class="address-form__default-toggle">
+                            <input type="checkbox" wire:model="setAsDefault">
+                            <span>Set as my default address</span>
+                        </label>
+                    @endauth
                 </div>
 
                 <div class="field">
