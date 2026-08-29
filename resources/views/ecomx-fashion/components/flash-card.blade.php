@@ -9,7 +9,7 @@
         <x-ux-img :id="$item['img']" :w="500" :alt="$item['name']" class="fcard__img" />
         <span class="fcard__save">Save <span class="sym">৳</span>{{ number_format($save) }}</span>
         @if ($productId)
-            <button type="button" class="pcard__wish" :class="wished && 'is-on'" @click.prevent="wished = !wished; $wire.debounce(500).setWishlist({{ $productId }}, wished)" aria-label="Wishlist"><x-icon name="heart" /></button>
+            <button type="button" class="pcard__wish" :class="wished && 'is-on'" @click.prevent="wished = !wished" wire:click.prevent.debounce.500ms="setWishlist({{ $productId }}, wished)" aria-label="Wishlist"><x-icon name="heart" /></button>
         @else
             <button type="button" class="pcard__wish" disabled aria-label="Wishlist"><x-icon name="heart" /></button>
         @endif
