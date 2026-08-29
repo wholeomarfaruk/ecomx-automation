@@ -4,12 +4,12 @@
     $productId = $item['id'] ?? null;
     $isWished = $item['is_wished'] ?? false;
 @endphp
-<div class="fcard" x-data="{ added:false }">
+<div class="fcard" x-data="{ added:false, wished: @js($isWished) }">
     <a href="{{ $item['url'] ?? route('ecomx-fashion.product') }}" class="fcard__media">
         <x-ux-img :id="$item['img']" :w="500" :alt="$item['name']" class="fcard__img" />
         <span class="fcard__save">Save <span class="sym">৳</span>{{ number_format($save) }}</span>
         @if ($productId)
-            <button type="button" class="pcard__wish {{ $isWished ? 'is-on' : '' }}" wire:click.prevent="toggleWishlist({{ $productId }})" wire:loading.attr="disabled" wire:target="toggleWishlist({{ $productId }})" aria-label="Wishlist"><x-icon name="heart" /></button>
+            <button type="button" class="pcard__wish" :class="wished && 'is-on'" @click.prevent="wished = !wished; $wire.debounce(500).setWishlist({{ $productId }}, wished)" aria-label="Wishlist"><x-icon name="heart" /></button>
         @else
             <button type="button" class="pcard__wish" disabled aria-label="Wishlist"><x-icon name="heart" /></button>
         @endif

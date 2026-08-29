@@ -8,29 +8,26 @@ use App\Models\Wishlist;
 use App\Models\WishlistItem;
 
 /**
- * Adds a `toggleWishlist` Livewire action to any ecomx-fashion page/component
- * whose product cards render a heart button bound to `wire:click`. Persists
- * to the wishlists/wishlist_items tables, keyed on the visitor's Device (see
+ * Adds wishlist Livewire actions to any ecomx-fashion page/component whose
+ * product cards render a heart button bound to `wire:click`. Persists to the
+ * wishlists/wishlist_items tables, keyed on the visitor's Device (see
  * DeviceTracker middleware) — no customer login required.
  */
 trait TogglesWishlist
 {
+    /**
+     * Blind toggle: add if absent, remove if present. Used where the button
+     * flips its own state from a fresh server render each time (buy box),
+     * so there's no optimistic client state that could disagree with it.
+     */
     public function toggleWishlist(int $productId, ?int $productVariantId = null): void
     {
-        /** @var Device|null $device */
-        $device = request()->attributes->get('device');
+        $device = $this->wishlistDevice();
 
         if (! $device) {
-            $this->dispatch('notify', message: 'Unable to update wishlist right now.', type: 'error');
-
             return;
         }
 
-        // Callers that don't have a variant picker (product-card grids) only
-        // ever pass the product id. For a variable product that still needs
-        // to resolve to a real variant row — fall back to its first active
-        // variant (in-stock ones first) so the wishlist always references a
-        // purchasable line item, not a dangling "the product in general".
         $productVariantId ??= $this->defaultVariantIdFor($productId);
 
         $wishlist = Wishlist::query()->firstOrCreate(['device_id' => $device->id]);
@@ -40,18 +37,71 @@ trait TogglesWishlist
             ->where('variant_id', $productVariantId)
             ->first();
 
-        if ($existing) {
+        $this->applyWishlistChange($wishlist, $device, $productId, $productVariantId, wished: ! $existing);
+    }
+
+    /**
+     * Explicit set: makes the DB match $wished exactly, regardless of how
+     * many times this fired. Used by product-card grids, whose heart button
+     * flips an Alpine-local boolean instantly on click (optimistic UI) and
+     * sends this debounced — so a burst of clicks collapses into one call
+     * carrying only the final settled state, instead of replaying every
+     * click as a blind toggle (which would drift from the visible icon).
+     */
+    public function setWishlist(int $productId, bool $wished, ?int $productVariantId = null): void
+    {
+        $device = $this->wishlistDevice();
+
+        if (! $device) {
+            return;
+        }
+
+        $productVariantId ??= $this->defaultVariantIdFor($productId);
+
+        $wishlist = Wishlist::query()->firstOrCreate(['device_id' => $device->id]);
+
+        $this->applyWishlistChange($wishlist, $device, $productId, $productVariantId, $wished);
+    }
+
+    protected function wishlistDevice(): ?Device
+    {
+        $device = request()->attributes->get('device');
+
+        if (! $device) {
+            $this->dispatch('notify', message: 'Unable to update wishlist right now.', type: 'error');
+        }
+
+        return $device;
+    }
+
+    protected function applyWishlistChange(Wishlist $wishlist, Device $device, int $productId, ?int $variantId, bool $wished): void
+    {
+        $existing = $wishlist->items()
+            ->where('product_id', $productId)
+            ->where('variant_id', $variantId)
+            ->first();
+
+        if ($wished && ! $existing) {
+            $wishlist->items()->create([
+                'product_id' => $productId,
+                'variant_id' => $variantId,
+            ]);
+            $message = 'Added to wishlist.';
+        } elseif (! $wished && $existing) {
             $existing->delete();
             $message = 'Removed from wishlist.';
         } else {
-            $wishlist->items()->create([
-                'product_id' => $productId,
-                'variant_id' => $productVariantId,
-            ]);
-            $message = 'Added to wishlist.';
+            // Already in the desired state (e.g. a debounced call landed
+            // after the state had already changed some other way) — nothing
+            // to persist, but the header count may still be stale for this
+            // component instance, so keep it in sync below.
+            $message = null;
         }
 
-        $this->dispatch('notify', message: $message);
+        if ($message) {
+            $this->dispatch('notify', message: $message);
+        }
+
         $this->dispatch('wishlist-updated', count: WishlistItem::forDevice($device)->count());
     }
 

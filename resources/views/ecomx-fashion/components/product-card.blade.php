@@ -5,12 +5,12 @@
     $isWished = $product['is_wished'] ?? false;
     $hasSale = !empty($product['sale']);
 @endphp
-<div class="pcard" x-data="{ added:false }">
+<div class="pcard" x-data="{ added:false, wished: @js($isWished) }">
     <a href="{{ $productUrl }}" class="pcard__media">
         <x-ux-img :id="$product['img']" :w="700" :alt="$product['name']" class="pcard__img" />
         @if(!empty($product['tag']))<span class="pcard__tag">{{ $product['tag'] }}</span>@endif
         @if ($productId)
-            <button type="button" class="pcard__wish {{ $isWished ? 'is-on' : '' }}" wire:click.prevent="toggleWishlist({{ $productId }})" wire:loading.attr="disabled" wire:target="toggleWishlist({{ $productId }})" aria-label="Add to wishlist"><x-icon name="heart" /></button>
+            <button type="button" class="pcard__wish" :class="wished && 'is-on'" @click.prevent="wished = !wished; $wire.debounce(500).setWishlist({{ $productId }}, wished)" aria-label="Add to wishlist"><x-icon name="heart" /></button>
         @else
             <button type="button" class="pcard__wish" disabled aria-label="Add to wishlist"><x-icon name="heart" /></button>
         @endif
