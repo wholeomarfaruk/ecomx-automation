@@ -40,6 +40,7 @@
                                             <span class="address-card__phone">{{ $savedAddress->phone }}</span>
                                             <span class="address-card__text">{{ $savedAddress->full_address }}</span>
                                         </div>
+                                        <button type="button" class="address-card__edit" wire:click.stop.prevent="editAddress({{ $savedAddress->id }})" aria-label="Edit address">Edit</button>
                                     </label>
                                 @endforeach
 
@@ -209,7 +210,7 @@
             <div class="modal" @click.self="$wire.closeAddAddressForm()">
                 <div class="modal__box modal__box--md">
                     <div class="modal__head">
-                        <p class="modal__title" style="font-size:22px">Add new address</p>
+                        <p class="modal__title" style="font-size:22px">{{ $editingAddressId ? 'Edit address' : 'Add new address' }}</p>
                         <button type="button" class="modal__close" wire:click="closeAddAddressForm" aria-label="Close">✕</button>
                     </div>
 
@@ -243,7 +244,7 @@
                             <span>Set as my default address</span>
                         </label>
 
-                        <button type="submit" class="btn btn--primary btn--block" wire:loading.attr="disabled" wire:target="saveNewAddress">Save Address</button>
+                        <button type="submit" class="btn btn--primary btn--block" wire:loading.attr="disabled" wire:target="saveNewAddress">{{ $editingAddressId ? 'Save Changes' : 'Save Address' }}</button>
                     </form>
                 </div>
             </div>

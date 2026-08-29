@@ -49,6 +49,14 @@ class Checkout extends Component
     public bool $showNewAddressForm = false;
     public bool $setAsDefault = false;
 
+    /**
+     * Set while the "Add/Edit address" modal is open for an existing saved
+     * address (Edit button on a card) rather than a brand-new one — same
+     * modal and fields, saveNewAddress() just updates this row in place
+     * instead of creating a new DeliveryAddress.
+     */
+    public ?int $editingAddressId = null;
+
     public bool $placed = false;
 
     public array $deliveryAreas = [
@@ -125,12 +133,42 @@ class Checkout extends Component
             $this->selectedAddressId = null;
         }
 
+        $this->editingAddressId = null;
+        $this->reset(['name', 'phone', 'address', 'address_type', 'setAsDefault']);
+        $this->showNewAddressForm = true;
+    }
+
+    /**
+     * Edit button on a saved-address card — opens the same modal as "Add
+     * new address" but pre-filled from that row, and setAsDefault reflects
+     * whether it already is the default rather than starting unchecked.
+     */
+    public function editAddress(int $addressId): void
+    {
+        $customerId = auth()->check() ? auth()->user()->customer?->id : null;
+
+        $address = $customerId
+            ? DeliveryAddress::where('id', $addressId)->where('customer_id', $customerId)->first()
+            : null;
+
+        if (! $address) {
+            return;
+        }
+
+        $this->editingAddressId = $address->id;
+        $this->name = $address->name;
+        $this->phone = $address->phone ?? '';
+        $this->address = $address->full_address ?? '';
+        $this->address_type = $address->address_type ?? '';
+        $this->setAsDefault = $address->is_default_shipping;
+
         $this->showNewAddressForm = true;
     }
 
     public function closeAddAddressForm(): void
     {
         $this->showNewAddressForm = false;
+        $this->editingAddressId = null;
         $this->reset(['name', 'phone', 'address', 'address_type', 'setAsDefault']);
         $this->resetErrorBag(['name', 'phone', 'address']);
     }
@@ -474,12 +512,49 @@ class Checkout extends Component
             return;
         }
 
-        $address = $this->storeAddressFromForm($customer);
+        $address = $this->editingAddressId
+            ? $this->updateAddressFromForm($customer, $this->editingAddressId)
+            : $this->storeAddressFromForm($customer);
+
+        if (! $address) {
+            $this->addError('name', 'That address is no longer available — please pick another or add a new one.');
+
+            return;
+        }
 
         $this->selectedAddressId = $address->id;
         $this->showNewAddressForm = false;
+        $this->editingAddressId = null;
 
         $this->reset(['name', 'phone', 'address', 'address_type', 'setAsDefault']);
+    }
+
+    /**
+     * Applies the modal's fields onto an existing saved address (Edit
+     * button) instead of creating a new row. Ownership-checked the same
+     * way as placeOrder()'s selectedAddressId — a plain public id sent
+     * from the browser must not let one customer edit another's address.
+     */
+    private function updateAddressFromForm(Customer $customer, int $addressId): ?DeliveryAddress
+    {
+        $address = DeliveryAddress::where('id', $addressId)->where('customer_id', $customer->id)->first();
+
+        if (! $address) {
+            return null;
+        }
+
+        if ($this->setAsDefault && ! $address->is_default_shipping) {
+            $this->promoteToDefault($customer, $address);
+        }
+
+        $address->update([
+            'name' => $this->name,
+            'phone' => $this->phone,
+            'full_address' => $this->address,
+            'address_type' => trim($this->address_type) ?: null,
+        ]);
+
+        return $address->refresh();
     }
 
     private function promoteToDefault(Customer $customer, DeliveryAddress $address): void
