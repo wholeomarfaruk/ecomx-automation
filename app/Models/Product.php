@@ -124,8 +124,12 @@ class Product extends Model
      * Whether this product is in the given device's wishlist. Pass the
      * Device the DeviceTracker middleware already resolved for this request
      * (request()->attributes->get('device')) — not a cookie value.
+     *
+     * Pass $variantId to check one specific variant line (e.g. the buy box's
+     * currently selected colour/size) instead of "any variant of this
+     * product", which is what product-card grids without a variant picker want.
      */
-    public function isWishedBy(Device|int|null $device): bool
+    public function isWishedBy(Device|int|null $device, ?int $variantId = null): bool
     {
         if (! $device) {
             return false;
@@ -134,6 +138,7 @@ class Product extends Model
         $deviceId = $device instanceof Device ? $device->id : $device;
 
         return $this->wishlistItems()
+            ->when($variantId !== null, fn ($q) => $q->where('variant_id', $variantId))
             ->whereHas('wishlist', fn ($q) => $q->where('device_id', $deviceId))
             ->exists();
     }

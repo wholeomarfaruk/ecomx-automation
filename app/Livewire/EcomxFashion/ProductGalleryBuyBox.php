@@ -352,7 +352,7 @@ class ProductGalleryBuyBox extends Component
 
     public function getIsWishedProperty(): bool
     {
-        return ProductModel::find($this->productId)?->isWishedBy(request()->attributes->get('device')) ?? false;
+        return ProductModel::find($this->productId)?->isWishedBy(request()->attributes->get('device'), $this->selectedVariantId) ?? false;
     }
 
     public function placeholder()

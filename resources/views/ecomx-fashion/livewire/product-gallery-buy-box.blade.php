@@ -99,7 +99,7 @@
         <div style="display:flex;flex-direction:column;gap:10px">
             <div style="display:flex;gap:10px">
                 <button type="button" class="btn btn--primary" style="flex:1" wire:click="addToCart">{{ $addedToCart ? 'Added to cart ✓' : 'Add to Cart — ৳' . number_format($this->currentPrice) }}</button>
-                <button class="icon-btn {{ $this->isWished ? 'is-on' : '' }}" style="width:54px;height:auto;border-radius:12px;background:#fff;{{ $this->isWished ? 'color:var(--ac)' : '' }}" wire:click="toggleWishlist({{ $productId }})" wire:loading.attr="disabled" wire:target="toggleWishlist({{ $productId }})" aria-label="Wishlist"><x-icon name="heart" /></button>
+                <button class="icon-btn {{ $this->isWished ? 'is-on' : '' }}" style="width:54px;height:auto;border-radius:12px;background:#fff;{{ $this->isWished ? 'color:var(--ac)' : '' }}" wire:click="toggleWishlist({{ $productId }}, {{ $this->selectedVariantId ?? 'null' }})" wire:loading.attr="disabled" wire:target="toggleWishlist({{ $productId }})" aria-label="Wishlist"><x-icon name="heart" /></button>
             </div>
             <div style="display:flex;gap:10px">
                 <button type="button" class="btn btn--outline" style="flex:1;border-color:var(--ac);color:var(--ac2)" wire:click="addToCart">Buy Now — 1 qty</button>
