@@ -4,6 +4,7 @@ namespace App\Livewire\EcomxFashion;
 
 use App\Enums\User\Status;
 use App\Models\Customer;
+use App\Models\EmailTemplate;
 use App\Models\SmsGatewayConfig;
 use App\Models\User;
 use App\Sms\Facades\Sms;
@@ -45,7 +46,19 @@ class AuthModal extends Component
     public string $registerPassword = '';
     public bool $agree = false;
 
+    // Forgot password: select channel -> verify OTP -> set new password
+    public string $fpStep = 'select';
+
+    /** phone | email */
+    public string $fpChannel = 'phone';
+    public string $fpIdentifier = '';
+    public string $fpCode = '';
+    public ?int $fpUserId = null;
+    public string $fpNewPassword = '';
+    public string $fpNewPassword_confirmation = '';
+
     public string $formError = '';
+    public string $formSuccess = '';
 
     public function switchMode(string $mode): void
     {
@@ -57,8 +70,24 @@ class AuthModal extends Component
     {
         $this->loginTab = $tab;
         $this->formError = '';
+        $this->formSuccess = '';
         $this->otpSent = false;
         $this->otpCode = '';
+    }
+
+    public function switchForgotChannel(string $channel): void
+    {
+        $this->fpChannel = $channel;
+        $this->fpIdentifier = '';
+        $this->formError = '';
+    }
+
+    public function backToForgotSelect(): void
+    {
+        $this->fpStep = 'select';
+        $this->fpIdentifier = '';
+        $this->fpCode = '';
+        $this->formError = '';
     }
 
     private function resetForms(): void
@@ -67,7 +96,9 @@ class AuthModal extends Component
             'loginPhone', 'loginPassword',
             'otpPhone', 'otpCode', 'otpSent',
             'registerName', 'registerPhone', 'registerPassword', 'agree',
-            'formError',
+            'fpStep', 'fpChannel', 'fpIdentifier', 'fpCode', 'fpUserId',
+            'fpNewPassword', 'fpNewPassword_confirmation',
+            'formError', 'formSuccess',
         ]);
     }
 
@@ -219,6 +250,146 @@ class AuthModal extends Component
 
         $this->resetForms();
         $this->dispatch('authenticated');
+    }
+
+    public function sendForgotOtp(): void
+    {
+        $this->formError = '';
+
+        $this->validate([
+            'fpIdentifier' => $this->fpChannel === 'email'
+                ? 'required|email|max:150'
+                : 'required|string|max:20',
+        ], [], ['fpIdentifier' => $this->fpChannel === 'email' ? 'email address' : 'phone number']);
+
+        $key = $this->throttleKey('forgot-send', $this->fpChannel . ':' . $this->fpIdentifier);
+
+        if (RateLimiter::tooManyAttempts($key, 3)) {
+            $seconds = RateLimiter::availableIn($key);
+            $this->formError = "Too many code requests. Please try again in {$seconds} seconds.";
+
+            return;
+        }
+
+        $user = $this->fpChannel === 'email'
+            ? User::where('email', $this->fpIdentifier)->first()
+            : User::where('phone', $this->fpIdentifier)->first();
+
+        RateLimiter::hit($key, 300);
+
+        if (! $user || ! $user->status->isActive()) {
+            // Same next step whether or not the account exists — don't let
+            // this form be used to enumerate registered phones/emails.
+            $this->fpUserId = null;
+            $this->fpStep = 'otp';
+
+            return;
+        }
+
+        $code = (string) random_int(100000, 999999);
+
+        $user->forceFill([
+            'otp' => $code,
+            'otp_expires_at' => now()->addMinutes(5),
+        ])->save();
+
+        if ($this->fpChannel === 'email') {
+            $sent = EmailTemplate::send('otp', $user->email, [
+                'name' => $user->name,
+                'email' => $user->email,
+                'code' => $code,
+                'app_name' => config('app.name'),
+                'year' => now()->year,
+            ]);
+
+            if (! $sent) {
+                $this->formError = 'gateway_unavailable';
+
+                return;
+            }
+        } else {
+            if (! $this->smsGatewayReady()) {
+                $this->formError = 'gateway_unavailable';
+
+                return;
+            }
+
+            $response = Sms::sendOTP($user->phone, $code);
+
+            if (! $response->success) {
+                $this->formError = 'gateway_unavailable';
+
+                return;
+            }
+        }
+
+        $this->fpUserId = $user->id;
+        $this->fpStep = 'otp';
+    }
+
+    public function verifyForgotOtp(): void
+    {
+        $this->formError = '';
+
+        $this->validate(['fpCode' => 'required|string|max:6']);
+
+        $key = $this->throttleKey('forgot-verify', $this->fpChannel . ':' . $this->fpIdentifier);
+
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            $seconds = RateLimiter::availableIn($key);
+            $this->formError = "Too many attempts. Please try again in {$seconds} seconds.";
+
+            return;
+        }
+
+        $user = $this->fpUserId ? User::find($this->fpUserId) : null;
+
+        if (! $user || ! $user->otp || $user->otp !== trim($this->fpCode)) {
+            RateLimiter::hit($key, 60);
+            $this->formError = 'The code you entered is incorrect.';
+
+            return;
+        }
+
+        if (! $user->otp_expires_at || Carbon::parse($user->otp_expires_at)->isPast()) {
+            $this->formError = 'This code has expired — please request a new one.';
+
+            return;
+        }
+
+        RateLimiter::clear($key);
+        $this->fpStep = 'reset';
+    }
+
+    public function resetPassword(): void
+    {
+        $this->formError = '';
+
+        $this->validate([
+            'fpNewPassword' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = $this->fpUserId ? User::find($this->fpUserId) : null;
+
+        if (! $user || ! $user->otp || Carbon::parse($user->otp_expires_at)->isPast()) {
+            $this->formError = 'This code has expired — please request a new one.';
+            $this->fpStep = 'select';
+
+            return;
+        }
+
+        $user->forceFill([
+            'password' => Hash::make($this->fpNewPassword),
+            'otp' => null,
+            'otp_expires_at' => null,
+        ])->save();
+
+        $phone = $user->phone;
+        $this->resetForms();
+        $this->mode = 'login';
+        $this->loginTab = 'password';
+        $this->loginPhone = $phone ?? '';
+        $this->formSuccess = 'Password reset successfully. Please sign in.';
     }
 
     public function register(): void
