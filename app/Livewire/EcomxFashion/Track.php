@@ -6,6 +6,7 @@ use App\Enums\Sales\OrderStatus;
 use App\Models\Order;
 use App\Models\SmsGatewayConfig;
 use App\Sms\Facades\Sms;
+use App\Support\PhoneNumber;
 use Illuminate\Support\Carbon;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
@@ -36,9 +37,11 @@ class Track extends Component
 
         $numericId = preg_replace('/\D/', '', $this->orderId);
 
+        $nationalPhone = PhoneNumber::national($this->phone);
+
         $order = $numericId !== ''
             ? Order::where('id', $numericId)
-                ->whereHas('customer', fn ($q) => $q->where('phone', $this->phone))
+                ->whereHas('customer', fn ($q) => $q->where('phone', $nationalPhone))
                 ->first()
             : null;
 
@@ -129,7 +132,7 @@ class Track extends Component
             'otp_expires_at' => now()->addMinutes(5),
         ])->save();
 
-        $response = Sms::sendOTP($user->phone, $code);
+        $response = Sms::sendOTP(PhoneNumber::local($user->phone), $code);
 
         if (! $response->success) {
             $this->otpError = 'gateway_unavailable';

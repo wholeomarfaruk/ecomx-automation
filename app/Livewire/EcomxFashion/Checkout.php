@@ -21,6 +21,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Services\BlockGuard;
 use App\Services\StockService;
+use App\Support\PhoneNumber;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Component;
@@ -249,6 +250,10 @@ class Checkout extends Component
 
         $this->validate();
 
+        if (! $this->selectedAddressId) {
+            $this->phone = PhoneNumber::national($this->phone);
+        }
+
         $selectedAddress = null;
 
         if ($this->selectedAddressId) {
@@ -271,7 +276,7 @@ class Checkout extends Component
             // and the success screen displays $this->phone — both need to
             // reflect the address actually being used for this order.
             $this->name = $selectedAddress->name;
-            $this->phone = $selectedAddress->phone ?: $this->phone;
+            $this->phone = $selectedAddress->phone ? PhoneNumber::national($selectedAddress->phone) : $this->phone;
         }
 
         $cart = $this->cart;
@@ -507,6 +512,8 @@ class Checkout extends Component
             'address' => 'required|string',
             'address_type' => 'nullable|string|max:50',
         ]);
+
+        $this->phone = PhoneNumber::national($this->phone);
 
         $customer = auth()->check() ? auth()->user()->customer : null;
 

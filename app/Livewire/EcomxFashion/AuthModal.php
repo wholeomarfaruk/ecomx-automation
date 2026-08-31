@@ -8,6 +8,7 @@ use App\Models\EmailTemplate;
 use App\Models\SmsGatewayConfig;
 use App\Models\User;
 use App\Sms\Facades\Sms;
+use App\Support\PhoneNumber;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
@@ -134,7 +135,7 @@ class AuthModal extends Component
             return;
         }
 
-        $user = User::where('phone', $this->loginPhone)->first();
+        $user = User::where('phone', PhoneNumber::national($this->loginPhone))->first();
 
         if (! $user || ! Hash::check($this->loginPassword, $user->password)) {
             RateLimiter::hit($key, 60);
@@ -177,7 +178,7 @@ class AuthModal extends Component
             return;
         }
 
-        $user = User::where('phone', $this->otpPhone)->first();
+        $user = User::where('phone', PhoneNumber::national($this->otpPhone))->first();
 
         if (! $user) {
             RateLimiter::hit($key, 300);
@@ -203,7 +204,7 @@ class AuthModal extends Component
             'otp_expires_at' => now()->addMinutes(5),
         ])->save();
 
-        $response = Sms::sendOTP($user->phone, $code);
+        $response = Sms::sendOTP(PhoneNumber::local($user->phone), $code);
 
         if (! $response->success) {
             $this->formError = 'gateway_unavailable';
@@ -229,7 +230,7 @@ class AuthModal extends Component
             return;
         }
 
-        $user = User::where('phone', $this->otpPhone)->first();
+        $user = User::where('phone', PhoneNumber::national($this->otpPhone))->first();
 
         if (! $user || ! $user->otp || $user->otp !== trim($this->otpCode)) {
             RateLimiter::hit($key, 60);
@@ -274,7 +275,7 @@ class AuthModal extends Component
 
         $user = $this->fpChannel === 'email'
             ? User::where('email', $this->fpIdentifier)->first()
-            : User::where('phone', $this->fpIdentifier)->first();
+            : User::where('phone', PhoneNumber::national($this->fpIdentifier))->first();
 
         RateLimiter::hit($key, 300);
 
@@ -315,7 +316,7 @@ class AuthModal extends Component
                 return;
             }
 
-            $response = Sms::sendOTP($user->phone, $code);
+            $response = Sms::sendOTP(PhoneNumber::local($user->phone), $code);
 
             if (! $response->success) {
                 $this->formError = 'gateway_unavailable';
@@ -368,6 +369,8 @@ class AuthModal extends Component
 
         $this->validate([
             'fpNewPassword' => 'required|string|min:8|confirmed',
+        ], [
+            'fpNewPassword.confirmed' => 'The passwords you entered do not match.',
         ]);
 
         $user = $this->fpUserId ? User::find($this->fpUserId) : null;
@@ -385,11 +388,11 @@ class AuthModal extends Component
             'otp_expires_at' => null,
         ])->save();
 
-        $phone = $user->phone;
+        $phone = PhoneNumber::local($user->phone);
         $this->resetForms();
         $this->mode = 'login';
         $this->loginTab = 'password';
-        $this->loginPhone = $phone ?? '';
+        $this->loginPhone = $phone;
         $this->formSuccess = 'Password reset successfully. Please sign in.';
     }
 
@@ -399,15 +402,23 @@ class AuthModal extends Component
 
         $this->validate([
             'registerName' => 'required|string|max:150',
-            'registerPhone' => ['required', 'string', 'max:20', Rule::unique('users', 'phone')],
+            'registerPhone' => ['required', 'string', 'max:20'],
             'registerEmail' => ['nullable', 'email', 'max:150', Rule::unique('users', 'email')],
             'registerPassword' => 'required|string|min:8',
             'agree' => 'accepted',
         ], [
-            'registerPhone.unique' => 'An account with this phone number already exists.',
             'registerEmail.unique' => 'An account with this email already exists.',
             'agree.accepted' => 'You must accept the terms to continue.',
         ]);
+
+        $normalizedPhone = PhoneNumber::normalize($this->registerPhone);
+        $nationalPhone = $normalizedPhone['phone'];
+
+        if (User::where('phone', $nationalPhone)->exists()) {
+            $this->addError('registerPhone', 'An account with this phone number already exists.');
+
+            return;
+        }
 
         $host = parse_url(config('app.url'), PHP_URL_HOST) ?: 'seldomfashion.local';
 
@@ -415,7 +426,8 @@ class AuthModal extends Component
             'name' => $this->registerName,
             'email' => $this->registerEmail !== '' ? $this->registerEmail : 'user+' . Str::random(10) . '@' . $host,
             'password' => $this->registerPassword,
-            'phone' => $this->registerPhone,
+            'phone' => $nationalPhone,
+            'country_code' => $normalizedPhone['country_code'],
             'status' => Status::ACTIVE,
         ]);
 
@@ -430,7 +442,7 @@ class AuthModal extends Component
             'first_name' => $firstName,
             'last_name' => $lastName,
             'full_name' => $this->registerName,
-            'phone' => $this->registerPhone,
+            'phone' => $nationalPhone,
             'status' => 'active',
         ]);
 
