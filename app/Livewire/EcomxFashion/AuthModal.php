@@ -43,6 +43,7 @@ class AuthModal extends Component
     // Register
     public string $registerName = '';
     public string $registerPhone = '';
+    public string $registerEmail = '';
     public string $registerPassword = '';
     public bool $agree = false;
 
@@ -95,7 +96,7 @@ class AuthModal extends Component
         $this->reset([
             'loginPhone', 'loginPassword',
             'otpPhone', 'otpCode', 'otpSent',
-            'registerName', 'registerPhone', 'registerPassword', 'agree',
+            'registerName', 'registerPhone', 'registerEmail', 'registerPassword', 'agree',
             'fpStep', 'fpChannel', 'fpIdentifier', 'fpCode', 'fpUserId',
             'fpNewPassword', 'fpNewPassword_confirmation',
             'formError', 'formSuccess',
@@ -399,10 +400,12 @@ class AuthModal extends Component
         $this->validate([
             'registerName' => 'required|string|max:150',
             'registerPhone' => ['required', 'string', 'max:20', Rule::unique('users', 'phone')],
+            'registerEmail' => ['nullable', 'email', 'max:150', Rule::unique('users', 'email')],
             'registerPassword' => 'required|string|min:8',
             'agree' => 'accepted',
         ], [
             'registerPhone.unique' => 'An account with this phone number already exists.',
+            'registerEmail.unique' => 'An account with this email already exists.',
             'agree.accepted' => 'You must accept the terms to continue.',
         ]);
 
@@ -410,7 +413,7 @@ class AuthModal extends Component
 
         $user = User::create([
             'name' => $this->registerName,
-            'email' => 'user+' . Str::random(10) . '@' . $host,
+            'email' => $this->registerEmail !== '' ? $this->registerEmail : 'user+' . Str::random(10) . '@' . $host,
             'password' => $this->registerPassword,
             'phone' => $this->registerPhone,
             'status' => Status::ACTIVE,

@@ -161,6 +161,11 @@
                     @error('registerPhone') <span class="field__error">{{ $message }}</span> @enderror
                 </div>
                 <div class="field">
+                    <label>Email (optional)</label>
+                    <input wire:model="registerEmail" type="email" placeholder="you@example.com">
+                    @error('registerEmail') <span class="field__error">{{ $message }}</span> @enderror
+                </div>
+                <div class="field">
                     <label>Password *</label>
                     <div style="position:relative">
                         <input wire:model="registerPassword" :type="showPass ? 'text' : 'password'" required placeholder="Create a password">
