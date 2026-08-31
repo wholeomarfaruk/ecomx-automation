@@ -401,6 +401,8 @@ class Checkout extends Component
             'status' => Status::ACTIVE,
         ]);
 
+        $user->assignWebsiteAccess();
+
         auth()->login($user, remember: true);
 
         $code = 'CUS-' . str_pad((string) (Customer::withTrashed()->max('id') + 1), 5, '0', STR_PAD_LEFT);

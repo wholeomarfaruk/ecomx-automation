@@ -120,6 +120,18 @@ class User extends Authenticatable
 
         return $this->panels()->where('slug', $panelSlug)->exists();
     }
+
+    /** Every account created through the storefront (register, guest checkout) gets the "user" role and User Panel access. */
+    public function assignWebsiteAccess(): void
+    {
+        $this->assignRole('user');
+
+        $panel = Panel::where('slug', 'user')->first();
+
+        if ($panel) {
+            $this->panels()->syncWithoutDetaching([$panel->id]);
+        }
+    }
     //roleName
     public function roleName(): ?string
     {

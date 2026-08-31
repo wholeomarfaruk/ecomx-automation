@@ -419,6 +419,8 @@ class AuthModal extends Component
             'status' => Status::ACTIVE,
         ]);
 
+        $user->assignWebsiteAccess();
+
         [$firstName, $lastName] = array_pad(explode(' ', trim($this->registerName), 2), 2, null);
         $code = 'CUS-' . str_pad((string) (Customer::withTrashed()->max('id') + 1), 5, '0', STR_PAD_LEFT);
 
