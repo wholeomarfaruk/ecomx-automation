@@ -117,6 +117,20 @@ class AuthModal extends Component
         return 'auth:' . $action . ':' . Str::lower($identifier) . ':' . request()->ip();
     }
 
+    /**
+     * A full page reload after login, instead of a same-page DOM update.
+     * The header's @auth/@guest state is baked into the initial page HTML
+     * (a static Blade partial, not its own Livewire component), so nothing
+     * short of a real navigation makes it reflect the new session — and
+     * nesting a Livewire island inside the header's Alpine x-data tree
+     * caused Alpine/Livewire to fight over the same DOM nodes on morph.
+     * A reload sidesteps that entirely and re-renders everything correctly.
+     */
+    private function reloadAfterLogin(): void
+    {
+        $this->redirect(request()->header('Referer') ?: route('ecomx-fashion.home'));
+    }
+
     public function loginWithPassword(): void
     {
         $this->formError = '';
@@ -154,7 +168,7 @@ class AuthModal extends Component
         auth()->login($user, remember: true);
 
         $this->resetForms();
-        $this->dispatch('authenticated');
+        $this->reloadAfterLogin();
     }
 
     public function sendLoginOtp(): void
@@ -251,7 +265,7 @@ class AuthModal extends Component
         auth()->login($user, remember: true);
 
         $this->resetForms();
-        $this->dispatch('authenticated');
+        $this->reloadAfterLogin();
     }
 
     public function sendForgotOtp(): void
@@ -449,7 +463,7 @@ class AuthModal extends Component
         auth()->login($user, remember: true);
 
         $this->resetForms();
-        $this->dispatch('authenticated');
+        $this->reloadAfterLogin();
     }
 
     public function render()
