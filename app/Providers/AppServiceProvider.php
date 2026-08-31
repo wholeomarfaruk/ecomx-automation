@@ -175,7 +175,14 @@ class AppServiceProvider extends ServiceProvider
                 'mail.mailers.smtp.port' => $credentials['port'] ?? config('mail.mailers.smtp.port'),
                 'mail.mailers.smtp.username' => $credentials['username'] ?? null,
                 'mail.mailers.smtp.password' => $credentials['password'] ?? null,
-                'mail.mailers.smtp.scheme' => $credentials['encryption'] ?? null,
+                // The admin UI stores the legacy "tls"/"ssl" encryption labels, but Symfony's
+                // mailer only accepts "smtp" (STARTTLS, e.g. port 587) or "smtps" (implicit
+                // TLS, e.g. port 465) as a scheme — passing "tls" straight through throws
+                // UnsupportedSchemeException. "ssl" and port 465 both mean implicit TLS.
+                'mail.mailers.smtp.scheme' => ((string) ($credentials['encryption'] ?? '') === 'ssl'
+                    || (int) ($credentials['port'] ?? 0) === 465)
+                    ? 'smtps'
+                    : 'smtp',
             ]);
         } elseif ($credentials['api_key'] ?? null) {
             match ($mailer) {
