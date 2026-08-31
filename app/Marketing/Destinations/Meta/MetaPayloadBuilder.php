@@ -8,6 +8,7 @@ use App\Marketing\Events\AddToCart;
 use App\Marketing\Events\InitiateCheckout;
 use App\Marketing\Events\Purchase;
 use App\Marketing\Events\ViewContent;
+use App\Support\PhoneNumber;
 
 final class MetaPayloadBuilder
 {
@@ -39,7 +40,57 @@ final class MetaPayloadBuilder
             'external_id' => $this->resolveExternalId($context),
             'fbp' => $context->trackingCookies['_fbp'] ?? null,
             'fbc' => $context->trackingCookies['_fbc'] ?? null,
+            'em' => $this->hashedEmail($context),
+            'ph' => $this->hashedPhone($context),
         ], fn ($value) => $value !== null);
+    }
+
+    /**
+     * Meta's Advanced Matching wants email lowercased/trimmed, then
+     * SHA-256 hashed (hex), per
+     * https://developers.facebook.com/docs/marketing-api/conversions-api/parameters/customer-information-parameters
+     *
+     * Phone-only registrations and guest checkouts get an auto-generated
+     * placeholder address (user+xxxx@<app-host>, guest+<phone>@<host>) since
+     * this storefront doesn't require a real email — those aren't the
+     * customer's actual email and must never be sent to Meta as if they were.
+     */
+    private function hashedEmail(MarketingContext $context): ?string
+    {
+        $email = $context->customer->email ?? $context->user->email ?? null;
+
+        if (! $email || str_starts_with($email, 'user+') || str_starts_with($email, 'guest+')) {
+            return null;
+        }
+
+        return hash('sha256', strtolower(trim($email)));
+    }
+
+    /**
+     * Meta requires phone as digits only, country code first, no leading 0
+     * and no symbols (e.g. 8801761234567), then SHA-256 hashed (hex) — see
+     * the customer-information-parameters doc linked above. PhoneNumber
+     * already resolves country_code + national number from whatever format
+     * was stored, so this just concatenates and strips the "+".
+     */
+    private function hashedPhone(MarketingContext $context): ?string
+    {
+        $phone = $context->customer->phone ?? $context->user->phone ?? null;
+
+        if (! $phone) {
+            return null;
+        }
+
+        // Customer has no country_code column of its own — only User does —
+        // so fall back through the linked account when context only carries a Customer.
+        $countryCode = $context->customer->country_code
+            ?? $context->customer->user->country_code
+            ?? $context->user->country_code
+            ?? null;
+
+        $e164 = ltrim(PhoneNumber::display($phone, $countryCode), '+');
+
+        return hash('sha256', $e164);
     }
 
     private function buildCustomData(
