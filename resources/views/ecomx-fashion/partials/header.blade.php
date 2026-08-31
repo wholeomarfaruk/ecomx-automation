@@ -155,8 +155,8 @@
             <div class="drawer">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
                     <span style="display:flex;align-items:center;gap:10px">
-                        <img src="{{ asset('frontend/img/seldom-rounded.png') }}" alt="Seldom Fashion" class="brand__mark">
-                        <span class="brand__name">SELDOM FASHION</span>
+                        <img src="{{ $brandMarkUrl }}" alt="{{ $siteName }}" class="brand__mark">
+                        <span class="brand__name">{{ $siteName }}</span>
                     </span>
                     <button class="modal__close" @click="drawer=false" aria-label="Close">✕</button>
                 </div>
