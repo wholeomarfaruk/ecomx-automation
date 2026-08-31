@@ -1,4 +1,4 @@
-<div x-data="{ showPass: false }" x-show="$store.ui.authOpen" x-cloak class="modal" @click.self="$store.ui.authOpen=false" x-on:authenticated.window="$store.ui.authOpen=false">
+<div x-data="{ showPass: false }" x-show="$store.ui.authOpen" x-cloak class="modal" @click.self="$store.ui.authOpen=false">
 @guest
     <div class="modal__box modal__box--md">
         <div class="modal__head">
