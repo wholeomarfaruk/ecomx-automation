@@ -123,27 +123,23 @@ class PaperflyDriver implements CourierDriverInterface
 
     public function cancelShipment(string $trackingNumber): CourierResponse
     {
-        try {
-            $response = $this->client()->post(self::BASE_URL . '/api/v1/cancel-order', [
-                'order_id' => $trackingNumber,
-            ]);
-        } catch (\Throwable $e) {
-            throw new CourierGatewayUnavailableException($e->getMessage());
-        }
-
-        $data = $response->json() ?? [];
-
-        if ($response->status() === 401 || $response->status() === 403) {
-            throw new CourierAuthenticationException($this->errorMessageFrom($response, $data), $this->rawResponseArray($response, $data));
-        }
-
-        $message = $data['success']['message'] ?? null;
-
-        if (! $response->successful() || ! $message) {
-            throw new CourierException($this->errorMessageFrom($response, $data, 'Failed to cancel Paperfly order.'), 'cancel_failed', $this->rawResponseArray($response, $data));
-        }
-
-        return CourierResponse::success('paperfly', ['message' => $message], $data);
+        // Paperfly's own docs list POST /api/v1/cancel-order (no trailing
+        // slash), which 404s live — the real route needs the trailing
+        // slash (.../cancel-order/), confirmed by OPTIONS reporting the
+        // path accepts POST and the trailing-slash form returning a real
+        // {"error":{"message":"invalid",...}} JSON body instead of Apache's
+        // 404 page. But every payload shape tried (order_id, ReferenceNumber,
+        // merchantOrderReference, string/int, even Paperfly's own docs
+        // example "Test_01610") gets back the identical generic "invalid"
+        // — including an empty body — so something about the request this
+        // endpoint actually requires still isn't confirmed. Refusing rather
+        // than reporting false success; re-enable (and flip
+        // capabilities()['shipment_cancel'] back to true) once Paperfly
+        // confirms the correct request shape.
+        throw new CourierException(
+            'Paperfly order cancellation is not available right now — their documented cancel endpoint rejects every request shape tried so far. Cancel it from the Paperfly merchant portal, or contact Paperfly support to confirm the correct request format.',
+            'not_supported',
+        );
     }
 
     public function getTracking(string $trackingNumber): TrackingResponse
@@ -390,7 +386,8 @@ class PaperflyDriver implements CourierDriverInterface
     {
         return [
             CourierCapability::SHIPMENT_CREATE->value => true,
-            CourierCapability::SHIPMENT_CANCEL->value => true,
+            // Their documented cancel endpoint 404s live — see cancelShipment().
+            CourierCapability::SHIPMENT_CANCEL->value => false,
             CourierCapability::TRACKING->value => true,
             CourierCapability::STATUS_SYNC->value => true,
             CourierCapability::RATE_CALCULATION->value => false,
