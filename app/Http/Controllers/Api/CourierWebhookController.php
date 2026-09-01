@@ -59,13 +59,19 @@ class CourierWebhookController extends Controller
             );
         }
 
-        // None of the integrated couriers sign their webhook payloads, so
+        // Most integrated couriers don't sign their webhook payloads, so
         // this app generates its own secret (Courier > Settings) and
         // requires it back as ?secret= on the URL registered with the
         // courier — without this, anyone who discovers the endpoint could
-        // forge status updates for any shipment.
+        // forge status updates for any shipment. Pathao is the exception:
+        // per their docs, it echoes the secret back verbatim in the
+        // X-PATHAO-Signature header on every call (not a real HMAC
+        // signature despite the name), rather than as a query string —
+        // Pathao's real webhook calls never carry ?secret=.
         if ($courierModel->webhook_secret) {
-            $provided = (string) $request->query('secret', '');
+            $provided = $courierModel->driver_key === 'pathao'
+                ? (string) $request->header('X-PATHAO-Signature', '')
+                : (string) $request->query('secret', '');
 
             if (! hash_equals($courierModel->webhook_secret, $provided)) {
                 $log->update([

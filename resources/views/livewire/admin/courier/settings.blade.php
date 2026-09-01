@@ -80,6 +80,7 @@
                             <span x-show="copied !== {{ $courier->id }}">Copy</span>
                             <span x-show="copied === {{ $courier->id }}" class="text-emerald-600">Copied!</span>
                         </button>
+
                         @php
                             $confirmMessage = $courier->webhook_secret
                                 ? "Regenerating invalidates the old secret for {$courier->name} — update the callback URL in their merchant panel afterward, or their webhooks will start failing. Continue?"
@@ -91,6 +92,26 @@
                             {{ $courier->webhook_secret ? 'Regenerate' : 'Generate Secret' }}
                         </button>
                     </div>
+
+                    @if ($courier->driver_key === 'pathao' && $courier->webhook_secret)
+                        <div class="flex items-center gap-2">
+                            <input readonly value="{{ $courier->webhook_secret }}"
+                                x-ref="secret-{{ $courier->id }}"
+                                class="flex-1 text-xs font-mono text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none">
+                            <button type="button"
+                                @click="navigator.clipboard.writeText($refs['secret-{{ $courier->id }}'].value); copied = 'secret-{{ $courier->id }}'; setTimeout(() => copied = null, 1500)"
+                                class="shrink-0 px-3 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                                <span x-show="copied !== 'secret-{{ $courier->id }}'">Copy secret</span>
+                                <span x-show="copied === 'secret-{{ $courier->id }}'" class="text-emerald-600">Copied!</span>
+                            </button>
+                        </div>
+                        <p class="text-[11px] text-gray-400">
+                            Paste the URL above as-is (no ?secret=) into Pathao's webhook URL field, and paste this
+                            secret into Pathao's "Webhook Secret" field on their dashboard — Pathao echoes it back
+                            in the <code class="bg-gray-100 px-1 rounded">X-PATHAO-Signature</code> header on every call
+                            instead of accepting it back as a query string.
+                        </p>
+                    @endif
                 </div>
             @endforeach
         </div>

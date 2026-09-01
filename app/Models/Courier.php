@@ -57,10 +57,20 @@ class Courier extends Model
         return $secret;
     }
 
+    /**
+     * Pathao doesn't accept a ?secret= query string back — it echoes the
+     * secret you enter on its own dashboard verbatim in the
+     * X-PATHAO-Signature header on every call instead, so its registered
+     * URL must be the bare endpoint (see CourierWebhookController::handle).
+     */
     public function webhookUrl(): string
     {
         $url = url('/api/webhooks/courier/' . $this->slug);
 
-        return $this->webhook_secret ? "{$url}?secret={$this->webhook_secret}" : $url;
+        if (! $this->webhook_secret || $this->driver_key === 'pathao') {
+            return $url;
+        }
+
+        return "{$url}?secret={$this->webhook_secret}";
     }
 }

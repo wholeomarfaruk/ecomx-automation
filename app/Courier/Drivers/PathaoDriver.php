@@ -245,19 +245,51 @@ class PathaoDriver implements CourierDriverInterface
 
     public function parseWebhookEvent(array $payload): ?TrackingEvent
     {
-        $rawStatus = $payload['order_status'] ?? $payload['event'] ?? null;
+        // Pathao sends the same update under up to three different keys —
+        // 'event' (dot/hyphen style, e.g. "order.pickup-cancelled"),
+        // 'order_status_slug' (Title_Case, e.g. "Pickup_Cancelled"), and
+        // 'order_status' (human text, e.g. "Pickup Cancelled") — a payload
+        // isn't guaranteed to carry all three, so try each in turn.
+        $rawStatus = $payload['event'] ?? $payload['order_status_slug'] ?? $payload['order_status'] ?? null;
 
         if (! $rawStatus) {
             return null;
         }
 
+        $message = $payload['order_status'] ?? $payload['order_status_slug'] ?? $payload['event'] ?? 'Webhook update.';
+        $message = str_replace('_', ' ', $message);
+
+        if ($reason = ($payload['reason'] ?? $payload['note'] ?? $payload['delivery_note'] ?? null)) {
+            $message .= ' — ' . $reason;
+        }
+
         return new TrackingEvent(
             status: $this->normalizeStatus($rawStatus),
             rawStatus: $rawStatus,
-            message: 'Webhook update.',
-            eventAt: Carbon::now(),
+            message: $message,
+            eventAt: $this->parseWebhookTimestamp($payload),
             rawData: $payload,
         );
+    }
+
+    /**
+     * Pathao webhook payloads carry the event time as either 'timestamp'
+     * (ISO 8601 with offset) or 'updated_at' (naive "Y-m-d H:i:s"); fall
+     * back to receipt time if neither parses.
+     */
+    protected function parseWebhookTimestamp(array $payload): Carbon
+    {
+        foreach (['timestamp', 'updated_at'] as $key) {
+            if (! empty($payload[$key])) {
+                try {
+                    return Carbon::parse($payload[$key]);
+                } catch (\Throwable) {
+                    continue;
+                }
+            }
+        }
+
+        return Carbon::now();
     }
 
     public function calculateRate(RateRequest $request): RateResponse
@@ -380,25 +412,65 @@ class PathaoDriver implements CourierDriverInterface
     }
 
     /**
-     * Pathao's order_status vocabulary mapped onto our canonical CourierStatus.
+     * Pathao's status vocabulary mapped onto our canonical CourierStatus.
+     * Covers all three shapes Pathao sends the same update under — the
+     * 'order_status' API/tracking value (space Title Case), the webhook
+     * 'order_status_slug' (Title_Case), and the webhook 'event' key (lower
+     * dot.hyphen-case, e.g. "order.pickup-cancelled") — normalized here by
+     * lowercasing and turning both '_' and '.' into a single separator
+     * style so one map covers all of them.
      */
     protected function normalizeStatus(string $rawStatus): CourierStatus
     {
-        return CourierStatusNormalizer::normalize($rawStatus, [
+        $key = str_replace(['.', '-', ' '], '_', strtolower(trim($rawStatus)));
+        $key = str_starts_with($key, 'order_') ? substr($key, 6) : $key;
+
+        return CourierStatusNormalizer::normalize($key, [
+            // Pending / pickup lifecycle
             'pending' => CourierStatus::PENDING,
+            'order_created' => CourierStatus::PENDING,
+            'created' => CourierStatus::PENDING,
+            'pickup_pending' => CourierStatus::PENDING,
             'pickup_requested' => CourierStatus::PENDING,
             'assigned_for_pickup' => CourierStatus::PENDING,
+            'pickup_rescheduled' => CourierStatus::PENDING,
+            'pickup_cancelled' => CourierStatus::CANCELLED,
+            'pickup_failed' => CourierStatus::FAILED,
+
+            // Picked up / in transit
             'picked' => CourierStatus::PICKED_UP,
+            'picked_up' => CourierStatus::PICKED_UP,
+            'pickup_verified' => CourierStatus::PICKED_UP,
             'at_the_sorting_hub' => CourierStatus::IN_TRANSIT,
             'in_transit' => CourierStatus::IN_TRANSIT,
             'received_at_last_mile_hub' => CourierStatus::IN_TRANSIT,
+            'received_at_sorting_hub' => CourierStatus::IN_TRANSIT,
+            'on_hold' => CourierStatus::IN_TRANSIT,
+
+            // Out for delivery
             'assigned_for_delivery' => CourierStatus::OUT_FOR_DELIVERY,
+            'delivery_in_progress' => CourierStatus::OUT_FOR_DELIVERY,
+
+            // Delivered
             'delivered' => CourierStatus::DELIVERED,
             'partial_delivery' => CourierStatus::DELIVERED,
+
+            // Delivery failure
+            'delivery_failed' => CourierStatus::FAILED,
+            'delivery_incomplete' => CourierStatus::FAILED,
+            'not_delivered' => CourierStatus::FAILED,
+
+            // Return
             'return' => CourierStatus::RETURNED,
             'returned' => CourierStatus::RETURNED,
+            'assigned_for_return' => CourierStatus::RETURNED,
+            'return_verified' => CourierStatus::RETURNED,
+            'partial_return' => CourierStatus::RETURNED,
+            'exchange' => CourierStatus::RETURNED,
+
+            // Cancelled
             'cancelled' => CourierStatus::CANCELLED,
-            'delivery_failed' => CourierStatus::FAILED,
+            'order_cancelled' => CourierStatus::CANCELLED,
         ]);
     }
 }
