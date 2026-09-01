@@ -18,6 +18,10 @@ class Logs extends Component
     #[Url]
     public string $outcome = '';
 
+    public bool $drawerOpen = false;
+    public ?int $viewLogId = null;
+    public string $viewLogType = 'api';
+
     public function updatingType(): void
     {
         $this->resetPage();
@@ -27,6 +31,19 @@ class Logs extends Component
     public function updatingOutcome(): void
     {
         $this->resetPage();
+    }
+
+    public function viewLog(int $id, string $type): void
+    {
+        $this->viewLogId = $id;
+        $this->viewLogType = $type;
+        $this->drawerOpen = true;
+    }
+
+    public function closeDrawer(): void
+    {
+        $this->drawerOpen = false;
+        $this->viewLogId = null;
     }
 
     public function render()
@@ -51,9 +68,18 @@ class Logs extends Component
                 ->paginate(20);
         }
 
+        $viewingLog = null;
+
+        if ($this->drawerOpen && $this->viewLogId) {
+            $viewingLog = $this->viewLogType === 'api'
+                ? CourierApiLog::with(['courier', 'courierAccount', 'shipment'])->find($this->viewLogId)
+                : CourierWebhookLog::with(['courier', 'shipment'])->find($this->viewLogId);
+        }
+
         return view('livewire.admin.courier.logs', [
             'apiLogs' => $apiLogs,
             'webhookLogs' => $webhookLogs,
+            'viewingLog' => $viewingLog,
         ])->layout('layouts.admin.admin');
     }
 }

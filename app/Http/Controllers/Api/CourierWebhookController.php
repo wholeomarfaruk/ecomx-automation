@@ -42,6 +42,27 @@ class CourierWebhookController extends Controller
             return response()->json(['message' => 'Unknown courier.'], 404);
         }
 
+        // None of the integrated couriers sign their webhook payloads, so
+        // this app generates its own secret (Courier > Settings) and
+        // requires it back as ?secret= on the URL registered with the
+        // courier — without this, anyone who discovers the endpoint could
+        // forge status updates for any shipment.
+        if ($courierModel->webhook_secret) {
+            $provided = (string) $request->query('secret', '');
+
+            if (! hash_equals($courierModel->webhook_secret, $provided)) {
+                $log->update([
+                    'status' => 'failed',
+                    'signature_status' => 'invalid',
+                    'error_message' => 'Missing or incorrect webhook secret.',
+                ]);
+
+                return response()->json(['message' => 'Unauthorized.'], 401);
+            }
+
+            $log->update(['signature_status' => 'valid']);
+        }
+
         try {
             $driver = app(CourierManager::class)->driverFor($courierModel->driver_key);
             $identifier = $driver->webhookIdentifier($payload);

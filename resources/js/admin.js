@@ -192,6 +192,17 @@ document.addEventListener("livewire:initialized", () => {
     Livewire.hook("morph.updated", () => window.initFlatpickr());
 });
 
+// wire:navigate swaps the page via fetch/morph instead of a real browser
+// navigation, so the browser's native "jump to #fragment on load" behavior
+// never fires for a link like href="...#courier" — this replicates it.
+const scrollToHashTarget = () => {
+    if (!window.location.hash) return;
+    const target = document.getElementById(window.location.hash.slice(1));
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
+document.addEventListener("livewire:navigated", scrollToHashTarget);
+
 //FlatPickr==================================================END
 //--    ====================================================
 //Sortable==================================================START

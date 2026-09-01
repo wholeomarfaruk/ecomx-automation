@@ -15,6 +15,7 @@ class Courier extends Model
         'description',
         'type',
         'capabilities',
+        'webhook_secret',
         'is_active',
         'sort_order',
     ];
@@ -45,5 +46,21 @@ class Courier extends Model
     public function hasCapability(string $capability): bool
     {
         return (bool) ($this->capabilities[$capability] ?? false);
+    }
+
+    /** Generates (or rotates) the token appended to this courier's webhook URL — see the add_webhook_secret migration for why this app owns it, not the courier. */
+    public function generateWebhookSecret(): string
+    {
+        $secret = bin2hex(random_bytes(24));
+        $this->update(['webhook_secret' => $secret]);
+
+        return $secret;
+    }
+
+    public function webhookUrl(): string
+    {
+        $url = url('/api/webhooks/courier/' . $this->slug);
+
+        return $this->webhook_secret ? "{$url}?secret={$this->webhook_secret}" : $url;
     }
 }

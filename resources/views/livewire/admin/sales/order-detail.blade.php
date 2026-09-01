@@ -222,7 +222,7 @@
             </div>
 
             {{-- Courier --}}
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+            <div id="courier" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 scroll-mt-6">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-sm font-semibold text-gray-800">Courier</h2>
                     @if($canManageCourier && $order->courierShipments->isEmpty())

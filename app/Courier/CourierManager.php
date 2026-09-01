@@ -161,6 +161,7 @@ class CourierManager extends Manager
             $account,
             $shipment,
             'create_shipment',
+            $request,
             fn () => $this->driver($courierKey)->createShipment($request),
             fn (string $code, string $message, array $raw) => ShipmentResponse::failure($courierKey, $code, $message, $raw),
         );
@@ -207,6 +208,7 @@ class CourierManager extends Manager
             $shipment->courierAccount,
             $shipment,
             'cancel_shipment',
+            ['tracking_number' => $shipment->tracking_number],
             fn () => $this->driver($courierKey)->cancelShipment($shipment->tracking_number),
             fn (string $code, string $message, array $raw) => CourierResponse::failure($courierKey, $code, $message, $raw),
         );
@@ -242,6 +244,7 @@ class CourierManager extends Manager
             $shipment->courierAccount,
             $shipment,
             'sync_tracking',
+            ['tracking_number' => $shipment->tracking_number],
             fn () => $this->driver($courierKey)->getTracking($shipment->tracking_number),
             fn (string $code, string $message, array $raw) => TrackingResponse::failure($courierKey, $code, $message, $raw),
         );
@@ -309,13 +312,16 @@ class CourierManager extends Manager
      * regardless of outcome — shared by every manager method above so no
      * call to a courier's API ever goes unlogged. $onException builds the
      * right *Response::failure() for the caller's return type since PHP
-     * has no way to infer that from a generic callable's return.
+     * has no way to infer that from a generic callable's return. $requestPayload
+     * is whatever was actually sent (a DTO, array, or scalar identifier) —
+     * stored verbatim so a failed call can be diagnosed without reproducing it.
      */
     protected function logged(
         Courier $courier,
         ?CourierAccount $account,
         CourierShipment $shipment,
         string $action,
+        mixed $requestPayload,
         callable $call,
         callable $onException,
     ) {
@@ -343,6 +349,7 @@ class CourierManager extends Manager
             'success' => $success,
             'error_code' => $errorCode,
             'error_message' => $errorMessage,
+            'request_payload' => json_encode($requestPayload),
             'response_payload' => json_encode($raw),
             'duration_ms' => (int) ((microtime(true) - $startedAt) * 1000),
         ]);

@@ -128,9 +128,9 @@ class PathaoDriver implements CourierDriverInterface
             );
         }
 
-        $cityId = $request->meta['pathao_city_id'] ?? null;
-        $zoneId = $request->meta['pathao_zone_id'] ?? null;
-        $areaId = $request->meta['pathao_area_id'] ?? null;
+        $cityId = $request->meta['pathao_city_id'] ?? 1;
+        $zoneId = $request->meta['pathao_zone_id'] ?? 1;
+        $areaId = $request->meta['pathao_area_id'] ?? 1;
 
         if (! $cityId || ! $zoneId) {
             throw new CourierException(
