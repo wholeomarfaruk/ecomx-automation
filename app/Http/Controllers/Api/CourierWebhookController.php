@@ -42,6 +42,23 @@ class CourierWebhookController extends Controller
             return response()->json(['message' => 'Unknown courier.'], 404);
         }
 
+        // Pathao pings the registered URL with this event once when the
+        // webhook is being set up on their merchant dashboard, and expects
+        // this exact status/header/secret combination back to mark the
+        // integration verified — it isn't a real status update, so it must
+        // be answered before the shared secret check below (Pathao doesn't
+        // send our ?secret= on this verification call).
+        if ($courierModel->driver_key === 'pathao' && ($payload['event'] ?? null) === 'webhook_integration') {
+            $log->update(['status' => 'processed', 'event_type' => 'webhook_integration']);
+
+            return response()->json([
+                'message' => 'Webhook integrated',
+            ], 202)->header(
+                'X-Pathao-Merchant-Webhook-Integration-Secret',
+                'f3992ecc-59da-4cbe-a049-a13da2018d51'
+            );
+        }
+
         // None of the integrated couriers sign their webhook payloads, so
         // this app generates its own secret (Courier > Settings) and
         // requires it back as ?secret= on the URL registered with the
