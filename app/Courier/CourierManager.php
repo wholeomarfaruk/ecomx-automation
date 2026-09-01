@@ -152,6 +152,7 @@ class CourierManager extends Manager
             'courier_id' => $courier->id,
             'courier_account_id' => $account->id,
             'status' => 'pending',
+            'cod_amount' => $request->codAmount,
             'request_payload' => json_encode($request),
         ]);
 

@@ -83,6 +83,11 @@ class Order extends Model
         return $this->belongsTo(Coupon::class);
     }
 
+    public function courierShipments(): HasMany
+    {
+        return $this->hasMany(CourierShipment::class)->latest();
+    }
+
     public function posSale(): HasOne
     {
         return $this->hasOne(PosSale::class);
