@@ -2,11 +2,16 @@
 
 namespace App\Livewire\Admin\Sales;
 
+use App\Enums\Sales\CourierStatus;
 use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\OrderStatus;
 use App\Enums\Sales\PaymentStatus;
+use App\Exceptions\Inventory\InsufficientStockException;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Setting;
+use App\Services\StockService;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -16,6 +21,9 @@ class Orders extends Component
     use WithPagination;
 
     protected string $paginationTheme = 'tailwind';
+
+    public bool $viewModal = false;
+    public ?int $viewOrderId = null;
 
     /** orders | products | autosaved */
     #[Url]
@@ -44,6 +52,71 @@ class Orders extends Component
         $this->reset(['search', 'productSearch', 'filterStatus', 'filterPaymentStatus', 'filterSource', 'dateFrom', 'dateTo']);
         $this->resetPage();
         $this->resetPage('productsPage');
+    }
+
+    public function viewOrder(int $id): void
+    {
+        $this->viewOrderId = $id;
+        $this->viewModal = true;
+    }
+
+    public function closeViewModal(): void
+    {
+        $this->viewModal = false;
+        $this->viewOrderId = null;
+    }
+
+    /**
+     * Inline status edits straight from the table row — mirrors
+     * OrderDetail::updateStatus()'s stock-commit/release side effects so a
+     * status flip here behaves identically to doing it from the full order
+     * page, just without the courier/payment/returns fields also on screen.
+     */
+    public function updateOrderStatus(int $orderId, string $status): void
+    {
+        $order = Order::with('items')->findOrFail($orderId);
+        $previousStatus = $order->status->value;
+        $stockService = app(StockService::class);
+
+        try {
+            DB::transaction(function () use ($order, $status, $previousStatus, $stockService) {
+                $order->update(['status' => $status]);
+
+                $deductOnConfirm = (bool) Setting::get('deduct_on_order_confirm', true, 'inventory');
+                $restockOnRelease = (bool) Setting::get('restock_on_cancel_or_return', true, 'inventory');
+
+                if ($deductOnConfirm && $status === 'confirmed' && $previousStatus !== 'confirmed') {
+                    $stockService->commitOrder($order);
+                } elseif ($restockOnRelease && in_array($status, ['cancelled', 'returned'], true) && $previousStatus === 'confirmed') {
+                    $stockService->releaseOrder($order);
+                }
+            });
+        } catch (InsufficientStockException $e) {
+            $this->dispatch('toast', ['type' => 'error', 'message' => $e->getMessage()]);
+            return;
+        }
+
+        activity('sales')
+            ->causedBy(auth()->user())
+            ->performedOn($order)
+            ->event('updated')
+            ->log("Order #{$order->id} status updated");
+
+        $this->dispatch('toast', ['type' => 'success', 'message' => 'Order status updated']);
+    }
+
+    public function updatePaymentStatus(int $orderId, string $paymentStatus): void
+    {
+        $order = Order::findOrFail($orderId);
+        $order->update(['payment_status' => $paymentStatus]);
+
+        activity('sales')
+            ->causedBy(auth()->user())
+            ->performedOn($order)
+            ->event('updated')
+            ->log("Order #{$order->id} payment status updated");
+
+        $this->dispatch('toast', ['type' => 'success', 'message' => 'Payment status updated']);
     }
 
     public function render(): mixed
@@ -101,16 +174,30 @@ class Orders extends Component
                 ->paginate(20, pageName: 'productsPage')
             : null;
 
+        $viewingOrder = $this->viewOrderId
+            ? Order::with([
+                'customer',
+                'billingAddress',
+                'shippingAddress',
+                'items.product',
+                'items.variant',
+                'payments',
+                'courierShipments.courier',
+            ])->find($this->viewOrderId)
+            : null;
+
         return view('livewire.admin.sales.orders', [
-            'orders'        => $orders,
+            'orders'          => $orders,
             'orderedProducts' => $orderedProducts,
-            'statuses'      => OrderStatus::cases(),
+            'statuses'        => OrderStatus::cases(),
             'paymentStatuses' => PaymentStatus::cases(),
-            'sources'       => OrderSource::cases(),
-            'totalCount'    => Order::count(),
-            'totalRevenue'  => Order::where('payment_status', PaymentStatus::PAID)->sum('total_amount'),
-            'pendingCount'  => Order::where('status', OrderStatus::PENDING)->count(),
-            'dueTotal'      => Order::sum('due_amount'),
+            'courierStatuses' => CourierStatus::cases(),
+            'sources'         => OrderSource::cases(),
+            'totalCount'      => Order::count(),
+            'totalRevenue'    => Order::where('payment_status', PaymentStatus::PAID)->sum('total_amount'),
+            'pendingCount'    => Order::where('status', OrderStatus::PENDING)->count(),
+            'dueTotal'        => Order::sum('due_amount'),
+            'viewingOrder'    => $viewingOrder,
         ])->layout('layouts.admin.admin');
     }
 }
