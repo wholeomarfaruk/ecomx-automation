@@ -7,6 +7,7 @@ use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\OrderStatus;
 use App\Enums\Sales\PaymentStatus;
 use App\Exceptions\Inventory\InsufficientStockException;
+use App\Livewire\Concerns\BooksCourierShipments;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Setting;
@@ -19,6 +20,7 @@ use Livewire\WithPagination;
 class Orders extends Component
 {
     use WithPagination;
+    use BooksCourierShipments;
 
     protected string $paginationTheme = 'tailwind';
 
@@ -186,6 +188,8 @@ class Orders extends Component
             ])->find($this->viewOrderId)
             : null;
 
+        $canManageCourier = auth()->user()->can('courier_configuration.manage');
+
         return view('livewire.admin.sales.orders', [
             'orders'          => $orders,
             'orderedProducts' => $orderedProducts,
@@ -198,6 +202,8 @@ class Orders extends Component
             'pendingCount'    => Order::where('status', OrderStatus::PENDING)->count(),
             'dueTotal'        => Order::sum('due_amount'),
             'viewingOrder'    => $viewingOrder,
+            'bookableAccounts' => $canManageCourier ? $this->bookableAccounts() : collect(),
+            'canManageCourier' => $canManageCourier,
         ])->layout('layouts.admin.admin');
     }
 }

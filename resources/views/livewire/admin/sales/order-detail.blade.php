@@ -226,7 +226,7 @@
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-sm font-semibold text-gray-800">Courier</h2>
                     @if($canManageCourier && $order->courierShipments->isEmpty())
-                        <button wire:click="openBookingModal" type="button"
+                        <button wire:click="openBookingModalForCurrentOrder" type="button"
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
@@ -326,7 +326,7 @@
                     </div>
 
                     @if($canManageCourier)
-                        <button wire:click="openBookingModal" type="button"
+                        <button wire:click="openBookingModalForCurrentOrder" type="button"
                             class="w-full mt-4 px-4 py-2 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
                             Book with a different courier
                         </button>
