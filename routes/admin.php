@@ -199,6 +199,16 @@ Route::prefix('settings/advance/notification-configuration')->name('settings.adv
 });
 Route::post('/push/subscribe', App\Http\Controllers\Admin\PushSubscriptionController::class)->name('push.subscribe');
 
+Route::prefix('settings/advance/courier')->name('settings.advance.courier.')->group(function () {
+    Route::get('/', App\Livewire\Admin\Courier\Dashboard::class)->name('dashboard');
+    Route::get('/couriers', App\Livewire\Admin\Courier\Couriers::class)->name('couriers');
+    Route::get('/accounts', App\Livewire\Admin\Courier\Accounts::class)->name('accounts');
+    Route::get('/shipments', App\Livewire\Admin\Courier\Shipments::class)->name('shipments');
+    Route::get('/shipments/{shipment}', App\Livewire\Admin\Courier\ShipmentDetail::class)->name('shipments.show');
+    Route::get('/logs', App\Livewire\Admin\Courier\Logs::class)->name('logs');
+    Route::get('/settings', App\Livewire\Admin\Courier\Settings::class)->name('settings');
+});
+
 // Activity Log
 Route::get('/activity-log', App\Livewire\Admin\ActivityLog\ActivityLog::class)->name('activity-log');
 

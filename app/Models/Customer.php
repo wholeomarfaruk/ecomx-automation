@@ -17,7 +17,7 @@ class Customer extends Model
         'first_name', 'last_name', 'full_name',
         'email', 'phone', 'alternative_phone',
         'gender', 'date_of_birth',
-        'customer_group_id',
+        'customer_group_id', 'default_courier_id',
         'reward_points', 'wallet_balance',
         'email_verified_at', 'phone_verified_at',
         'status', 'notes', 'metadata',
@@ -43,6 +43,11 @@ class Customer extends Model
     public function customerGroup(): BelongsTo
     {
         return $this->belongsTo(CustomerGroup::class);
+    }
+
+    public function defaultCourier(): BelongsTo
+    {
+        return $this->belongsTo(Courier::class, 'default_courier_id');
     }
 
     public function carts(): HasMany

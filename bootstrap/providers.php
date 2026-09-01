@@ -5,4 +5,5 @@ return [
     App\Providers\FortifyServiceProvider::class,
     App\Providers\SmsServiceProvider::class,
     App\Providers\PushServiceProvider::class,
+    App\Providers\CourierServiceProvider::class,
 ];

@@ -11,6 +11,7 @@ enum CourierStatus: string
     case DELIVERED         = 'delivered';
     case FAILED            = 'failed';
     case RETURNED          = 'returned';
+    case CANCELLED         = 'cancelled';
 
     public function label(): string
     {
@@ -22,6 +23,7 @@ enum CourierStatus: string
             self::DELIVERED        => 'Delivered',
             self::FAILED           => 'Failed',
             self::RETURNED         => 'Returned',
+            self::CANCELLED        => 'Cancelled',
         };
     }
 
@@ -35,6 +37,7 @@ enum CourierStatus: string
             self::DELIVERED        => 'bg-emerald-50 text-emerald-600',
             self::FAILED           => 'bg-red-50 text-red-500',
             self::RETURNED         => 'bg-orange-50 text-orange-600',
+            self::CANCELLED        => 'bg-slate-100 text-slate-500',
         };
     }
 }

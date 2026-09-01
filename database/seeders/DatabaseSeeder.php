@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
             SmsTemplateSeeder::class,
             EmailTemplateSeeder::class,
             NotificationEventSeeder::class,
+            CourierSeeder::class,
         ]);
         User::create([
             'name' => 'superadmin',

@@ -751,7 +751,8 @@
                         'admin.settings.advance.developer-tools', 'admin.settings.advance.system-health', 'admin.settings.advance.license-configuration'
                     ]) || str_starts_with(Route::currentRouteName(), 'admin.settings.advance.sms-configuration.')
                         || str_starts_with(Route::currentRouteName(), 'admin.settings.advance.email-configuration.')
-                        || str_starts_with(Route::currentRouteName(), 'admin.settings.advance.notification-configuration.');
+                        || str_starts_with(Route::currentRouteName(), 'admin.settings.advance.notification-configuration.')
+                        || str_starts_with(Route::currentRouteName(), 'admin.settings.advance.courier.');
                 @endphp
                 <div x-data="dropdown" x-init="open = {{ $advanceActive ? 'true' : 'false' }} && $store.sidebar.full" class="relative">
                     <div @click="toggle('advance')" x-data="tooltip" @mouseover="show = true"
@@ -813,6 +814,12 @@
                         <a href="{{ route('admin.settings.advance.notification-configuration.dashboard') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.settings.advance.notification-configuration.') ? 'text-gray-200' : '' }}">
                             Notification Configuration
+                        </a>
+                        @endcan
+                        @can('courier_configuration.view')
+                        <a href="{{ route('admin.settings.advance.courier.dashboard') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.settings.advance.courier.') ? 'text-gray-200' : '' }}">
+                            Courier
                         </a>
                         @endcan
                     </div>

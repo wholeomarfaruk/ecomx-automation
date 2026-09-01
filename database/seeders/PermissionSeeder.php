@@ -111,6 +111,10 @@ class PermissionSeeder extends Seeder
             ['id' => 58, 'name' => 'purchase_order.edit'],
             ['id' => 59, 'name' => 'purchase_order.delete'],
 
+            //courier configuration
+            ['id' => 60, 'name' => 'courier_configuration.view'],
+            ['id' => 61, 'name' => 'courier_configuration.manage'],
+
         ];
         foreach ($permissions as $permission) {
             // Permission::create(['name' => $permission]);
