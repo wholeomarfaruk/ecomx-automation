@@ -17,6 +17,7 @@ use App\Courier\Exceptions\CourierAuthenticationException;
 use App\Courier\Exceptions\CourierException;
 use App\Courier\Exceptions\CourierGatewayUnavailableException;
 use App\Enums\Sales\CourierStatus;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 
@@ -116,11 +117,11 @@ class RedXDriver implements CourierDriverInterface
         $data = $response->json() ?? [];
 
         if ($response->status() === 401 || $response->status() === 403) {
-            throw new CourierAuthenticationException($data['message'] ?? 'RedX authentication failed.', $data);
+            throw new CourierAuthenticationException($this->errorMessageFrom($response, $data), $this->rawResponseArray($response, $data));
         }
 
         if (! $response->successful() || empty($data['tracking_id'])) {
-            throw new CourierException($data['message'] ?? 'Failed to create RedX parcel.', 'shipment_create_failed', $data);
+            throw new CourierException($this->errorMessageFrom($response, $data, 'Failed to create RedX parcel.'), 'shipment_create_failed', $this->rawResponseArray($response, $data));
         }
 
         return ShipmentResponse::success(
@@ -152,14 +153,14 @@ class RedXDriver implements CourierDriverInterface
         $data = $response->json() ?? [];
 
         if ($response->status() === 401 || $response->status() === 403) {
-            throw new CourierAuthenticationException($data['message'] ?? 'RedX authentication failed.', $data);
+            throw new CourierAuthenticationException($this->errorMessageFrom($response, $data), $this->rawResponseArray($response, $data));
         }
 
         // RedX's gateway has been observed returning a non-2xx HTTP status
         // (e.g. 503) alongside a valid {"success":true,...} body — trust the
         // body's own success flag first, since it's the more reliable signal.
         if (($data['success'] ?? null) !== true) {
-            throw new CourierException($data['message'] ?? 'Failed to cancel RedX parcel.', 'cancel_failed', $data);
+            throw new CourierException($this->errorMessageFrom($response, $data, 'Failed to cancel RedX parcel.'), 'cancel_failed', $this->rawResponseArray($response, $data));
         }
 
         return CourierResponse::success('redx', ['message' => $data['message'] ?? 'ok'], $data);
@@ -176,11 +177,11 @@ class RedXDriver implements CourierDriverInterface
         $data = $response->json() ?? [];
 
         if ($response->status() === 401 || $response->status() === 403) {
-            throw new CourierAuthenticationException($data['message'] ?? 'RedX authentication failed.', $data);
+            throw new CourierAuthenticationException($this->errorMessageFrom($response, $data), $this->rawResponseArray($response, $data));
         }
 
         if (! $response->successful()) {
-            throw new CourierException($data['message'] ?? 'Failed to fetch RedX tracking.', 'tracking_failed', $data);
+            throw new CourierException($this->errorMessageFrom($response, $data, 'Failed to fetch RedX tracking.'), 'tracking_failed', $this->rawResponseArray($response, $data));
         }
 
         $entries = $data['tracking'] ?? [];
@@ -201,6 +202,37 @@ class RedXDriver implements CourierDriverInterface
             events: $events,
             rawResponse: $data,
         );
+    }
+
+    /**
+     * RedX's sandbox has been observed returning a non-JSON body on some
+     * gateway-level failures — fall back to the raw text rather than a
+     * generic message when there's no parsed {message} field.
+     */
+    protected function errorMessageFrom(Response $response, array $data, string $fallback = 'RedX authentication failed.'): string
+    {
+        if (! empty($data['message'])) {
+            return $data['message'];
+        }
+
+        $body = trim($response->body());
+
+        return $body !== '' ? $body : $fallback;
+    }
+
+    /**
+     * What gets stored as this call's rawResponse (and from there,
+     * courier_api_logs.response_payload) — always includes the HTTP status
+     * and raw body text, not just the JSON-decoded array, so a non-JSON
+     * error response is never logged as an empty [] with no way to see
+     * what RedX actually sent.
+     */
+    protected function rawResponseArray(Response $response, array $data): array
+    {
+        return array_merge($data, [
+            'http_status' => $response->status(),
+            'raw_body' => $response->body(),
+        ]);
     }
 
     /**
@@ -298,7 +330,7 @@ class RedXDriver implements CourierDriverInterface
         $data = $response->json() ?? [];
 
         if (! $response->successful()) {
-            throw new CourierException($data['message'] ?? 'Failed to calculate RedX rate.', 'rate_calculation_failed', $data);
+            throw new CourierException($this->errorMessageFrom($response, $data, 'Failed to calculate RedX rate.'), 'rate_calculation_failed', $this->rawResponseArray($response, $data));
         }
 
         return RateResponse::success(
@@ -328,7 +360,9 @@ class RedXDriver implements CourierDriverInterface
         }
 
         if (! $response->successful()) {
-            throw new CourierAuthenticationException($response->json()['message'] ?? 'RedX authentication failed.', $response->json() ?? []);
+            $data = $response->json() ?? [];
+
+            throw new CourierAuthenticationException($this->errorMessageFrom($response, $data), $this->rawResponseArray($response, $data));
         }
 
         return CourierResponse::success('redx', ['message' => 'Connection successful.']);
@@ -388,7 +422,7 @@ class RedXDriver implements CourierDriverInterface
         $data = $response->json() ?? [];
 
         if (! $response->successful()) {
-            throw new CourierException($data['message'] ?? 'Failed to fetch RedX areas.', 'areas_fetch_failed', $data);
+            throw new CourierException($this->errorMessageFrom($response, $data, 'Failed to fetch RedX areas.'), 'areas_fetch_failed', $this->rawResponseArray($response, $data));
         }
 
         return CourierResponse::success('redx', ['areas' => $data['areas'] ?? []], $data);

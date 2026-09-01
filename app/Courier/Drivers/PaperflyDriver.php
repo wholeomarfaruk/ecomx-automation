@@ -17,6 +17,7 @@ use App\Courier\Exceptions\CourierAuthenticationException;
 use App\Courier\Exceptions\CourierException;
 use App\Courier\Exceptions\CourierGatewayUnavailableException;
 use App\Enums\Sales\CourierStatus;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 
@@ -92,15 +93,24 @@ class PaperflyDriver implements CourierDriverInterface
         $data = $response->json() ?? [];
 
         if ($response->status() === 401 || $response->status() === 403) {
-            throw new CourierAuthenticationException($data['message'] ?? 'Paperfly authentication failed.', $data);
+            throw new CourierAuthenticationException($this->errorMessageFrom($response, $data), $this->rawResponseArray($response, $data));
         }
 
         if (! $response->successful() || empty($data['success']['tracking_number'])) {
-            throw new CourierException($data['error']['message'] ?? $data['message'] ?? 'Failed to create Paperfly order.', 'shipment_create_failed', $data);
+            throw new CourierException($this->errorMessageFrom($response, $data, 'Failed to create Paperfly order.'), 'shipment_create_failed', $this->rawResponseArray($response, $data));
         }
 
         $result = $data['success'];
 
+        // Note: Paperfly's tracking/cancel endpoints actually look orders up
+        // by the merchantOrderReference WE sent (our own order id), NOT by
+        // this tracking_number/tracking_barcode — confirmed live: POST
+        // /API-Order-Tracking {"ReferenceNumber": "<order id>"} succeeds,
+        // {"ReferenceNumber": "<tracking_number>"} returns "No Order Found".
+        // tracking_number still stores Paperfly's real code here (for
+        // display, consistent with every other courier) — CourierManager
+        // swaps in the order id instead when calling getTracking()/
+        // cancelShipment() for this courier specifically.
         return ShipmentResponse::success(
             courier: 'paperfly',
             shipmentId: $result['tracking_number'],
@@ -124,13 +134,13 @@ class PaperflyDriver implements CourierDriverInterface
         $data = $response->json() ?? [];
 
         if ($response->status() === 401 || $response->status() === 403) {
-            throw new CourierAuthenticationException($data['message'] ?? 'Paperfly authentication failed.', $data);
+            throw new CourierAuthenticationException($this->errorMessageFrom($response, $data), $this->rawResponseArray($response, $data));
         }
 
         $message = $data['success']['message'] ?? null;
 
         if (! $response->successful() || ! $message) {
-            throw new CourierException($data['error']['message'] ?? $data['message'] ?? 'Failed to cancel Paperfly order.', 'cancel_failed', $data);
+            throw new CourierException($this->errorMessageFrom($response, $data, 'Failed to cancel Paperfly order.'), 'cancel_failed', $this->rawResponseArray($response, $data));
         }
 
         return CourierResponse::success('paperfly', ['message' => $message], $data);
@@ -149,11 +159,11 @@ class PaperflyDriver implements CourierDriverInterface
         $data = $response->json() ?? [];
 
         if ($response->status() === 401 || $response->status() === 403) {
-            throw new CourierAuthenticationException($data['message'] ?? 'Paperfly authentication failed.', $data);
+            throw new CourierAuthenticationException($this->errorMessageFrom($response, $data), $this->rawResponseArray($response, $data));
         }
 
         if (! $response->successful() || empty($data['success']['trackingStatus'])) {
-            throw new CourierException($data['error']['message'] ?? $data['message'] ?? 'Failed to fetch Paperfly tracking.', 'tracking_failed', $data);
+            throw new CourierException($this->errorMessageFrom($response, $data, 'Failed to fetch Paperfly tracking.'), 'tracking_failed', $this->rawResponseArray($response, $data));
         }
 
         $stage = $data['success']['trackingStatus'][0] ?? [];
@@ -224,6 +234,8 @@ class PaperflyDriver implements CourierDriverInterface
             return ['by' => 'tracking_number', 'value' => $orderNumber];
         }
 
+        // merchant_order_reference is our own order id — matched via the
+        // Order relation rather than the tracking_number column.
         if ($reference = ($data['merchant_order_reference'] ?? null)) {
             return ['by' => 'order_id', 'value' => $reference];
         }
@@ -274,6 +286,41 @@ class PaperflyDriver implements CourierDriverInterface
         ]);
     }
 
+    /**
+     * Paperfly nests errors as {"error":{"message":...}} on most endpoints
+     * but can also return a bare {"message":...} or a non-JSON body — try
+     * each shape in turn before falling back to the raw response text.
+     */
+    protected function errorMessageFrom(Response $response, array $data, string $fallback = 'Paperfly authentication failed.'): string
+    {
+        if (! empty($data['error']['message'])) {
+            return $data['error']['message'];
+        }
+
+        if (! empty($data['message'])) {
+            return $data['message'];
+        }
+
+        $body = trim($response->body());
+
+        return $body !== '' ? $body : $fallback;
+    }
+
+    /**
+     * What gets stored as this call's rawResponse (and from there,
+     * courier_api_logs.response_payload) — always includes the HTTP status
+     * and raw body text, not just the JSON-decoded array, so a non-JSON
+     * error response is never logged as an empty [] with no way to see
+     * what Paperfly actually sent.
+     */
+    protected function rawResponseArray(Response $response, array $data): array
+    {
+        return array_merge($data, [
+            'http_status' => $response->status(),
+            'raw_body' => $response->body(),
+        ]);
+    }
+
     public function calculateRate(RateRequest $request): RateResponse
     {
         throw new CourierException(
@@ -306,14 +353,14 @@ class PaperflyDriver implements CourierDriverInterface
         }
 
         $data = $response->json() ?? [];
-        $errorMessage = $data['error']['message'] ?? '';
+        $errorMessage = $this->errorMessageFrom($response, $data, '');
 
         if ($response->status() === 401
             || $response->status() === 403
             || str_contains(strtolower($errorMessage), 'credential')
             || str_contains(strtolower($errorMessage), 'api key')
         ) {
-            throw new CourierAuthenticationException($errorMessage ?: 'Paperfly authentication failed.', $data);
+            throw new CourierAuthenticationException($errorMessage ?: 'Paperfly authentication failed.', $this->rawResponseArray($response, $data));
         }
 
         return CourierResponse::success('paperfly', ['message' => 'Connection successful.']);

@@ -70,6 +70,23 @@ class CourierManager extends Manager
             ->first();
     }
 
+    /**
+     * What to hand a driver's getTracking()/cancelShipment() as the lookup
+     * value. Every courier except Paperfly looks shipments up by their own
+     * tracking_number — Paperfly's tracking/cancel endpoints only accept
+     * the merchantOrderReference WE sent when booking (confirmed live:
+     * {"ReferenceNumber": "<our order id>"} succeeds, the real tracking
+     * code returns "No Order Found"), so courier_shipments.tracking_number
+     * still stores Paperfly's real code for display, and this swaps in the
+     * order id instead only at the point of calling their API.
+     */
+    protected function lookupIdentifierFor(CourierShipment $shipment): string
+    {
+        return $shipment->courier->driver_key === 'paperfly'
+            ? (string) $shipment->order_id
+            : (string) $shipment->tracking_number;
+    }
+
     public function installedCouriers(): array
     {
         return collect(config('courier.drivers', []))
@@ -202,14 +219,15 @@ class CourierManager extends Manager
     public function cancelShipment(CourierShipment $shipment): CourierResponse
     {
         $courierKey = $shipment->courier->driver_key;
+        $lookupId = $this->lookupIdentifierFor($shipment);
 
         $response = $this->logged(
             $shipment->courier,
             $shipment->courierAccount,
             $shipment,
             'cancel_shipment',
-            ['tracking_number' => $shipment->tracking_number],
-            fn () => $this->driver($courierKey)->cancelShipment($shipment->tracking_number),
+            ['lookup_id' => $lookupId],
+            fn () => $this->driver($courierKey)->cancelShipment($lookupId),
             fn (string $code, string $message, array $raw) => CourierResponse::failure($courierKey, $code, $message, $raw),
         );
 
@@ -238,14 +256,15 @@ class CourierManager extends Manager
     public function syncTracking(CourierShipment $shipment): TrackingResponse
     {
         $courierKey = $shipment->courier->driver_key;
+        $lookupId = $this->lookupIdentifierFor($shipment);
 
         $response = $this->logged(
             $shipment->courier,
             $shipment->courierAccount,
             $shipment,
             'sync_tracking',
-            ['tracking_number' => $shipment->tracking_number],
-            fn () => $this->driver($courierKey)->getTracking($shipment->tracking_number),
+            ['lookup_id' => $lookupId],
+            fn () => $this->driver($courierKey)->getTracking($lookupId),
             fn (string $code, string $message, array $raw) => TrackingResponse::failure($courierKey, $code, $message, $raw),
         );
 

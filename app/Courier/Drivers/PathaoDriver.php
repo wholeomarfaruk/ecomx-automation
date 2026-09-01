@@ -17,6 +17,7 @@ use App\Courier\Exceptions\CourierAuthenticationException;
 use App\Courier\Exceptions\CourierException;
 use App\Courier\Exceptions\CourierGatewayUnavailableException;
 use App\Enums\Sales\CourierStatus;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -77,7 +78,7 @@ class PathaoDriver implements CourierDriverInterface
             $data = $response->json() ?? [];
 
             if (! $response->successful() || empty($data['access_token'])) {
-                throw new CourierAuthenticationException($data['message'] ?? 'Pathao authentication failed.', $data);
+                throw new CourierAuthenticationException($this->errorMessageFrom($response, $data), $this->rawResponseArray($response, $data));
             }
 
             return $data['access_token'];
@@ -164,11 +165,11 @@ class PathaoDriver implements CourierDriverInterface
         $data = $response->json() ?? [];
 
         if ($response->status() === 401 || $response->status() === 403) {
-            throw new CourierAuthenticationException($data['message'] ?? 'Pathao authentication failed.', $data);
+            throw new CourierAuthenticationException($this->errorMessageFrom($response, $data), $this->rawResponseArray($response, $data));
         }
 
         if (! $response->successful()) {
-            throw new CourierException($data['message'] ?? 'Failed to create Pathao shipment.', 'shipment_create_failed', $data);
+            throw new CourierException($this->errorMessageFrom($response, $data, 'Failed to create Pathao shipment.'), 'shipment_create_failed', $this->rawResponseArray($response, $data));
         }
 
         $order = $data['data'] ?? [];
@@ -202,11 +203,11 @@ class PathaoDriver implements CourierDriverInterface
         $data = $response->json() ?? [];
 
         if ($response->status() === 401 || $response->status() === 403) {
-            throw new CourierAuthenticationException($data['message'] ?? 'Pathao authentication failed.', $data);
+            throw new CourierAuthenticationException($this->errorMessageFrom($response, $data), $this->rawResponseArray($response, $data));
         }
 
         if (! $response->successful()) {
-            throw new CourierException($data['message'] ?? 'Failed to fetch Pathao tracking.', 'tracking_failed', $data);
+            throw new CourierException($this->errorMessageFrom($response, $data, 'Failed to fetch Pathao tracking.'), 'tracking_failed', $this->rawResponseArray($response, $data));
         }
 
         $order = $data['data'] ?? [];
@@ -344,6 +345,38 @@ class PathaoDriver implements CourierDriverInterface
                 ['key' => 'store_id', 'label' => 'Store ID (optional — auto-detected if left blank)', 'type' => 'text', 'required' => false],
             ],
         ];
+    }
+
+    /**
+     * Pathao usually returns JSON even on error, but a gateway-level
+     * failure (proxy timeout, bad request rejected before reaching the
+     * app) can still come back as plain text — fall back to the raw body
+     * rather than a generic message when that happens.
+     */
+    protected function errorMessageFrom(Response $response, array $data, string $fallback = 'Pathao authentication failed.'): string
+    {
+        if (! empty($data['message'])) {
+            return $data['message'];
+        }
+
+        $body = trim($response->body());
+
+        return $body !== '' ? $body : $fallback;
+    }
+
+    /**
+     * What gets stored as this call's rawResponse (and from there,
+     * courier_api_logs.response_payload) — always includes the HTTP status
+     * and raw body text, not just the JSON-decoded array, so a non-JSON
+     * error response is never logged as an empty [] with no way to see
+     * what Pathao actually sent.
+     */
+    protected function rawResponseArray(Response $response, array $data): array
+    {
+        return array_merge($data, [
+            'http_status' => $response->status(),
+            'raw_body' => $response->body(),
+        ]);
     }
 
     /**

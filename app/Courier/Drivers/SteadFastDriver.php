@@ -17,6 +17,7 @@ use App\Courier\Exceptions\CourierAuthenticationException;
 use App\Courier\Exceptions\CourierException;
 use App\Courier\Exceptions\CourierGatewayUnavailableException;
 use App\Enums\Sales\CourierStatus;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 
@@ -82,11 +83,11 @@ class SteadFastDriver implements CourierDriverInterface
         $data = $response->json() ?? [];
 
         if ($response->status() === 401 || $response->status() === 403) {
-            throw new CourierAuthenticationException($data['message'] ?? 'SteadFast authentication failed.', $data);
+            throw new CourierAuthenticationException($this->errorMessageFrom($response, $data), $this->rawResponseArray($response, $data));
         }
 
         if (! $response->successful() || ($data['status'] ?? null) !== 200) {
-            throw new CourierException($data['message'] ?? 'Failed to create SteadFast shipment.', 'shipment_create_failed', $data);
+            throw new CourierException($this->errorMessageFrom($response, $data, 'Failed to create SteadFast shipment.'), 'shipment_create_failed', $this->rawResponseArray($response, $data));
         }
 
         $consignment = $data['consignment'] ?? [];
@@ -123,11 +124,11 @@ class SteadFastDriver implements CourierDriverInterface
         $data = $response->json() ?? [];
 
         if ($response->status() === 401 || $response->status() === 403) {
-            throw new CourierAuthenticationException($data['message'] ?? 'SteadFast authentication failed.', $data);
+            throw new CourierAuthenticationException($this->errorMessageFrom($response, $data), $this->rawResponseArray($response, $data));
         }
 
         if (! $response->successful() || ($data['status'] ?? null) !== 200) {
-            throw new CourierException($data['message'] ?? 'Failed to fetch SteadFast tracking.', 'tracking_failed', $data);
+            throw new CourierException($this->errorMessageFrom($response, $data, 'Failed to fetch SteadFast tracking.'), 'tracking_failed', $this->rawResponseArray($response, $data));
         }
 
         $rawStatus = $data['delivery_status'] ?? 'pending';
@@ -200,11 +201,11 @@ class SteadFastDriver implements CourierDriverInterface
         $data = $response->json() ?? [];
 
         if ($response->status() === 401 || $response->status() === 403) {
-            throw new CourierAuthenticationException($data['message'] ?? 'SteadFast authentication failed.', $data);
+            throw new CourierAuthenticationException($this->errorMessageFrom($response, $data), $this->rawResponseArray($response, $data));
         }
 
         if (! $response->successful() || ($data['status'] ?? null) !== 200) {
-            throw new CourierException($data['message'] ?? 'Failed to fetch SteadFast balance.', 'balance_check_failed', $data);
+            throw new CourierException($this->errorMessageFrom($response, $data, 'Failed to fetch SteadFast balance.'), 'balance_check_failed', $this->rawResponseArray($response, $data));
         }
 
         return CourierResponse::success('steadfast', ['balance' => $data['current_balance'] ?? null], $data);
@@ -264,6 +265,40 @@ class SteadFastDriver implements CourierDriverInterface
                 ['key' => 'secret_key', 'label' => 'Secret Key', 'type' => 'password', 'required' => true],
             ],
         ];
+    }
+
+    /**
+     * SteadFast returns error bodies inconsistently — sometimes JSON
+     * ({"message": "..."}), sometimes a bare text/html string like
+     * "Account is not active!" that $response->json() silently turns into
+     * null. Falling straight back to a generic message in that case hides
+     * the real, actionable reason (account not approved, bad IP allowlist,
+     * etc.) from whoever's debugging a failed booking.
+     */
+    protected function errorMessageFrom(Response $response, array $data, string $fallback = 'SteadFast authentication failed.'): string
+    {
+        if (! empty($data['message'])) {
+            return $data['message'];
+        }
+
+        $body = trim($response->body());
+
+        return $body !== '' ? $body : $fallback;
+    }
+
+    /**
+     * What gets stored as this call's rawResponse (and from there, the
+     * courier_api_logs.response_payload row) — always includes the HTTP
+     * status and raw body text, not just the JSON-decoded array, so a
+     * non-JSON error response (see errorMessageFrom() above) is never
+     * logged as an empty [] with no way to see what SteadFast actually sent.
+     */
+    protected function rawResponseArray(Response $response, array $data): array
+    {
+        return array_merge($data, [
+            'http_status' => $response->status(),
+            'raw_body' => $response->body(),
+        ]);
     }
 
     /**
