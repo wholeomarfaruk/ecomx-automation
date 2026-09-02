@@ -417,26 +417,26 @@
             </div>
         </div>
     </div>
-</div>
 
-<style>
-    @keyframes dash-card-in {
-        from { opacity: 0; transform: translateY(6px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .dash-card-in {
-        animation: dash-card-in .35s ease-out both;
-    }
-    @keyframes dash-bar-in {
-        from { width: 0 !important; }
-    }
-    .dash-bar-in {
-        animation: dash-bar-in .6s ease-out;
-    }
-    @media (prefers-reduced-motion: reduce) {
-        .dash-card-in, .dash-bar-in { animation: none; }
-    }
-</style>
+    <style>
+        @keyframes dash-card-in {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .dash-card-in {
+            animation: dash-card-in .35s ease-out both;
+        }
+        @keyframes dash-bar-in {
+            from { width: 0 !important; }
+        }
+        .dash-bar-in {
+            animation: dash-bar-in .6s ease-out;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .dash-card-in, .dash-bar-in { animation: none; }
+        }
+    </style>
+</div>
 
 @script
 <script>
