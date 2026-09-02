@@ -22,14 +22,14 @@
         $ordersChange = $pctChange((float) $kpis['total_orders'], $previousKpis['total_orders'] !== null ? (float) $previousKpis['total_orders'] : null);
 
         $cards = [
-            ['label' => 'Total Sales', 'value' => '৳'.number_format($kpis['total_sales'], 2), 'accent' => 'text-indigo-600 bg-indigo-50', 'change' => $salesChange, 'icon' => 'M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z'],
-            ['label' => 'Total Orders', 'value' => number_format($kpis['total_orders']), 'accent' => 'text-sky-600 bg-sky-50', 'change' => $ordersChange, 'icon' => 'M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 1.994-4.684 2.674-7.14a1.06 1.06 0 0 0-.999-1.335H5.85m4.5 8.475H5.85m0 0-.383-1.437'],
-            ['label' => 'Pending Orders', 'value' => number_format($kpis['pending_orders']), 'accent' => 'text-amber-600 bg-amber-50', 'icon' => 'M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z'],
-            ['label' => 'Delivered Orders', 'value' => number_format($kpis['delivered_orders']), 'accent' => 'text-emerald-600 bg-emerald-50', 'icon' => 'm4.5 12.75 6 6 9-13.5'],
-            ['label' => 'Cancelled Orders', 'value' => number_format($kpis['cancelled_orders']), 'accent' => 'text-gray-500 bg-gray-100', 'icon' => 'M6 18 18 6M6 6l12 12'],
-            ['label' => 'Returned Orders', 'value' => number_format($kpis['returned_orders']), 'accent' => 'text-red-500 bg-red-50', 'icon' => 'M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3'],
-            ['label' => 'Net Revenue', 'value' => '৳'.number_format($kpis['net_revenue'], 2), 'accent' => 'text-violet-600 bg-violet-50', 'icon' => 'M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z'],
-            ['label' => 'Avg. Order Value', 'value' => '৳'.number_format($kpis['aov'], 2), 'accent' => 'text-teal-600 bg-teal-50', 'icon' => 'M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75'],
+            ['label' => 'Total Sales', 'raw' => (float) $kpis['total_sales'], 'decimals' => 2, 'prefix' => '৳', 'accent' => 'text-indigo-600 bg-indigo-50', 'change' => $salesChange, 'icon' => 'M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z'],
+            ['label' => 'Total Orders', 'raw' => (float) $kpis['total_orders'], 'decimals' => 0, 'prefix' => '', 'accent' => 'text-sky-600 bg-sky-50', 'change' => $ordersChange, 'icon' => 'M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 1.994-4.684 2.674-7.14a1.06 1.06 0 0 0-.999-1.335H5.85m4.5 8.475H5.85m0 0-.383-1.437'],
+            ['label' => 'Pending Orders', 'raw' => (float) $kpis['pending_orders'], 'decimals' => 0, 'prefix' => '', 'accent' => 'text-amber-600 bg-amber-50', 'icon' => 'M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z'],
+            ['label' => 'Delivered Orders', 'raw' => (float) $kpis['delivered_orders'], 'decimals' => 0, 'prefix' => '', 'accent' => 'text-emerald-600 bg-emerald-50', 'icon' => 'm4.5 12.75 6 6 9-13.5'],
+            ['label' => 'Cancelled Orders', 'raw' => (float) $kpis['cancelled_orders'], 'decimals' => 0, 'prefix' => '', 'accent' => 'text-gray-500 bg-gray-100', 'icon' => 'M6 18 18 6M6 6l12 12'],
+            ['label' => 'Returned Orders', 'raw' => (float) $kpis['returned_orders'], 'decimals' => 0, 'prefix' => '', 'accent' => 'text-red-500 bg-red-50', 'icon' => 'M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3'],
+            ['label' => 'Net Revenue', 'raw' => (float) $kpis['net_revenue'], 'decimals' => 2, 'prefix' => '৳', 'accent' => 'text-violet-600 bg-violet-50', 'icon' => 'M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z'],
+            ['label' => 'Avg. Order Value', 'raw' => (float) $kpis['aov'], 'decimals' => 2, 'prefix' => '৳', 'accent' => 'text-teal-600 bg-teal-50', 'icon' => 'M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75'],
         ];
     @endphp
 
@@ -44,7 +44,9 @@
                         </svg>
                     </span>
                 </div>
-                <div class="text-2xl font-bold text-gray-900">{{ $card['value'] }}</div>
+                <div class="text-2xl font-bold text-gray-900"
+                    x-data="dashCounter({{ $card['raw'] }}, {{ $card['decimals'] }}, '{{ $card['prefix'] }}')"
+                    x-init="run()" x-text="display"></div>
                 @if (array_key_exists('change', $card) && $card['change'] !== null)
                     <div class="mt-1 text-xs font-medium {{ $card['change'] >= 0 ? 'text-emerald-600' : 'text-red-500' }}">
                         {{ $card['change'] >= 0 ? '↑' : '↓' }} {{ number_format(abs($card['change']), 1) }}% vs previous period
@@ -170,17 +172,19 @@
     <div class="grid grid-cols-2 lg:grid-cols-5 gap-2">
         @php
             $inventoryCards = [
-                ['label' => 'Total Products', 'value' => number_format($inventory['total_products']), 'accent' => 'text-indigo-600 bg-indigo-50'],
-                ['label' => 'Active', 'value' => number_format($inventory['active_products']), 'accent' => 'text-emerald-600 bg-emerald-50'],
-                ['label' => 'Draft', 'value' => number_format($inventory['draft_products']), 'accent' => 'text-gray-500 bg-gray-100'],
-                ['label' => 'Out of Stock', 'value' => number_format($inventory['out_of_stock']), 'accent' => 'text-red-500 bg-red-50'],
-                ['label' => 'Low Stock', 'value' => number_format($inventory['low_stock']), 'accent' => 'text-amber-600 bg-amber-50'],
+                ['label' => 'Total Products', 'raw' => (float) $inventory['total_products'], 'accent' => 'text-indigo-600 bg-indigo-50'],
+                ['label' => 'Active', 'raw' => (float) $inventory['active_products'], 'accent' => 'text-emerald-600 bg-emerald-50'],
+                ['label' => 'Draft', 'raw' => (float) $inventory['draft_products'], 'accent' => 'text-gray-500 bg-gray-100'],
+                ['label' => 'Out of Stock', 'raw' => (float) $inventory['out_of_stock'], 'accent' => 'text-red-500 bg-red-50'],
+                ['label' => 'Low Stock', 'raw' => (float) $inventory['low_stock'], 'accent' => 'text-amber-600 bg-amber-50'],
             ];
         @endphp
         @foreach ($inventoryCards as $card)
             <div class="dash-card-in bg-white rounded-lg shadow-sm border border-gray-200 p-3 transition-shadow hover:shadow-md" style="animation-delay: {{ $loop->index * 40 }}ms">
                 <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">{{ $card['label'] }}</span>
-                <div class="text-xl font-bold text-gray-900 mt-2">{{ $card['value'] }}</div>
+                <div class="text-xl font-bold text-gray-900 mt-2"
+                    x-data="dashCounter({{ $card['raw'] }}, 0, '')"
+                    x-init="run()" x-text="display"></div>
             </div>
         @endforeach
     </div>
@@ -269,16 +273,18 @@
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
         @php
             $customerCards = [
-                ['label' => 'Total Customers', 'value' => number_format($customers['total_customers']), 'accent' => 'text-indigo-600 bg-indigo-50'],
-                ['label' => 'Active in Range', 'value' => number_format($customers['active_customers']), 'accent' => 'text-sky-600 bg-sky-50'],
-                ['label' => 'New Customers', 'value' => number_format($customers['new_customers']), 'accent' => 'text-emerald-600 bg-emerald-50'],
-                ['label' => 'Returning Customers', 'value' => number_format($customers['returning_customers']), 'accent' => 'text-violet-600 bg-violet-50'],
+                ['label' => 'Total Customers', 'raw' => (float) $customers['total_customers'], 'accent' => 'text-indigo-600 bg-indigo-50'],
+                ['label' => 'Active in Range', 'raw' => (float) $customers['active_customers'], 'accent' => 'text-sky-600 bg-sky-50'],
+                ['label' => 'New Customers', 'raw' => (float) $customers['new_customers'], 'accent' => 'text-emerald-600 bg-emerald-50'],
+                ['label' => 'Returning Customers', 'raw' => (float) $customers['returning_customers'], 'accent' => 'text-violet-600 bg-violet-50'],
             ];
         @endphp
         @foreach ($customerCards as $card)
             <div class="dash-card-in bg-white rounded-lg shadow-sm border border-gray-200 p-3 transition-shadow hover:shadow-md" style="animation-delay: {{ $loop->index * 40 }}ms">
                 <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">{{ $card['label'] }}</span>
-                <div class="text-xl font-bold text-gray-900 mt-2">{{ $card['value'] }}</div>
+                <div class="text-xl font-bold text-gray-900 mt-2"
+                    x-data="dashCounter({{ $card['raw'] }}, 0, '')"
+                    x-init="run()" x-text="display"></div>
             </div>
         @endforeach
     </div>
@@ -332,7 +338,9 @@
                 @foreach ($courierCards as $card)
                     <div class="dash-card-in bg-gray-50 rounded-lg px-3 py-2 transition-colors hover:bg-gray-100" style="animation-delay: {{ $loop->index * 40 }}ms">
                         <div class="text-xs text-gray-400">{{ $card['label'] }}</div>
-                        <div class="text-lg font-bold text-gray-900">{{ number_format($card['value']) }}</div>
+                        <div class="text-lg font-bold text-gray-900"
+                            x-data="dashCounter({{ (float) $card['value'] }}, 0, '')"
+                            x-init="run()" x-text="display"></div>
                     </div>
                 @endforeach
             </div>
@@ -440,6 +448,32 @@
 
 @script
 <script>
+    if (typeof window.dashCounter !== 'function') {
+        window.dashCounter = (target, decimals = 0, prefix = '') => ({
+            display: prefix + (0).toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }),
+            run() {
+                const duration = 700;
+                const start = performance.now();
+                const from = 0;
+
+                const step = (now) => {
+                    const progress = Math.min((now - start) / duration, 1);
+                    const eased = 1 - Math.pow(1 - progress, 3);
+                    const value = from + (target - from) * eased;
+                    this.display = prefix + value.toLocaleString('en-US', {
+                        minimumFractionDigits: decimals,
+                        maximumFractionDigits: decimals,
+                    });
+                    if (progress < 1) {
+                        requestAnimationFrame(step);
+                    }
+                };
+
+                requestAnimationFrame(step);
+            },
+        });
+    }
+
     Alpine.data('salesTrendChart', (trend) => ({
         init() {
             new window.Chart(this.$refs.canvas, {
