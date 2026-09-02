@@ -46,6 +46,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerAuthListeners();
         $this->registerNotificationListeners();
         $this->configureMailFromSettings();
+        $this->configureMarketingFromSettings();
 
         // ecomx-fashion theme's own components (<x-ux-img>, <x-product-card>, ...),
         // used bare (no namespace prefix) — matches how the theme's blade views call them.
@@ -201,6 +202,68 @@ class AppServiceProvider extends ServiceProvider
                 'mail.from.address' => $fromEmail,
                 'mail.from.name' => $fromName ?? config('mail.from.name'),
             ]);
+        }
+    }
+
+    // Site Settings → Marketing tab lets admins configure Meta/GTM tracking
+    // from the DB instead of .env. Same guard as configureMailFromSettings()
+    // above — migrations/fresh installs run before the settings table
+    // exists. A DB value only overrides its .env-driven config default when
+    // actually set (non-empty), so an unconfigured install keeps behaving
+    // exactly as it does today.
+    protected function configureMarketingFromSettings(): void
+    {
+        try {
+            if (! Schema::hasTable('settings')) {
+                return;
+            }
+        } catch (\Throwable $e) {
+            return;
+        }
+
+        $pixelId = Setting::get('meta_pixel_id', null, 'marketing');
+        if (filled($pixelId)) {
+            config(['services.meta.pixel_id' => $pixelId]);
+        }
+
+        $accessToken = Setting::get('meta_access_token', null, 'marketing');
+        if (filled($accessToken)) {
+            config(['services.meta.access_token' => $accessToken]);
+        }
+
+        $apiVersion = Setting::get('meta_api_version', null, 'marketing');
+        if (filled($apiVersion)) {
+            config(['services.meta.api_version' => $apiVersion]);
+        }
+
+        $testEventCode = Setting::get('meta_test_event_code', null, 'marketing');
+        if (filled($testEventCode)) {
+            config(['services.meta.test_event_code' => $testEventCode]);
+        }
+
+        $gtmEnabled = Setting::get('gtm_enabled', null, 'marketing');
+        if ($gtmEnabled !== null) {
+            config(['marketing.gtm.enabled' => (bool) $gtmEnabled]);
+        }
+
+        $gtmContainerId = Setting::get('gtm_container_id', null, 'marketing');
+        if (filled($gtmContainerId)) {
+            config(['marketing.gtm.container_id' => $gtmContainerId]);
+        }
+
+        $destinations = Setting::get('server_destinations', null, 'marketing');
+        if (filled($destinations)) {
+            config(['marketing.destinations' => array_filter(explode(',', (string) $destinations))]);
+        }
+
+        $sessionTimeout = Setting::get('session_timeout_minutes', null, 'marketing');
+        if (filled($sessionTimeout)) {
+            config(['marketing.session_timeout_minutes' => (int) $sessionTimeout]);
+        }
+
+        $attributionLifetime = Setting::get('attribution_lifetime_days', null, 'marketing');
+        if (filled($attributionLifetime)) {
+            config(['marketing.attribution_lifetime_days' => (int) $attributionLifetime]);
         }
     }
 

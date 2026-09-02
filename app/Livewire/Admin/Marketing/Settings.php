@@ -12,9 +12,11 @@ class Settings extends Component
 {
     public string $activeTab = 'destinations';
 
-    // Destination config — read-only display of env-driven values, since
-    // credentials belong in .env, not the database (Step 6/17 already
-    // established this pattern for Meta).
+    // Destination config — read-only status display. Values are editable
+    // under Site Settings → Marketing (App\Livewire\Admin\SiteSettings\SiteSettings),
+    // which writes to the settings table; AppServiceProvider::configureMarketingFromSettings()
+    // overlays those onto config() at boot, so this page's config() reads
+    // reflect the DB-stored values automatically.
     public bool $gtmEnabled = false;
     public bool $metaConfigured = false;
 

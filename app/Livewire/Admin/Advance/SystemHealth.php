@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Advance;
 
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
@@ -9,6 +10,34 @@ use Livewire\Component;
 
 class SystemHealth extends Component
 {
+    public function clearCache(): void
+    {
+        abort_unless(auth()->user()->can('system_health.view'), 403);
+
+        Artisan::call('cache:clear');
+
+        activity('settings')
+            ->causedBy(auth()->user())
+            ->event('updated')
+            ->log('Application cache was cleared');
+
+        $this->dispatch('toast', ['type' => 'success', 'message' => 'Cache cleared successfully']);
+    }
+
+    public function clearConfig(): void
+    {
+        abort_unless(auth()->user()->can('system_health.view'), 403);
+
+        Artisan::call('config:clear');
+
+        activity('settings')
+            ->causedBy(auth()->user())
+            ->event('updated')
+            ->log('Configuration cache was cleared');
+
+        $this->dispatch('toast', ['type' => 'success', 'message' => 'Configuration cache cleared successfully']);
+    }
+
     public function render()
     {
         if (! auth()->user()->can('system_health.view')) {

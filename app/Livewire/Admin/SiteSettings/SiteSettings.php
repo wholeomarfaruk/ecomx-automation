@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin\SiteSettings;
 
 use App\Livewire\Traits\WithMediaPicker;
+use App\Marketing\Destinations\DestinationRegistry;
 use App\Models\Country;
 use App\Models\Currency;
 use App\Models\Language;
@@ -10,12 +11,19 @@ use App\Models\Setting;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class SiteSettings extends Component
 {
     use WithMediaPicker;
 
+    // Bound to ?group=... so sidebar links (e.g. Advance → Marketing) can
+    // deep-link straight into a tab. Not written back to the URL on every
+    // in-page tab click (as:'group' + no history push isn't needed) — the
+    // default keeps existing bare /admin/site-settings links landing on
+    // "general" exactly as before.
+    #[Url(as: 'group')]
     public string $activeGroup = 'general';
 
     // General
@@ -80,6 +88,22 @@ class SiteSettings extends Component
 
     // Pricing
     public string $min_margin_percent = '15';
+
+    // Marketing
+    public string $meta_pixel_id             = '';
+    public string $meta_access_token         = '';
+    public string $meta_api_version          = 'v23.0';
+    public string $meta_test_event_code      = '';
+    public bool   $gtm_enabled               = false;
+    public string $gtm_container_id          = '';
+    public string $tiktok_pixel_id           = '';
+    public string $ga4_measurement_id        = '';
+    public string $server_destinations       = 'meta';
+    public string $session_timeout_minutes   = '30';
+    public string $attribution_lifetime_days = '90';
+
+    // Queue (read-only display + notes)
+    public string $queue_notes = '';
 
     /** @var array<int, string> */
     public array $timezoneOptions = [];
@@ -327,6 +351,63 @@ class SiteSettings extends Component
             ]);
         }
 
+        if ($this->activeGroup === 'marketing') {
+            $registeredDestinations = (new DestinationRegistry())->keys();
+
+            $this->validate([
+                'meta_pixel_id'             => 'nullable|string|max:100',
+                'meta_access_token'         => 'nullable|string|max:1000',
+                'meta_api_version'          => 'nullable|string|max:20',
+                'meta_test_event_code'      => 'nullable|string|max:100',
+                'gtm_container_id'          => 'nullable|string|max:50|required_if:gtm_enabled,true',
+                'tiktok_pixel_id'           => 'nullable|string|max:100',
+                'ga4_measurement_id'        => 'nullable|string|max:50',
+                'server_destinations'       => 'nullable|string',
+                'session_timeout_minutes'   => 'required|numeric|min:1',
+                'attribution_lifetime_days' => 'required|numeric|min:1',
+            ]);
+
+            $destinationKeys = array_filter(array_map('trim', explode(',', $this->server_destinations)));
+            $unknown = array_diff($destinationKeys, $registeredDestinations);
+
+            if (! empty($unknown)) {
+                $this->addError('server_destinations', 'Unknown destination(s): '.implode(', ', $unknown).'. Available: '.implode(', ', $registeredDestinations).'.');
+
+                return;
+            }
+
+            $marketingFields = [
+                'meta_pixel_id', 'meta_access_token', 'meta_api_version', 'meta_test_event_code',
+                'gtm_container_id', 'tiktok_pixel_id', 'ga4_measurement_id', 'server_destinations',
+                'session_timeout_minutes', 'attribution_lifetime_days',
+            ];
+
+            $old = ['gtm_enabled' => (bool) Setting::get('gtm_enabled', '0', 'marketing')];
+            foreach ($marketingFields as $field) {
+                $old[$field] = Setting::get($field, null, 'marketing');
+            }
+
+            Setting::set('gtm_enabled', $this->gtm_enabled ? '1' : '0', 'marketing');
+            foreach ($marketingFields as $field) {
+                Setting::set($field, $this->$field, 'marketing');
+            }
+
+            $new = ['gtm_enabled' => $this->gtm_enabled];
+            foreach ($marketingFields as $field) {
+                $new[$field] = $this->$field;
+            }
+
+            $this->logSettingsChange('Marketing settings were updated', $old, $new);
+        }
+
+        if ($this->activeGroup === 'queue') {
+            $old = ['notes' => Setting::get('notes', '', 'queue')];
+
+            Setting::set('notes', $this->queue_notes, 'queue');
+
+            $this->logSettingsChange('Queue notes were updated', $old, ['notes' => $this->queue_notes]);
+        }
+
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Settings saved successfully']);
     }
 
@@ -354,6 +435,9 @@ class SiteSettings extends Component
             'languages'  => Language::active()->ordered()->get(),
             'currencies' => Currency::ordered()->get(),
             'countries'  => Country::active()->orderBy('name')->get(),
+            'availableDestinations' => (new DestinationRegistry())->keys(),
+            'queueConnection' => config('queue.default'),
+            'queueFailedDriver' => config('queue.failed.driver'),
         ])->layout('layouts.admin.admin');
     }
 
@@ -413,5 +497,19 @@ class SiteSettings extends Component
         $this->require_email_verify = (bool) Setting::get('require_email_verify', '0', 'registration');
 
         $this->min_margin_percent = Setting::get('min_margin_percent', '15', 'pricing');
+
+        $this->meta_pixel_id             = Setting::get('meta_pixel_id',             '',      'marketing');
+        $this->meta_access_token         = Setting::get('meta_access_token',         '',      'marketing');
+        $this->meta_api_version          = Setting::get('meta_api_version',          'v23.0', 'marketing');
+        $this->meta_test_event_code      = Setting::get('meta_test_event_code',      '',      'marketing');
+        $this->gtm_enabled               = (bool) Setting::get('gtm_enabled',        '0',     'marketing');
+        $this->gtm_container_id          = Setting::get('gtm_container_id',          '',      'marketing');
+        $this->tiktok_pixel_id           = Setting::get('tiktok_pixel_id',           '',      'marketing');
+        $this->ga4_measurement_id        = Setting::get('ga4_measurement_id',        '',      'marketing');
+        $this->server_destinations       = Setting::get('server_destinations',       'meta',  'marketing');
+        $this->session_timeout_minutes   = Setting::get('session_timeout_minutes',   '30',    'marketing');
+        $this->attribution_lifetime_days = Setting::get('attribution_lifetime_days', '90',    'marketing');
+
+        $this->queue_notes = Setting::get('notes', '', 'queue');
     }
 }

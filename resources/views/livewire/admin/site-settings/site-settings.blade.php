@@ -15,6 +15,8 @@
                         'social'       => ['label' => 'Social Links',  'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"/>'],
                         'registration' => ['label' => 'Registration',  'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"/>'],
                         'pricing'      => ['label' => 'Pricing',       'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182.553-.44 1.278-.659 2.003-.659.725 0 1.45.22 2.003.659l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>'],
+                        'marketing'    => ['label' => 'Marketing',     'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 1 1 0-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 0 1-1.44-4.282m3.102.069a18.03 18.03 0 0 1-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 0 1 8.835 2.535M10.34 6.66a23.847 23.847 0 0 0 8.835-2.535m0 0A23.74 23.74 0 0 0 18.795 3m.38 1.125a23.91 23.91 0 0 1 1.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 0 0 1.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 0 1 0 3.46"/>'],
+                        'queue'        => ['label' => 'Queue Setup',   'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>'],
                     ];
                 @endphp
 
@@ -665,6 +667,188 @@
                                     If a sale price is edited below this margin over purchase price, an alert is shown before continuing
                                     (e.g. purchase ৳100, minimum margin 15% → alert triggers if sale price drops below ৳115).
                                 </p>
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- ══════════════════ MARKETING ══════════════════ --}}
+                    @if ($activeGroup === 'marketing')
+                        <div class="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 1 1 0-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 0 1-1.44-4.282m3.102.069a18.03 18.03 0 0 1-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 0 1 8.835 2.535M10.34 6.66a23.847 23.847 0 0 0 8.835-2.535m0 0A23.74 23.74 0 0 0 18.795 3m.38 1.125a23.91 23.91 0 0 1 1.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 0 0 1.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 0 1 0 3.46"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-sm font-semibold text-gray-900">Marketing & Tracking</h2>
+                                <p class="text-xs text-gray-400">Meta, GTM, TikTok and analytics config — configured here instead of .env</p>
+                            </div>
+                        </div>
+
+                        <div class="px-6 py-5 space-y-5">
+                            {{-- Meta / Facebook --}}
+                            <div>
+                                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Meta / Facebook</p>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Pixel ID</label>
+                                        <input wire:model="meta_pixel_id" type="text" placeholder="e.g. 1234567890"
+                                            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                        @error('meta_pixel_id') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Access Token</label>
+                                        <input wire:model="meta_access_token" type="password" placeholder="Conversions API access token" autocomplete="new-password"
+                                            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                        @error('meta_access_token') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                        <p class="text-xs text-gray-400 mt-1.5">Used for server-side Conversions API calls.</p>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">API Version</label>
+                                        <input wire:model="meta_api_version" type="text" placeholder="v23.0"
+                                            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                        @error('meta_api_version') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Test Event Code</label>
+                                        <input wire:model="meta_test_event_code" type="text" placeholder="e.g. TEST12345"
+                                            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                        @error('meta_test_event_code') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                    </div>
+                                </div>
+                                <div class="mt-3 rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 flex items-start gap-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"/>
+                                    </svg>
+                                    <p class="text-xs text-amber-700">Test Event Code is for testing only — remove it before going live so real events aren't marked as test traffic.</p>
+                                </div>
+                            </div>
+
+                            {{-- GTM --}}
+                            <div class="border-t border-gray-100 pt-4">
+                                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Google Tag Manager</p>
+                                <div class="flex items-center justify-between gap-4 rounded-xl border border-gray-200 px-4 py-3.5 mb-4
+                                    {{ $gtm_enabled ? 'bg-gray-50' : 'bg-white' }}">
+                                    <div class="flex items-start gap-3">
+                                        <span class="inline-flex mt-0.5 text-xs font-semibold px-2 py-0.5 rounded-full {{ $gtm_enabled ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-500' }}">
+                                            {{ $gtm_enabled ? 'ON' : 'OFF' }}
+                                        </span>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-800">Enable GTM</p>
+                                            <p class="text-xs text-gray-400 mt-0.5">Injects the GTM container script on public pages</p>
+                                        </div>
+                                    </div>
+                                    <button wire:click="$toggle('gtm_enabled')" type="button"
+                                        class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-all focus:outline-none
+                                            {{ $gtm_enabled ? 'bg-violet-500 ring-2 ring-violet-200' : 'bg-gray-300' }}">
+                                        <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform
+                                            {{ $gtm_enabled ? 'translate-x-6' : 'translate-x-1' }}"></span>
+                                    </button>
+                                </div>
+                                <div class="max-w-sm">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Container ID</label>
+                                    <input wire:model="gtm_container_id" type="text" placeholder="GTM-XXXXXXX"
+                                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                    @error('gtm_container_id') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                    <p class="text-xs text-gray-400 mt-1.5">Meta Pixel, GA4 and TikTok tags are expected to be configured inside this GTM container, not injected separately by this app.</p>
+                                </div>
+                            </div>
+
+                            {{-- TikTok --}}
+                            <div class="border-t border-gray-100 pt-4">
+                                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">TikTok Pixel</p>
+                                <div class="max-w-sm">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Pixel ID</label>
+                                    <input wire:model="tiktok_pixel_id" type="text" placeholder="e.g. CXXXXXXXXXXXXXXXXXXX"
+                                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                    @error('tiktok_pixel_id') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                    <p class="text-xs text-gray-400 mt-1.5">Stored for reference — no TikTok Events API integration is wired up yet.</p>
+                                </div>
+                            </div>
+
+                            {{-- GA4 --}}
+                            <div class="border-t border-gray-100 pt-4">
+                                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Google Analytics (GA4)</p>
+                                <div class="max-w-sm">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Measurement ID</label>
+                                    <input wire:model="ga4_measurement_id" type="text" placeholder="G-XXXXXXXXXX"
+                                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                    @error('ga4_measurement_id') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                    <p class="text-xs text-gray-400 mt-1.5">Stored for reference — not yet wired to a script; typically loaded via the GTM container above.</p>
+                                </div>
+                            </div>
+
+                            {{-- Session & Attribution --}}
+                            <div class="border-t border-gray-100 pt-4">
+                                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Session & Attribution</p>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Session Timeout (minutes)</label>
+                                        <input wire:model="session_timeout_minutes" type="number" min="1"
+                                            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                        @error('session_timeout_minutes') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                        <p class="text-xs text-gray-400 mt-1.5">A visit after this much inactivity starts a new marketing session.</p>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Attribution Lifetime (days)</label>
+                                        <input wire:model="attribution_lifetime_days" type="number" min="1"
+                                            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                        @error('attribution_lifetime_days') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                        <p class="text-xs text-gray-400 mt-1.5">How long first/last-touch attribution cookies survive.</p>
+                                    </div>
+                                    <div class="sm:col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Server Destinations</label>
+                                        <input wire:model="server_destinations" type="text" placeholder="meta"
+                                            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                        @error('server_destinations') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                        <p class="text-xs text-gray-400 mt-1.5">
+                                            Comma-separated list of server-side delivery destinations to queue events for.
+                                            Currently registered: <span class="font-mono">{{ implode(', ', $availableDestinations) }}</span>.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- ══════════════════ QUEUE SETUP (read-only + notes) ══════════════════ --}}
+                    @if ($activeGroup === 'queue')
+                        <div class="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-cyan-100 flex items-center justify-center shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-sm font-semibold text-gray-900">Queue Setup</h2>
+                                <p class="text-xs text-gray-400">Current queue configuration and operational notes</p>
+                            </div>
+                        </div>
+
+                        <div class="px-6 py-5 space-y-5">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Current Configuration</p>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Queue Connection</label>
+                                        <input type="text" value="{{ $queueConnection }}" disabled
+                                            class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-500 font-mono">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Failed Job Driver</label>
+                                        <input type="text" value="{{ $queueFailedDriver }}" disabled
+                                            class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-500 font-mono">
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-1.5">Switching queue drivers requires updating .env and restarting workers — shown here for reference only.</p>
+                            </div>
+
+                            <div class="border-t border-gray-100 pt-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Notes</label>
+                                <textarea wire:model="queue_notes" rows="6" placeholder="e.g. worker restart procedure, supervisor config location, escalation contact..."
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"></textarea>
+                                @error('queue_notes') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                <p class="text-xs text-gray-400 mt-1.5">Free-text ops documentation, saved here for the team.</p>
                             </div>
                         </div>
                     @endif

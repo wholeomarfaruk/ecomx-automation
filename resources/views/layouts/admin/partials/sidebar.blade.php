@@ -822,6 +822,10 @@
                             Courier
                         </a>
                         @endcan
+                        <a href="{{ route('admin.site-settings', ['group' => 'marketing']) }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.site-settings' && request()->query('group') === 'marketing' ? 'text-gray-200' : '' }}">
+                            Marketing
+                        </a>
                     </div>
                 </div>
 
