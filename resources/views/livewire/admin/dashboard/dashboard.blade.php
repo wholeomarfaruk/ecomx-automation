@@ -35,7 +35,7 @@
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
         @foreach ($cards as $card)
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+            <div class="dash-card-in bg-white rounded-lg shadow-sm border border-gray-200 p-3 transition-shadow hover:shadow-md" style="animation-delay: {{ $loop->index * 40 }}ms">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">{{ $card['label'] }}</span>
                     <span class="w-8 h-8 rounded-lg flex items-center justify-center {{ $card['accent'] }}">
@@ -88,7 +88,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-2">
 
         {{-- Revenue trend chart --}}
-        <div class="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+        <div class="dash-card-in lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 p-3">
             <h2 class="text-sm font-semibold text-gray-900 mb-2">Sales & Orders Trend</h2>
             <div class="h-64" wire:ignore
                 x-data="salesTrendChart(@js($trend))"
@@ -98,7 +98,7 @@
         </div>
 
         {{-- Order status breakdown --}}
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+        <div class="dash-card-in bg-white rounded-lg shadow-sm border border-gray-200 p-3" style="animation-delay: 80ms">
             <h2 class="text-sm font-semibold text-gray-900 mb-2">Order Status</h2>
             <div class="space-y-2">
                 @php $maxStatusCount = max(1, $orderStatusBreakdown->max('count')); @endphp
@@ -110,7 +110,7 @@
                             <span class="text-gray-900 font-semibold">{{ number_format($row['count']) }}</span>
                         </div>
                         <div class="h-2 rounded-full bg-gray-100 overflow-hidden">
-                            <div class="h-full rounded-full bg-linear-to-r from-indigo-500 to-violet-500"
+                            <div class="dash-bar-in h-full rounded-full bg-linear-to-r from-indigo-500 to-violet-500"
                                 style="width: {{ max(4, round($row['count'] / $maxStatusCount * 100)) }}%"></div>
                         </div>
                     </a>
@@ -178,7 +178,7 @@
             ];
         @endphp
         @foreach ($inventoryCards as $card)
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+            <div class="dash-card-in bg-white rounded-lg shadow-sm border border-gray-200 p-3 transition-shadow hover:shadow-md" style="animation-delay: {{ $loop->index * 40 }}ms">
                 <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">{{ $card['label'] }}</span>
                 <div class="text-xl font-bold text-gray-900 mt-2">{{ $card['value'] }}</div>
             </div>
@@ -276,7 +276,7 @@
             ];
         @endphp
         @foreach ($customerCards as $card)
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+            <div class="dash-card-in bg-white rounded-lg shadow-sm border border-gray-200 p-3 transition-shadow hover:shadow-md" style="animation-delay: {{ $loop->index * 40 }}ms">
                 <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">{{ $card['label'] }}</span>
                 <div class="text-xl font-bold text-gray-900 mt-2">{{ $card['value'] }}</div>
             </div>
@@ -330,7 +330,7 @@
                     ];
                 @endphp
                 @foreach ($courierCards as $card)
-                    <div class="bg-gray-50 rounded-lg px-3 py-2">
+                    <div class="dash-card-in bg-gray-50 rounded-lg px-3 py-2 transition-colors hover:bg-gray-100" style="animation-delay: {{ $loop->index * 40 }}ms">
                         <div class="text-xs text-gray-400">{{ $card['label'] }}</div>
                         <div class="text-lg font-bold text-gray-900">{{ number_format($card['value']) }}</div>
                     </div>
@@ -390,7 +390,7 @@
                             <span class="text-gray-900 font-semibold">৳{{ number_format($row->amount, 2) }}</span>
                         </div>
                         <div class="h-2 rounded-full bg-gray-100 overflow-hidden">
-                            <div class="h-full rounded-full bg-linear-to-r from-indigo-500 to-violet-500"
+                            <div class="dash-bar-in h-full rounded-full bg-linear-to-r from-indigo-500 to-violet-500"
                                 style="width: {{ max(4, round($row->amount / $maxMethodAmount * 100)) }}%"></div>
                         </div>
                     </div>
@@ -418,6 +418,25 @@
         </div>
     </div>
 </div>
+
+<style>
+    @keyframes dash-card-in {
+        from { opacity: 0; transform: translateY(6px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .dash-card-in {
+        animation: dash-card-in .35s ease-out both;
+    }
+    @keyframes dash-bar-in {
+        from { width: 0 !important; }
+    }
+    .dash-bar-in {
+        animation: dash-bar-in .6s ease-out;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .dash-card-in, .dash-bar-in { animation: none; }
+    }
+</style>
 
 @script
 <script>
