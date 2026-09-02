@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Catalog;
 use App\Models\Brand;
 use App\Models\Product;
 use Illuminate\Support\Str;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -15,6 +16,7 @@ class Products extends Component
     public string $search            = '';
     public string $filterStatus      = '';
     public string $filterBrand       = '';
+    #[Url]
     public string $filterStockStatus = '';
     public string $filterProductType = '';
 

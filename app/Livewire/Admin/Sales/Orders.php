@@ -33,7 +33,9 @@ class Orders extends Component
 
     #[Url]
     public string $search              = '';
+    #[Url]
     public string $filterStatus        = '';
+    #[Url]
     public string $filterPaymentStatus = '';
     public string $filterSource        = '';
     public string $dateFrom            = '';
