@@ -1,7 +1,7 @@
-<div class="space-y-6" wire:key="admin-dashboard">
+<div class="space-y-4" wire:key="admin-dashboard">
 
     {{-- Header + range filter --}}
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
             <p class="text-sm text-gray-500 mt-1">Business overview — sales, orders, and store health.</p>
@@ -33,10 +33,10 @@
         ];
     @endphp
 
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
         @foreach ($cards as $card)
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4">
-                <div class="flex items-center justify-between mb-3">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+                <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">{{ $card['label'] }}</span>
                     <span class="w-8 h-8 rounded-lg flex items-center justify-center {{ $card['accent'] }}">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
@@ -67,8 +67,8 @@
         $activeAlerts = collect($alerts)->filter(fn ($a) => $a['count'] > 0);
     @endphp
     @if ($activeAlerts->isNotEmpty())
-        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5">
-            <h2 class="text-sm font-semibold text-amber-900 mb-3 flex items-center gap-2">
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <h2 class="text-sm font-semibold text-amber-900 mb-2 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
                 </svg>
@@ -85,11 +85,11 @@
         </div>
     @endif
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-2">
 
         {{-- Revenue trend chart --}}
-        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
-            <h2 class="text-sm font-semibold text-gray-900 mb-4">Sales & Orders Trend</h2>
+        <div class="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+            <h2 class="text-sm font-semibold text-gray-900 mb-2">Sales & Orders Trend</h2>
             <div class="h-64" wire:ignore
                 x-data="salesTrendChart(@js($trend))"
                 x-init="init()">
@@ -98,9 +98,9 @@
         </div>
 
         {{-- Order status breakdown --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
-            <h2 class="text-sm font-semibold text-gray-900 mb-4">Order Status</h2>
-            <div class="space-y-3">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+            <h2 class="text-sm font-semibold text-gray-900 mb-2">Order Status</h2>
+            <div class="space-y-2">
                 @php $maxStatusCount = max(1, $orderStatusBreakdown->max('count')); @endphp
                 @foreach ($orderStatusBreakdown as $row)
                     @continue($row['count'] === 0)
@@ -120,8 +120,8 @@
     </div>
 
     {{-- Recent Orders --}}
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
             <h2 class="text-sm font-semibold text-gray-900">Recent Orders</h2>
             <a href="{{ route('admin.sales.orders') }}" class="text-xs text-indigo-600 hover:text-indigo-700 font-medium">View all →</a>
         </div>
@@ -129,17 +129,17 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr class="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
-                        <th class="px-5 py-2.5 font-semibold">Order</th>
-                        <th class="px-3 py-2.5 font-semibold">Customer</th>
-                        <th class="px-3 py-2.5 font-semibold text-right">Amount</th>
-                        <th class="px-3 py-2.5 font-semibold">Payment</th>
-                        <th class="px-5 py-2.5 font-semibold">Status</th>
+                        <th class="px-4 py-2 font-semibold">Order</th>
+                        <th class="px-3 py-2 font-semibold">Customer</th>
+                        <th class="px-3 py-2 font-semibold text-right">Amount</th>
+                        <th class="px-3 py-2 font-semibold">Payment</th>
+                        <th class="px-4 py-2 font-semibold">Status</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse ($recentOrders as $order)
                         <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='{{ route('admin.sales.orders.show', $order->id) }}'">
-                            <td class="px-5 py-3">
+                            <td class="px-4 py-2">
                                 <div class="text-gray-900 font-medium">#{{ $order->id }}</div>
                                 <div class="text-xs text-gray-400">{{ $order->placed_at?->format('M j, Y g:i A') }}</div>
                             </td>
@@ -150,7 +150,7 @@
                                     {{ $order->payment_status->label() }}
                                 </span>
                             </td>
-                            <td class="px-5 py-3">
+                            <td class="px-4 py-2">
                                 <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $order->status->badgeClass() }}">
                                     {{ $order->status->label() }}
                                 </span>
@@ -158,7 +158,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-5 py-8 text-center text-gray-400 text-sm">No orders in this range.</td>
+                            <td colspan="5" class="px-4 py-6 text-center text-gray-400 text-sm">No orders in this range.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -167,7 +167,7 @@
     </div>
 
     {{-- Inventory snapshot --}}
-    <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-2">
         @php
             $inventoryCards = [
                 ['label' => 'Total Products', 'value' => number_format($inventory['total_products']), 'accent' => 'text-indigo-600 bg-indigo-50'],
@@ -178,18 +178,18 @@
             ];
         @endphp
         @foreach ($inventoryCards as $card)
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
                 <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">{{ $card['label'] }}</span>
                 <div class="text-xl font-bold text-gray-900 mt-2">{{ $card['value'] }}</div>
             </div>
         @endforeach
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-2">
 
         {{-- Top products --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                 <h2 class="text-sm font-semibold text-gray-900">Top Products</h2>
                 <a href="{{ route('admin.catalog.products') }}" class="text-xs text-indigo-600 hover:text-indigo-700 font-medium">View all →</a>
             </div>
@@ -197,25 +197,25 @@
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
-                            <th class="px-5 py-2.5 font-semibold">Product</th>
-                            <th class="px-3 py-2.5 font-semibold text-right">Sold</th>
-                            <th class="px-5 py-2.5 font-semibold text-right">Revenue</th>
+                            <th class="px-4 py-2 font-semibold">Product</th>
+                            <th class="px-3 py-2 font-semibold text-right">Sold</th>
+                            <th class="px-4 py-2 font-semibold text-right">Revenue</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse ($topProducts as $product)
                             <tr class="hover:bg-gray-50">
-                                <td class="px-5 py-3">
+                                <td class="px-4 py-2">
                                     <a href="{{ route('admin.catalog.products.edit', $product->product_id) }}" class="text-gray-900 font-medium hover:text-indigo-600">
                                         {{ $product->product_name }}
                                     </a>
                                 </td>
                                 <td class="px-3 py-3 text-right text-gray-700">{{ number_format($product->qty_sold, 0) }}</td>
-                                <td class="px-5 py-3 text-right text-gray-900 font-semibold">৳{{ number_format($product->revenue, 2) }}</td>
+                                <td class="px-4 py-2 text-right text-gray-900 font-semibold">৳{{ number_format($product->revenue, 2) }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" class="px-5 py-8 text-center text-gray-400 text-sm">No sales in this range.</td>
+                                <td colspan="3" class="px-4 py-6 text-center text-gray-400 text-sm">No sales in this range.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -224,8 +224,8 @@
         </div>
 
         {{-- Low stock --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                 <h2 class="text-sm font-semibold text-gray-900">Low Stock</h2>
                 <a href="{{ route('admin.inventory.stock') }}" class="text-xs text-indigo-600 hover:text-indigo-700 font-medium">View all →</a>
             </div>
@@ -233,22 +233,22 @@
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
-                            <th class="px-5 py-2.5 font-semibold">Product</th>
-                            <th class="px-3 py-2.5 font-semibold text-right">Stock</th>
-                            <th class="px-5 py-2.5 font-semibold text-right">Alert</th>
+                            <th class="px-4 py-2 font-semibold">Product</th>
+                            <th class="px-3 py-2 font-semibold text-right">Stock</th>
+                            <th class="px-4 py-2 font-semibold text-right">Alert</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse ($lowStockVariants as $variant)
                             <tr class="hover:bg-gray-50">
-                                <td class="px-5 py-3">
+                                <td class="px-4 py-2">
                                     <a href="{{ route('admin.catalog.products.edit', $variant->product_id) }}" class="text-gray-900 font-medium hover:text-indigo-600">
                                         {{ $variant->product?->name }}
                                     </a>
                                     <div class="text-xs text-gray-400">{{ $variant->sku }}</div>
                                 </td>
                                 <td class="px-3 py-3 text-right text-gray-700">{{ number_format($variant->stock_quantity, 0) }}</td>
-                                <td class="px-5 py-3 text-right">
+                                <td class="px-4 py-2 text-right">
                                     <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $variant->stock_quantity <= 0 ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-600' }}">
                                         {{ $variant->stock_quantity <= 0 ? 'Critical' : 'Low' }}
                                     </span>
@@ -256,7 +256,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" class="px-5 py-8 text-center text-gray-400 text-sm">All stock levels healthy.</td>
+                                <td colspan="3" class="px-4 py-6 text-center text-gray-400 text-sm">All stock levels healthy.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -266,7 +266,7 @@
     </div>
 
     {{-- Customer overview --}}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
         @php
             $customerCards = [
                 ['label' => 'Total Customers', 'value' => number_format($customers['total_customers']), 'accent' => 'text-indigo-600 bg-indigo-50'],
@@ -276,18 +276,18 @@
             ];
         @endphp
         @foreach ($customerCards as $card)
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
                 <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">{{ $card['label'] }}</span>
                 <div class="text-xl font-bold text-gray-900 mt-2">{{ $card['value'] }}</div>
             </div>
         @endforeach
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-2">
 
         {{-- Top customers --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                 <h2 class="text-sm font-semibold text-gray-900">Top Customers</h2>
                 <a href="{{ route('admin.customers.index') }}" class="text-xs text-indigo-600 hover:text-indigo-700 font-medium">View all →</a>
             </div>
@@ -295,21 +295,21 @@
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
-                            <th class="px-5 py-2.5 font-semibold">Customer</th>
-                            <th class="px-3 py-2.5 font-semibold text-right">Orders</th>
-                            <th class="px-5 py-2.5 font-semibold text-right">Spent</th>
+                            <th class="px-4 py-2 font-semibold">Customer</th>
+                            <th class="px-3 py-2 font-semibold text-right">Orders</th>
+                            <th class="px-4 py-2 font-semibold text-right">Spent</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse ($topCustomers as $row)
                             <tr class="hover:bg-gray-50">
-                                <td class="px-5 py-3 text-gray-900 font-medium">{{ $row->customer?->full_name ?? 'Guest' }}</td>
+                                <td class="px-4 py-2 text-gray-900 font-medium">{{ $row->customer?->full_name ?? 'Guest' }}</td>
                                 <td class="px-3 py-3 text-right text-gray-700">{{ number_format($row->orders_count) }}</td>
-                                <td class="px-5 py-3 text-right text-gray-900 font-semibold">৳{{ number_format($row->total_spent, 2) }}</td>
+                                <td class="px-4 py-2 text-right text-gray-900 font-semibold">৳{{ number_format($row->total_spent, 2) }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" class="px-5 py-8 text-center text-gray-400 text-sm">No customers in this range.</td>
+                                <td colspan="3" class="px-4 py-6 text-center text-gray-400 text-sm">No customers in this range.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -318,9 +318,9 @@
         </div>
 
         {{-- Courier overview --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
-            <h2 class="text-sm font-semibold text-gray-900 mb-4">Courier Overview</h2>
-            <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+            <h2 class="text-sm font-semibold text-gray-900 mb-2">Courier Overview</h2>
+            <div class="grid grid-cols-2 gap-2 mb-2">
                 @php
                     $courierCards = [
                         ['label' => 'Total Parcels', 'value' => $courierOverview['total_parcels']],
@@ -330,7 +330,7 @@
                     ];
                 @endphp
                 @foreach ($courierCards as $card)
-                    <div class="bg-gray-50 rounded-lg px-3 py-2.5">
+                    <div class="bg-gray-50 rounded-lg px-3 py-2">
                         <div class="text-xs text-gray-400">{{ $card['label'] }}</div>
                         <div class="text-lg font-bold text-gray-900">{{ number_format($card['value']) }}</div>
                     </div>
@@ -341,35 +341,35 @@
     </div>
 
     {{-- Courier performance --}}
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
             <h2 class="text-sm font-semibold text-gray-900">Courier Performance</h2>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
-                        <th class="px-5 py-2.5 font-semibold">Courier</th>
-                        <th class="px-3 py-2.5 font-semibold text-right">Parcels</th>
-                        <th class="px-3 py-2.5 font-semibold text-right">Delivered</th>
-                        <th class="px-3 py-2.5 font-semibold text-right">Returned</th>
-                        <th class="px-5 py-2.5 font-semibold text-right">Success Rate</th>
+                        <th class="px-4 py-2 font-semibold">Courier</th>
+                        <th class="px-3 py-2 font-semibold text-right">Parcels</th>
+                        <th class="px-3 py-2 font-semibold text-right">Delivered</th>
+                        <th class="px-3 py-2 font-semibold text-right">Returned</th>
+                        <th class="px-4 py-2 font-semibold text-right">Success Rate</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse ($courierPerformance as $row)
                         <tr class="hover:bg-gray-50">
-                            <td class="px-5 py-3 text-gray-900 font-medium">{{ $row['name'] }}</td>
+                            <td class="px-4 py-2 text-gray-900 font-medium">{{ $row['name'] }}</td>
                             <td class="px-3 py-3 text-right text-gray-700">{{ number_format($row['parcels']) }}</td>
                             <td class="px-3 py-3 text-right text-gray-700">{{ number_format($row['delivered']) }}</td>
                             <td class="px-3 py-3 text-right text-gray-700">{{ number_format($row['returned']) }}</td>
-                            <td class="px-5 py-3 text-right font-semibold {{ $row['success_rate'] !== null && $row['success_rate'] >= 80 ? 'text-emerald-600' : 'text-amber-600' }}">
+                            <td class="px-4 py-2 text-right font-semibold {{ $row['success_rate'] !== null && $row['success_rate'] >= 80 ? 'text-emerald-600' : 'text-amber-600' }}">
                                 {{ $row['success_rate'] !== null ? number_format($row['success_rate'], 1).'%' : '—' }}
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-5 py-8 text-center text-gray-400 text-sm">No courier shipments in this range.</td>
+                            <td colspan="5" class="px-4 py-6 text-center text-gray-400 text-sm">No courier shipments in this range.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -378,10 +378,10 @@
     </div>
 
     {{-- Payment breakdown --}}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
-            <h2 class="text-sm font-semibold text-gray-900 mb-4">Payment Methods</h2>
-            <div class="space-y-3">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-2">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+            <h2 class="text-sm font-semibold text-gray-900 mb-2">Payment Methods</h2>
+            <div class="space-y-2">
                 @php $maxMethodAmount = max(1, $paymentByMethod->max('amount')); @endphp
                 @forelse ($paymentByMethod as $row)
                     <div>
@@ -400,9 +400,9 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
-            <h2 class="text-sm font-semibold text-gray-900 mb-4">Payment Status</h2>
-            <div class="space-y-3">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+            <h2 class="text-sm font-semibold text-gray-900 mb-2">Payment Status</h2>
+            <div class="space-y-2">
                 @php $totalPaymentCount = max(1, $paymentByStatus->sum('total')); @endphp
                 @forelse ($paymentByStatus as $row)
                     <div class="flex items-center justify-between text-sm">
