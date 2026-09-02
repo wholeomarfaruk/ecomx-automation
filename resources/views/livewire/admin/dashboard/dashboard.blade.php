@@ -22,31 +22,32 @@
         $ordersChange = $pctChange((float) $kpis['total_orders'], $previousKpis['total_orders'] !== null ? (float) $previousKpis['total_orders'] : null);
 
         $cards = [
-            ['label' => 'Total Sales', 'raw' => (float) $kpis['total_sales'], 'decimals' => 2, 'prefix' => '৳', 'accent' => 'text-indigo-600 bg-indigo-50', 'change' => $salesChange, 'icon' => 'M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z'],
-            ['label' => 'Total Orders', 'raw' => (float) $kpis['total_orders'], 'decimals' => 0, 'prefix' => '', 'accent' => 'text-sky-600 bg-sky-50', 'change' => $ordersChange, 'icon' => 'M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 1.994-4.684 2.674-7.14a1.06 1.06 0 0 0-.999-1.335H5.85m4.5 8.475H5.85m0 0-.383-1.437'],
-            ['label' => 'Pending Orders', 'raw' => (float) $kpis['pending_orders'], 'decimals' => 0, 'prefix' => '', 'accent' => 'text-amber-600 bg-amber-50', 'icon' => 'M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z'],
-            ['label' => 'Delivered Orders', 'raw' => (float) $kpis['delivered_orders'], 'decimals' => 0, 'prefix' => '', 'accent' => 'text-emerald-600 bg-emerald-50', 'icon' => 'm4.5 12.75 6 6 9-13.5'],
-            ['label' => 'Cancelled Orders', 'raw' => (float) $kpis['cancelled_orders'], 'decimals' => 0, 'prefix' => '', 'accent' => 'text-gray-500 bg-gray-100', 'icon' => 'M6 18 18 6M6 6l12 12'],
-            ['label' => 'Returned Orders', 'raw' => (float) $kpis['returned_orders'], 'decimals' => 0, 'prefix' => '', 'accent' => 'text-red-500 bg-red-50', 'icon' => 'M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3'],
-            ['label' => 'Net Revenue', 'raw' => (float) $kpis['net_revenue'], 'decimals' => 2, 'prefix' => '৳', 'accent' => 'text-violet-600 bg-violet-50', 'icon' => 'M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z'],
-            ['label' => 'Avg. Order Value', 'raw' => (float) $kpis['aov'], 'decimals' => 2, 'prefix' => '৳', 'accent' => 'text-teal-600 bg-teal-50', 'icon' => 'M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75'],
+            ['label' => 'Total Sales', 'raw' => (float) $kpis['total_sales'], 'decimals' => 2, 'prefix' => '৳', 'accent' => 'text-white bg-linear-to-br from-indigo-500 to-indigo-600', 'ring' => 'border-indigo-200', 'glow' => 'from-indigo-50 to-white', 'value' => 'text-indigo-700', 'change' => $salesChange, 'icon' => 'M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z'],
+            ['label' => 'Total Orders', 'raw' => (float) $kpis['total_orders'], 'decimals' => 0, 'prefix' => '', 'accent' => 'text-white bg-linear-to-br from-sky-500 to-sky-600', 'ring' => 'border-sky-200', 'glow' => 'from-sky-50 to-white', 'value' => 'text-sky-700', 'change' => $ordersChange, 'icon' => 'M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 1.994-4.684 2.674-7.14a1.06 1.06 0 0 0-.999-1.335H5.85m4.5 8.475H5.85m0 0-.383-1.437'],
+            ['label' => 'Pending Orders', 'raw' => (float) $kpis['pending_orders'], 'decimals' => 0, 'prefix' => '', 'accent' => 'text-white bg-linear-to-br from-amber-400 to-amber-500', 'ring' => 'border-amber-200', 'glow' => 'from-amber-50 to-white', 'value' => 'text-amber-700', 'icon' => 'M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z'],
+            ['label' => 'Delivered Orders', 'raw' => (float) $kpis['delivered_orders'], 'decimals' => 0, 'prefix' => '', 'accent' => 'text-white bg-linear-to-br from-emerald-500 to-emerald-600', 'ring' => 'border-emerald-200', 'glow' => 'from-emerald-50 to-white', 'value' => 'text-emerald-700', 'icon' => 'm4.5 12.75 6 6 9-13.5'],
+            ['label' => 'Cancelled Orders', 'raw' => (float) $kpis['cancelled_orders'], 'decimals' => 0, 'prefix' => '', 'accent' => 'text-white bg-linear-to-br from-slate-400 to-slate-500', 'ring' => 'border-slate-200', 'glow' => 'from-slate-50 to-white', 'value' => 'text-slate-700', 'icon' => 'M6 18 18 6M6 6l12 12'],
+            ['label' => 'Returned Orders', 'raw' => (float) $kpis['returned_orders'], 'decimals' => 0, 'prefix' => '', 'accent' => 'text-white bg-linear-to-br from-rose-500 to-rose-600', 'ring' => 'border-rose-200', 'glow' => 'from-rose-50 to-white', 'value' => 'text-rose-700', 'icon' => 'M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3'],
+            ['label' => 'Net Revenue', 'raw' => (float) $kpis['net_revenue'], 'decimals' => 2, 'prefix' => '৳', 'accent' => 'text-white bg-linear-to-br from-violet-500 to-violet-600', 'ring' => 'border-violet-200', 'glow' => 'from-violet-50 to-white', 'value' => 'text-violet-700', 'icon' => 'M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z'],
+            ['label' => 'Avg. Order Value', 'raw' => (float) $kpis['aov'], 'decimals' => 2, 'prefix' => '৳', 'accent' => 'text-white bg-linear-to-br from-teal-500 to-teal-600', 'ring' => 'border-teal-200', 'glow' => 'from-teal-50 to-white', 'value' => 'text-teal-700', 'icon' => 'M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75'],
         ];
     @endphp
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
         @foreach ($cards as $card)
-            <div class="dash-card-in bg-white rounded-lg shadow-sm border border-gray-200 p-3 transition-shadow hover:shadow-md" style="animation-delay: {{ $loop->index * 40 }}ms">
+            <div class="dash-card-in bg-linear-to-br {{ $card['glow'] }} rounded-lg shadow-sm border {{ $card['ring'] }} p-3 transition-shadow hover:shadow-md" style="animation-delay: {{ $loop->index * 40 }}ms">
                 <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">{{ $card['label'] }}</span>
-                    <span class="w-8 h-8 rounded-lg flex items-center justify-center {{ $card['accent'] }}">
+                    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ $card['label'] }}</span>
+                    <span class="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm {{ $card['accent'] }}">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="{{ $card['icon'] }}" />
                         </svg>
                     </span>
                 </div>
-                <div class="text-2xl font-bold text-gray-900"
+                <div class="text-2xl font-bold {{ $card['value'] }}"
+                    wire:key="kpi-counter-{{ $loop->index }}-{{ $card['raw'] }}"
                     x-data="dashCounter({{ $card['raw'] }}, {{ $card['decimals'] }}, '{{ $card['prefix'] }}')"
-                    x-init="run()" x-text="display"></div>
+                    x-text="display"></div>
                 @if (array_key_exists('change', $card) && $card['change'] !== null)
                     <div class="mt-1 text-xs font-medium {{ $card['change'] >= 0 ? 'text-emerald-600' : 'text-red-500' }}">
                         {{ $card['change'] >= 0 ? '↑' : '↓' }} {{ number_format(abs($card['change']), 1) }}% vs previous period
@@ -91,7 +92,10 @@
 
         {{-- Revenue trend chart --}}
         <div class="dash-card-in lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-            <h2 class="text-sm font-semibold text-gray-900 mb-2">Sales & Orders Trend</h2>
+            <h2 class="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-linear-to-br from-indigo-500 to-emerald-500"></span>
+                Sales & Orders Trend
+            </h2>
             <div class="h-64" wire:ignore
                 x-data="salesTrendChart(@js($trend))"
                 x-init="init()">
@@ -100,6 +104,16 @@
         </div>
 
         {{-- Order status breakdown --}}
+        @php
+            $statusColors = [
+                'from-amber-400 to-amber-500',
+                'from-sky-400 to-sky-500',
+                'from-emerald-400 to-emerald-500',
+                'from-slate-400 to-slate-500',
+                'from-rose-400 to-rose-500',
+                'from-violet-400 to-violet-500',
+            ];
+        @endphp
         <div class="dash-card-in bg-white rounded-lg shadow-sm border border-gray-200 p-3" style="animation-delay: 80ms">
             <h2 class="text-sm font-semibold text-gray-900 mb-2">Order Status</h2>
             <div class="space-y-2">
@@ -112,7 +126,7 @@
                             <span class="text-gray-900 font-semibold">{{ number_format($row['count']) }}</span>
                         </div>
                         <div class="h-2 rounded-full bg-gray-100 overflow-hidden">
-                            <div class="dash-bar-in h-full rounded-full bg-linear-to-r from-indigo-500 to-violet-500"
+                            <div class="dash-bar-in h-full rounded-full bg-linear-to-r {{ $statusColors[$loop->index % count($statusColors)] }}"
                                 style="width: {{ max(4, round($row['count'] / $maxStatusCount * 100)) }}%"></div>
                         </div>
                     </a>
@@ -172,19 +186,20 @@
     <div class="grid grid-cols-2 lg:grid-cols-5 gap-2">
         @php
             $inventoryCards = [
-                ['label' => 'Total Products', 'raw' => (float) $inventory['total_products'], 'accent' => 'text-indigo-600 bg-indigo-50'],
-                ['label' => 'Active', 'raw' => (float) $inventory['active_products'], 'accent' => 'text-emerald-600 bg-emerald-50'],
-                ['label' => 'Draft', 'raw' => (float) $inventory['draft_products'], 'accent' => 'text-gray-500 bg-gray-100'],
-                ['label' => 'Out of Stock', 'raw' => (float) $inventory['out_of_stock'], 'accent' => 'text-red-500 bg-red-50'],
-                ['label' => 'Low Stock', 'raw' => (float) $inventory['low_stock'], 'accent' => 'text-amber-600 bg-amber-50'],
+                ['label' => 'Total Products', 'raw' => (float) $inventory['total_products'], 'bg' => 'bg-linear-to-br from-indigo-50 to-white border-indigo-200', 'value' => 'text-indigo-700'],
+                ['label' => 'Active', 'raw' => (float) $inventory['active_products'], 'bg' => 'bg-linear-to-br from-emerald-50 to-white border-emerald-200', 'value' => 'text-emerald-700'],
+                ['label' => 'Draft', 'raw' => (float) $inventory['draft_products'], 'bg' => 'bg-linear-to-br from-slate-50 to-white border-slate-200', 'value' => 'text-slate-700'],
+                ['label' => 'Out of Stock', 'raw' => (float) $inventory['out_of_stock'], 'bg' => 'bg-linear-to-br from-rose-50 to-white border-rose-200', 'value' => 'text-rose-700'],
+                ['label' => 'Low Stock', 'raw' => (float) $inventory['low_stock'], 'bg' => 'bg-linear-to-br from-amber-50 to-white border-amber-200', 'value' => 'text-amber-700'],
             ];
         @endphp
         @foreach ($inventoryCards as $card)
-            <div class="dash-card-in bg-white rounded-lg shadow-sm border border-gray-200 p-3 transition-shadow hover:shadow-md" style="animation-delay: {{ $loop->index * 40 }}ms">
-                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">{{ $card['label'] }}</span>
-                <div class="text-xl font-bold text-gray-900 mt-2"
+            <div class="dash-card-in {{ $card['bg'] }} rounded-lg shadow-sm border p-3 transition-shadow hover:shadow-md" style="animation-delay: {{ $loop->index * 40 }}ms">
+                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ $card['label'] }}</span>
+                <div class="text-xl font-bold {{ $card['value'] }} mt-2"
+                    wire:key="inv-counter-{{ $loop->index }}-{{ $card['raw'] }}"
                     x-data="dashCounter({{ $card['raw'] }}, 0, '')"
-                    x-init="run()" x-text="display"></div>
+                    x-text="display"></div>
             </div>
         @endforeach
     </div>
@@ -273,18 +288,19 @@
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
         @php
             $customerCards = [
-                ['label' => 'Total Customers', 'raw' => (float) $customers['total_customers'], 'accent' => 'text-indigo-600 bg-indigo-50'],
-                ['label' => 'Active in Range', 'raw' => (float) $customers['active_customers'], 'accent' => 'text-sky-600 bg-sky-50'],
-                ['label' => 'New Customers', 'raw' => (float) $customers['new_customers'], 'accent' => 'text-emerald-600 bg-emerald-50'],
-                ['label' => 'Returning Customers', 'raw' => (float) $customers['returning_customers'], 'accent' => 'text-violet-600 bg-violet-50'],
+                ['label' => 'Total Customers', 'raw' => (float) $customers['total_customers'], 'bg' => 'bg-linear-to-br from-indigo-50 to-white border-indigo-200', 'value' => 'text-indigo-700'],
+                ['label' => 'Active in Range', 'raw' => (float) $customers['active_customers'], 'bg' => 'bg-linear-to-br from-sky-50 to-white border-sky-200', 'value' => 'text-sky-700'],
+                ['label' => 'New Customers', 'raw' => (float) $customers['new_customers'], 'bg' => 'bg-linear-to-br from-emerald-50 to-white border-emerald-200', 'value' => 'text-emerald-700'],
+                ['label' => 'Returning Customers', 'raw' => (float) $customers['returning_customers'], 'bg' => 'bg-linear-to-br from-violet-50 to-white border-violet-200', 'value' => 'text-violet-700'],
             ];
         @endphp
         @foreach ($customerCards as $card)
-            <div class="dash-card-in bg-white rounded-lg shadow-sm border border-gray-200 p-3 transition-shadow hover:shadow-md" style="animation-delay: {{ $loop->index * 40 }}ms">
-                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">{{ $card['label'] }}</span>
-                <div class="text-xl font-bold text-gray-900 mt-2"
+            <div class="dash-card-in {{ $card['bg'] }} rounded-lg shadow-sm border p-3 transition-shadow hover:shadow-md" style="animation-delay: {{ $loop->index * 40 }}ms">
+                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ $card['label'] }}</span>
+                <div class="text-xl font-bold {{ $card['value'] }} mt-2"
+                    wire:key="cust-counter-{{ $loop->index }}-{{ $card['raw'] }}"
                     x-data="dashCounter({{ $card['raw'] }}, 0, '')"
-                    x-init="run()" x-text="display"></div>
+                    x-text="display"></div>
             </div>
         @endforeach
     </div>
@@ -329,18 +345,19 @@
             <div class="grid grid-cols-2 gap-2 mb-2">
                 @php
                     $courierCards = [
-                        ['label' => 'Total Parcels', 'value' => $courierOverview['total_parcels']],
-                        ['label' => 'In Transit', 'value' => $courierOverview['in_transit']],
-                        ['label' => 'Delivered', 'value' => $courierOverview['delivered']],
-                        ['label' => 'Returned/Failed', 'value' => $courierOverview['returned'] + $courierOverview['failed']],
+                        ['label' => 'Total Parcels', 'value' => $courierOverview['total_parcels'], 'bg' => 'bg-linear-to-br from-indigo-50 to-white border-indigo-100', 'value_color' => 'text-indigo-700'],
+                        ['label' => 'In Transit', 'value' => $courierOverview['in_transit'], 'bg' => 'bg-linear-to-br from-sky-50 to-white border-sky-100', 'value_color' => 'text-sky-700'],
+                        ['label' => 'Delivered', 'value' => $courierOverview['delivered'], 'bg' => 'bg-linear-to-br from-emerald-50 to-white border-emerald-100', 'value_color' => 'text-emerald-700'],
+                        ['label' => 'Returned/Failed', 'value' => $courierOverview['returned'] + $courierOverview['failed'], 'bg' => 'bg-linear-to-br from-rose-50 to-white border-rose-100', 'value_color' => 'text-rose-700'],
                     ];
                 @endphp
                 @foreach ($courierCards as $card)
-                    <div class="dash-card-in bg-gray-50 rounded-lg px-3 py-2 transition-colors hover:bg-gray-100" style="animation-delay: {{ $loop->index * 40 }}ms">
-                        <div class="text-xs text-gray-400">{{ $card['label'] }}</div>
-                        <div class="text-lg font-bold text-gray-900"
+                    <div class="dash-card-in {{ $card['bg'] }} rounded-lg border px-3 py-2 transition-shadow hover:shadow-sm" style="animation-delay: {{ $loop->index * 40 }}ms">
+                        <div class="text-xs text-gray-500">{{ $card['label'] }}</div>
+                        <div class="text-lg font-bold {{ $card['value_color'] }}"
+                            wire:key="courier-counter-{{ $loop->index }}-{{ (float) $card['value'] }}"
                             x-data="dashCounter({{ (float) $card['value'] }}, 0, '')"
-                            x-init="run()" x-text="display"></div>
+                            x-text="display"></div>
                     </div>
                 @endforeach
             </div>
@@ -390,7 +407,17 @@
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
             <h2 class="text-sm font-semibold text-gray-900 mb-2">Payment Methods</h2>
             <div class="space-y-2">
-                @php $maxMethodAmount = max(1, $paymentByMethod->max('amount')); @endphp
+                @php
+                    $maxMethodAmount = max(1, $paymentByMethod->max('amount'));
+                    $methodColors = [
+                        'from-indigo-400 to-indigo-500',
+                        'from-emerald-400 to-emerald-500',
+                        'from-amber-400 to-amber-500',
+                        'from-sky-400 to-sky-500',
+                        'from-rose-400 to-rose-500',
+                        'from-violet-400 to-violet-500',
+                    ];
+                @endphp
                 @forelse ($paymentByMethod as $row)
                     <div>
                         <div class="flex items-center justify-between text-xs mb-1">
@@ -398,7 +425,7 @@
                             <span class="text-gray-900 font-semibold">৳{{ number_format($row->amount, 2) }}</span>
                         </div>
                         <div class="h-2 rounded-full bg-gray-100 overflow-hidden">
-                            <div class="dash-bar-in h-full rounded-full bg-linear-to-r from-indigo-500 to-violet-500"
+                            <div class="dash-bar-in h-full rounded-full bg-linear-to-r {{ $methodColors[$loop->index % count($methodColors)] }}"
                                 style="width: {{ max(4, round($row->amount / $maxMethodAmount * 100)) }}%"></div>
                         </div>
                     </div>
@@ -450,26 +477,39 @@
 <script>
     if (typeof window.dashCounter !== 'function') {
         window.dashCounter = (target, decimals = 0, prefix = '') => ({
-            display: prefix + (0).toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }),
+            target,
+            decimals,
+            prefix,
+            display: '',
+            format(value) {
+                return this.prefix + value.toLocaleString('en-US', {
+                    minimumFractionDigits: this.decimals,
+                    maximumFractionDigits: this.decimals,
+                });
+            },
             run() {
                 const duration = 700;
                 const start = performance.now();
                 const from = 0;
+                const to = this.target;
 
                 const step = (now) => {
                     const progress = Math.min((now - start) / duration, 1);
                     const eased = 1 - Math.pow(1 - progress, 3);
-                    const value = from + (target - from) * eased;
-                    this.display = prefix + value.toLocaleString('en-US', {
-                        minimumFractionDigits: decimals,
-                        maximumFractionDigits: decimals,
-                    });
+                    this.display = this.format(from + (to - from) * eased);
                     if (progress < 1) {
                         requestAnimationFrame(step);
+                    } else {
+                        this.display = this.format(to);
                     }
                 };
 
                 requestAnimationFrame(step);
+            },
+            init() {
+                this.display = this.format(this.target);
+                this.run();
+                this.$watch('target', () => this.run());
             },
         });
     }
