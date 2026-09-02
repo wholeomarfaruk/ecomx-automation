@@ -1,9 +1,9 @@
 {{-- Shared Today/Yesterday/7d/30d/90d/All time/Custom range picker. Expects $range, $customFrom, $customTo, and $this->ranges() in scope. --}}
 <div class="flex flex-col gap-2 items-start sm:items-end">
-    <div class="inline-flex rounded-lg bg-gray-100 border border-gray-200 p-1 self-start sm:self-end flex-wrap">
+    <div class="inline-flex rounded-lg bg-gray-100 border border-gray-200 p-0.5 self-start sm:self-end flex-wrap">
         @foreach ($this->ranges() as $key => $label)
             <button type="button" wire:click="$set('range', '{{ $key }}')"
-                class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors
+                class="px-2 py-1 text-xs font-medium rounded-md transition-colors
                     {{ $range === $key ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
                 {{ $label }}
             </button>

@@ -67,16 +67,16 @@
         $activeAlerts = collect($alerts)->filter(fn ($a) => $a['count'] > 0);
     @endphp
     @if ($activeAlerts->isNotEmpty())
-        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
-            <h2 class="text-sm font-semibold text-amber-900 mb-2 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-2">
+            <h2 class="text-xs font-semibold text-amber-900 mb-1.5 flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
                 </svg>
                 Action Required
             </h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
                 @foreach ($activeAlerts as $alert)
-                    <a href="{{ $alert['href'] }}" class="flex items-center gap-2 bg-white/70 hover:bg-white rounded-lg px-3 py-2 text-sm text-amber-900 transition">
+                    <a href="{{ $alert['href'] }}" class="flex items-center gap-1.5 bg-white/70 hover:bg-white rounded-lg px-2.5 py-1.5 text-xs text-amber-900 transition">
                         <span class="font-bold">{{ number_format($alert['count']) }}</span>
                         <span>{{ $alert['label'] }}</span>
                     </a>
