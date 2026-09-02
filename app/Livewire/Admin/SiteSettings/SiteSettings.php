@@ -104,6 +104,7 @@ class SiteSettings extends Component
 
     // Queue (read-only display + notes)
     public string $queue_notes = '';
+    public string $queue_cron_supervisor_path = '';
 
     /** @var array<int, string> */
     public array $timezoneOptions = [];
@@ -401,11 +402,18 @@ class SiteSettings extends Component
         }
 
         if ($this->activeGroup === 'queue') {
-            $old = ['notes' => Setting::get('notes', '', 'queue')];
+            $old = [
+                'notes' => Setting::get('notes', '', 'queue'),
+                'cron_supervisor_path' => Setting::get('cron_supervisor_path', '', 'queue'),
+            ];
 
             Setting::set('notes', $this->queue_notes, 'queue');
+            Setting::set('cron_supervisor_path', $this->queue_cron_supervisor_path, 'queue');
 
-            $this->logSettingsChange('Queue notes were updated', $old, ['notes' => $this->queue_notes]);
+            $this->logSettingsChange('Queue notes were updated', $old, [
+                'notes' => $this->queue_notes,
+                'cron_supervisor_path' => $this->queue_cron_supervisor_path,
+            ]);
         }
 
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Settings saved successfully']);
@@ -438,6 +446,7 @@ class SiteSettings extends Component
             'availableDestinations' => (new DestinationRegistry())->keys(),
             'queueConnection' => config('queue.default'),
             'queueFailedDriver' => config('queue.failed.driver'),
+            'queueName' => config('queue.connections.'.config('queue.default').'.queue', 'default'),
         ])->layout('layouts.admin.admin');
     }
 
@@ -511,5 +520,6 @@ class SiteSettings extends Component
         $this->attribution_lifetime_days = Setting::get('attribution_lifetime_days', '90',    'marketing');
 
         $this->queue_notes = Setting::get('notes', '', 'queue');
+        $this->queue_cron_supervisor_path = Setting::get('cron_supervisor_path', '', 'queue');
     }
 }
