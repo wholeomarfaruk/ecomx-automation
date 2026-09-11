@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Sales;
 
+use App\Actions\Accounts\PostOrderSale;
 use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\OrderStatus;
 use App\Enums\Sales\PaymentStatus;
@@ -309,6 +310,10 @@ class OrderCreate extends Component
                 if ($deductOnConfirm && $this->status === 'confirmed') {
                     $order->load('items');
                     app(StockService::class)->commitOrder($order);
+                }
+
+                if ($this->status === 'confirmed') {
+                    app(PostOrderSale::class)->handle($order);
                 }
 
                 return $order;

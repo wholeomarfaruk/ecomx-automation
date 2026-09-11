@@ -49,7 +49,7 @@ class SupplierInvoice extends Model
 
         static::updating(function (SupplierInvoice $invoice) {
             if ($invoice->isDirty(['type', 'amount', 'supplier_id'])) {
-                $originalType   = SupplierInvoiceType::from($invoice->getOriginal('type'));
+                $originalType   = SupplierInvoiceType::from($invoice->getRawOriginal('type'));
                 $originalDelta  = $originalType->signedAmount((float) $invoice->getOriginal('amount'));
                 $newDelta       = $invoice->type->signedAmount((float) $invoice->amount);
 

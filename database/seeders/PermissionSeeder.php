@@ -115,6 +115,50 @@ class PermissionSeeder extends Seeder
             ['id' => 60, 'name' => 'courier_configuration.view'],
             ['id' => 61, 'name' => 'courier_configuration.manage'],
 
+            //accounts - dashboard & transactions
+            ['id' => 62, 'name' => 'accounts_dashboard.view'],
+            ['id' => 63, 'name' => 'accounts_transaction.view'],
+            ['id' => 64, 'name' => 'accounts_transaction.create'],
+            ['id' => 65, 'name' => 'accounts_transaction.edit'],
+            ['id' => 66, 'name' => 'accounts_transaction.void'],
+
+            //accounts - cash & bank
+            ['id' => 67, 'name' => 'accounts_cash_account.view'],
+            ['id' => 68, 'name' => 'accounts_cash_account.manage'],
+
+            //accounts - receivables
+            ['id' => 69, 'name' => 'accounts_receivable.view'],
+            ['id' => 70, 'name' => 'accounts_receivable.manage'],
+
+            //accounts - payables
+            ['id' => 71, 'name' => 'accounts_payable.view'],
+            ['id' => 72, 'name' => 'accounts_payable.manage'],
+
+            //accounts - loans
+            ['id' => 73, 'name' => 'accounts_loan.view'],
+            ['id' => 74, 'name' => 'accounts_loan.manage'],
+
+            //accounts - expenses
+            ['id' => 75, 'name' => 'accounts_expense.view'],
+            ['id' => 76, 'name' => 'accounts_expense.manage'],
+
+            //accounts - fixed assets
+            ['id' => 77, 'name' => 'accounts_fixed_asset.view'],
+            ['id' => 78, 'name' => 'accounts_fixed_asset.manage'],
+
+            //accounts - owner equity
+            ['id' => 79, 'name' => 'accounts_owner_equity.manage'],
+
+            //accounts - reports
+            ['id' => 80, 'name' => 'accounts_report.view'],
+
+            //accounts - journal entries / settings (advanced)
+            ['id' => 81, 'name' => 'journal_entry.view'],
+            ['id' => 82, 'name' => 'journal_entry.create'],
+            ['id' => 83, 'name' => 'journal_entry.void'],
+            ['id' => 84, 'name' => 'accounts_settings.manage'],
+            ['id' => 85, 'name' => 'fiscal_period.manage'],
+
         ];
         foreach ($permissions as $permission) {
             // Permission::create(['name' => $permission]);

@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Admin\Sales;
 
+use App\Actions\Accounts\PostCustomerPayment;
+use App\Actions\Accounts\PostOrderSale;
 use App\Enums\Sales\CourierStatus;
 use App\Enums\Sales\FulfillmentStatus;
 use App\Enums\Sales\OrderStatus;
@@ -9,6 +11,7 @@ use App\Enums\Sales\PaymentMethod;
 use App\Enums\Sales\PaymentStatus;
 use App\Exceptions\Inventory\InsufficientStockException;
 use App\Livewire\Concerns\BooksCourierShipments;
+use App\Models\Account;
 use App\Models\Order;
 use App\Models\Setting;
 use App\Services\StockService;
@@ -93,6 +96,10 @@ class OrderDetail extends Component
             return;
         }
 
+        if ($this->status === 'confirmed' && $previousStatus !== 'confirmed') {
+            app(PostOrderSale::class)->handle($order);
+        }
+
         activity('sales')
             ->causedBy(auth()->user())
             ->performedOn($order)
@@ -100,6 +107,21 @@ class OrderDetail extends Component
             ->log("Order #{$order->id} status updated");
 
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Order status updated']);
+    }
+
+    protected function accountId(string $code): int
+    {
+        return Account::where('code', $code)->value('id')
+            ?? throw new \RuntimeException("Chart of accounts is missing account code {$code}.");
+    }
+
+    protected function cashAccountCodeFor(string $paymentMethod): string
+    {
+        return match ($paymentMethod) {
+            'bank' => '1020',
+            'bkash', 'nagad', 'rocket' => '1030',
+            default => '1010',
+        };
     }
 
     public function updateCourier(): void
@@ -152,6 +174,17 @@ class OrderDetail extends Component
         ]);
 
         $order->recalculateTotals();
+
+        if ($this->paymentStatusNew === 'paid' && $order->customer_id) {
+            app(PostCustomerPayment::class)->handle(
+                customer: $order->customer,
+                cashAccountId: $this->accountId($this->cashAccountCodeFor($this->paymentMethod)),
+                receivableAccountId: $this->accountId('1100'),
+                amount: (float) $this->paymentAmount,
+                entryDate: now()->toDateString(),
+                description: "Payment for Order #{$order->id} ({$this->paymentMethod})",
+            );
+        }
 
         activity('sales')
             ->causedBy(auth()->user())

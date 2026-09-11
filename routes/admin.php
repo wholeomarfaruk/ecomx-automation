@@ -88,6 +88,36 @@ Route::prefix('purchase')->name('purchase.')->group(function () {
     Route::get('/orders/{id}/edit', App\Livewire\Admin\Purchase\PurchaseOrderForm::class)->name('orders.edit');
 });
 
+// Accounts
+Route::prefix('accounts')->name('accounts.')->group(function () {
+    Route::get('/', App\Livewire\Admin\Accounts\Dashboard::class)->name('dashboard');
+    Route::get('/transactions', App\Livewire\Admin\Accounts\Transactions::class)->name('transactions');
+    Route::get('/cash-accounts', App\Livewire\Admin\Accounts\CashBankAccounts::class)->name('cash-accounts.index');
+    Route::get('/cash-accounts/{accountId}/ledger', App\Livewire\Admin\Accounts\CashBankLedger::class)->name('cash-accounts.ledger');
+    Route::get('/receivables', App\Livewire\Admin\Accounts\Receivables::class)->name('receivables.index');
+    Route::get('/payables', App\Livewire\Admin\Accounts\Payables::class)->name('payables.index');
+    Route::get('/loans', App\Livewire\Admin\Accounts\Loans::class)->name('loans.index');
+    Route::get('/fixed-assets', App\Livewire\Admin\Accounts\FixedAssets::class)->name('fixed-assets.index');
+    Route::get('/owner-equity', App\Livewire\Admin\Accounts\OwnerEquity::class)->name('owner-equity.index');
+    Route::get('/expenses', App\Livewire\Admin\Accounts\Expenses::class)->name('expenses.index');
+    Route::get('/expenses/recurring', App\Livewire\Admin\Accounts\RecurringExpenses::class)->name('expenses.recurring');
+
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', App\Livewire\Admin\Accounts\Reports\ReportsIndex::class)->name('index');
+        Route::get('/pnl', App\Livewire\Admin\Accounts\Reports\ProfitAndLoss::class)->name('pnl');
+        Route::get('/balance-sheet', App\Livewire\Admin\Accounts\Reports\BalanceSheet::class)->name('balance-sheet');
+        Route::get('/cash-flow', App\Livewire\Admin\Accounts\Reports\CashFlow::class)->name('cash-flow');
+        Route::get('/fees', App\Livewire\Admin\Accounts\Reports\FeeReport::class)->name('fees');
+    });
+
+    Route::prefix('settings')->name('settings.')->group(function () {
+        Route::get('/opening-balance', App\Livewire\Admin\Accounts\Settings\OpeningBalance::class)->name('opening-balance');
+        Route::get('/chart-of-accounts', App\Livewire\Admin\Accounts\Settings\ChartOfAccounts::class)->name('chart-of-accounts');
+        Route::get('/journal-entries', App\Livewire\Admin\Accounts\Settings\JournalEntries::class)->name('journal-entries');
+        Route::get('/fiscal-periods', App\Livewire\Admin\Accounts\Settings\FiscalPeriods::class)->name('fiscal-periods');
+    });
+});
+
 // Customers
 Route::prefix('customers')->name('customers.')->group(function () {
     Route::get('/', App\Livewire\Admin\Customers\CustomerList::class)->name('index');

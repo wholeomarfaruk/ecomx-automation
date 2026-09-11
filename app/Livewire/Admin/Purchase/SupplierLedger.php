@@ -2,13 +2,20 @@
 
 namespace App\Livewire\Admin\Purchase;
 
+use App\Actions\Accounts\PostJournalEntry;
+use App\Actions\Accounts\PostSupplierBill;
+use App\Enums\Accounts\TransactionType;
 use App\Enums\Purchase\SupplierInvoiceType;
+use App\Exceptions\Accounts\DuplicateJournalEntryException;
 use App\Exceptions\Purchase\SupplierInvoiceDeletionException;
 use App\Livewire\Traits\WithMediaPicker;
+use App\Models\Account;
+use App\Models\AccountsSupplierBill;
 use App\Models\File;
 use App\Models\ProductVariant;
 use App\Models\Supplier;
 use App\Models\SupplierInvoice;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -231,6 +238,9 @@ class SupplierLedger extends Component
             return;
         }
 
+        $originalType   = $invoice->type;
+        $originalAmount = (float) $invoice->amount;
+
         $invoice->update([
             'invoice_number' => $this->invoiceNumber ?: null,
             'type'           => $this->invoiceType,
@@ -240,6 +250,8 @@ class SupplierLedger extends Component
             'notes'          => $this->invoiceNotes ?: null,
             'document_ids'   => $this->documentIds ?: null,
         ]);
+
+        $this->reconcileBillOnEdit($invoice, $originalType, $originalAmount);
 
         $invoice->items()->delete();
 
@@ -324,6 +336,10 @@ class SupplierLedger extends Component
             }
         }
 
+        if ($invoice->type === SupplierInvoiceType::PURCHASE) {
+            $this->postBillToAccounts($invoice);
+        }
+
         activity('purchase')
             ->causedBy(auth()->user())
             ->performedOn($invoice)
@@ -333,6 +349,109 @@ class SupplierLedger extends Component
 
         $this->invoiceModal = false;
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Invoice recorded successfully']);
+    }
+
+    /**
+     * Books the purchase (Dr Inventory / Cr Accounts Payable) and opens an
+     * AccountsSupplierBill for payment allocation, linked to this real
+     * SupplierInvoice — so bills seen under Accounts always trace back to
+     * an actual purchase recorded here. Safely ignored if this invoice was
+     * already posted (shouldn't happen on create, but keeps this idempotent
+     * like the sales-side equivalent).
+     */
+    protected function postBillToAccounts(SupplierInvoice $invoice): void
+    {
+        try {
+            app(PostSupplierBill::class)->handle(
+                supplier: $invoice->supplier,
+                inventoryAccountId: $this->accountId('1200'),
+                payableAccountId: $this->accountId('2100'),
+                amount: (float) $invoice->amount,
+                entryDate: $invoice->invoice_date?->toDateString() ?? now()->toDateString(),
+                supplierInvoiceId: $invoice->id,
+                description: "Purchase invoice #{$invoice->serial_number} — {$invoice->supplier->name}",
+            );
+        } catch (DuplicateJournalEntryException) {
+            // Already posted for this invoice — nothing to do.
+        }
+    }
+
+    protected function accountId(string $code): int
+    {
+        return Account::where('code', $code)->value('id')
+            ?? throw new \RuntimeException("Chart of accounts is missing account code {$code}.");
+    }
+
+    /**
+     * Keeps the Accounts side in step when an already-posted purchase
+     * invoice is edited. A posted journal entry is never mutated (Golden
+     * Rule #2), so: type newly becomes "purchase" -> post the first bill;
+     * amount changes on a bill that was already posted -> post a small
+     * adjustment entry for the delta and correct the AccountsSupplierBill
+     * total instead of re-posting the full amount. Switching a purchase
+     * invoice to a non-purchase type is left untouched here — no schema
+     * support for voiding a bill exists yet (status is open/partial/paid
+     * only), so that edit still needs to be corrected by hand in Accounts.
+     */
+    protected function reconcileBillOnEdit(SupplierInvoice $invoice, SupplierInvoiceType $originalType, float $originalAmount): void
+    {
+        $wasPurchase = $originalType === SupplierInvoiceType::PURCHASE;
+        $isPurchase  = $invoice->type === SupplierInvoiceType::PURCHASE;
+
+        if (! $wasPurchase && $isPurchase) {
+            $this->postBillToAccounts($invoice);
+            return;
+        }
+
+        if (! $wasPurchase || ! $isPurchase) {
+            return;
+        }
+
+        $bill = AccountsSupplierBill::where('supplier_invoice_id', $invoice->id)->first();
+
+        if (! $bill) {
+            $this->postBillToAccounts($invoice);
+            return;
+        }
+
+        $delta = round((float) $invoice->amount - $originalAmount, 2);
+
+        if (abs($delta) < 0.01) {
+            return;
+        }
+
+        $this->postBillAdjustment($invoice, $bill, $delta);
+    }
+
+    protected function postBillAdjustment(SupplierInvoice $invoice, AccountsSupplierBill $bill, float $delta): void
+    {
+        DB::transaction(function () use ($invoice, $bill, $delta) {
+            $inventoryAccountId = $this->accountId('1200');
+            $payableAccountId   = $this->accountId('2100');
+            $amount             = abs($delta);
+
+            $lines = $delta > 0
+                ? [
+                    ['account_id' => $inventoryAccountId, 'debit' => $amount],
+                    ['account_id' => $payableAccountId, 'credit' => $amount],
+                ]
+                : [
+                    ['account_id' => $payableAccountId, 'debit' => $amount],
+                    ['account_id' => $inventoryAccountId, 'credit' => $amount],
+                ];
+
+            app(PostJournalEntry::class)->handle([
+                'entry_date'       => $invoice->invoice_date?->toDateString() ?? now()->toDateString(),
+                'description'      => "Purchase invoice #{$invoice->serial_number} adjustment — {$invoice->supplier->name}",
+                'transaction_type' => TransactionType::SUPPLIER_BILL->value,
+            ], $lines);
+
+            $bill->amount = round((float) $bill->amount + $delta, 2);
+            $bill->status = $bill->amountDue() <= 0.01
+                ? 'paid'
+                : ((float) $bill->amount_allocated > 0 ? 'partial' : 'open');
+            $bill->save();
+        });
     }
 
     public function deleteInvoice(int $id): void

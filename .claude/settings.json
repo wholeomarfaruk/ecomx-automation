@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs -I{} echo {})",
+      "Bash(git stash *)",
+      "Bash(grep -n 'protected $fillable' app/Models/Order.php app/Models/Supplier.php)",
+      "Read(//tmp/**)"
+    ]
+  }
+}

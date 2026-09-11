@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
             EmailTemplateSeeder::class,
             NotificationEventSeeder::class,
             CourierSeeder::class,
+            AccountSeeder::class,
         ]);
         User::create([
             'name' => 'superadmin',
@@ -39,7 +40,7 @@ class DatabaseSeeder extends Seeder
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
         ]);
-        $user = User::find(1);
+        $user = User::where('email', 'superadmin@gmail.com')->first();
         $user->assignRole('superadmin');
         $user->panels()->attach(1);
     }

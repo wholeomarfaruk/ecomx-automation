@@ -53,5 +53,13 @@ class CurrencySeeder extends Seeder
         foreach ($currencies as $currency) {
             DB::table('currencies')->updateOrInsert(['code' => $currency['code']], $currency);
         }
+
+        // BDT is the store's operating currency for the Accounts module
+        // (see docs/ecomX-accounts-cases.md) even though it isn't in the
+        // customer-facing currency list above.
+        DB::table('currencies')->updateOrInsert(
+            ['code' => 'BDT'],
+            ['name' => 'Bangladeshi Taka', 'symbol' => '৳', 'decimal_places' => 2, 'is_base' => true]
+        );
     }
 }
