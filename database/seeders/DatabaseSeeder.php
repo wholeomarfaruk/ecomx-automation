@@ -34,7 +34,9 @@ class DatabaseSeeder extends Seeder
             CourierSeeder::class,
             AccountSeeder::class,
         ]);
-        User::create([
+        User::updateOrInsert(
+        [ 'id' => 1],
+        [
             'name' => 'superadmin',
             'email' => 'superadmin@gmail.com',
             'password' => bcrypt('password'),

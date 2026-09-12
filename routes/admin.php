@@ -79,7 +79,7 @@ Route::prefix('catalog')->name('catalog.')->group(function () {
 });
 
 // Purchase
-Route::prefix('purchase')->name('purchase.')->group(function () {
+Route::prefix('purchase')->name('purchase.')->middleware('module:purchase')->group(function () {
     Route::get('/suppliers', App\Livewire\Admin\Purchase\Suppliers::class)->name('suppliers');
     Route::get('/suppliers/{supplierId}/ledger', App\Livewire\Admin\Purchase\SupplierLedger::class)->name('suppliers.ledger');
     Route::get('/invoices', App\Livewire\Admin\Purchase\SupplierInvoices::class)->name('invoices');
@@ -89,7 +89,7 @@ Route::prefix('purchase')->name('purchase.')->group(function () {
 });
 
 // Accounts
-Route::prefix('accounts')->name('accounts.')->group(function () {
+Route::prefix('accounts')->name('accounts.')->middleware('module:accounts')->group(function () {
     Route::get('/', App\Livewire\Admin\Accounts\Dashboard::class)->name('dashboard');
     Route::get('/transactions', App\Livewire\Admin\Accounts\Transactions::class)->name('transactions');
     Route::get('/cash-accounts', App\Livewire\Admin\Accounts\CashBankAccounts::class)->name('cash-accounts.index');
@@ -188,8 +188,9 @@ Route::prefix('marketing')->name('marketing.')->group(function () {
     Route::get('/settings', App\Livewire\Admin\Marketing\Settings::class)->name('settings.index');
 });
 
-Route::prefix('inventory')->name('inventory.')->group(function () {
+Route::prefix('inventory')->name('inventory.')->middleware('module:inventory')->group(function () {
     Route::get('/', App\Livewire\Admin\Inventory\StockList::class)->name('stock');
+    Route::get('/stock/{type}/{id}', App\Livewire\Admin\Inventory\StockDetail::class)->name('stock-detail')->whereIn('type', ['variant', 'product'])->whereNumber('id');
     Route::get('/stock-in', App\Livewire\Admin\Inventory\StockIn::class)->name('stock-in');
     Route::get('/batches', App\Livewire\Admin\Inventory\Batches::class)->name('batches');
     Route::get('/movements', App\Livewire\Admin\Inventory\MovementList::class)->name('movements');

@@ -33,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'panel' => \App\Http\Middleware\PanelMiddleware::class,
             'device.track' => \App\Http\Middleware\DeviceTracker::class,
             'block.scope' => \App\Http\Middleware\BlockScope::class,
+            'module' => \App\Http\Middleware\EnsureModuleEnabled::class,
         ]);
 
         $middleware->appendToGroup('web', \App\Http\Middleware\DeviceTracker::class);

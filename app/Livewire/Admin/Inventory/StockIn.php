@@ -24,7 +24,6 @@ class StockIn extends Component
     public $variantId = '';
     public $quantity = '';
 
-    public bool $useBatch = false;
     /** Either an existing InventoryBatch id, or self::NEW_BATCH to create one. */
     public string $batchSelection = self::NEW_BATCH;
     public $batchNo = '';
@@ -143,13 +142,18 @@ class StockIn extends Component
             'productId' => 'required|integer|exists:products,id',
             'variantId' => 'nullable|integer|exists:product_variants,id',
             'quantity' => 'required|numeric|min:0.001',
-            'batchNo' => ($this->useBatch && $this->batchSelection === self::NEW_BATCH) ? 'required|string|max:100' : 'nullable|string|max:100',
+            'batchNo' => $this->batchSelection === self::NEW_BATCH ? 'required|string|max:100' : 'nullable|string|max:100',
             'manufactureDate' => 'nullable|date',
             'expiryDate' => 'nullable|date|after_or_equal:manufactureDate',
             'purchasePrice' => 'nullable|numeric|min:0',
         ]);
 
-        if ($this->useBatch && $this->batchSelection !== self::NEW_BATCH && ! InventoryBatch::whereKey($this->batchSelection)->exists()) {
+        if (! $this->variantId && ProductVariant::where('product_id', $this->productId)->exists()) {
+            $this->addError('variantId', 'This product has variants — please select one.');
+            return;
+        }
+
+        if ($this->batchSelection !== self::NEW_BATCH && ! InventoryBatch::whereKey($this->batchSelection)->exists()) {
             $this->addError('batchSelection', 'Please choose a batch or create a new one.');
             return;
         }
@@ -171,36 +175,24 @@ class StockIn extends Component
         }
 
         try {
-            if ($this->useBatch) {
-                $stockService->stockInBatch(
-                    $product,
-                    $variant,
-                    $this->batchNo,
-                    (float) $this->quantity,
-                    expiryDate: $this->expiryDate ?: null,
-                    manufactureDate: $this->manufactureDate ?: null,
-                    purchasePrice: $this->purchasePrice !== '' ? (float) $this->purchasePrice : null,
-                    reference: $purchaseOrderItem,
-                    note: $this->note ?: 'Stock in from Inventory',
-                    purchaseOrder: $purchaseOrder,
-                );
+            $stockService->stockInBatch(
+                $product,
+                $variant,
+                $this->batchNo,
+                (float) $this->quantity,
+                expiryDate: $this->expiryDate ?: null,
+                manufactureDate: $this->manufactureDate ?: null,
+                purchasePrice: $this->purchasePrice !== '' ? (float) $this->purchasePrice : null,
+                reference: $purchaseOrderItem,
+                note: $this->note ?: 'Stock in from Inventory',
+                purchaseOrder: $purchaseOrder,
+            );
 
-                if ($purchaseOrderItem) {
-                    // The movement above is now logged against the PO item
-                    // (reference_type = PurchaseOrderItem), so received-so-far
-                    // tracking sees it — check if the whole PO is now complete.
-                    $stockService->markPurchaseOrderReceivedIfComplete($purchaseOrder);
-                }
-            } elseif ($purchaseOrderItem) {
-                $stockService->receivePurchaseOrderItem($purchaseOrderItem, (float) $this->quantity, note: $this->note ?: null);
-            } else {
-                $stockService->increase(
-                    $product,
-                    $variant,
-                    (float) $this->quantity,
-                    'purchase',
-                    note: $this->note ?: 'Stock in from Inventory',
-                );
+            if ($purchaseOrderItem) {
+                // The movement above is now logged against the PO item
+                // (reference_type = PurchaseOrderItem), so received-so-far
+                // tracking sees it — check if the whole PO is now complete.
+                $stockService->markPurchaseOrderReceivedIfComplete($purchaseOrder);
             }
         } catch (InsufficientStockException $e) {
             $this->addError('quantity', $e->getMessage());
@@ -216,7 +208,7 @@ class StockIn extends Component
 
         $this->reset([
             'purchaseOrderId', 'purchaseOrderItemId', 'variantId', 'quantity',
-            'useBatch', 'batchSelection', 'batchNo', 'manufactureDate', 'expiryDate', 'purchasePrice', 'note',
+            'batchSelection', 'batchNo', 'manufactureDate', 'expiryDate', 'purchasePrice', 'note',
         ]);
         $this->batchSelection = self::NEW_BATCH;
         $this->dispatch('toast', ['type' => 'success', 'message' => $toastMessage]);
@@ -229,7 +221,7 @@ class StockIn extends Component
             : collect();
 
         $existingBatches = collect();
-        if ($this->useBatch && $this->productId) {
+        if ($this->productId) {
             $existingBatches = InventoryBatch::query()
                 ->where('warehouse_id', Warehouse::default()->id)
                 ->where('product_id', $this->productId)

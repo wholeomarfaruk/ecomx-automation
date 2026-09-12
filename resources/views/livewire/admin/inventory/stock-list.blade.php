@@ -4,7 +4,7 @@
     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div class="grid grid-cols-4 gap-3 flex-1 max-w-3xl">
             <div class="bg-white rounded-xl border border-gray-200 px-4 py-3">
-                <p class="text-xs text-gray-400">Variants Tracked</p>
+                <p class="text-xs text-gray-400">Items Tracked</p>
                 <p class="text-xl font-semibold text-gray-800 mt-0.5">{{ number_format($totalVariants) }}</p>
             </div>
             <div class="bg-white rounded-xl border border-gray-200 px-4 py-3">
@@ -78,37 +78,42 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
-                    @forelse($variants as $variant)
+                    @forelse($rows as $row)
                         <tr class="hover:bg-gray-50/50 transition">
                             <td class="px-5 py-3">
-                                <span class="text-sm font-medium text-gray-800">{{ $variant->product->name ?? '—' }}</span>
+                                <span class="text-sm font-medium text-gray-800">{{ $row->product_name }}</span>
                             </td>
                             <td class="px-5 py-3">
-                                <span class="text-sm font-mono text-gray-500">{{ $variant->sku }}</span>
+                                <span class="text-sm font-mono text-gray-500">{{ $row->sku }}</span>
                             </td>
                             <td class="px-5 py-3 text-center">
                                 @php
-                                    $qty = (float) $variant->stock_quantity;
-                                    $effectiveThreshold = $variant->reorder_level > 0 ? (float) $variant->reorder_level : $lowStockThreshold;
-                                    $badge = $qty <= 0 ? 'bg-red-50 text-red-500' : ($qty <= $effectiveThreshold ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600');
-                                    $label = $qty <= 0 ? 'Out of Stock' : ($qty <= $effectiveThreshold ? 'Low Stock' : 'In Stock');
+                                    $qty = $row->quantity;
+                                    $badge = $qty <= 0 ? 'bg-red-50 text-red-500' : ($qty <= $row->threshold ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600');
+                                    $label = $qty <= 0 ? 'Out of Stock' : ($qty <= $row->threshold ? 'Low Stock' : 'In Stock');
                                 @endphp
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{ $badge }}">{{ $label }}</span>
                             </td>
                             <td class="px-5 py-3 text-right">
-                                <span class="text-sm font-semibold text-gray-800">{{ rtrim(rtrim(number_format($variant->stock_quantity, 3), '0'), '.') }}</span>
+                                <span class="text-sm font-semibold text-gray-800">{{ rtrim(rtrim(number_format($row->quantity, 3), '0'), '.') }}</span>
                             </td>
                             <td class="px-5 py-3 text-right">
-                                <button wire:click="openAdjustModal({{ $variant->id }})" type="button"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
-                                    Adjust
-                                </button>
+                                <div class="inline-flex items-center gap-2">
+                                    <a href="{{ route('admin.inventory.stock-detail', ['type' => $row->variant_id ? 'variant' : 'product', 'id' => $row->variant_id ?? $row->product_id]) }}"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition">
+                                        Details
+                                    </a>
+                                    <button wire:click="openAdjustModal({{ $row->variant_id ?? 'null' }}, {{ $row->product_id }})" type="button"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
+                                        Adjust
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
                             <td colspan="5" class="px-5 py-16 text-center">
-                                <p class="text-sm font-semibold text-gray-700">No variants found</p>
+                                <p class="text-sm font-semibold text-gray-700">No items found</p>
                                 <p class="text-xs text-gray-400 mt-0.5">Try adjusting the filters above</p>
                             </td>
                         </tr>
@@ -117,9 +122,9 @@
             </table>
         </div>
 
-        @if($variants->hasPages())
+        @if($rows->hasPages())
             <div class="px-5 py-3 border-t border-gray-100">
-                {{ $variants->links() }}
+                {{ $rows->links() }}
             </div>
         @endif
     </div>

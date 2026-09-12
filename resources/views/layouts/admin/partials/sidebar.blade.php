@@ -360,6 +360,7 @@
                     </div>
                 </div>
 
+                @if (\App\Models\Setting::get('accounts_enabled', true, 'modules'))
                 @php
                     $accountsActive = str_starts_with(Route::currentRouteName(), 'admin.accounts.');
                 @endphp
@@ -435,7 +436,9 @@
                         </a>
                     </div>
                 </div>
+                @endif
 
+                @if (\App\Models\Setting::get('purchase_enabled', true, 'modules'))
                 @php
                     $purchaseActive = str_starts_with(Route::currentRouteName(), 'admin.purchase.');
                 @endphp
@@ -479,7 +482,9 @@
                         </a>
                     </div>
                 </div>
+                @endif
 
+                @if (\App\Models\Setting::get('inventory_enabled', true, 'modules'))
                 @php
                     $inventoryActive = str_starts_with(Route::currentRouteName(), 'admin.inventory.');
                 @endphp
@@ -535,6 +540,7 @@
                         </a>
                     </div>
                 </div>
+                @endif
 
                 @php
                     $salesActive = str_starts_with(Route::currentRouteName(), 'admin.sales.');

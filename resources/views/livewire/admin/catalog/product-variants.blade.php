@@ -273,9 +273,18 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1.5">Stock Quantity</label>
-                        <input wire:model="variantStockQuantity" type="number" step="1" min="0" placeholder="0"
-                            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                        @error('variantStockQuantity') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        @if ($inventoryEnabled)
+                            <input type="text" value="{{ $variantStockQuantity }}" disabled
+                                class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-500">
+                            <p class="text-xs text-gray-400 mt-1">
+                                Managed by the Inventory module —
+                                <a href="{{ route('admin.inventory.stock') }}" class="text-indigo-600 hover:underline">manage stock →</a>
+                            </p>
+                        @else
+                            <input wire:model="variantStockQuantity" type="number" step="1" min="0" placeholder="0"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            @error('variantStockQuantity') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        @endif
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1.5">Status</label>

@@ -106,6 +106,11 @@ class SiteSettings extends Component
     public string $queue_notes = '';
     public string $queue_cron_supervisor_path = '';
 
+    // Modules — dependency chain: purchase -> inventory -> accounts
+    public bool $purchase_enabled  = true;
+    public bool $inventory_enabled = true;
+    public bool $accounts_enabled  = true;
+
     /** @var array<int, string> */
     public array $timezoneOptions = [];
 
@@ -119,6 +124,35 @@ class SiteSettings extends Component
     public function setGroup(string $group): void
     {
         $this->activeGroup = $group;
+    }
+
+    /**
+     * Live cascade so the UI reflects dependencies as toggles are clicked:
+     * purchase -> inventory -> accounts (each requires the one before it).
+     */
+    public function updatedPurchaseEnabled(bool $value): void
+    {
+        if (! $value) {
+            $this->inventory_enabled = false;
+            $this->accounts_enabled = false;
+        }
+    }
+
+    public function updatedInventoryEnabled(bool $value): void
+    {
+        if ($value) {
+            $this->purchase_enabled = true;
+        } else {
+            $this->accounts_enabled = false;
+        }
+    }
+
+    public function updatedAccountsEnabled(bool $value): void
+    {
+        if ($value) {
+            $this->inventory_enabled = true;
+            $this->purchase_enabled = true;
+        }
     }
 
     /**
@@ -416,6 +450,40 @@ class SiteSettings extends Component
             ]);
         }
 
+        if ($this->activeGroup === 'modules') {
+            // Re-enforce the dependency chain server-side in case the client
+            // state ever gets out of sync with the live wire:click cascade.
+            if (! $this->purchase_enabled) {
+                $this->inventory_enabled = false;
+            }
+            if (! $this->inventory_enabled) {
+                $this->accounts_enabled = false;
+            }
+            if ($this->accounts_enabled) {
+                $this->inventory_enabled = true;
+            }
+            if ($this->inventory_enabled) {
+                $this->purchase_enabled = true;
+            }
+
+            $old = [
+                'purchase_enabled'  => (bool) Setting::get('purchase_enabled',  '1', 'modules'),
+                'inventory_enabled' => (bool) Setting::get('inventory_enabled', '1', 'modules'),
+                'accounts_enabled'  => (bool) Setting::get('accounts_enabled',  '1', 'modules'),
+            ];
+
+            Setting::set('purchase_enabled',  $this->purchase_enabled  ? '1' : '0', 'modules');
+            Setting::set('inventory_enabled', $this->inventory_enabled ? '1' : '0', 'modules');
+            Setting::set('accounts_enabled',  $this->accounts_enabled  ? '1' : '0', 'modules');
+            Setting::forgetGroup('modules');
+
+            $this->logSettingsChange('Module settings were updated', $old, [
+                'purchase_enabled'  => $this->purchase_enabled,
+                'inventory_enabled' => $this->inventory_enabled,
+                'accounts_enabled'  => $this->accounts_enabled,
+            ]);
+        }
+
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Settings saved successfully']);
     }
 
@@ -521,5 +589,9 @@ class SiteSettings extends Component
 
         $this->queue_notes = Setting::get('notes', '', 'queue');
         $this->queue_cron_supervisor_path = Setting::get('cron_supervisor_path', '', 'queue');
+
+        $this->purchase_enabled  = (bool) Setting::get('purchase_enabled',  '1', 'modules');
+        $this->inventory_enabled = (bool) Setting::get('inventory_enabled', '1', 'modules');
+        $this->accounts_enabled  = (bool) Setting::get('accounts_enabled',  '1', 'modules');
     }
 }

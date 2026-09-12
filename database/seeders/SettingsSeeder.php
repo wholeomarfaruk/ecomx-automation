@@ -54,6 +54,11 @@ class SettingsSeeder extends Seeder
             ['group' => 'social',  'key' => 'instagram',      'value' => '',                    'type' => 'text',    'label' => 'Instagram URL'],
             ['group' => 'social',  'key' => 'linkedin',       'value' => '',                    'type' => 'text',    'label' => 'LinkedIn URL'],
             ['group' => 'social',  'key' => 'tiktok',         'value' => '',                    'type' => 'text',    'label' => 'TikTok URL'],
+
+            // Dependency chain: purchase -> inventory -> accounts (each requires the one before it).
+            ['group' => 'modules', 'key' => 'purchase_enabled',  'value' => '1', 'type' => 'boolean', 'label' => 'Purchase Module'],
+            ['group' => 'modules', 'key' => 'inventory_enabled', 'value' => '1', 'type' => 'boolean', 'label' => 'Inventory Module'],
+            ['group' => 'modules', 'key' => 'accounts_enabled',  'value' => '1', 'type' => 'boolean', 'label' => 'Accounts Module'],
         ];
 
         foreach ($defaults as $setting) {

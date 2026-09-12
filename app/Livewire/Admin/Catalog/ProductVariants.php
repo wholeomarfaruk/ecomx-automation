@@ -10,6 +10,7 @@ use App\Models\ProductAttributeValue;
 use App\Models\ProductVariant;
 use App\Models\ProductVariantLink;
 use App\Models\ProductVariantValue;
+use App\Models\Setting;
 use App\Services\StockService;
 use Illuminate\Support\Str;
 use Livewire\Component;
@@ -300,13 +301,20 @@ class ProductVariants extends Component
         ]);
 
         if ((float) $this->variantStockQuantity !== (float) $variant->stock_quantity) {
-            app(StockService::class)->setAbsolute(
-                $variant->product,
-                $variant,
-                (float) $this->variantStockQuantity,
-                reference: $variant,
-                note: 'Set via variant editor',
-            );
+            if (Setting::get('inventory_enabled', true, 'modules')) {
+                app(StockService::class)->setAbsolute(
+                    $variant->product,
+                    $variant,
+                    (float) $this->variantStockQuantity,
+                    reference: $variant,
+                    note: 'Set via variant editor',
+                );
+            } else {
+                // Inventory module is off — no warehouse ledger to route
+                // through, so the variant's own stock_quantity is the
+                // source of truth and is written to directly.
+                $variant->update(['stock_quantity' => $this->variantStockQuantity]);
+            }
         }
 
         $variant->media()->delete();
@@ -394,6 +402,7 @@ class ProductVariants extends Component
             'variants'             => $product->variants,
             'editingVariant'       => $editingVariant,
             'linkableProducts'     => $linkableProducts,
+            'inventoryEnabled'     => Setting::get('inventory_enabled', true, 'modules'),
         ]);
     }
 }
