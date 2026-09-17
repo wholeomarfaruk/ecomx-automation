@@ -155,6 +155,13 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
                                         </svg>
                                     </a>
+                                    <a href="{{ route('admin.accounts.reports.customer-ledger', ['customerId' => $customer->id]) }}"
+                                        title="View ledger"
+                                        class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                        </svg>
+                                    </a>
                                     @if($customer->status !== 'blocked')
                                         <button wire:click="toggleStatus({{ $customer->id }})" type="button"
                                             title="{{ $customer->status === 'active' ? 'Click to deactivate' : 'Click to activate' }}"
@@ -240,6 +247,17 @@
             </div>
             <form wire:submit.prevent="createCustomer" class="overflow-y-auto px-6 py-5 space-y-4">
                 <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Link to Existing Profile</label>
+                        <x-searchable-select
+                            wire:key="new-master-profile-select"
+                            field="newMasterProfileId"
+                            :options="$masterProfileOptions"
+                            placeholder="None — create a new profile"
+                            searchPlaceholder="Search profiles…"
+                        />
+                        <p class="text-xs text-gray-400 mt-1">Pick this if the customer is already a supplier/user/etc. Leave blank to create a new profile.</p>
+                    </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1.5">Customer Code <span class="text-red-500">*</span></label>
                         <input wire:model="newCode" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
@@ -316,6 +334,17 @@
             </div>
             <form wire:submit.prevent="updateCustomer" class="overflow-y-auto px-6 py-5 space-y-4">
                 <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Linked Profile</label>
+                        <x-searchable-select
+                            wire:key="edit-master-profile-select-{{ $editingId }}"
+                            field="editMasterProfileId"
+                            :options="$masterProfileOptions"
+                            placeholder="None — create a new profile"
+                            searchPlaceholder="Search profiles…"
+                        />
+                        <p class="text-xs text-gray-400 mt-1">Change this only to re-point this customer at a different existing profile.</p>
+                    </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1.5">Customer Code <span class="text-red-500">*</span></label>
                         <input wire:model="editCode" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">

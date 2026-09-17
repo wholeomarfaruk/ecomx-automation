@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Sales;
 
+use App\Concerns\CreatesMasterProfile;
 use App\Exceptions\Inventory\InsufficientStockException;
 use App\Exceptions\Sales\CouponNotApplicableException;
 use App\Models\Combo;
@@ -21,6 +22,8 @@ use Livewire\Component;
 
 class PosScreen extends Component
 {
+    use CreatesMasterProfile;
+
     public ?PosSession $session = null;
 
     public string $productSearch = '';
@@ -228,7 +231,16 @@ class PosScreen extends Component
 
         [$firstName, $lastName] = array_pad(explode(' ', trim($this->newCustomerName), 2), 2, null);
 
+        $masterProfile = $this->createMasterProfileFor([
+            'display_name' => $this->newCustomerName,
+            'first_name'   => $firstName,
+            'last_name'    => $lastName,
+            'phone'        => $this->newCustomerPhone,
+            'email'        => $this->newCustomerEmail ?: null,
+        ]);
+
         $customer = Customer::create([
+            'master_profile_id' => $masterProfile->id,
             'customer_code' => $code,
             'first_name'    => $firstName,
             'last_name'     => $lastName,

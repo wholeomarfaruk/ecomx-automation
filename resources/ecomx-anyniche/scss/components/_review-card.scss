@@ -1,0 +1,135 @@
+// Review/testimonial card carousel — used by x-anyniche::review-slider
+// (see ProductReviewsSlider). Ported from ecomx-fashion's
+// components/_review-card.scss + pages/_reviews.scss, same --pri/--ac
+// CSS-var palette this theme's older AnyNiche design system already uses.
+.rcard {
+    flex: none;
+    width: 290px;
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(var(--pri-rgb), .06);
+    border: 1px solid rgba(var(--pri-rgb), .05);
+
+    @media (max-width: 899px) {
+        width: 78vw;
+        max-width: 320px;
+    }
+}
+.rcard__media {
+    position: relative;
+    aspect-ratio: 9/16;
+    background: #ECE9E3;
+    cursor: zoom-in;
+}
+.rcard__media > img,
+.rcard__media > video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.rcard__foot {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    background: rgba(var(--sec-rgb), .94);
+    backdrop-filter: blur(8px);
+    border-radius: 12px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 8px 24px rgba(var(--pri-rgb), .18);
+}
+.rcard__avatar {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 999px;
+    object-fit: cover;
+    flex: none;
+}
+.rcard__stars {
+    color: var(--ac);
+    font-size: 15px;
+    letter-spacing: 1.5px;
+}
+.stars {
+    color: var(--ac);
+    letter-spacing: 2px;
+}
+
+// ---- reviews page stats/filters (pages/_reviews.scss) ----------------------
+
+.rv-stats {
+    display: grid;
+    gap: 16px;
+}
+@media (min-width: 900px) {
+    .rv-stats { grid-template-columns: 1fr 1.3fr 1fr; }
+}
+.rv-stat-dark {
+    background: var(--pri);
+    border-radius: 14px;
+    padding: clamp(24px, 3vw, 36px);
+    color: var(--sec);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+}
+.rv-card-lite {
+    background: #fff;
+    border: 1px solid rgba(var(--pri-rgb), .06);
+    border-radius: 14px;
+    padding: clamp(24px, 3vw, 36px);
+    box-shadow: 0 10px 30px rgba(var(--pri-rgb), .04);
+}
+.rv-bar {
+    height: 7px;
+    border-radius: 999px;
+    background: rgba(var(--pri-rgb), .07);
+    overflow: hidden;
+}
+.rv-bar span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--pri);
+}
+.rv-filter {
+    flex: none;
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(var(--pri-rgb), .15);
+    background: #fff;
+    font-size: 12.5px;
+    font-weight: 500;
+    transition: all .2s;
+}
+.rv-filter.is-active {
+    background: var(--pri);
+    color: var(--sec);
+    border-color: var(--pri);
+}
+.verified {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--ac2);
+}
+.verified__tick {
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    background: var(--ac);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+}

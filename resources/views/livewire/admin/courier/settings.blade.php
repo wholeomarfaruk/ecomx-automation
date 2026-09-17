@@ -38,6 +38,34 @@
         </form>
     </div>
 
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-5 border-b border-gray-100">
+            <h2 class="text-sm font-semibold text-gray-900">COD Fee Rate</h2>
+            <p class="text-xs text-gray-400">
+                Percentage each courier charges on the COD amount they collect — used to compute an order's total
+                courier cost (delivery fee + COD fee) when a shipment is booked.
+            </p>
+        </div>
+        <div class="px-6 py-5 space-y-3">
+            @foreach ($couriers as $courier)
+                <div class="flex items-center justify-between gap-3 p-3 rounded-lg bg-gray-50">
+                    <p class="text-sm font-medium text-gray-900">{{ $courier->name }}</p>
+                    <div class="flex items-center gap-2">
+                        <div class="relative">
+                            <input wire:model="codFeeRates.{{ $courier->id }}" type="number" step="0.01" min="0" max="100"
+                                class="w-24 text-sm text-right rounded-lg border border-gray-300 pl-3 pr-7 py-1.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400">%</span>
+                        </div>
+                        <button wire:click="saveCodFeeRate({{ $courier->id }})" type="button"
+                            class="shrink-0 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
+                            Save
+                        </button>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden" x-data="{ copied: null }">
         <div class="px-6 py-5 border-b border-gray-100">
             <h2 class="text-sm font-semibold text-gray-900">Webhook URLs</h2>

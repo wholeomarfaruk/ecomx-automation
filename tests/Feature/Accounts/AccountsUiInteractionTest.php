@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Accounts;
 
+use App\Concerns\CreatesMasterProfile;
 use App\Livewire\Admin\Accounts\Receivables;
 use App\Livewire\Admin\Accounts\Transactions;
 use App\Models\Account;
@@ -24,7 +25,7 @@ use Tests\TestCase;
  */
 class AccountsUiInteractionTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, CreatesMasterProfile;
 
     protected function setUp(): void
     {
@@ -57,7 +58,14 @@ class AccountsUiInteractionTest extends TestCase
 
     public function test_receivables_screen_receives_payment_and_closes_invoice(): void
     {
+        $masterProfile = $this->createMasterProfileFor([
+            'display_name' => 'Rahim Uddin',
+            'first_name'   => 'Rahim',
+            'phone'        => '01700000000',
+        ]);
+
         $customer = Customer::create([
+            'master_profile_id' => $masterProfile->id,
             'customer_code' => 'CUST-1',
             'first_name'    => 'Rahim',
             'full_name'     => 'Rahim Uddin',

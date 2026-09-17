@@ -1,0 +1,60 @@
+// Generic grid/spacing utilities and the list-item responsive grid — split
+// out of the original monolithic app.scss.
+@use '../variables' as *;
+
+.gap-y-3 {
+    row-gap: .75rem;
+}
+.gap-x-8 {
+    -moz-column-gap: 2rem;
+    column-gap: 2rem;
+}
+.grid {
+    display: grid;
+}
+.mt-10 {
+    margin-top: 2.5rem;
+}
+
+.list-item li {
+    line-height: 2.2rem;
+    color: #7e8ba0;
+    font-size: 18px;
+    font-weight: 500;
+    list-style: none;
+}
+@media (min-width: 768px) {
+    .list-item {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+@media screen and (max-width: 768px) {
+    .list-item {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .list-text-container {
+        justify-content: center;
+        padding-right: 0;
+    }
+    .list-text-container h5 {
+        text-align: center;
+        margin-top: 10px;
+    }
+    .list-text-container p {
+        text-align: start;
+    }
+}
+.list-text {
+    text-align: end;
+}
+.titel-two {
+    text-align: end;
+}
+.list-text, .list-text-two {
+    color: #595959;
+    font-size: 12px;
+    font-weight: 800;
+}
+.list-text-container img {
+    border: 3px solid $accent;
+}

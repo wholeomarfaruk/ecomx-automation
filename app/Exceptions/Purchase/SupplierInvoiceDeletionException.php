@@ -15,4 +15,9 @@ class SupplierInvoiceDeletionException extends RuntimeException
     {
         return new self('Only the most recent invoice can be deleted. Delete newer invoices first.');
     }
+
+    public static function isPaymentWithAllocations(): self
+    {
+        return new self('This payment is already applied to one or more bills in Accounts and cannot be deleted here. Reverse it from Accounts > Payables instead.');
+    }
 }

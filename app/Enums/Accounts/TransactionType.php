@@ -24,6 +24,7 @@ enum TransactionType: string
     case REFUND              = 'refund';                // Case 3.7, 3.9
     case CREDIT_NOTE         = 'credit_note';           // Case 3.8
     case BAD_DEBT            = 'bad_debt';               // Case 3.10
+    case CUSTOMER_ADVANCE    = 'customer_advance';       // Pre-completion payment held as a liability
     case SUPPLIER_BILL       = 'supplier_bill';         // Case 4.1
     case SUPPLIER_PAYMENT    = 'supplier_payment';      // Case 4.2, 4.3
     case PURCHASE_RETURN     = 'purchase_return';        // Case 4.4
@@ -58,6 +59,7 @@ enum TransactionType: string
             self::REFUND              => 'Refund',
             self::CREDIT_NOTE         => 'Customer Credit',
             self::BAD_DEBT            => 'Bad Debt Write-off',
+            self::CUSTOMER_ADVANCE    => 'Customer Advance',
             self::SUPPLIER_BILL       => 'Supplier Bill',
             self::SUPPLIER_PAYMENT    => 'Supplier Payment',
             self::PURCHASE_RETURN     => 'Purchase Return',
@@ -93,7 +95,7 @@ enum TransactionType: string
             self::SALES_RETURN, self::REFUND, self::PURCHASE_RETURN,
             self::VOID, self::REVERSAL => 'bg-red-50 text-red-500',
 
-            self::CREDIT_NOTE, self::SUPPLIER_ADVANCE => 'bg-indigo-50 text-indigo-600',
+            self::CREDIT_NOTE, self::SUPPLIER_ADVANCE, self::CUSTOMER_ADVANCE => 'bg-indigo-50 text-indigo-600',
 
             self::SUPPLIER_BILL, self::ASSET_PURCHASE, self::ASSET_DISPOSAL,
             self::OPENING_BALANCE => 'bg-gray-100 text-gray-600',

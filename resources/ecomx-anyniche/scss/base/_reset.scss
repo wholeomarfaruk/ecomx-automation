@@ -1,0 +1,18 @@
+// Global element resets and base typography — split out of the original
+// monolithic app.scss (see git history / juwel-trade-corporation project).
+@use '../variables' as *;
+
+body {
+    font-family: "Open Sans", "Noto Sans Bengali", sans-serif;
+    /* font-family: 'SolaimanLipi', Arial, Helvetica, sans-serif; */
+}
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+ol, ul, menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}

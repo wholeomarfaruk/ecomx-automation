@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Admin\Customers;
 
+use App\Concerns\CreatesMasterProfile;
 use App\Models\Customer;
 use App\Models\CustomerGroup;
+use App\Models\MasterProfile;
 use App\Support\DeviceActivity;
 use Illuminate\Support\Str;
 use Livewire\Component;
@@ -11,7 +13,7 @@ use Livewire\WithPagination;
 
 class CustomerList extends Component
 {
-    use WithPagination;
+    use WithPagination, CreatesMasterProfile;
 
     public string $search              = '';
     public string $filterStatus        = '';
@@ -22,6 +24,7 @@ class CustomerList extends Component
 
     // create
     public bool   $createModal        = false;
+    public string $newMasterProfileId = '';
     public string $newCode            = '';
     public string $newFirstName       = '';
     public string $newLastName        = '';
@@ -34,6 +37,7 @@ class CustomerList extends Component
     // edit
     public bool   $editModal            = false;
     public ?int   $editingId            = null;
+    public string $editMasterProfileId  = '';
     public string $editCode             = '';
     public string $editFirstName        = '';
     public string $editLastName         = '';
@@ -138,7 +142,7 @@ class CustomerList extends Component
     public function openCreateModal(): void
     {
         $this->reset([
-            'newFirstName', 'newLastName', 'newEmail', 'newPhone',
+            'newMasterProfileId', 'newFirstName', 'newLastName', 'newEmail', 'newPhone',
             'newGender', 'newDateOfBirth', 'newCustomerGroupId',
         ]);
         $this->newCode = 'CUS-' . str_pad((string) (Customer::withTrashed()->max('id') + 1), 5, '0', STR_PAD_LEFT);
@@ -161,7 +165,16 @@ class CustomerList extends Component
 
         $fullName = trim($this->newFirstName . ' ' . $this->newLastName);
 
+        $masterProfile = $this->resolveMasterProfile($this->newMasterProfileId ?: null, [
+            'display_name' => $fullName,
+            'first_name'   => $this->newFirstName,
+            'last_name'    => $this->newLastName ?: null,
+            'phone'        => $this->newPhone,
+            'email'        => $this->newEmail ?: null,
+        ]);
+
         $customer = Customer::create([
+            'master_profile_id'  => $masterProfile->id,
             'customer_code'      => $this->newCode,
             'first_name'         => $this->newFirstName,
             'last_name'          => $this->newLastName ?: null,
@@ -189,6 +202,7 @@ class CustomerList extends Component
         $customer = Customer::findOrFail($id);
 
         $this->editingId           = $customer->id;
+        $this->editMasterProfileId = (string) ($customer->master_profile_id ?? '');
         $this->editCode            = $customer->customer_code;
         $this->editFirstName       = $customer->first_name;
         $this->editLastName        = $customer->last_name ?? '';
@@ -220,7 +234,25 @@ class CustomerList extends Component
 
         $fullName = trim($this->editFirstName . ' ' . $this->editLastName);
 
+        $profileAttributes = [
+            'display_name' => $fullName,
+            'first_name'   => $this->editFirstName,
+            'last_name'    => $this->editLastName ?: null,
+            'phone'        => $this->editPhone,
+            'email'        => $this->editEmail ?: null,
+        ];
+
+        $newProfileId = $this->editMasterProfileId ?: null;
+        $masterProfileId = $customer->master_profile_id;
+
+        if ($newProfileId && (int) $newProfileId !== $customer->master_profile_id) {
+            $masterProfileId = (int) $newProfileId;
+        } else {
+            $this->syncMasterProfile($customer->masterProfile, $profileAttributes);
+        }
+
         $customer->update([
+            'master_profile_id'  => $masterProfileId,
             'customer_code'      => $this->editCode,
             'first_name'         => $this->editFirstName,
             'last_name'          => $this->editLastName ?: null,
@@ -289,6 +321,13 @@ class CustomerList extends Component
             'activeCount'    => Customer::where('status', 'active')->count(),
             'onlineCount'    => Customer::whereHas('devices', fn($d) => $d->where('last_active_at', '>=', $onlineSince))->count(),
             'newThisMonth'   => Customer::whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
+            'masterProfileOptions' => MasterProfile::query()
+                ->where('status', 'active')
+                ->orderBy('display_name')
+                ->get()
+                ->mapWithKeys(fn (MasterProfile $profile) => [
+                    $profile->id => "{$profile->display_name} ({$profile->uuid})",
+                ]),
         ])->layout('layouts.admin.admin');
     }
 }

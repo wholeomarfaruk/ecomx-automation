@@ -13,7 +13,7 @@ class InventorySettings extends Component
     public int $lowStockThreshold = 5;
     public bool $allowNegativeStock = false;
 
-    public bool $deductOnOrderConfirm = true;
+    public bool $bookOnOrderConfirm = true;
     public bool $restockOnCancelOrReturn = true;
 
     public $defaultWarehouseId = '';
@@ -23,7 +23,7 @@ class InventorySettings extends Component
         $this->lowStockThreshold = (int) Setting::get('low_stock_threshold', 5, static::GROUP);
         $this->allowNegativeStock = (bool) Setting::get('allow_negative_stock', false, static::GROUP);
 
-        $this->deductOnOrderConfirm = (bool) Setting::get('deduct_on_order_confirm', true, static::GROUP);
+        $this->bookOnOrderConfirm = (bool) Setting::get('book_on_order_confirm', true, static::GROUP);
         $this->restockOnCancelOrReturn = (bool) Setting::get('restock_on_cancel_or_return', true, static::GROUP);
 
         $this->defaultWarehouseId = (string) (Setting::get('default_warehouse_id', '', static::GROUP) ?: '');
@@ -44,7 +44,7 @@ class InventorySettings extends Component
         $values = [
             'low_stock_threshold' => $this->lowStockThreshold,
             'allow_negative_stock' => $this->allowNegativeStock,
-            'deduct_on_order_confirm' => $this->deductOnOrderConfirm,
+            'book_on_order_confirm' => $this->bookOnOrderConfirm,
             'restock_on_cancel_or_return' => $this->restockOnCancelOrReturn,
             'default_warehouse_id' => $this->defaultWarehouseId ?: null,
         ];

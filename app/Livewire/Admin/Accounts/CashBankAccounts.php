@@ -10,7 +10,12 @@ use Livewire\Component;
  * business holds, plus the ability to add a new one. New accounts are
  * created as non-system children of the matching system parent (Cash 1010,
  * Bank 1020, Mobile Banking 1030) so they still roll up into that parent's
- * type/subtype grouping.
+ * type/subtype grouping. Also lists 'courier' subtype accounts (1045 and
+ * its per-courier children, seeded by AccountSeeder) — money couriers are
+ * currently holding on the business's behalf (COD collected but not yet
+ * settled to a real bank account), shown here alongside true liquid
+ * accounts so the total picture of "what do we currently hold" is visible
+ * in one place, even though it isn't itself a manual payment/refund source.
  */
 class CashBankAccounts extends Component
 {
@@ -82,7 +87,7 @@ class CashBankAccounts extends Component
             ->get();
 
         $accounts = Account::query()
-            ->whereIn('subtype', ['cash', 'bank', 'mobile_banking'])
+            ->whereIn('subtype', ['cash', 'bank', 'mobile_banking', 'courier'])
             ->orderBy('code')
             ->get();
 

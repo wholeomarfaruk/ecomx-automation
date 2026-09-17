@@ -3,6 +3,14 @@
     <h1 class="text-lg font-semibold text-gray-800 mb-6">রিপোর্ট (Reports)</h1>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <a href="{{ route('admin.accounts.reports.customer-ledgers') }}" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:border-indigo-300 transition">
+            <p class="font-medium text-gray-800">কাস্টমার লেজার (Customer Ledgers)</p>
+            <p class="text-xs text-gray-400 mt-1">Every customer's full statement &amp; running balance</p>
+        </a>
+        <a href="{{ route('admin.accounts.reports.order-ledgers') }}" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:border-indigo-300 transition">
+            <p class="font-medium text-gray-800">অর্ডার লেজার (Order Ledgers)</p>
+            <p class="text-xs text-gray-400 mt-1">Every order's posted accounting entries</p>
+        </a>
         <a href="{{ route('admin.accounts.reports.pnl') }}" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:border-indigo-300 transition">
             <p class="font-medium text-gray-800">লাভ-ক্ষতি (Profit &amp; Loss)</p>
             <p class="text-xs text-gray-400 mt-1">Income vs expenses over a date range</p>
@@ -20,8 +28,8 @@
             <p class="text-xs text-gray-400 mt-1">Every transfer/gateway/conversion fee in one place</p>
         </a>
         <a href="{{ route('admin.accounts.receivables.index') }}" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:border-indigo-300 transition">
-            <p class="font-medium text-gray-800">কাস্টমার ledger</p>
-            <p class="text-xs text-gray-400 mt-1">Per-customer outstanding &amp; statements</p>
+            <p class="font-medium text-gray-800">বকেয়া কাস্টমার (Receivables)</p>
+            <p class="text-xs text-gray-400 mt-1">Customers with open/partial invoices</p>
         </a>
         <a href="{{ route('admin.accounts.payables.index') }}" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:border-indigo-300 transition">
             <p class="font-medium text-gray-800">সাপ্লায়ার ledger</p>

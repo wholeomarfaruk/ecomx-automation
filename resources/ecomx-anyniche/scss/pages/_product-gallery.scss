@@ -1,0 +1,58 @@
+// Product gallery / variant-select page bits — split out of the original
+// monolithic app.scss. (Distinct from storefront/_product-page.scss, which
+// styles the dedicated storefront product page layout.)
+@use '../variables' as *;
+
+.gallrey {
+}
+.gallrey-pic {
+    border-radius: 15px;
+    border: 3px solid $accent;
+}
+.gallrey-pic:hover {
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    transition: all 0.5s;
+    transform: scale(1.02);
+}
+@media screen and (max-width: 768px) {
+    .gallrey {
+        width: 50%;
+        margin-top: 0;
+    }
+}
+@media screen and (max-width: 499px) {
+    .gallrey {
+        width: 50%;
+        margin-top: 0;
+    }
+}
+@media screen and (max-width: 380px) {
+    .gallrey {
+        height: 40vh;
+        width: 50%;
+        margin-top: 0;
+    }
+}
+
+.content-site {
+    border: 1px solid #b8b7b7;
+    border-radius: 10px;
+    background: #ebf7ecb6;
+    cursor: pointer;
+}
+.content-site:hover {
+    background: #d0f7caca;
+}
+.select-box-titel {
+    font-size: 18px;
+    font-weight: 500;
+}
+.select-box-price, .select-box-weight {
+    margin-bottom: 0px;
+}
+.p-selected {
+    outline: 2px solid $accent;
+}
+.select-box option {
+    font-size: 13px;
+}

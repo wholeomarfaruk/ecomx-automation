@@ -22,8 +22,8 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        {{-- Receivable / Payable quick view --}}
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
+        {{-- Receivable / Payable / Advance / Stock quick view --}}
         <a href="{{ route('admin.accounts.receivables.index') }}" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:border-indigo-300 transition">
             <p class="text-xs text-gray-400">📥 আমি পাবো (Receivable)</p>
             <p class="text-xl font-semibold text-emerald-600 mt-1">{{ number_format($receivableTotal, 2) }}</p>
@@ -31,6 +31,10 @@
         <a href="{{ route('admin.accounts.payables.index') }}" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:border-indigo-300 transition">
             <p class="text-xs text-gray-400">📤 আমি দিবো (Payable)</p>
             <p class="text-xl font-semibold text-red-500 mt-1">{{ number_format($payableTotal, 2) }}</p>
+        </a>
+        <a href="{{ route('admin.accounts.payables.index') }}" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:border-indigo-300 transition">
+            <p class="text-xs text-gray-400">🎁 সাপ্লায়ার অ্যাডভান্স (Unapplied Advance)</p>
+            <p class="text-xl font-semibold text-indigo-600 mt-1">{{ number_format($supplierAdvanceTotal, 2) }}</p>
         </a>
         <a href="{{ route('admin.accounts.reports.index') }}" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:border-indigo-300 transition">
             <p class="text-xs text-gray-400">📦 স্টকের দাম (Stock Value)</p>
@@ -92,7 +96,15 @@
                 @empty
                 @endforelse
 
-                @if ($overdueReceivables->isEmpty() && $overdueLoanSchedules->isEmpty() && $dueRecurringExpenses->isEmpty())
+                @forelse ($openAdvances as $advance)
+                    <a href="{{ route('admin.accounts.payables.index') }}" class="px-5 py-3 flex items-center justify-between hover:bg-gray-50/60 transition">
+                        <span class="text-sm text-gray-700">Advance unapplied: {{ $advance->supplier->name ?? 'Unknown supplier' }}</span>
+                        <span class="text-sm font-medium text-indigo-600">{{ number_format($advance->amountRemaining(), 2) }}</span>
+                    </a>
+                @empty
+                @endforelse
+
+                @if ($overdueReceivables->isEmpty() && $overdueLoanSchedules->isEmpty() && $dueRecurringExpenses->isEmpty() && $openAdvances->isEmpty())
                     <div class="px-5 py-8 text-center text-sm text-gray-400">কোনো সতর্কতা নেই।</div>
                 @endif
             </div>

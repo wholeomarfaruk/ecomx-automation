@@ -33,7 +33,7 @@
                         <option value="">— Select an item —</option>
                         @foreach($purchaseOrderItems as $item)
                             <option value="{{ $item->id }}" @disabled($item->remaining <= 0)>
-                                {{ $item->variant->product->name ?? 'Unknown product' }} ({{ $item->variant->sku ?? '' }}) — received {{ rtrim(rtrim(number_format($item->received_so_far, 3), '0'), '.') }} of {{ rtrim(rtrim(number_format($item->quantity, 3), '0'), '.') }}
+                                {{ $item->product->name ?? 'Unknown product' }}{{ $item->variant ? " ({$item->variant->sku})" : '' }} — received {{ rtrim(rtrim(number_format($item->received_so_far, 3), '0'), '.') }} of {{ rtrim(rtrim(number_format($item->quantity, 3), '0'), '.') }}
                                 @if($item->remaining <= 0) — fully received @endif
                             </option>
                         @endforeach
@@ -56,12 +56,12 @@
             @if($productId && $variants->isNotEmpty())
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1.5">Variant <span class="text-red-500">*</span></label>
-                    <select wire:model="variantId" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                        <option value="">— Select a variant —</option>
-                        @foreach($variants as $variant)
-                            <option value="{{ $variant->id }}">{{ $variant->sku }} — current: {{ rtrim(rtrim(number_format($variant->stock_quantity, 3), '0'), '.') }}</option>
-                        @endforeach
-                    </select>
+                    <x-searchable-select wire:key="variant-select-{{ $productId }}"
+                        field="variantId" :value="$variantId"
+                        :options="$variants->mapWithKeys(fn ($variant) => [
+                            (string) $variant->id => $variant->sku . ' — current: ' . rtrim(rtrim(number_format($variant->stock_quantity, 3), '0'), '.'),
+                        ])"
+                        placeholder="— Select a variant —" search-placeholder="Search variants…" />
                     @error('variantId') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>
             @endif
@@ -86,7 +86,8 @@
                 @else
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1.5">Batch <span class="text-red-500">*</span></label>
-                        <x-searchable-select field="batchSelection" :value="$batchSelection"
+                        <x-searchable-select wire:key="batch-select-{{ $productId }}-{{ $variantId }}-{{ $existingBatches->count() }}"
+                            field="batchSelection" :value="$batchSelection"
                             :options="collect([\App\Livewire\Admin\Inventory\StockIn::NEW_BATCH => '+ Create new batch'])
                                 ->union($existingBatches->mapWithKeys(fn ($batch) => [
                                     (string) $batch->id => $batch->batch_no

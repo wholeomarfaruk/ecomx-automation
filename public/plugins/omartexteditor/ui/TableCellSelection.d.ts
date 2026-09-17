@@ -1,0 +1,30 @@
+export declare class TableCellSelection {
+    private root;
+    private table;
+    private anchor;
+    private selected;
+    private dragging;
+    private onChangeCb;
+    private colStrips;
+    private rowStrips;
+    private hoveredTable;
+    constructor(root: HTMLElement);
+    onChange(cb: () => void): void;
+    getSelectedCells(): HTMLTableCellElement[];
+    getSelectedTable(): HTMLTableElement | null;
+    private handleMouseDown;
+    private handleMouseOver;
+    private handleMouseUp;
+    private handleOutsideMouseDown;
+    private handleKeydown;
+    private applyHighlight;
+    private clearHighlightOnly;
+    selectColumn(table: HTMLTableElement, colIndex: number): void;
+    selectRow(table: HTMLTableElement, rowIndex: number): void;
+    clear(): void;
+    private handleHoverForStrips;
+    private refreshStrips;
+    private clearStrips;
+    private buildStrips;
+    destroy(): void;
+}

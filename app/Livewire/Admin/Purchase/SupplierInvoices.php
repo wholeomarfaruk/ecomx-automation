@@ -3,6 +3,8 @@
 namespace App\Livewire\Admin\Purchase;
 
 use App\Enums\Purchase\SupplierInvoiceType;
+use App\Livewire\Traits\HandlesSupplierInvoiceModal;
+use App\Livewire\Traits\WithMediaPicker;
 use App\Models\File;
 use App\Models\Supplier;
 use App\Models\SupplierInvoice;
@@ -12,6 +14,8 @@ use Livewire\WithPagination;
 class SupplierInvoices extends Component
 {
     use WithPagination;
+    use WithMediaPicker;
+    use HandlesSupplierInvoiceModal;
 
     protected string $paginationTheme = 'tailwind';
 
@@ -20,6 +24,11 @@ class SupplierInvoices extends Component
     public string $filterSupplier = '';
     public string $dateFrom     = '';
     public string $dateTo       = '';
+
+    // Which supplier the invoice modal is currently acting on — unlike
+    // SupplierLedger (a fixed supplier from the route), this cross-supplier
+    // page lets the admin pick one inside the modal itself.
+    public string $modalSupplierId = '';
 
     public function updatingSearch(): void         { $this->resetPage(); }
     public function updatingFilterType(): void     { $this->resetPage(); }
@@ -31,6 +40,31 @@ class SupplierInvoices extends Component
     {
         $this->reset(['search', 'filterType', 'filterSupplier', 'dateFrom', 'dateTo']);
         $this->resetPage();
+    }
+
+    protected function invoiceSupplierId(): ?int
+    {
+        return $this->modalSupplierId !== '' ? (int) $this->modalSupplierId : null;
+    }
+
+    protected function extraInvoiceModalResetKeys(): array
+    {
+        return ['modalSupplierId'];
+    }
+
+    protected function extraInvoiceValidationRules(): array
+    {
+        return ['modalSupplierId' => 'required|integer|exists:suppliers,id'];
+    }
+
+    protected function afterOpenEditInvoiceModal(SupplierInvoice $invoice): void
+    {
+        $this->modalSupplierId = (string) $invoice->supplier_id;
+    }
+
+    public function updatedModalSupplierId(): void
+    {
+        $this->purchaseOrderId = '';
     }
 
     /**
@@ -77,12 +111,15 @@ class SupplierInvoices extends Component
 
         $this->attachDocuments($invoices->getCollection());
 
+        $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
+
         return view('livewire.admin.purchase.supplier-invoices', [
             'invoices'      => $invoices,
-            'suppliers'     => Supplier::orderBy('name')->get(['id', 'name']),
+            'suppliers'     => $suppliers,
             'totalCount'    => SupplierInvoice::count(),
             'purchaseTotal' => SupplierInvoice::where('type', SupplierInvoiceType::PURCHASE)->sum('amount'),
             'paidTotal'     => SupplierInvoice::whereIn('type', [SupplierInvoiceType::ADVANCE, SupplierInvoiceType::PAYMENT])->sum('amount'),
+            ...$this->invoiceModalViewData($this->invoiceSupplierId()),
         ])->layout('layouts.admin.admin');
     }
 }

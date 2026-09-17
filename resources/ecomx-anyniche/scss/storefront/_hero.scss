@@ -1,0 +1,126 @@
+@use 'variables' as *;
+
+// =============================================================================
+// Hero: rotating slider (left) + two static banners (right)
+// =============================================================================
+
+.jtc-hero {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.jtc-hero__slider {
+  position: relative;
+  flex: 2 1 380px;
+  border-radius: $radius;
+  overflow: hidden;
+  min-height: 400px;
+  background: $ink;
+}
+
+.jtc-hero__slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.7s ease;
+  &.is-active { opacity: 1; visibility: visible; }
+  img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+}
+
+.jtc-hero__dots {
+  position: absolute;
+  bottom: 20px;
+  left: 52px;
+  display: flex;
+  gap: 8px;
+  z-index: 5;
+}
+.jtc-hero__dot {
+  width: 9px; height: 9px;
+  border-radius: $radius-pill;
+  background: rgba(255, 255, 255, 0.55);
+  border: none;
+  cursor: pointer;
+  transition: width 0.2s, background 0.2s;
+  &.is-active { width: 26px; background: #fff; }
+}
+
+.jtc-hero__nav {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  gap: 8px;
+  z-index: 5;
+}
+.jtc-hero__arrow {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: $shadow-sm;
+  display: grid;
+  place-items: center;
+  color: $ink;
+  border: none;
+  cursor: pointer;
+  &:hover { background: #fff; }
+}
+
+.jtc-hero__side {
+  display: grid;
+  flex: 1 1 190px;
+  grid-template-rows: 1fr 1fr;
+  gap: 20px;
+  min-height: 400px;
+}
+.jtc-hero__banner {
+  position: relative;
+  border-radius: $radius;
+  overflow: hidden;
+  min-height: 190px;
+  display: block;
+  img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; }
+}
+
+@media (max-width: $bp-mobile) {
+  .jtc-hero__slider {
+    min-height: unset;
+    height: auto;
+    aspect-ratio: 4 / 2;
+    max-height: 60vh;
+  }
+  .jtc-hero__side { display: none; }
+}
+
+@media (max-width: 480px) {
+  .jtc-hero__slider { aspect-ratio: 4 / 2; }
+}
+
+@media (max-height: 600px) and (max-width: $bp-mobile) {
+  .jtc-hero__slider { aspect-ratio: 16 / 9; max-height: 45vh; }
+}
+
+@media (max-width: 400px) {
+  .jtc-hero__slider { aspect-ratio: 4 / 2; max-height: 50vh; }
+
+  .jtc-hero__dots {
+    left: 12px;
+    bottom: 12px;
+    gap: 6px;
+  }
+  .jtc-hero__dot {
+    width: 7px; height: 7px;
+    &.is-active { width: 18px; }
+  }
+
+  .jtc-hero__nav {
+    bottom: 12px;
+    right: 12px;
+    gap: 6px;
+  }
+  .jtc-hero__arrow {
+    width: 32px; height: 32px;
+  }
+}

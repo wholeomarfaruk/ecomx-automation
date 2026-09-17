@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Catalog;
 
+use App\Enums\Product\ProductType;
 use App\Livewire\Traits\WithMediaPicker;
 use App\Models\Attribute;
 use App\Models\Product;
@@ -49,6 +50,20 @@ class ProductVariants extends Component
     }
 
     /**
+     * Variants only apply to "variable" products — mutating methods below
+     * guard against being reached on a simple/combo product (e.g. a stale
+     * component instance kept alive after the product type was switched).
+     */
+    protected function assertVariableProduct(): void
+    {
+        abort_unless(
+            Product::whereKey($this->productId)->value('product_type') === ProductType::VARIABLE,
+            403,
+            'This product is not a variable product.'
+        );
+    }
+
+    /**
      * Opens the shared media picker for one selected colour chip's
      * per-product swatch image override. `swatchImageTargetId` remembers
      * which product_attribute_values row this picker call is for, since
@@ -89,6 +104,8 @@ class ProductVariants extends Component
 
     public function addAttribute(): void
     {
+        $this->assertVariableProduct();
+
         if ($this->newAttributeId === '') {
             return;
         }
@@ -118,12 +135,16 @@ class ProductVariants extends Component
 
     public function removeAttribute(int $productAttributeId): void
     {
+        $this->assertVariableProduct();
+
         ProductAttribute::findOrFail($productAttributeId)->delete();
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Attribute removed. Existing variants using it may need regenerating.']);
     }
 
     public function reorderAttributes(array $orderedProductAttributeIds): void
     {
+        $this->assertVariableProduct();
+
         $product = Product::findOrFail($this->productId);
 
         foreach ($orderedProductAttributeIds as $index => $productAttributeId) {
@@ -135,6 +156,8 @@ class ProductVariants extends Component
 
     public function toggleValue(int $productAttributeId, int $attributeValueId): void
     {
+        $this->assertVariableProduct();
+
         $existing = ProductAttributeValue::where('product_attribute_id', $productAttributeId)
             ->where('attribute_value_id', $attributeValueId)
             ->first();
@@ -161,6 +184,8 @@ class ProductVariants extends Component
      */
     public function reorderValues(int $productAttributeId, array $orderedAttributeValueIds): void
     {
+        $this->assertVariableProduct();
+
         foreach ($orderedAttributeValueIds as $index => $attributeValueId) {
             ProductAttributeValue::where('product_attribute_id', $productAttributeId)
                 ->where('attribute_value_id', $attributeValueId)
@@ -170,6 +195,8 @@ class ProductVariants extends Component
 
     public function generateVariants(): void
     {
+        $this->assertVariableProduct();
+
         $product = Product::with('productAttributes.values.attributeValue', 'productAttributes.attribute')->findOrFail($this->productId);
 
         $groups = $product->productAttributes
@@ -234,6 +261,8 @@ class ProductVariants extends Component
 
     public function reorderVariants(array $orderedIds): void
     {
+        $this->assertVariableProduct();
+
         foreach ($orderedIds as $index => $id) {
             ProductVariant::where('id', $id)->update(['sort_order' => $index + 1]);
         }
@@ -241,12 +270,16 @@ class ProductVariants extends Component
 
     public function toggleVariantStatus(int $id): void
     {
+        $this->assertVariableProduct();
+
         $variant = ProductVariant::findOrFail($id);
         $variant->update(['status' => $variant->status === 'active' ? 'inactive' : 'active']);
     }
 
     public function deleteVariant(int $id): void
     {
+        $this->assertVariableProduct();
+
         ProductVariant::findOrFail($id)->delete();
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Variant deleted']);
     }
@@ -277,6 +310,8 @@ class ProductVariants extends Component
 
     public function saveVariant(): void
     {
+        $this->assertVariableProduct();
+
         $variant = ProductVariant::findOrFail($this->editingVariantId);
 
         $this->validate([
@@ -332,6 +367,8 @@ class ProductVariants extends Component
 
     public function linkToProduct(int $linkedProductId): void
     {
+        $this->assertVariableProduct();
+
         $variant = ProductVariant::findOrFail($this->editingVariantId);
 
         $exists = $variant->links()
@@ -357,6 +394,8 @@ class ProductVariants extends Component
 
     public function unlinkProduct(int $linkId): void
     {
+        $this->assertVariableProduct();
+
         ProductVariantLink::findOrFail($linkId)->delete();
     }
 

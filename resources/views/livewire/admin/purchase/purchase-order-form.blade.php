@@ -105,9 +105,9 @@
                             <div class="grid grid-cols-12 gap-3 items-start">
                                 <div class="col-span-12 md:col-span-6">
                                     <div class="flex items-center justify-between mb-1">
-                                        <label class="block text-[11px] text-gray-500">Product Variant <span class="text-red-500">*</span></label>
+                                        <label class="block text-[11px] text-gray-500">Product / Variant <span class="text-red-500">*</span></label>
                                         @if($item['variant_id'] !== '')
-                                            <button wire:click="viewPriceHistory({{ $item['variant_id'] }})" type="button" title="View purchase price history"
+                                            <button wire:click="viewPriceHistory('{{ $item['variant_id'] }}')" type="button" title="View purchase price history"
                                                 class="inline-flex items-center gap-1 text-[11px] text-indigo-600 hover:text-indigo-700 font-medium">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -118,7 +118,7 @@
                                     </div>
                                     <x-searchable-select field="items.{{ $index }}.variant_id" :value="$items[$index]['variant_id']"
                                         :options="$variantOptions" :images="$variantImages"
-                                        placeholder="— Select a product variant —" search-placeholder="Search by product name or SKU…" />
+                                        placeholder="— Select a product or variant —" search-placeholder="Search by product name or SKU…" />
                                     @error("items.{$index}.variant_id") <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                                 </div>
                                 <div class="col-span-4 md:col-span-2">
@@ -192,7 +192,7 @@
                             </span>
                         @endif
                     </div>
-                    <p class="text-xs text-gray-400 mt-0.5">Low or out-of-stock variants — click + to add to this order.</p>
+                    <p class="text-xs text-gray-400 mt-0.5">Low or out-of-stock products/variants — click + to add to this order.</p>
                     <div class="relative mt-3">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/>
@@ -202,7 +202,7 @@
                     </div>
                 </div>
                 <div class="max-h-[480px] overflow-y-auto divide-y divide-gray-100">
-                    @php($addedVariantIds = collect($items)->pluck('variant_id')->filter()->map(fn($v) => (string) $v)->all())
+                    @php($addedKeys = collect($items)->pluck('variant_id')->filter()->all())
                     @forelse($restockGroups as $group)
                         <div class="px-5 py-3">
                             <div class="flex items-center gap-2 mb-2">
@@ -221,12 +221,13 @@
                                                 {{ $variant->stock_quantity <= 0 ? 'Out of stock' : rtrim(rtrim(number_format($variant->stock_quantity, 3), '0'), '.') . ' left' }}
                                             </span>
                                         </div>
-                                        @if(in_array((string) $variant->id, $addedVariantIds, true))
+                                        @if(in_array($variant->key, $addedKeys, true))
                                             <span class="inline-flex items-center px-2 py-1 rounded-lg text-[11px] font-medium bg-emerald-50 text-emerald-600 shrink-0">
                                                 Added
                                             </span>
                                         @else
-                                            <button wire:click="addLowStockItem({{ $variant->id }})" type="button" title="Add to order"
+                                            @php([$restockType, $restockId] = explode(':', $variant->key))
+                                            <button wire:click="{{ $restockType === 'v' ? 'addLowStockItem' : 'addLowStockProductItem' }}({{ $restockId }})" type="button" title="Add to order"
                                                 class="w-7 h-7 shrink-0 inline-flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
@@ -252,14 +253,14 @@
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mt-6">
             <div class="px-6 py-4 border-b border-gray-100">
                 <h2 class="text-sm font-semibold text-gray-800">Receiving</h2>
-                <p class="text-xs text-gray-400 mt-0.5">Record deliveries against this order — a purchase order can arrive in several partial shipments.</p>
+                <p class="text-xs text-gray-400 mt-0.5">A purchase order can arrive in several partial shipments — click Receive to record a delivery for an item, with its batch/lot and cost.</p>
             </div>
             <div class="divide-y divide-gray-100">
                 @forelse($receivingItems as $item)
                     <div class="p-5 flex flex-wrap items-center gap-4" wire:key="receive-{{ $item->id }}">
                         <div class="flex-1 min-w-[180px]">
-                            <span class="text-sm font-medium text-gray-800">{{ $item->variant->product->name ?? 'Unknown product' }}</span>
-                            <span class="block text-xs font-mono text-gray-400">{{ $item->variant->sku ?? '' }}</span>
+                            <span class="text-sm font-medium text-gray-800">{{ $item->product->name ?? 'Unknown product' }}</span>
+                            <span class="block text-xs font-mono text-gray-400">{{ $item->variant->sku ?? $item->product->code ?? '' }}</span>
                             @if($item->received_batches->isNotEmpty())
                                 <div class="flex flex-wrap items-center gap-1 mt-1.5">
                                     @foreach($item->received_batches as $batch)
@@ -277,18 +278,13 @@
                             </p>
                         </div>
                         @if($item->remaining > 0)
-                            <div class="flex items-center gap-2 shrink-0">
-                                <input wire:model="receiveQuantities.{{ $item->id }}" type="number" step="0.001" min="0" max="{{ $item->remaining }}"
-                                    placeholder="Qty"
-                                    class="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                                <button wire:click="receiveItem({{ $item->id }})" type="button"
-                                    class="px-3.5 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition">
-                                    Receive
-                                </button>
-                            </div>
-                            @error("receiveQuantities.{$item->id}")
-                                <p class="text-xs text-red-500 shrink-0 basis-full">{{ $message }}</p>
-                            @enderror
+                            <a href="{{ route('admin.inventory.stock-in') }}?purchase_order={{ $order->id }}&item={{ $item->id }}" wire:navigate
+                                class="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                                </svg>
+                                Receive
+                            </a>
                         @else
                             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-600 shrink-0">
                                 Fully Received
@@ -314,6 +310,11 @@
                                 {{ $priceHistoryVariant->product->name ?? 'Unknown product' }}
                                 <span class="font-mono text-gray-400">[{{ $priceHistoryVariant->sku }}]</span>
                             </p>
+                        @elseif($priceHistoryProduct)
+                            <p class="text-xs text-gray-500 mt-0.5 truncate">
+                                {{ $priceHistoryProduct->name }}
+                                <span class="font-mono text-gray-400">[{{ $priceHistoryProduct->code }}]</span>
+                            </p>
                         @endif
                     </div>
                     <button wire:click="closePriceHistory" type="button" class="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 transition">
@@ -323,17 +324,20 @@
                     </button>
                 </div>
 
-                <div class="px-6 py-4 border-b border-gray-100 grid grid-cols-5 gap-3">
-                    <div class="text-center">
-                        <p class="text-[11px] text-gray-400">Variant Price</p>
-                        <p class="text-sm font-semibold text-emerald-600">
-                            {{ $priceHistoryVariant?->purchase_price !== null ? number_format($priceHistoryVariant->purchase_price, 2) : '—' }}
-                        </p>
-                    </div>
+                <div class="px-6 py-4 border-b border-gray-100 grid {{ $priceHistoryVariant ? 'grid-cols-5' : 'grid-cols-4' }} gap-3">
+                    @if($priceHistoryVariant)
+                        <div class="text-center">
+                            <p class="text-[11px] text-gray-400">Variant Price</p>
+                            <p class="text-sm font-semibold text-emerald-600">
+                                {{ $priceHistoryVariant->purchase_price !== null ? number_format($priceHistoryVariant->purchase_price, 2) : '—' }}
+                            </p>
+                        </div>
+                    @endif
                     <div class="text-center">
                         <p class="text-[11px] text-gray-400">Product Price</p>
                         <p class="text-sm font-semibold text-teal-600">
-                            {{ $priceHistoryVariant?->product?->purchase_price !== null ? number_format($priceHistoryVariant->product->purchase_price, 2) : '—' }}
+                            @php($productPrice = $priceHistoryVariant?->product?->purchase_price ?? $priceHistoryProduct?->purchase_price)
+                            {{ $productPrice !== null ? number_format($productPrice, 2) : '—' }}
                         </p>
                     </div>
                     <div class="text-center">
@@ -386,7 +390,7 @@
                             <span class="text-sm font-semibold text-gray-800 shrink-0">{{ number_format($entry['unit_price'], 2) }}</span>
                         </div>
                     @empty
-                        <p class="px-6 py-8 text-sm text-gray-400 text-center">No purchase price history recorded for this variant yet.</p>
+                        <p class="px-6 py-8 text-sm text-gray-400 text-center">No purchase price history recorded for this item yet.</p>
                     @endforelse
                 </div>
             </div>

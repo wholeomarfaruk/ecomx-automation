@@ -1,0 +1,82 @@
+// App-level footer and social icon buttons — split out of the original
+// monolithic app.scss. (Distinct from storefront/_footer.scss, which styles
+// the dedicated storefront layout's footer.)
+@use '../variables' as *;
+
+.section-footer {
+    background: #1b2234;
+    padding: 10px;
+}
+.divider {
+    color: #d1d1d1;
+}
+.footer-content {
+    margin-top: 50px;
+    margin-bottom: 50px;
+    gap: 7rem;
+}
+.footer-text {
+    color: #9ba2b0;
+    font-size: 13px;
+    padding-top: 10px;
+    line-height: 1.5rem;
+}
+.footer-text-contact {
+    color: #9ba2b0;
+    font-size: 13px;
+    padding-top: 10px;
+}
+.footer-text-contact:hover {
+    color: $accent;
+}
+.footer-titel {
+    color: #c9cbd1;
+    font-weight: bold;
+    font-size: 15px;
+}
+.social-icon a {
+    margin-top: 20px;
+    color: #9ba2b0;
+}
+.social-icon a i {
+    font-size: 20px;
+}
+.icon-group {
+    background: #504f4f;
+    padding: 10px;
+    border-radius: 10px;
+}
+.icon-facebook {
+    background: #504f4f;
+    padding: 10px 16px;
+    border-radius: 10px;
+}
+.icon-messenger {
+    background: #504f4f;
+    padding: 10px 12px;
+    border-radius: 10px;
+}
+.icon-phone {
+    background: #504f4f;
+    padding: 10px 12px;
+    border-radius: 10px;
+}
+.icon-whatsapp {
+    background: #504f4f;
+    padding: 10px 12px;
+    border-radius: 10px;
+}
+.icon-mail {
+    background: #504f4f;
+    padding: 10px 12px;
+    border-radius: 10px;
+}
+.social-icon a:hover {
+    background: $accent;
+    color: #fff;
+}
+@media screen and (max-width: 768px) {
+    .footer-content {
+        gap: 2rem;
+    }
+}

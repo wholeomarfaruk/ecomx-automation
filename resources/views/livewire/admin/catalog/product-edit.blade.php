@@ -54,6 +54,7 @@
                     ];
                 @endphp
                 @foreach($tabs as $key => $tab)
+                    @continue($key === 'variants' && $productType !== 'variable')
                     @continue($key === 'combo' && $productType !== 'combo')
                     @continue($key === 'gift' && ! $giftAllowed)
                     <button type="button" wire:click="setTab('{{ $key }}')"
@@ -177,8 +178,7 @@
                         </div>
                         <div class="col-span-2">
                             <label class="block text-xs font-medium text-gray-600 mb-1.5">Full Description</label>
-                            <textarea wire:model="description" rows="6" placeholder="Detailed product description…"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"></textarea>
+                            <x-rich-text-editor wire-model="description" class="w-full" />
                         </div>
                     </div>
                 </div>

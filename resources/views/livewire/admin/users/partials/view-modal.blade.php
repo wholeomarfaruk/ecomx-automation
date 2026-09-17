@@ -108,6 +108,17 @@
                 {{-- Edit mode inputs --}}
                 <div class="flex-1 min-w-0 space-y-2" x-show="editMode" x-cloak>
                     <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Linked Profile</label>
+                        <x-searchable-select
+                            wire:key="edit-user-master-profile-select-{{ $user?->id }}"
+                            field="editMasterProfileId"
+                            :options="$masterProfileOptions"
+                            placeholder="None — create a new profile"
+                            searchPlaceholder="Search profiles…"
+                        />
+                        <p class="text-xs text-gray-400 mt-1">Change this only to re-point this user at a different existing profile.</p>
+                    </div>
+                    <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">Name</label>
                         <input wire:model="editName" type="text"
                             class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"

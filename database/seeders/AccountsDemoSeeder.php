@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Actions\Accounts\ApplyCustomerCredit;
+use App\Concerns\CreatesMasterProfile;
 use App\Actions\Accounts\DisposeFixedAsset;
 use App\Actions\Accounts\PostCodSettlement;
 use App\Actions\Accounts\PostCurrencyConversion;
@@ -49,6 +50,8 @@ use Illuminate\Database\Seeder;
  */
 class AccountsDemoSeeder extends Seeder
 {
+    use CreatesMasterProfile;
+
     public function run(): void
     {
         $user = User::where('email', 'superadmin@gmail.com')->first() ?? User::first();
@@ -87,11 +90,19 @@ class AccountsDemoSeeder extends Seeder
         );
 
         // --- Customers + sales with COGS + payments (Case 3.1-3.4) ---
+        $rahimProfile = $this->createMasterProfileFor([
+            'display_name' => 'Rahim Uddin', 'first_name' => 'Rahim', 'last_name' => 'Uddin', 'phone' => '01711000001',
+        ]);
         $rahim = Customer::create([
+            'master_profile_id' => $rahimProfile->id,
             'customer_code' => 'CUST-DEMO-1', 'first_name' => 'Rahim', 'last_name' => 'Uddin',
             'full_name' => 'Rahim Uddin', 'phone' => '01711000001', 'status' => 'active',
         ]);
+        $karimProfile = $this->createMasterProfileFor([
+            'display_name' => 'Karim Molla', 'first_name' => 'Karim', 'last_name' => 'Molla', 'phone' => '01711000002',
+        ]);
         $karim = Customer::create([
+            'master_profile_id' => $karimProfile->id,
             'customer_code' => 'CUST-DEMO-2', 'first_name' => 'Karim', 'last_name' => 'Molla',
             'full_name' => 'Karim Molla', 'phone' => '01711000002', 'status' => 'active',
         ]);
@@ -114,7 +125,11 @@ class AccountsDemoSeeder extends Seeder
 
         // A third sale left fully unpaid and old enough to show as an
         // overdue receivable on the dashboard.
+        $sabbirProfile = $this->createMasterProfileFor([
+            'display_name' => 'Sabbir Hasan', 'first_name' => 'Sabbir', 'last_name' => 'Hasan', 'phone' => '01711000003',
+        ]);
         $sabbir = Customer::create([
+            'master_profile_id' => $sabbirProfile->id,
             'customer_code' => 'CUST-DEMO-3', 'first_name' => 'Sabbir', 'last_name' => 'Hasan',
             'full_name' => 'Sabbir Hasan', 'phone' => '01711000003', 'status' => 'active',
         ]);
@@ -135,7 +150,11 @@ class AccountsDemoSeeder extends Seeder
         );
 
         // --- Customer credit issue + redemption (Case 3.8) ---
+        $anikaProfile = $this->createMasterProfileFor([
+            'display_name' => 'Anika Rahman', 'first_name' => 'Anika', 'last_name' => 'Rahman', 'phone' => '01711000004',
+        ]);
         $anika = Customer::create([
+            'master_profile_id' => $anikaProfile->id,
             'customer_code' => 'CUST-DEMO-4', 'first_name' => 'Anika', 'last_name' => 'Rahman',
             'full_name' => 'Anika Rahman', 'phone' => '01711000004', 'status' => 'active',
         ]);
@@ -147,7 +166,11 @@ class AccountsDemoSeeder extends Seeder
         );
 
         // --- Bad debt write-off (Case 3.10) ---
+        $lostProfile = $this->createMasterProfileFor([
+            'display_name' => 'Unreachable Customer', 'first_name' => 'Unknown', 'last_name' => '', 'phone' => '01711000005',
+        ]);
         $lost = Customer::create([
+            'master_profile_id' => $lostProfile->id,
             'customer_code' => 'CUST-DEMO-5', 'first_name' => 'Unknown', 'last_name' => '',
             'full_name' => 'Unreachable Customer', 'phone' => '01711000005', 'status' => 'inactive',
         ]);
@@ -165,8 +188,10 @@ class AccountsDemoSeeder extends Seeder
         );
 
         // --- Suppliers + bills + payments + return + advance (Case 4.1-4.5) ---
-        $abcTraders = Supplier::create(['code' => 'SUP-DEMO-1', 'name' => 'ABC Traders', 'status' => 'active']);
-        $xyzImports = Supplier::create(['code' => 'SUP-DEMO-2', 'name' => 'XYZ Imports', 'status' => 'active']);
+        $abcTradersProfile = $this->createMasterProfileFor(['type' => 'organization', 'display_name' => 'ABC Traders']);
+        $abcTraders = Supplier::create(['master_profile_id' => $abcTradersProfile->id, 'code' => 'SUP-DEMO-1', 'name' => 'ABC Traders', 'status' => 'active']);
+        $xyzImportsProfile = $this->createMasterProfileFor(['type' => 'organization', 'display_name' => 'XYZ Imports']);
+        $xyzImports = Supplier::create(['master_profile_id' => $xyzImportsProfile->id, 'code' => 'SUP-DEMO-2', 'name' => 'XYZ Imports', 'status' => 'active']);
 
         $bill1 = app(PostSupplierBill::class)->handle(
             $abcTraders, $acc('1200'), $acc('2100'), 100000, now()->subDays(25)->toDateString(), null, 'Fabric purchase'

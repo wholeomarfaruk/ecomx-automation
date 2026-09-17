@@ -1,0 +1,51 @@
+// =============================================================================
+// Juwel Trade Corporation — design tokens
+// =============================================================================
+
+// Brand palette (derived from the JTC logo: blue → green)
+$blue:        #1B7FC4;
+$blue-dark:   #145E92;
+$green:       #3DA935;
+$blue-light:  #e8f3fb;
+$green-light: #eafaf0;
+
+// Neutrals
+$ink:        #14201c; // primary text / dark surfaces
+$ink-soft:   #34433d; // secondary text
+$muted:      #6b7a73; // tertiary text
+$muted-2:    #9aa8a1;
+$line:       #e6eae7; // borders
+$line-soft:  #eef2f0;
+$bg:         #f7faf8; // page background
+$surface:    #fff;
+$surface-2:  #f2f5f4;
+$img-bg:     #eef2f0;
+
+// Type
+$font-sans:    'Inter', -apple-system, system-ui, sans-serif;
+$font-display: 'Sora', sans-serif;
+
+// Shape
+$radius:      7px;   // global rectangular radius
+$radius-pill: 999px;
+
+// Elevation
+$shadow-sm:  0 1px 2px rgba(20, 32, 28, 0.05), 0 1px 3px rgba(20, 32, 28, 0.06);
+$shadow-pop: 0 24px 60px -20px rgba(20, 32, 28, 0.28);
+$shadow-modal: 0 30px 80px -20px rgba(20, 32, 28, 0.4);
+
+// Layout
+$container:      1240px;
+$container-wide: 1536px;
+$gutter:         20px;
+
+// Breakpoints
+$bp-wide:   1536px;
+$bp-tablet: 1100px;
+$bp-mobile: 768px;
+
+@mixin container($max-width: $container) {
+  max-width: $max-width;
+  margin-inline: auto;
+  padding-inline: $gutter;
+}

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class SupplierInvoiceItem extends Model
 {
     protected $fillable = [
-        'supplier_invoice_id', 'product_variant_id', 'name', 'quantity', 'unit_price', 'amount',
+        'supplier_invoice_id', 'product_variant_id', 'purchase_order_item_id', 'name', 'quantity', 'unit_price', 'amount',
     ];
 
     protected function casts(): array
@@ -28,5 +28,10 @@ class SupplierInvoiceItem extends Model
     public function variant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class, 'product_variant_id');
+    }
+
+    public function purchaseOrderItem(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrderItem::class);
     }
 }

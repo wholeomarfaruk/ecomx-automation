@@ -2,6 +2,7 @@
 
 namespace App\Livewire\EcomxFashion;
 
+use App\Concerns\CreatesMasterProfile;
 use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\PaymentStatus;
 use App\Enums\User\Status;
@@ -17,10 +18,8 @@ use App\Models\Customer;
 use App\Models\DeliveryAddress;
 use App\Models\Device;
 use App\Models\Order;
-use App\Models\Setting;
 use App\Models\User;
 use App\Services\BlockGuard;
-use App\Services\StockService;
 use App\Support\PhoneNumber;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -30,6 +29,8 @@ use Livewire\Attributes\Layout;
 #[Layout('ecomx-fashion.layouts.ecomx_fashion')]
 class Checkout extends Component
 {
+    use CreatesMasterProfile;
+
     public string $name = '';
     public string $phone = '';
     public string $address = '';
@@ -334,12 +335,6 @@ class Checkout extends Component
                     ]);
                 }
 
-                $deductOnConfirm = (bool) Setting::get('deduct_on_order_confirm', true, 'inventory');
-
-                if (! $deductOnConfirm) {
-                    app(StockService::class)->commitOrder($order);
-                }
-
                 $cart->update(['status' => 'converted']);
 
                 return $order;
@@ -398,7 +393,15 @@ class Checkout extends Component
             $syntheticEmail = 'guest+' . $this->phone . '+' . Str::random(6) . '@' . $host;
         }
 
+        $masterProfile = $this->createMasterProfileFor([
+            'display_name' => $this->name,
+            'first_name'   => $firstName,
+            'last_name'    => $lastName,
+            'phone'        => $this->phone,
+        ]);
+
         $user = User::create([
+            'master_profile_id' => $masterProfile->id,
             'name' => $this->name,
             'email' => $syntheticEmail,
             'password' => Str::random(40),
@@ -413,6 +416,7 @@ class Checkout extends Component
         $code = 'CUS-' . str_pad((string) (Customer::withTrashed()->max('id') + 1), 5, '0', STR_PAD_LEFT);
 
         return Customer::create([
+            'master_profile_id' => $masterProfile->id,
             'user_id' => $user->id,
             'customer_code' => $code,
             'first_name' => $firstName,

@@ -55,10 +55,10 @@ class PaletteRegistry
         rename($tmp, $path);
     }
 
-    /** Site-wide active palette slug, falling back to config('ecomx-fashion.palettes')'s first entry. */
+    /** Site-wide active palette slug, falling back to the active theme's config('{slug}.palettes')'s first entry. */
     public static function active(): string
     {
-        $palettes = config('ecomx-fashion.palettes', []);
+        $palettes = config(ActiveTheme::slug() . '.palettes', []);
         $stored = static::read()['active'] ?? null;
 
         if ($stored !== null && in_array($stored, $palettes, true)) {
@@ -70,7 +70,7 @@ class PaletteRegistry
 
     public static function setActive(string $palette): void
     {
-        if (! in_array($palette, config('ecomx-fashion.palettes', []), true)) {
+        if (! in_array($palette, config(ActiveTheme::slug() . '.palettes', []), true)) {
             throw new \InvalidArgumentException("Unknown palette [{$palette}].");
         }
 

@@ -1,0 +1,95 @@
+// Order confirmation / order-tracking page — split out of the original
+// monolithic app.scss.
+.order-info-box {
+    box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+    padding: 40px 100px;
+}
+.thanks {
+    font-size: 13px;
+    color: #4a5466;
+    font-weight: bold;
+}
+.order-some-text {
+    color: #7e8ba0;
+    font-size: 14px;
+    line-height: 25px;
+}
+.order-id, .date {
+    color: #54596a;
+    font-weight: bold;
+}
+.order-number, .date-time {
+    color: #9ba2b0;
+    font-weight: bold;
+    font-size: 14px;
+}
+.order-card img {
+    width: 15%;
+    border-radius: 15px;
+}
+.order-product-name {
+    font-size: 14px;
+    color: #54596a;
+    font-weight: bold;
+}
+.order-product-weight {
+    color: #9ba2b0;
+    font-size: 13px;
+}
+.order-product-price {
+    font-size: 13px;
+    color: #54596a;
+}
+.delivery-info {
+    text-transform: uppercase;
+    font-weight: bold;
+    color: #9ba2b0;
+    font-size: 13px;
+}
+.delivery-info-total {
+    text-transform: uppercase;
+    font-weight: bold;
+    color: #283147;
+    font-size: 14px;
+}
+.order-price-unit {
+    color: #283147;
+    font-size: 13px;
+}
+.order-price-unit-total {
+    font-weight: bold;
+    color: #283147;
+    font-size: 14px;
+}
+.some-titel {
+    color: #9ba2b0;
+    font-size: 14px;
+    font-weight: bold;
+}
+.person-name, .delivery-type {
+    color: #504f4f;
+    font-weight: bold;
+    font-size: 14px;
+}
+.order-address, .delivery-notice {
+    color: #7e8ba0;
+    font-size: 13px;
+}
+.buttom-notice {
+    text-align: center;
+    font-size: 12px;
+    font-weight: bold;
+    color: #4d596e;
+}
+#order .product-list .col-md-6 {
+    width: 48%;
+}
+@media screen and (max-width: 768px) {
+    .order-info-box {
+        padding: 40px 20px;
+    }
+    .order-card img {
+        width: 30%;
+        border-radius: 15px;
+    }
+}

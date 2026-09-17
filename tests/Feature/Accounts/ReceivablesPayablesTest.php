@@ -3,6 +3,7 @@
 namespace Tests\Feature\Accounts;
 
 use App\Actions\Accounts\ApplyCustomerCredit;
+use App\Concerns\CreatesMasterProfile;
 use App\Actions\Accounts\PostCustomerCreditIssue;
 use App\Actions\Accounts\PostCustomerPayment;
 use App\Actions\Accounts\PostPurchaseReturn;
@@ -34,7 +35,7 @@ use Tests\TestCase;
  */
 class ReceivablesPayablesTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, CreatesMasterProfile;
 
     protected function setUp(): void
     {
@@ -52,7 +53,15 @@ class ReceivablesPayablesTest extends TestCase
 
     protected function makeCustomer(): Customer
     {
+        $masterProfile = $this->createMasterProfileFor([
+            'display_name' => 'Rahim Uddin',
+            'first_name'   => 'Rahim',
+            'last_name'    => 'Uddin',
+            'phone'        => '01700000000',
+        ]);
+
         return Customer::create([
+            'master_profile_id' => $masterProfile->id,
             'customer_code' => 'CUST-1',
             'first_name'    => 'Rahim',
             'last_name'     => 'Uddin',
@@ -64,7 +73,13 @@ class ReceivablesPayablesTest extends TestCase
 
     protected function makeSupplier(): Supplier
     {
+        $masterProfile = $this->createMasterProfileFor([
+            'type'         => 'organization',
+            'display_name' => 'ABC Traders',
+        ]);
+
         return Supplier::create([
+            'master_profile_id' => $masterProfile->id,
             'code'   => 'SUP-1',
             'name'   => 'ABC Traders',
             'status' => 'active',

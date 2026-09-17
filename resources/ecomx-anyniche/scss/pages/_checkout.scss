@@ -1,0 +1,79 @@
+// Checkout form / price summary page — split out of the original monolithic
+// app.scss.
+@use '../variables' as *;
+
+.order-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #2e3850;
+}
+.some-heading {
+    font-size: 1.5rem;
+    font-weight: bolder;
+    color: #2e3850;
+    margin-bottom: 1rem;
+}
+.box label {
+    font-weight: 600;
+    font-size: 13px;
+    color: #54596a;
+}
+.box form input, input::placeholder {
+    font-size: 13px;
+}
+.order-heading {
+    margin-top: 2px;
+    border-bottom: 2px dashed #8a8b8d;
+}
+.price-info h5 span {
+    color: #737e91;
+}
+.price-info h5 {
+    color: $accent;
+    font-size: 15px;
+}
+.price-info {
+    border-bottom: 2px dashed #8a8b8d;
+}
+.delete-btn {
+    border: 0;
+    background: #fff;
+    font-size: 18px;
+}
+.delete-btn:hover {
+    color: $accent;
+}
+.price-list {
+    font-weight: bold;
+    color: #1b2234;
+    margin-top: 20px;
+}
+.deli-price-info {
+    border-bottom: 2px dashed #8a8b8d;
+}
+.deli-price-text {
+    font-size: 15px;
+    color: #666;
+}
+.deli-price {
+    color: $accent;
+    font-weight: bold;
+}
+.subtotal-price-info {
+    border-bottom: 2px dashed #8a8b8d;
+}
+.subtotal-text {
+    color: #000;
+    font-weight: bold;
+    font-size: 15px;
+}
+.subtotal-text-green {
+    color: $accent;
+    font-weight: bold;
+}
+.i-text {
+    font-size: 13px;
+    color: #b7b6b6;
+    margin-top: 20px;
+    text-align: center;
+}

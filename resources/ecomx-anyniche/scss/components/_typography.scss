@@ -1,0 +1,26 @@
+// Reusable text/heading utility classes — split out of the original
+// monolithic app.scss.
+.titel {
+    color: #2a2b2a;
+    font-weight: bolder;
+}
+.text {
+    color: #666;
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 2.2rem;
+}
+.ratting {
+    color: #fca903;
+}
+.gold-text {
+    color: #fca903;
+    font-size: 13px;
+}
+.leading-7 {
+    line-height: 1.75rem;
+}
+.text-base {
+    font-size: 1rem;
+    line-height: 1.5rem;
+}

@@ -16,6 +16,7 @@ class ShipmentResponse
         public ?string $errorCode = null,
         public ?string $errorMessage = null,
         public array $rawResponse = [],
+        public ?float $deliveryFee = null,
     ) {
     }
 
@@ -26,6 +27,7 @@ class ShipmentResponse
         ?string $consignmentId = null,
         CourierStatus $status = CourierStatus::PENDING,
         array $rawResponse = [],
+        ?float $deliveryFee = null,
     ): self {
         return new self(
             success: true,
@@ -35,6 +37,7 @@ class ShipmentResponse
             consignmentId: $consignmentId,
             status: $status,
             rawResponse: $rawResponse,
+            deliveryFee: $deliveryFee,
         );
     }
 
@@ -62,6 +65,7 @@ class ShipmentResponse
             'error_code' => $this->errorCode,
             'error_message' => $this->errorMessage,
             'raw_response' => $this->rawResponse,
+            'delivery_fee' => $this->deliveryFee,
         ];
     }
 }

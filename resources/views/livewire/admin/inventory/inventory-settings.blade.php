@@ -45,11 +45,11 @@
             <div class="space-y-4">
                 <label class="flex items-center justify-between gap-4 cursor-pointer">
                     <span>
-                        <span class="block text-sm font-medium text-gray-700">Deduct Stock on Order Confirm</span>
-                        <span class="block text-xs text-gray-400">Automatically reduce stock when an order (admin-created or updated) becomes Confirmed. POS sales always deduct immediately regardless of this setting.</span>
+                        <span class="block text-sm font-medium text-gray-700">Book Stock on Order Confirm</span>
+                        <span class="block text-xs text-gray-400">Reserve stock (without physically deducting it) when an order becomes Confirmed — physical stock is only deducted once the order is marked Completed. POS sales always deduct immediately regardless of this setting.</span>
                     </span>
                     <span class="relative inline-flex h-5 w-9 items-center shrink-0">
-                        <input type="checkbox" wire:model="deductOnOrderConfirm" class="peer sr-only">
+                        <input type="checkbox" wire:model="bookOnOrderConfirm" class="peer sr-only">
                         <span class="absolute inset-0 rounded-full bg-gray-300 peer-checked:bg-indigo-500 transition-colors"></span>
                         <span class="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform peer-checked:translate-x-4"></span>
                     </span>

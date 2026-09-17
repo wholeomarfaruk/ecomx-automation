@@ -17,6 +17,7 @@ use App\Courier\Exceptions\CourierAuthenticationException;
 use App\Courier\Exceptions\CourierException;
 use App\Courier\Exceptions\CourierGatewayUnavailableException;
 use App\Enums\Sales\CourierStatus;
+use App\Support\PhoneNumber;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -145,8 +146,8 @@ class PathaoDriver implements CourierDriverInterface
                 'store_id' => $this->resolveStoreId(),
                 'merchant_order_id' => $request->orderId,
                 'recipient_name' => $request->recipientName,
-                'recipient_phone' => $request->recipientPhone,
-                'recipient_address' => $request->recipientAddress,
+                'recipient_phone' => $this->normalizePhone($request->recipientPhone),
+                'recipient_address' => $this->normalizeAddress($request->recipientAddress, $request->recipientName),
                 'recipient_city' => $cityId,
                 'recipient_zone' => $zoneId,
                 'recipient_area' => $areaId,
@@ -181,6 +182,7 @@ class PathaoDriver implements CourierDriverInterface
             consignmentId: $order['consignment_id'] ?? null,
             status: $this->normalizeStatus($order['order_status'] ?? 'pending'),
             rawResponse: $data,
+            deliveryFee: isset($order['delivery_fee']) ? (float) $order['delivery_fee'] : null,
         );
     }
 
@@ -232,6 +234,8 @@ class PathaoDriver implements CourierDriverInterface
 
     public function webhookIdentifier(array $payload): ?array
     {
+        $payload = $this->flattenWebhookPayload($payload);
+
         if ($consignmentId = ($payload['consignment_id'] ?? null)) {
             return ['by' => 'tracking_number', 'value' => $consignmentId];
         }
@@ -245,6 +249,8 @@ class PathaoDriver implements CourierDriverInterface
 
     public function parseWebhookEvent(array $payload): ?TrackingEvent
     {
+        $payload = $this->flattenWebhookPayload($payload);
+
         // Pathao sends the same update under up to three different keys —
         // 'event' (dot/hyphen style, e.g. "order.pickup-cancelled"),
         // 'order_status_slug' (Title_Case, e.g. "Pickup_Cancelled"), and
@@ -270,6 +276,26 @@ class PathaoDriver implements CourierDriverInterface
             eventAt: $this->parseWebhookTimestamp($payload),
             rawData: $payload,
         );
+    }
+
+    /**
+     * Pathao's real status-update webhooks wrap the actual event under a
+     * nested 'payload' key (top level only carries 'timestamp'/'event'),
+     * unlike the flat shape most of this driver's other payloads use (e.g.
+     * the one-off webhook_integration verification call, or older/manually
+     * built test payloads) — merge the nested keys up to the top level (the
+     * outer 'event'/'timestamp' losing to the inner ones on a name clash,
+     * since the inner copy is the actual per-field data) so every reader
+     * below can just look at $payload directly regardless of which shape a
+     * given call arrived in.
+     */
+    protected function flattenWebhookPayload(array $payload): array
+    {
+        if (! isset($payload['payload']) || ! is_array($payload['payload'])) {
+            return $payload;
+        }
+
+        return array_merge($payload, $payload['payload']);
     }
 
     /**
@@ -377,6 +403,39 @@ class PathaoDriver implements CourierDriverInterface
                 ['key' => 'store_id', 'label' => 'Store ID (optional — auto-detected if left blank)', 'type' => 'text', 'required' => false],
             ],
         ];
+    }
+
+    /**
+     * Pathao requires the recipient phone as an 11-digit BD local number
+     * (01XXXXXXXXX) — a +880/880-prefixed or otherwise-formatted number
+     * (as ShipmentRequest may carry, since callers pass it through
+     * unnormalized) is rejected with "not a valid phone number". Route
+     * every number through PhoneNumber so 01761234567, 8801761234567,
+     * +8801761234567 etc. all land on the same local format Pathao wants.
+     */
+    protected function normalizePhone(string $phone): string
+    {
+        return PhoneNumber::local(PhoneNumber::national($phone));
+    }
+
+    /**
+     * Pathao rejects a recipient_address shorter than 10 characters. A
+     * short but otherwise valid address (e.g. just "House 5, Road 2") is
+     * padded with the recipient name so it clears Pathao's length floor
+     * rather than failing the whole booking over a formatting rule that
+     * has nothing to do with whether the address itself is deliverable.
+     */
+    protected function normalizeAddress(string $address, ?string $recipientName = null): string
+    {
+        $trimmed = trim($address);
+
+        if (mb_strlen($trimmed) >= 10) {
+            return $trimmed;
+        }
+
+        $padded = $recipientName ? trim($trimmed . ', ' . $recipientName) : $trimmed;
+
+        return mb_strlen($padded) >= 10 ? $padded : str_pad($trimmed, 10);
     }
 
     /**

@@ -1,0 +1,23 @@
+import { Editor, EditorOptions } from './core/Editor';
+import './plugins/links';
+import './plugins/anchor';
+import './plugins/image';
+import './plugins/media';
+import './plugins/embed';
+import './plugins/table';
+import './plugins/codesample';
+import './plugins/emoticons';
+import './plugins/charmap';
+import './plugins/searchreplace';
+import './plugins/wordcount';
+import './plugins/elementpath';
+import './plugins/spacing';
+import './plugins/visualblocks';
+import './plugins/onboarding';
+declare function init(options: EditorOptions): Editor;
+export { Editor, EditorOptions, init };
+declare const _default: {
+    init: typeof init;
+    Editor: typeof Editor;
+};
+export default _default;

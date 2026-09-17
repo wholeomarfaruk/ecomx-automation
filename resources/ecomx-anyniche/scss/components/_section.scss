@@ -1,0 +1,39 @@
+// Generic ".section" block (icon + heading + text) reused across pages —
+// split out of the original monolithic app.scss.
+.section {
+    padding-top: 70px;
+    padding-bottom: 70px;
+    text-align: center;
+}
+.section p {
+    color: #7e8ba0;
+}
+.section i {
+    font-size: 30px;
+    margin-bottom: 10px;
+    background: #d7f3e4c7;
+    color: #32d66b;
+    padding: 25px;
+    border-radius: 20px;
+}
+.section h5 {
+    color: #243f4e;
+    text-align: center;
+    font-weight: bolder;
+    margin-bottom: 15px;
+    display: block;
+}
+.service-main {
+    transition: all 0.3s;
+    cursor: pointer;
+}
+.service-main:hover {
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    transition: all 0.5s;
+}
+@media (max-width: 992px) {
+    .section {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+}

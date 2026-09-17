@@ -2,6 +2,7 @@
 
 namespace App\Livewire\EcomxFashion;
 
+use App\Concerns\CreatesMasterProfile;
 use App\Enums\User\Status;
 use App\Models\Customer;
 use App\Models\EmailTemplate;
@@ -26,6 +27,8 @@ use Livewire\Component;
  */
 class AuthModal extends Component
 {
+    use CreatesMasterProfile;
+
     /** login | register */
     public string $mode = 'login';
 
@@ -436,7 +439,19 @@ class AuthModal extends Component
 
         $host = parse_url(config('app.url'), PHP_URL_HOST) ?: 'seldomfashion.local';
 
+        [$firstName, $lastName] = array_pad(explode(' ', trim($this->registerName), 2), 2, null);
+
+        $masterProfile = $this->createMasterProfileFor([
+            'display_name' => $this->registerName,
+            'first_name'   => $firstName,
+            'last_name'    => $lastName,
+            'country_code' => $normalizedPhone['country_code'],
+            'phone'        => $nationalPhone,
+            'email'        => $this->registerEmail !== '' ? $this->registerEmail : null,
+        ]);
+
         $user = User::create([
+            'master_profile_id' => $masterProfile->id,
             'name' => $this->registerName,
             'email' => $this->registerEmail !== '' ? $this->registerEmail : 'user+' . Str::random(10) . '@' . $host,
             'password' => $this->registerPassword,
@@ -447,10 +462,10 @@ class AuthModal extends Component
 
         $user->assignWebsiteAccess();
 
-        [$firstName, $lastName] = array_pad(explode(' ', trim($this->registerName), 2), 2, null);
         $code = 'CUS-' . str_pad((string) (Customer::withTrashed()->max('id') + 1), 5, '0', STR_PAD_LEFT);
 
         Customer::create([
+            'master_profile_id' => $masterProfile->id,
             'user_id' => $user->id,
             'customer_code' => $code,
             'first_name' => $firstName,

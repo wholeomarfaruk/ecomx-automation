@@ -1,0 +1,260 @@
+{
+    "manifest": {
+        "id": "ecomx-anyniche",
+        "name": "Ecomx AnyNiche Theme",
+        "schemaVersion": "1.0",
+        "version": "1.0.0",
+        "author": "ecomX Automation",
+        "license": "proprietary",
+        "description": "Generic, product-agnostic Livewire storefront theme with placeholder demo data — a starting point for building a new theme/engine independent of ecomx-fashion.",
+        "engine": "ecomxAnyniche"
+    },
+    "preview": {
+        "thumbnail": "https://images.unsplash.com/photo-1445205170230-053b83016050?q=80&w=600&auto=format&fit=crop",
+        "cover": "https://images.unsplash.com/photo-1445205170230-053b83016050?q=80&w=1600&auto=format&fit=crop"
+    },
+    "assets": {
+        "sass": {
+            "version": "1.0.0",
+            "from": "themes/ecomx-anyniche/sass",
+            "to": "resources/ecomx-anyniche/sass"
+        },
+        "js": {
+            "version": "1.0.0",
+            "from": "themes/ecomx-anyniche/js",
+            "to": "resources/ecomx-anyniche/js"
+        },
+        "fonts": {
+            "version": "1.0.0",
+            "from": "themes/ecomx-anyniche/fonts",
+            "to": "public/ecomx-anyniche/fonts"
+        },
+        "images": {
+            "version": "1.0.0",
+            "from": "themes/ecomx-anyniche/images",
+            "to": "public/ecomx-anyniche/images"
+        },
+        "icons": {
+            "version": "1.0.0",
+            "from": "themes/ecomx-anyniche/icons",
+            "to": "public/ecomx-anyniche/icons"
+        },
+        "videos": {
+            "version": "1.0.0",
+            "from": "themes/ecomx-anyniche/videos",
+            "to": "public/ecomx-anyniche/videos"
+        },
+        "audio": {
+            "version": "1.0.0",
+            "from": "themes/ecomx-anyniche/audio",
+            "to": "public/ecomx-anyniche/audio"
+        },
+        "downloads": {
+            "version": "1.0.0",
+            "from": "themes/ecomx-anyniche/downloads",
+            "to": "public/ecomx-anyniche/downloads"
+        }
+    },
+    "components": {
+        "flash-card": {
+            "version": "1.0.0",
+            "view": {
+                "from": "components/flash-card.blade.php",
+                "to": "resources/views/ecomx-anyniche/components/flash-card.blade.php"
+            }
+        },
+        "icon": {
+            "version": "1.0.0",
+            "view": {
+                "from": "components/icon.blade.php",
+                "to": "resources/views/ecomx-anyniche/components/icon.blade.php"
+            }
+        },
+        "product-card": {
+            "version": "1.0.0",
+            "view": {
+                "from": "components/product-card.blade.php",
+                "to": "resources/views/ecomx-anyniche/components/product-card.blade.php"
+            }
+        },
+        "review-slider": {
+            "version": "1.0.0",
+            "view": {
+                "from": "components/review-slider.blade.php",
+                "to": "resources/views/ecomx-anyniche/components/review-slider.blade.php"
+            }
+        },
+        "section-head": {
+            "version": "1.0.0",
+            "view": {
+                "from": "components/section-head.blade.php",
+                "to": "resources/views/ecomx-anyniche/components/section-head.blade.php"
+            }
+        },
+        "ux-img": {
+            "version": "1.0.0",
+            "view": {
+                "from": "components/ux-img.blade.php",
+                "to": "resources/views/ecomx-anyniche/components/ux-img.blade.php"
+            }
+        }
+    },
+    "sections": {
+        "hero-banner": {
+            "version": "1.0.0",
+            "component": "hero-banner",
+            "type": "static",
+            "source": "banner",
+            "multiple": false
+        },
+        "featured-products": {
+            "version": "1.0.0",
+            "component": "product-slider",
+            "type": "dynamic",
+            "source": "products",
+            "multiple": true
+        }
+    },
+    "pages": {
+        "home": {
+            "version": "1.0.0",
+            "route": "ecomx-anyniche.home",
+            "view": "resources/views/ecomx-anyniche/livewire/home.blade.php",
+            "livewire": "App\\Livewire\\EcomxAnyniche\\Home"
+        },
+        "shop": {
+            "version": "1.0.0",
+            "route": "ecomx-anyniche.shop",
+            "view": "resources/views/ecomx-anyniche/livewire/shop.blade.php",
+            "livewire": "App\\Livewire\\EcomxAnyniche\\Shop"
+        },
+        "category": {
+            "version": "1.0.0",
+            "route": "ecomx-anyniche.category",
+            "view": "resources/views/ecomx-anyniche/livewire/category.blade.php",
+            "livewire": "App\\Livewire\\EcomxAnyniche\\Category"
+        },
+        "product": {
+            "version": "1.0.0",
+            "route": "ecomx-anyniche.product",
+            "view": "resources/views/ecomx-anyniche/livewire/product.blade.php",
+            "livewire": "App\\Livewire\\EcomxAnyniche\\Product"
+        },
+        "reviews": {
+            "version": "1.0.0",
+            "route": "ecomx-anyniche.reviews",
+            "view": "resources/views/ecomx-anyniche/livewire/reviews.blade.php",
+            "livewire": "App\\Livewire\\EcomxAnyniche\\Reviews"
+        },
+        "track": {
+            "version": "1.0.0",
+            "route": "ecomx-anyniche.track",
+            "view": "resources/views/ecomx-anyniche/livewire/track.blade.php",
+            "livewire": "App\\Livewire\\EcomxAnyniche\\Track"
+        },
+        "checkout": {
+            "version": "1.0.0",
+            "route": "ecomx-anyniche.checkout",
+            "view": "resources/views/ecomx-anyniche/livewire/checkout.blade.php",
+            "livewire": "App\\Livewire\\EcomxAnyniche\\Checkout"
+        }
+    },
+    "layouts": {
+        "master": {
+            "version": "1.0.0",
+            "view": "resources/views/ecomx-anyniche/layouts/ecomx_anyniche.blade.php"
+        },
+        "header": {
+            "version": "1.0.0",
+            "view": "resources/views/ecomx-anyniche/partials/header.blade.php"
+        },
+        "footer": {
+            "version": "1.0.0",
+            "view": "resources/views/ecomx-anyniche/partials/footer.blade.php"
+        },
+        "mega-menu": {
+            "version": "1.0.0",
+            "view": "resources/views/ecomx-anyniche/partials/mega-menu.blade.php"
+        },
+        "bottom-nav": {
+            "version": "1.0.0",
+            "view": "resources/views/ecomx-anyniche/partials/bottom-nav.blade.php"
+        },
+        "search-modal": {
+            "version": "1.0.0",
+            "view": "resources/views/livewire/ecomx-anyniche/search-modal.blade.php",
+            "livewire": "App\\Livewire\\EcomxAnyniche\\SearchModal"
+        },
+        "cart-drawer": {
+            "version": "1.0.0",
+            "view": "resources/views/livewire/ecomx-anyniche/cart-manager.blade.php",
+            "livewire": "App\\Livewire\\EcomxAnyniche\\CartManager"
+        },
+        "wishlist-drawer": {
+            "version": "1.0.0",
+            "view": "resources/views/livewire/ecomx-anyniche/wishlist-drawer.blade.php",
+            "livewire": "App\\Livewire\\EcomxAnyniche\\WishlistDrawer"
+        },
+        "auth-modal": {
+            "version": "1.0.0",
+            "view": "resources/views/ecomx-anyniche/partials/auth-modal.blade.php"
+        },
+        "support-modal": {
+            "version": "1.0.0",
+            "view": "resources/views/ecomx-anyniche/partials/support-modal.blade.php"
+        }
+    },
+    "routes": {
+        "file": "routes/frontend/ecomxAnyniche.php"
+    },
+    "sectionComponents": {
+        "version": "1.0.0",
+        "namespace": "App\\Livewire\\EcomxAnyniche\\Sections",
+        "registry": [
+            "App\\Livewire\\EcomxAnyniche\\Sections\\Trust",
+            "App\\Livewire\\EcomxAnyniche\\Sections\\HeroSlider",
+            "App\\Livewire\\EcomxAnyniche\\Sections\\CategoryCarousel",
+            "App\\Livewire\\EcomxAnyniche\\Sections\\CategoryRow",
+            "App\\Livewire\\EcomxAnyniche\\Sections\\PromoStripBanner",
+            "App\\Livewire\\EcomxAnyniche\\Sections\\PromosGrid",
+            "App\\Livewire\\EcomxAnyniche\\Sections\\BrowseAll",
+            "App\\Livewire\\EcomxAnyniche\\Sections\\DiscoverChips"
+        ]
+    },
+    "themeSettings": {
+        "defaultPalette": "neutral",
+        "palettesFile": "resources/ecomx-anyniche/scss/base/_palettes.scss",
+        "paletteAttribute": "data-pal",
+        "paletteStore": "Alpine.store('ui').palette"
+    },
+    "dependencies": {
+        "php": ">=8.1",
+        "composer": {
+            "laravel/framework": ">=10.0",
+            "livewire/livewire": "^3.0 || ^4.0"
+        },
+        "npm": {
+            "alpinejs": "^3.15.8",
+            "sweetalert2": "^11.26.18"
+        },
+        "modules": [],
+        "addons": []
+    },
+    "vite": {
+        "buildDirectory": {
+            "from": "themes/ecomx-anyniche/build",
+            "to": "public/build/ecomx-anyniche"
+        },
+        "input": [
+            "resources/ecomx-anyniche/scss/app.scss",
+            "resources/ecomx-anyniche/js/app.js"
+        ]
+    },
+    "config": {
+        "theme": {
+            "version": "1.0.0",
+            "from": "config/theme.php",
+            "to": "config/ecomx-anyniche.php"
+        }
+    }
+}

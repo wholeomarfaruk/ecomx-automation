@@ -24,6 +24,10 @@ class PostSaleWithCogs
 {
     public function __construct(protected PostJournalEntry $postJournalEntry) {}
 
+    /**
+     * @param  array<int, float>|null  $itemAmounts  order_item_id => sale amount to recognize now (partial completion); omitted/null means every non-gift item's full total_amount
+     * @param  array<int, float>|null  $itemCogsAmounts  order_item_id => cost amount to recognize now; omitted/null means quantity * purchase_price for every item
+     */
     public function handle(
         Order $order,
         int $receivableOrCashAccountId,
@@ -32,12 +36,43 @@ class PostSaleWithCogs
         int $cogsAccountId,
         ?string $entryDate = null,
         bool $isReceivable = true,
+        ?float $shippingAmount = null,
+        ?int $shippingIncomeAccountId = null,
+        ?string $purposeSuffix = null,
+        ?array $itemAmounts = null,
+        ?array $itemCogsAmounts = null,
     ): array {
         $order->loadMissing('items', 'customer');
 
         $entryDate ??= now()->toDateString();
-        $saleAmount = (float) $order->items->sum(fn ($item) => $item->is_gift ? 0 : (float) $item->total_amount);
-        $cogsAmount = (float) $order->items->sum(fn ($item) => $item->is_gift ? 0 : (float) $item->quantity * (float) $item->purchase_price);
+        $purposeSuffix ??= '';
+
+        $saleAmount = $itemAmounts !== null
+            ? array_sum($itemAmounts)
+            : (float) $order->items->sum(fn ($item) => $item->is_gift ? 0 : (float) $item->total_amount);
+
+        $cogsAmount = $itemCogsAmounts !== null
+            ? array_sum($itemCogsAmounts)
+            : (float) $order->items->sum(fn ($item) => $item->is_gift ? 0 : (float) $item->quantity * (float) $item->purchase_price);
+
+        $shippingAmount = $shippingAmount !== null ? round($shippingAmount, 2) : 0.0;
+        $includeShipping = $shippingAmount > 0 && $shippingIncomeAccountId !== null;
+
+        $receivableDebit = $saleAmount + ($includeShipping ? $shippingAmount : 0.0);
+
+        $saleLines = [
+            [
+                'account_id'     => $receivableOrCashAccountId,
+                'debit'          => $receivableDebit,
+                'subledger_type' => $isReceivable ? Customer::class : null,
+                'subledger_id'   => $isReceivable ? $order->customer_id : null,
+            ],
+            ['account_id' => $salesAccountId, 'credit' => $saleAmount],
+        ];
+
+        if ($includeShipping) {
+            $saleLines[] = ['account_id' => $shippingIncomeAccountId, 'credit' => $shippingAmount];
+        }
 
         $saleEntry = $this->postJournalEntry->handle([
             'entry_date'       => $entryDate,
@@ -45,16 +80,8 @@ class PostSaleWithCogs
             'transaction_type' => TransactionType::SALE->value,
             'source_type'      => Order::class,
             'source_id'        => $order->id,
-            'purpose'          => 'sale',
-        ], [
-            [
-                'account_id'     => $receivableOrCashAccountId,
-                'debit'          => $saleAmount,
-                'subledger_type' => $isReceivable ? \App\Models\Customer::class : null,
-                'subledger_id'   => $isReceivable ? $order->customer_id : null,
-            ],
-            ['account_id' => $salesAccountId, 'credit' => $saleAmount],
-        ]);
+            'purpose'          => 'sale' . $purposeSuffix,
+        ], $saleLines);
 
         $cogsEntry = null;
         if ($cogsAmount > 0) {
@@ -64,7 +91,7 @@ class PostSaleWithCogs
                 'transaction_type' => TransactionType::COGS->value,
                 'source_type'      => Order::class,
                 'source_id'        => $order->id,
-                'purpose'          => 'cogs',
+                'purpose'          => 'cogs' . $purposeSuffix,
             ], [
                 ['account_id' => $cogsAccountId, 'debit' => $cogsAmount],
                 ['account_id' => $inventoryAccountId, 'credit' => $cogsAmount],
@@ -73,15 +100,21 @@ class PostSaleWithCogs
 
         $invoice = null;
         if ($isReceivable) {
-            $invoice = AccountsCustomerInvoice::create([
-                'customer_id'      => $order->customer_id,
-                'order_id'         => $order->id,
-                'invoice_number'   => 'INV-' . str_pad((string) $order->id, 6, '0', STR_PAD_LEFT),
-                'amount'           => $saleAmount,
-                'amount_allocated' => 0,
-                'status'           => 'open',
-                'journal_entry_id' => $saleEntry->id,
-            ]);
+            $invoice = AccountsCustomerInvoice::firstWhere('order_id', $order->id);
+
+            if ($invoice) {
+                $invoice->increment('amount', $receivableDebit);
+            } else {
+                $invoice = AccountsCustomerInvoice::create([
+                    'customer_id'      => $order->customer_id,
+                    'order_id'         => $order->id,
+                    'invoice_number'   => 'INV-' . str_pad((string) $order->id, 6, '0', STR_PAD_LEFT),
+                    'amount'           => $receivableDebit,
+                    'amount_allocated' => 0,
+                    'status'           => 'open',
+                    'journal_entry_id' => $saleEntry->id,
+                ]);
+            }
         }
 
         return ['sale' => $saleEntry, 'cogs' => $cogsEntry, 'invoice' => $invoice];

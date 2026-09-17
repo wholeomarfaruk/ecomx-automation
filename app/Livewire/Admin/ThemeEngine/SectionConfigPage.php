@@ -4,9 +4,7 @@ namespace App\Livewire\Admin\ThemeEngine;
 
 use App\Livewire\Traits\WithMediaPicker;
 use App\Models\Category;
-use App\Support\EcomxFashion\PageRegistry;
-use App\Support\EcomxFashion\PageSectionConfigRegistry;
-use App\Support\EcomxFashion\SectionSchema;
+use App\Support\EcomxFashion\ThemeRegistry;
 use Livewire\Component;
 
 /**
@@ -15,10 +13,37 @@ use Livewire\Component;
  * Same field-manipulation methods/behaviour, just addressable by URL: no
  * more losing your place on refresh, and no more nested-modal ceiling for
  * fields that themselves need a picker or a bigger editing surface.
+ *
+ * Theme-agnostic: PageRegistry/PageSectionConfigRegistry/SectionSchema live
+ * one-per-theme under App\Support\{ThemeNamespace}\*, so this resolves the
+ * active theme's classes by name (via ThemeRegistry::active()) rather than
+ * hardcoding a single theme's import — the same theme.json-driven "which
+ * theme is active" state that ActiveTheme::slug() reads elsewhere.
  */
 class SectionConfigPage extends Component
 {
     use WithMediaPicker;
+
+    /** Studly-cased theme namespace, e.g. 'ecomx-anyniche' -> 'EcomxAnyniche'. */
+    protected static function themeNamespace(): string
+    {
+        return str_replace(' ', '', ucwords(str_replace('-', ' ', ThemeRegistry::active())));
+    }
+
+    protected static function pageRegistry(): string
+    {
+        return 'App\\Support\\' . static::themeNamespace() . '\\PageRegistry';
+    }
+
+    protected static function pageSectionConfigRegistry(): string
+    {
+        return 'App\\Support\\' . static::themeNamespace() . '\\PageSectionConfigRegistry';
+    }
+
+    protected static function sectionSchema(): string
+    {
+        return 'App\\Support\\' . static::themeNamespace() . '\\SectionSchema';
+    }
 
     public string $page = '';
     public string $section = '';
@@ -41,14 +66,16 @@ class SectionConfigPage extends Component
 
     public function mount(string $page, string $section): void
     {
-        abort_unless(PageRegistry::exists($page), 404);
-        abort_unless(in_array($section, PageRegistry::sectionKeysForPage($page), true), 404);
+        $pageRegistry = static::pageRegistry();
+
+        abort_unless($pageRegistry::exists($page), 404);
+        abort_unless(in_array($section, $pageRegistry::sectionKeysForPage($page), true), 404);
 
         $this->page = $page;
         $this->section = $section;
 
-        $saved = PageSectionConfigRegistry::find($page, $section);
-        $defaults = SectionSchema::defaultsFor($section);
+        $saved = static::pageSectionConfigRegistry()::find($page, $section);
+        $defaults = static::sectionSchema()::defaultsFor($section);
         $this->values = array_merge($defaults, $saved ?? []);
 
         if ($this->needsCategories()) {
@@ -58,7 +85,7 @@ class SectionConfigPage extends Component
 
     protected function needsCategories(): bool
     {
-        return collect(SectionSchema::fieldsFor($this->section))
+        return collect(static::sectionSchema()::fieldsFor($this->section))
             ->contains(fn (array $field) => in_array($field['type'], ['category_list', 'category_select', 'category_multi_select'], true));
     }
 
@@ -72,7 +99,7 @@ class SectionConfigPage extends Component
 
     public function fields(): array
     {
-        return SectionSchema::fieldsFor($this->section);
+        return static::sectionSchema()::fieldsFor($this->section);
     }
 
     public function addMediaSlot(string $fieldKey): void
@@ -114,6 +141,11 @@ class SectionConfigPage extends Component
         $this->values[$fieldKey] = $value;
     }
 
+    public function updateCheckbox(string $fieldKey, bool $value): void
+    {
+        $this->values[$fieldKey] = $value;
+    }
+
     public function updateCategorySelect(string $fieldKey, string $categoryId): void
     {
         $this->values[$fieldKey] = $categoryId;
@@ -124,7 +156,7 @@ class SectionConfigPage extends Component
         $selected = $this->values[$fieldKey] ?? [];
 
         if ($checked) {
-            $max = collect(SectionSchema::fieldsFor($this->section))
+            $max = collect(static::sectionSchema()::fieldsFor($this->section))
                 ->firstWhere('key', $fieldKey)['max'] ?? null;
 
             if ($max !== null && count($selected) >= $max) {
@@ -216,9 +248,37 @@ class SectionConfigPage extends Component
         ));
     }
 
+    public function addIconItem(string $fieldKey): void
+    {
+        $trustClass = 'App\\Livewire\\' . static::themeNamespace() . '\\Sections\\Trust';
+        $defaultIcon = class_exists($trustClass) ? ($trustClass::ICONS[0] ?? '') : '';
+
+        $this->values[$fieldKey][] = ['icon' => $defaultIcon, 'title' => '', 'description' => ''];
+    }
+
+    public function updateIconItem(string $fieldKey, int $index, string $part, string $value): void
+    {
+        $this->values[$fieldKey][$index][$part] = $value;
+    }
+
+    public function removeIconItem(string $fieldKey, int $index): void
+    {
+        unset($this->values[$fieldKey][$index]);
+        $this->values[$fieldKey] = array_values($this->values[$fieldKey]);
+    }
+
+    /** @param int[] $orderedIndexes Current indexes of $values[$fieldKey], in their new order. */
+    public function reorderIconItems(string $fieldKey, array $orderedIndexes): void
+    {
+        $this->values[$fieldKey] = array_values(array_map(
+            fn (int $i) => $this->values[$fieldKey][$i],
+            $orderedIndexes
+        ));
+    }
+
     public function save(): void
     {
-        PageSectionConfigRegistry::save($this->page, $this->section, $this->values);
+        static::pageSectionConfigRegistry()::save($this->page, $this->section, $this->values);
 
         $this->dispatch('toast', [
             'type' => 'success',

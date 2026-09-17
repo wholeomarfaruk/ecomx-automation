@@ -1,0 +1,11 @@
+export declare function toggleInline(root: HTMLElement, canonicalTag: string): void;
+export declare function isInlineActive(root: HTMLElement, canonicalTag: string): boolean;
+export declare function setBlockFormat(root: HTMLElement, tag: string): void;
+export declare function getCurrentBlockFormat(root: HTMLElement): string | null;
+export declare function applyInlineStyle(root: HTMLElement, prop: string, value: string): void;
+export declare function clearInlineStyle(root: HTMLElement, prop: string): void;
+export declare function applyBlockStyle(root: HTMLElement, prop: string, value: string): void;
+export declare function applyBlockStyles(root: HTMLElement, styles: Record<string, string>): boolean;
+export declare function getCurrentBlockStyle(root: HTMLElement, prop: string): string | null;
+export declare function getCurrentInlineStyle(root: HTMLElement, prop: string): string | null;
+export declare function clearFormatting(root: HTMLElement): void;

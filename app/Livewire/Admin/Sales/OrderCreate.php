@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Admin\Sales;
 
-use App\Actions\Accounts\PostOrderSale;
 use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\OrderStatus;
 use App\Enums\Sales\PaymentStatus;
@@ -20,6 +19,7 @@ use App\Models\Setting;
 use App\Services\CouponShippingService;
 use App\Services\StockService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class OrderCreate extends Component
@@ -219,7 +219,7 @@ class OrderCreate extends Component
             'billingAddressId'    => 'nullable|integer|exists:delivery_addresses,id',
             'shippingAddressId'   => 'nullable|integer|exists:delivery_addresses,id',
             'source'              => 'required|in:website,messenger,whatsapp,pos,admin,api',
-            'status'              => 'required|in:pending,confirmed,processing,shipped,delivered,partially_delivered,cancelled,returned,partially_returned,refunded',
+            'status'              => ['required', Rule::enum(OrderStatus::class)],
             'paymentStatus'       => 'required|in:pending,partial,paid,failed,refunded',
             'fulfillmentStatus'   => 'required|in:unfulfilled,partial,fulfilled',
             'discountAmount'      => 'nullable|numeric|min:0',
@@ -305,15 +305,12 @@ class OrderCreate extends Component
                     $order->recalculateTotals();
                 }
 
-                $deductOnConfirm = (bool) Setting::get('deduct_on_order_confirm', true, 'inventory');
+                $bookOnConfirm = (bool) Setting::get('book_on_order_confirm', true, 'inventory');
+                $status = OrderStatus::from($this->status);
 
-                if ($deductOnConfirm && $this->status === 'confirmed') {
+                if ($bookOnConfirm && $status->isBookable()) {
                     $order->load('items');
-                    app(StockService::class)->commitOrder($order);
-                }
-
-                if ($this->status === 'confirmed') {
-                    app(PostOrderSale::class)->handle($order);
+                    app(StockService::class)->bookOrder($order);
                 }
 
                 return $order;

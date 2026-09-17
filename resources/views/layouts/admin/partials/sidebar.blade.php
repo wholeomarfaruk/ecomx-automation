@@ -101,7 +101,7 @@
 
                 @php
                     $usersActive = in_array(Route::currentRouteName(), [
-                        'admin.users', 'admin.users.devices', 'admin.users.blocks', 'admin.users.active',
+                        'admin.users', 'admin.users.devices', 'admin.users.blocks', 'admin.users.active', 'admin.master-profile',
                     ]) || str_starts_with(Route::currentRouteName(), 'admin.customers.');
                 @endphp
                 <div x-data="dropdown" x-init="open = {{ $usersActive ? 'true' : 'false' }} && $store.sidebar.full" class="relative">
@@ -130,11 +130,15 @@
                                 clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <div x-cloak x-show="open" @click.outside="open=false"
+                    <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
                         <a href="{{ route('admin.users') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.users' ? 'text-gray-200' : '' }}">
                             Users
+                        </a>
+                        <a href="{{ route('admin.master-profile') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.master-profile' ? 'text-gray-200' : '' }}">
+                            Master Profile
                         </a>
                         <a href="{{ route('admin.users.active') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.users.active' ? 'text-gray-200' : '' }}">
@@ -182,7 +186,7 @@
                                 clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <div x-cloak x-show="open" @click.outside="open=false"
+                    <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
                         <a href="{{ route('admin.frontend.menu') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.frontend.menu' || Route::currentRouteName() === 'admin.frontend.menu.show' ? 'text-gray-200' : '' }}">
@@ -234,7 +238,7 @@
                                 clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <div x-cloak x-show="open" @click.outside="open=false"
+                    <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
                         <a href="{{ route('admin.landingpages.pages') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.landingpages.pages' || str_starts_with(Route::currentRouteName(), 'admin.landingpages.pages.') ? 'text-gray-200' : '' }}">
@@ -283,7 +287,7 @@
                                 clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <div x-cloak x-show="open" @click.outside="open=false"
+                    <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
                         <a href="{{ route('admin.catalog.categories') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.catalog.categories' ? 'text-gray-200' : '' }}">
@@ -331,7 +335,7 @@
                                 clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <div x-cloak x-show="open" @click.outside="open=false"
+                    <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
                         <a href="{{ route('admin.customers.index') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.customers.index' ? 'text-gray-200' : '' }}">
@@ -388,11 +392,11 @@
                                 clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <div x-cloak x-show="open" @click.outside="open=false"
+                    <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
                         <a href="{{ route('admin.accounts.dashboard') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.accounts.dashboard' ? 'text-gray-200' : '' }}">
-                            হোম (Home)
+                            Dashboard
                         </a>
                         <a href="{{ route('admin.accounts.transactions') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.accounts.transactions' ? 'text-gray-200' : '' }}">
@@ -466,7 +470,7 @@
                                 clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <div x-cloak x-show="open" @click.outside="open=false"
+                    <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
                         <a href="{{ route('admin.purchase.suppliers') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.purchase.suppliers') ? 'text-gray-200' : '' }}">
@@ -512,7 +516,7 @@
                                 clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <div x-cloak x-show="open" @click.outside="open=false"
+                    <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
                         <a href="{{ route('admin.inventory.stock') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.inventory.stock' ? 'text-gray-200' : '' }}">
@@ -569,7 +573,7 @@
                                 clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <div x-cloak x-show="open" @click.outside="open=false"
+                    <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
                         <a href="{{ route('admin.sales.orders') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.orders') ? 'text-gray-200' : '' }}">
@@ -625,7 +629,7 @@
                                 clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <div x-cloak x-show="open" @click.outside="open=false"
+                    <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
                         <a href="{{ route('admin.marketing.dashboard') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.dashboard' ? 'text-gray-200' : '' }}">
@@ -792,7 +796,7 @@
                                 clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <div x-cloak x-show="open" @click.outside="open=false"
+                    <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
                         <a href="{{ route('admin.roles.list') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ in_array(Route::currentRouteName(), ['admin.roles.list', 'admin.roles.create', 'admin.roles.edit']) ? 'text-gray-200' : '' }}">
@@ -860,7 +864,7 @@
                                 clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <div x-cloak x-show="open" @click.outside="open=false"
+                    <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
                         @can('developer_tools.view')
                         <a href="{{ route('admin.settings.advance.developer-tools') }}"

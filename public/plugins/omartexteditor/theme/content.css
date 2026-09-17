@@ -1,0 +1,201 @@
+/* Default typography injected into the editable area's content itself
+   (as opposed to default.css, which styles the editor chrome around it). */
+
+.omar-text-editor-content h1, .omar-text-editor-content h2, .omar-text-editor-content h3,
+.omar-text-editor-content h4, .omar-text-editor-content h5, .omar-text-editor-content h6 {
+  margin: 0.6em 0 0.3em;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.omar-text-editor-content h1 { font-size: 1.8em; }
+.omar-text-editor-content h2 { font-size: 1.5em; }
+.omar-text-editor-content h3 { font-size: 1.25em; }
+.omar-text-editor-content h4 { font-size: 1.1em; }
+.omar-text-editor-content h5 { font-size: 1em; }
+.omar-text-editor-content h6 { font-size: 0.9em; }
+
+.omar-text-editor-content p {
+  margin: 0 0 0.2em;
+}
+
+.omar-text-editor-content ul, .omar-text-editor-content ol {
+  margin: 0 0 0.8em;
+  padding-left: 1.6em;
+}
+
+.omar-text-editor-content blockquote {
+  margin: 0 0 0.8em;
+  padding: 0.2em 0 0.2em 1em;
+  border-left: 3px solid #ccc;
+  color: #555;
+}
+
+.omar-text-editor-content pre {
+  margin: 0 0 0.8em;
+  padding: 10px 12px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-family: Consolas, Menlo, monospace;
+  font-size: 0.9em;
+}
+
+.omar-text-editor-content code {
+  font-family: Consolas, Menlo, monospace;
+  background: #f0f0f0;
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+}
+
+.omar-text-editor-content pre code {
+  background: none;
+  padding: 0;
+}
+
+.omar-text-editor-content pre.omar-text-editor-codesample {
+  cursor: pointer;
+}
+
+.omar-text-editor-content .tok-keyword { color: #b91c8c; font-weight: 600; }
+.omar-text-editor-content .tok-string { color: #1a7f37; }
+.omar-text-editor-content .tok-comment { color: #6a737d; font-style: italic; }
+.omar-text-editor-content .tok-number { color: #b35900; }
+
+/* Search & replace highlights */
+
+.omar-text-editor-search-highlight {
+  background: #fff2a8;
+  color: inherit;
+}
+
+.omar-text-editor-search-highlight-active {
+  background: #ffb84d;
+}
+
+/* Visual blocks */
+
+.omar-text-editor-content.omar-text-editor-visual-blocks p,
+.omar-text-editor-content.omar-text-editor-visual-blocks div,
+.omar-text-editor-content.omar-text-editor-visual-blocks h1,
+.omar-text-editor-content.omar-text-editor-visual-blocks h2,
+.omar-text-editor-content.omar-text-editor-visual-blocks h3,
+.omar-text-editor-content.omar-text-editor-visual-blocks h4,
+.omar-text-editor-content.omar-text-editor-visual-blocks h5,
+.omar-text-editor-content.omar-text-editor-visual-blocks h6,
+.omar-text-editor-content.omar-text-editor-visual-blocks blockquote,
+.omar-text-editor-content.omar-text-editor-visual-blocks li {
+  outline: 1px dashed #b8c2cc;
+  outline-offset: 2px;
+}
+
+.omar-text-editor-content table {
+  border-collapse: collapse;
+  margin: 0 0 0.8em;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.omar-text-editor-content table td,
+.omar-text-editor-content table th {
+  border: 1px solid #ccc;
+  padding: 6px 8px;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.omar-text-editor-content table th {
+  background: #f5f5f5;
+  font-weight: 600;
+}
+
+.omar-text-editor-content hr {
+  border: none;
+  border-top: 1px solid #ccc;
+  margin: 1em 0;
+}
+
+.omar-text-editor-content a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.omar-text-editor-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.omar-text-editor-content img.omar-text-editor-img-selected {
+  outline: 2px solid #4a90d9;
+  outline-offset: 1px;
+}
+
+.omar-text-editor-media-embed {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  aspect-ratio: 16 / 9;
+  margin: 0 0 0.8em;
+}
+
+.omar-text-editor-media-embed iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.omar-text-editor-media-video {
+  margin: 0 0 0.8em;
+}
+
+.omar-text-editor-media-video video {
+  display: block;
+  max-width: 100%;
+  border-radius: 4px;
+  background: #000;
+}
+
+.omar-text-editor-media-audio {
+  margin: 0 0 0.8em;
+}
+
+.omar-text-editor-media-audio audio {
+  display: block;
+  max-width: 100%;
+}
+
+.omar-text-editor-embed {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  aspect-ratio: 16 / 9;
+  margin: 0 0 0.8em;
+}
+
+.omar-text-editor-embed iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.omar-text-editor-media-embed.omar-text-editor-media-selected,
+.omar-text-editor-media-video.omar-text-editor-media-selected,
+.omar-text-editor-media-audio.omar-text-editor-media-selected,
+.omar-text-editor-embed.omar-text-editor-media-selected {
+  outline: 2px solid #4a90d9;
+  outline-offset: 1px;
+}
+
+.omar-text-editor-content a.omar-text-editor-anchor {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  vertical-align: middle;
+  background: #f5a623;
+  border-radius: 2px;
+  text-decoration: none;
+}

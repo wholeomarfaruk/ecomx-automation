@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Exceptions\Inventory\InsufficientStockException;
 use App\Models\InventoryBatch;
 use App\Models\InventoryStock;
+use App\Models\InventoryStockBookingMovement;
 use App\Models\InventoryStockMovement;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -82,7 +83,7 @@ class StockService
             $delta = $newQuantity - $before;
 
             $stock->update(['quantity' => $newQuantity]);
-            $this->syncVariantCache($variant, $warehouse, $newQuantity);
+            $this->syncVariantCache($variant, $warehouse, $newQuantity, (float) $stock->booked_quantity);
 
             return InventoryStockMovement::create([
                 'warehouse_id' => $warehouse->id,
@@ -102,18 +103,120 @@ class StockService
     }
 
     /**
-     * Deducts stock for every item on an order the moment it becomes
-     * confirmed. Idempotent — if this order's items already have a "sale"
-     * movement logged (e.g. updateStatus() saved twice, or the order was
-     * already confirmed at creation), this is a no-op. Combo lines (no
-     * product_id) are skipped — combo stock is derived from components,
-     * not tracked directly, per the inventory plan.
+     * Deducts stock for every item on an order the moment it's completed —
+     * physically decreasing `quantity` and, in the same transaction,
+     * consuming (decreasing) whatever `booked_quantity` this order was
+     * holding by the same amount (floored at 0, so an order that skipped
+     * booking — e.g. one already committed under the pre-booking model —
+     * simply has nothing to consume). Pass `$itemQuantities` (order_item_id
+     * => quantity) to deduct only a partial amount per item (partial
+     * completion); omitting it deducts each item's full `quantity`.
+     * Idempotent per item — if an item's full requested quantity already has
+     * a "sale" movement logged, that item is skipped; combo lines (no
+     * product_id) are always skipped — combo stock is derived from
+     * components, not tracked directly.
+     *
+     * @param  array<int, float>|null  $itemQuantities
+     * @throws InsufficientStockException
+     */
+    public function commitOrder(Order $order, ?array $itemQuantities = null, ?Warehouse $warehouse = null): void
+    {
+        $warehouse ??= Warehouse::default();
+
+        DB::transaction(function () use ($order, $itemQuantities, $warehouse) {
+            foreach ($order->items as $item) {
+                if (! $item->product_id) {
+                    continue;
+                }
+
+                // null (the parameter's default) means "no explicit map —
+                // deduct each item's full quantity" (legacy/whole-order
+                // completion). A non-null array is authoritative even when
+                // empty or missing this item's key — 0, not "fall back to
+                // full quantity" — since an explicit map means the caller
+                // already knows exactly what still needs deducting (e.g.
+                // PostOrderCompletion, where a fully-packed item legitimately
+                // has nothing left for this method to do).
+                $requested = $itemQuantities === null
+                    ? (float) $item->quantity
+                    : (float) ($itemQuantities[$item->id] ?? 0);
+
+                if ($requested <= 0) {
+                    continue;
+                }
+
+                $alreadyCommitted = (float) InventoryStockMovement::query()
+                    ->where('reference_type', OrderItem::class)
+                    ->where('reference_id', $item->id)
+                    ->where('type', 'sale')
+                    ->sum('quantity');
+                $alreadyCommitted = abs($alreadyCommitted);
+
+                $toDeduct = $requested - $alreadyCommitted;
+
+                if ($toDeduct <= 0) {
+                    continue;
+                }
+
+                $this->decrease(
+                    $item->product, $item->variant, $toDeduct, 'sale',
+                    warehouse: $warehouse, reference: $item,
+                    note: "Order #{$order->id} completed",
+                );
+
+                $this->consumeBooking($item, $toDeduct, $warehouse);
+            }
+        });
+    }
+
+    /**
+     * Decreases booked_quantity for one item by the given amount (floored at
+     * what's actually booked for it), writing a booking-ledger row so the
+     * "why did booked_quantity drop" audit trail matches the physical
+     * deduction that triggered it.
+     */
+    protected function consumeBooking(OrderItem $item, float $quantity, Warehouse $warehouse): void
+    {
+        $stock = $this->lockOrCreateStock($item->product, $item->variant, $warehouse);
+        $before = (float) $stock->booked_quantity;
+        $toConsume = min($before, $quantity);
+
+        if ($toConsume <= 0) {
+            return;
+        }
+
+        $after = $before - $toConsume;
+        $stock->update(['booked_quantity' => $after]);
+        $this->syncVariantCache($item->variant, $warehouse, (float) $stock->quantity, $after);
+
+        InventoryStockBookingMovement::create([
+            'warehouse_id' => $warehouse->id,
+            'product_id' => $item->product_id,
+            'variant_id' => $item->variant_id,
+            'type' => 'unbooked_completed',
+            'quantity' => -$toConsume,
+            'before_quantity' => $before,
+            'after_quantity' => $after,
+            'reference_type' => OrderItem::class,
+            'reference_id' => $item->id,
+            'note' => "Order #{$item->order_id} completed",
+            'created_by' => auth()->id(),
+            'created_at' => now(),
+        ]);
+    }
+
+    /**
+     * Reserves stock for every item on an order the moment it becomes
+     * bookable (confirmed) — increments booked_quantity without touching the
+     * physical quantity. Throws if the reservation would exceed what's
+     * physically available minus what's already booked by other orders,
+     * unless negative stock is allowed. Idempotent via orderAlreadyBooked().
      *
      * @throws InsufficientStockException
      */
-    public function commitOrder(Order $order, ?Warehouse $warehouse = null): void
+    public function bookOrder(Order $order, ?Warehouse $warehouse = null): void
     {
-        if ($this->orderAlreadyCommitted($order)) {
+        if ($this->orderAlreadyBooked($order)) {
             return;
         }
 
@@ -125,13 +228,89 @@ class StockService
                     continue;
                 }
 
-                $this->decrease(
-                    $item->product, $item->variant, (float) $item->quantity, 'sale',
-                    warehouse: $warehouse, reference: $item,
-                    note: "Order #{$order->id} confirmed",
-                );
+                $this->adjustBooking($item, (float) $item->quantity, 'booked', $warehouse, "Order #{$order->id} confirmed");
             }
         });
+    }
+
+    /**
+     * Releases whatever this order still has booked — for a given release
+     * $type (unbooked_completed/unbooked_cancelled/unbooked_returned).
+     * Consuming via commitOrder() already releases the completed portion
+     * directly, so this is mainly for cancel/return paths where nothing was
+     * ever physically deducted. Safe to call on an order with nothing left
+     * booked (no-op per item).
+     */
+    public function releaseBooking(Order $order, string $type, ?Warehouse $warehouse = null): void
+    {
+        $warehouse ??= Warehouse::default();
+
+        DB::transaction(function () use ($order, $type, $warehouse) {
+            foreach ($order->items as $item) {
+                if (! $item->product_id) {
+                    continue;
+                }
+
+                $stock = $this->lockOrCreateStock($item->product, $item->variant, $warehouse);
+                $booked = (float) $stock->booked_quantity;
+
+                if ($booked <= 0) {
+                    continue;
+                }
+
+                $this->adjustBooking($item, -$booked, $type, $warehouse, "Order #{$order->id} {$type}");
+            }
+        });
+    }
+
+    /**
+     * Signed delta to one item's booked_quantity ($signedQuantity > 0 to
+     * book more, < 0 to release), locked/audited the same way applyDelta()
+     * handles the physical balance.
+     */
+    protected function adjustBooking(OrderItem $item, float $signedQuantity, string $type, Warehouse $warehouse, ?string $note = null): void
+    {
+        $stock = $this->lockOrCreateStock($item->product, $item->variant, $warehouse);
+        $before = (float) $stock->booked_quantity;
+        $after = $before + $signedQuantity;
+
+        if ($signedQuantity > 0) {
+            $availableToBook = (float) $stock->quantity - $before;
+            $allowNegative = (bool) Setting::get('allow_negative_stock', false, 'inventory');
+
+            if ($signedQuantity > $availableToBook && ! $allowNegative) {
+                throw InsufficientStockException::forProduct($item->product->name, $signedQuantity, max(0, $availableToBook));
+            }
+        }
+
+        $after = max(0.0, $after);
+
+        $stock->update(['booked_quantity' => $after]);
+        $this->syncVariantCache($item->variant, $warehouse, (float) $stock->quantity, $after);
+
+        InventoryStockBookingMovement::create([
+            'warehouse_id' => $warehouse->id,
+            'product_id' => $item->product_id,
+            'variant_id' => $item->variant_id,
+            'type' => $type,
+            'quantity' => $signedQuantity,
+            'before_quantity' => $before,
+            'after_quantity' => $after,
+            'reference_type' => OrderItem::class,
+            'reference_id' => $item->id,
+            'note' => $note,
+            'created_by' => auth()->id(),
+            'created_at' => now(),
+        ]);
+    }
+
+    protected function orderAlreadyBooked(Order $order): bool
+    {
+        return InventoryStockBookingMovement::query()
+            ->where('reference_type', OrderItem::class)
+            ->whereIn('reference_id', $order->items->pluck('id'))
+            ->where('type', 'booked')
+            ->exists();
     }
 
     /**
@@ -225,21 +404,21 @@ class StockService
         ?Warehouse $warehouse = null,
         ?string $note = null,
     ): InventoryStockMovement {
-        $item->loadMissing('purchaseOrder', 'variant.product');
+        $item->loadMissing('purchaseOrder', 'product', 'variant');
 
         $alreadyReceived = $this->receivedQuantityForPurchaseOrderItem($item);
         $remaining = (float) $item->quantity - $alreadyReceived;
 
         if ($quantity > $remaining) {
             throw InsufficientStockException::forProduct(
-                $item->variant->product->name ?? 'this item',
+                $item->product->name ?? 'this item',
                 $quantity,
                 $remaining,
             );
         }
 
         $movement = $this->increase(
-            $item->variant->product,
+            $item->product,
             $item->variant,
             $quantity,
             'purchase',
@@ -438,18 +617,68 @@ class StockService
     }
 
     /**
-     * Current available quantity across a warehouse (defaults to the default
-     * warehouse) for a product/variant. Returns 0 if no stock row exists yet.
+     * Decrease stock from ONE caller-specified batch — the explicit-pick
+     * sibling to decreaseFefo()'s auto-pick-oldest-expiry-first walk. Used
+     * when the admin (not the system) chooses which batch a shipment came
+     * from, e.g. packing an order item. Locks the batch row, decrements it,
+     * flips it to depleted at 0, then goes through the same applyDelta()
+     * aggregate-balance path every other decrease uses and stamps batch_id
+     * on the resulting movement — mirrors one iteration of decreaseFefo()'s
+     * loop, just for a single named batch instead of an auto-walked list.
+     *
+     * @throws InsufficientStockException if $quantity exceeds the batch's own remaining quantity
+     */
+    public function decreaseFromBatch(
+        InventoryBatch $batch,
+        float $quantity,
+        string $type,
+        ?Model $reference = null,
+        ?string $note = null,
+    ): InventoryStockMovement {
+        $quantity = abs($quantity);
+
+        return DB::transaction(function () use ($batch, $quantity, $type, $reference, $note) {
+            $locked = InventoryBatch::query()->whereKey($batch->id)->lockForUpdate()->firstOrFail();
+
+            if ($quantity > (float) $locked->quantity) {
+                throw InsufficientStockException::forProduct(
+                    $locked->product?->name ?? "batch {$locked->batch_no}",
+                    $quantity,
+                    (float) $locked->quantity,
+                );
+            }
+
+            $locked->decrement('quantity', $quantity);
+            if ((float) $locked->quantity <= 0) {
+                $locked->update(['status' => 'depleted']);
+            }
+
+            $warehouse = $locked->warehouse ?? Warehouse::default();
+
+            $movement = $this->applyDelta($locked->product, $locked->variant, -$quantity, $type, $warehouse, $reference, $note);
+            $movement->update(['batch_id' => $locked->id]);
+
+            return $movement;
+        });
+    }
+
+    /**
+     * Purchasable quantity across a warehouse (defaults to the default
+     * warehouse) for a product/variant — physical quantity minus whatever is
+     * currently booked (soft-reserved) against other orders, clamped at 0.
+     * Returns 0 if no stock row exists yet.
      */
     public function available(Product $product, ?ProductVariant $variant, ?Warehouse $warehouse = null): float
     {
         $warehouse ??= Warehouse::default();
 
-        return (float) InventoryStock::query()
+        $stock = InventoryStock::query()
             ->where('warehouse_id', $warehouse->id)
             ->where('product_id', $product->id)
             ->where('variant_id', $variant?->id)
-            ->value('quantity') ?? 0.0;
+            ->first();
+
+        return $stock ? $stock->availableQuantity() : 0.0;
     }
 
     protected function applyDelta(
@@ -475,7 +704,7 @@ class StockService
             }
 
             $stock->update(['quantity' => $after]);
-            $this->syncVariantCache($variant, $warehouse, $after);
+            $this->syncVariantCache($variant, $warehouse, $after, (float) $stock->booked_quantity);
 
             return InventoryStockMovement::create([
                 'warehouse_id' => $warehouse->id,
@@ -495,18 +724,13 @@ class StockService
     }
 
     /**
-     * product_variants.stock_quantity is a denormalized read cache for the
-     * default warehouse's balance — every cart/PDP/checkout read site in
-     * the app queries it directly rather than joining inventory_stocks.
-     * Keep it in sync here so those call sites don't need to change; if
-     * multi-warehouse selection is added later, this cache should represent
-     * a sum across warehouses instead of just the default one.
+     * product_variants.stock_quantity is admin-managed only (set via the
+     * variant editor) — Stock In and every other StockService write path
+     * must not touch it.
      */
-    protected function syncVariantCache(?ProductVariant $variant, Warehouse $warehouse, float $newQuantity): void
+    protected function syncVariantCache(?ProductVariant $variant, Warehouse $warehouse, float $newQuantity, float $newBookedQuantity = 0.0): void
     {
-        if ($variant && $warehouse->is_default) {
-            $variant->update(['stock_quantity' => $newQuantity]);
-        }
+        // Intentionally a no-op.
     }
 
     protected function lockOrCreateStock(Product $product, ?ProductVariant $variant, Warehouse $warehouse): InventoryStock

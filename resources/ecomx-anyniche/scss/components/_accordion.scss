@@ -1,0 +1,19 @@
+// FAQ accordion — split out of the original monolithic app.scss.
+.accordion-text {
+    font-size: 14px;
+    color: #878686;
+}
+.accordion-titel {
+    color: #243f4e;
+    font-size: 20px;
+    font-weight: bold;
+    display: block;
+}
+.qus-ask {
+    width: 75%;
+}
+@media screen and (max-width: 768px) {
+    .qus-ask {
+        width: 100%;
+    }
+}

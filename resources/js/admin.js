@@ -260,3 +260,12 @@ import Chart from 'chart.js/auto';
 window.Chart = Chart;
 
 // ChartJs==================================================END
+
+// OmarTextEditor (rich text editor) ========================START
+import * as OmarTextEditor from 'omar-text-editor';
+import 'omar-text-editor/dist/theme/default.css';
+import 'omar-text-editor/dist/theme/content.css';
+
+window.OmarTextEditor = OmarTextEditor;
+
+// OmarTextEditor==================================================END

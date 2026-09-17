@@ -13,7 +13,7 @@ class Customer extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'user_id', 'customer_code',
+        'user_id', 'master_profile_id', 'customer_code',
         'first_name', 'last_name', 'full_name',
         'email', 'phone', 'alternative_phone',
         'gender', 'date_of_birth',
@@ -38,6 +38,11 @@ class Customer extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function masterProfile(): BelongsTo
+    {
+        return $this->belongsTo(MasterProfile::class);
     }
 
     public function customerGroup(): BelongsTo

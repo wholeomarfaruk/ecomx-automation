@@ -14,6 +14,7 @@
                         <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Supplier</th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Open Bills</th>
                         <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Total Due</th>
+                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Advance</th>
                         <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
                     </tr>
                 </thead>
@@ -30,12 +31,27 @@
                                 @endforeach
                             </td>
                             <td class="px-5 py-3 text-right text-sm font-medium text-red-500">{{ number_format($supplier->totalDue, 2) }}</td>
+                            <td class="px-5 py-3 text-xs">
+                                @if ($supplier->openAdvances->isNotEmpty())
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-indigo-50 text-indigo-600 mb-1">
+                                        {{ number_format($supplier->totalAdvance, 2) }} unapplied
+                                    </span>
+                                    @if ($supplier->openBills->isNotEmpty())
+                                        <button wire:click="openApplyAdvanceModal({{ $supplier->openAdvances->first()->id }})" type="button"
+                                            class="block text-indigo-600 hover:text-indigo-700">Apply to bill</button>
+                                    @endif
+                                @else
+                                    <span class="text-gray-300">—</span>
+                                @endif
+                            </td>
                             <td class="px-5 py-3 text-right">
-                                <button wire:click="openPayModal({{ $supplier->id }})" type="button" class="text-sm text-indigo-600 hover:text-indigo-700">Pay</button>
+                                @if ($supplier->openBills->isNotEmpty())
+                                    <button wire:click="openPayModal({{ $supplier->id }})" type="button" class="text-sm text-indigo-600 hover:text-indigo-700">Pay</button>
+                                @endif
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="4" class="px-5 py-8 text-center text-sm text-gray-400">No outstanding payables.</td></tr>
+                        <tr><td colspan="5" class="px-5 py-8 text-center text-sm text-gray-400">No outstanding payables.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -87,6 +103,42 @@
                 <div class="flex justify-end gap-2 mt-6">
                     <button wire:click="$set('paySupplierId', null)" type="button" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
                     <button wire:click="payNow" type="button" class="px-4 py-2 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg">Save</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if ($applyAdvanceId)
+        <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" wire:click.self="$set('applyAdvanceId', null)">
+            <div class="bg-white rounded-2xl shadow-lg w-full max-w-md p-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Apply Advance to Bill</h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">Date</label>
+                        <input type="date" wire:model="applyAdvanceDate" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300">
+                        @error('applyAdvanceDate') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    @if ($applyAdvanceBillOptions->isNotEmpty())
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">Apply to specific bills (optional — oldest-first otherwise, capped by the advance's remaining balance)</label>
+                            <div class="space-y-1 max-h-32 overflow-y-auto">
+                                @foreach ($applyAdvanceBillOptions as $bill)
+                                    <label class="flex items-center gap-2 text-sm">
+                                        <input type="checkbox" wire:model="applyAdvanceBills.{{ $bill->id }}">
+                                        Bill #{{ $bill->id }} — due {{ number_format($bill->amountDue(), 2) }}
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                    @error('applyAdvanceBills') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="flex justify-end gap-2 mt-6">
+                    <button wire:click="$set('applyAdvanceId', null)" type="button" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+                    <button wire:click="applyAdvanceNow" type="button" class="px-4 py-2 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg">Apply</button>
                 </div>
             </div>
         </div>

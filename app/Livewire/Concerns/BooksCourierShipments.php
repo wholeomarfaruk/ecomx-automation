@@ -11,6 +11,7 @@ use App\Models\Courier;
 use App\Models\CourierAccount;
 use App\Models\CourierShipment;
 use App\Models\Order;
+use App\Models\OrderItem;
 use Livewire\Attributes\Computed;
 
 /**
@@ -41,7 +42,7 @@ trait BooksCourierShipments
     {
         $this->guardCourierManage();
 
-        $order = Order::with(['shippingAddress', 'items'])->findOrFail($orderId);
+        $order = Order::with(['shippingAddress', 'items.product'])->findOrFail($orderId);
         $address = $order->shippingAddress;
 
         $this->reset([
@@ -54,12 +55,31 @@ trait BooksCourierShipments
         $this->bookingRecipientPhone   = $address->phone ?? '';
         $this->bookingRecipientAddress = $address->full_address ?? '';
         $this->bookingCodAmount        = (string) $order->due_amount;
-        $this->bookingWeight           = '0.5';
+        $this->bookingWeight           = (string) $this->totalWeightFor($order);
         $this->bookingQuantity         = (string) max(1, $order->items->sum('quantity'));
         $this->bookingDescription      = $order->items->pluck('product_name')->filter()->implode(', ') ?: "Order #{$order->id}";
         $this->bookingInstruction      = '';
 
         $this->bookingModal = true;
+    }
+
+    /**
+     * Sum of each item's product weight × quantity, defaulting a
+     * weightless product/combo line to 0.5kg (the same flat fallback this
+     * form used unconditionally before) so a courier weight is never left
+     * at 0 just because a product's weight was never filled in on the
+     * catalog. The admin can still edit the field afterward — this only
+     * changes what the modal opens with.
+     */
+    protected function totalWeightFor(Order $order): float
+    {
+        $total = $order->items->sum(function (OrderItem $item) {
+            $weight = (float) ($item->product?->weight ?? 0);
+
+            return ($weight > 0 ? $weight : 0.5) * (float) $item->quantity;
+        });
+
+        return $total > 0 ? round($total, 3) : 0.5;
     }
 
     public function closeBookingModal(): void

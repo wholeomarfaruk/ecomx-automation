@@ -103,15 +103,21 @@
                             <td class="px-5 py-3 text-right cursor-pointer" onclick="window.location.href='{{ route('admin.sales.orders.show', $order->id) }}'">
                                 <span class="text-sm {{ $order->due_amount > 0 ? 'text-red-500 font-medium' : 'text-gray-400' }}">{{ number_format($order->due_amount, 2) }}</span>
                             </td>
-                            <td class="px-5 py-3 text-center">
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{ $order->payment_status->badgeClass() }}">
-                                    {{ $order->payment_status->label() }}
-                                </span>
+                            <td class="px-5 py-3 text-center" @click.stop>
+                                <select wire:change="updatePaymentStatus({{ $order->id }}, $event.target.value)"
+                                    class="appearance-none cursor-pointer text-center px-2.5 py-1 rounded-full text-xs font-medium border-0 focus:ring-2 focus:ring-indigo-400 focus:outline-none {{ $order->payment_status->badgeClass() }}">
+                                    @foreach($paymentStatuses as $ps)
+                                        <option value="{{ $ps->value }}" @selected($order->payment_status === $ps)>{{ $ps->label() }}</option>
+                                    @endforeach
+                                </select>
                             </td>
-                            <td class="px-5 py-3 text-center">
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{ $order->status->badgeClass() }}">
-                                    {{ $order->status->label() }}
-                                </span>
+                            <td class="px-5 py-3 text-center" @click.stop>
+                                <select wire:change="updateOrderStatus({{ $order->id }}, $event.target.value)"
+                                    class="appearance-none cursor-pointer text-center px-2.5 py-1 rounded-full text-xs font-medium border-0 focus:ring-2 focus:ring-indigo-400 focus:outline-none {{ $order->status->badgeClass() }}">
+                                    @foreach($statuses as $s)
+                                        <option value="{{ $s->value }}" @selected($order->status === $s)>{{ $s->label() }}</option>
+                                    @endforeach
+                                </select>
                             </td>
                             <td class="px-5 py-3 text-center">
                                 @if($order->courier_status)
@@ -192,27 +198,6 @@
                                                     Book Courier
                                                 </button>
                                             @endif
-
-                                            <div class="my-1 border-t border-gray-100"></div>
-
-                                            <div class="px-4 py-2">
-                                                <label class="block text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-1">Order Status</label>
-                                                <select wire:change="updateOrderStatus({{ $order->id }}, $event.target.value)" @click.stop
-                                                    class="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                                                    @foreach($statuses as $s)
-                                                        <option value="{{ $s->value }}" @selected($order->status === $s)>{{ $s->label() }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                            <div class="px-4 py-2">
-                                                <label class="block text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-1">Payment Status</label>
-                                                <select wire:change="updatePaymentStatus({{ $order->id }}, $event.target.value)" @click.stop
-                                                    class="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                                                    @foreach($paymentStatuses as $ps)
-                                                        <option value="{{ $ps->value }}" @selected($order->payment_status === $ps)>{{ $ps->label() }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
                                         </div>
                                     </template>
                                 </div>

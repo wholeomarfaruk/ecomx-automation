@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Concerns\CreatesMasterProfile;
 use App\Events\UserRegistered;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -9,6 +10,8 @@ use Illuminate\Support\Facades\Log;
 
 class UserService
 {
+    use CreatesMasterProfile;
+
     public function all(string $search = '')
     {
         return User::when($search, fn($q) => $q
@@ -24,7 +27,16 @@ class UserService
 
     public function create(array $data): User
     {
+        $masterProfile = $this->resolveMasterProfile($data['master_profile_id'] ?? null, [
+            'display_name' => $data['name'],
+            'country_code' => $data['country_code'] ?? null,
+            'phone'        => $data['phone'] ?? null,
+            'email'        => $data['email'],
+            'notes'        => $data['address'] ?? null,
+        ]);
+
         $user = User::create([
+            'master_profile_id' => $masterProfile->id,
             'name'         => $data['name'],
             'email'        => $data['email'],
             'password'     => Hash::make($data['password']),

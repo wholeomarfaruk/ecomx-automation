@@ -45,6 +45,22 @@
         <div class="overflow-y-auto flex-1">
             <form wire:submit.prevent="registerUser" id="create-user-form">
 
+                {{-- ── Master Profile ── --}}
+                <div class="px-6 py-5 border-b border-gray-100">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Master Profile</p>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Link to Existing Profile</label>
+                        <x-searchable-select
+                            wire:key="new-user-master-profile-select"
+                            field="newUserMasterProfileId"
+                            :options="$masterProfileOptions"
+                            placeholder="None — create a new profile"
+                            searchPlaceholder="Search profiles…"
+                        />
+                        <p class="text-xs text-gray-400 mt-1.5">Pick this if the user is already a customer/supplier/etc. Leave blank to create a new profile.</p>
+                    </div>
+                </div>
+
                 {{-- ── Account Credentials ── --}}
                 <div class="px-6 py-5 border-b border-gray-100">
                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Account Credentials</p>

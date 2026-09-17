@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\Sales\CourierStatus;
 use App\Enums\Sales\FulfillmentStatus;
+use App\Enums\Sales\OrderPaymentType;
 use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\OrderStatus;
 use App\Enums\Sales\PaymentStatus;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Order extends Model
 {
@@ -93,6 +95,16 @@ class Order extends Model
         return $this->hasOne(PosSale::class);
     }
 
+    /**
+     * Every journal entry ever posted with this order as its source (sale,
+     * COGS, shipping, advance conversion, return, reversal, ...) — the full
+     * accounting trail behind this order, used by the Order Ledger report.
+     */
+    public function journalEntries(): MorphMany
+    {
+        return $this->morphMany(JournalEntry::class, 'source');
+    }
+
     public function recalculateTotals(): void
     {
         $itemsTotal = $this->items()->get()->sum(fn (OrderItem $item) => $item->is_gift ? 0 : (float) $item->total_amount);
@@ -103,10 +115,13 @@ class Order extends Model
         $shippingDiscount = max(0.0, min((float) $this->shipping_amount, (float) $this->shipping_discount));
         $netShipping       = (float) $this->shipping_amount - $shippingDiscount;
 
+        $paidIn  = $this->payments()->where('status', PaymentStatus::PAID)->where('type', OrderPaymentType::PAYMENT)->sum('amount');
+        $paidOut = $this->payments()->where('status', PaymentStatus::REFUNDED)->where('type', OrderPaymentType::REFUND)->sum('amount');
+
         $this->subtotal          = $itemsTotal;
         $this->shipping_discount = $shippingDiscount;
         $this->total_amount      = $itemsTotal - $this->discount_amount + $netShipping + $this->tax_amount;
-        $this->paid_amount       = $this->payments()->where('status', PaymentStatus::PAID)->sum('amount');
+        $this->paid_amount       = max(0, (float) $paidIn - (float) $paidOut);
         $this->due_amount        = max(0, $this->total_amount - $this->paid_amount);
         $this->save();
     }
@@ -126,6 +141,38 @@ class Order extends Model
             $this->status = OrderStatus::RETURNED;
         } elseif ($anyReturned) {
             $this->status = OrderStatus::PARTIALLY_RETURNED;
+        }
+
+        $this->save();
+    }
+
+    /**
+     * Flips status to DELIVERED/PARTIALLY_DELIVERED based on item-level
+     * delivered_quantity — pure shipping-status tracking, mirrors
+     * syncReturnStatus(). Never changes stock or posts accounting; that only
+     * happens when the order is separately marked COMPLETED. A no-op once
+     * the order is already closed (completed/cancelled/returned/refunded),
+     * so a late delivery-tracking edit after close doesn't reopen it.
+     */
+    public function syncDeliveryStatus(): void
+    {
+        if ($this->status->isClosed()) {
+            return;
+        }
+
+        $items = $this->items()->get();
+
+        if ($items->isEmpty()) {
+            return;
+        }
+
+        $anyDelivered = $items->contains(fn (OrderItem $item) => (float) $item->delivered_quantity > 0);
+        $allDelivered = $items->every(fn (OrderItem $item) => (float) $item->delivered_quantity >= (float) $item->quantity);
+
+        if ($allDelivered) {
+            $this->status = OrderStatus::DELIVERED;
+        } elseif ($anyDelivered) {
+            $this->status = OrderStatus::PARTIALLY_DELIVERED;
         }
 
         $this->save();

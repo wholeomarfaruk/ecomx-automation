@@ -159,6 +159,12 @@ class PermissionSeeder extends Seeder
             ['id' => 84, 'name' => 'accounts_settings.manage'],
             ['id' => 85, 'name' => 'fiscal_period.manage'],
 
+            //users - master profile
+            ['id' => 86, 'name' => 'master_profile.view'],
+            ['id' => 87, 'name' => 'master_profile.create'],
+            ['id' => 88, 'name' => 'master_profile.edit'],
+            ['id' => 89, 'name' => 'master_profile.delete'],
+
         ];
         foreach ($permissions as $permission) {
             // Permission::create(['name' => $permission]);

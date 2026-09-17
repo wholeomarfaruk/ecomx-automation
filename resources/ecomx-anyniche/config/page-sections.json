@@ -1,0 +1,64 @@
+{
+    "home": [
+        {
+            "key": "hero-slider",
+            "active": true,
+            "order": 0
+        },
+        {
+            "key": "category-carousel",
+            "active": true,
+            "order": 1
+        },
+        {
+            "key": "trust",
+            "active": true,
+            "order": 11
+        },
+        {
+            "key": "category-row-1",
+            "active": true,
+            "order": 2
+        },
+        {
+            "key": "promo-strip-banner",
+            "active": true,
+            "order": 3
+        },
+        {
+            "key": "category-row-2",
+            "active": true,
+            "order": 4
+        },
+        {
+            "key": "promos-grid",
+            "active": true,
+            "order": 5
+        },
+        {
+            "key": "browse-all",
+            "active": true,
+            "order": 6
+        },
+        {
+            "key": "category-row-3",
+            "active": true,
+            "order": 7
+        },
+        {
+            "key": "category-row-4",
+            "active": true,
+            "order": 8
+        },
+        {
+            "key": "category-row-5",
+            "active": true,
+            "order": 9
+        },
+        {
+            "key": "discover-chips",
+            "active": true,
+            "order": 10
+        }
+    ]
+}

@@ -172,6 +172,17 @@
             </div>
             <form wire:submit.prevent="createSupplier" class="overflow-y-auto px-6 py-5 space-y-4">
                 <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Link to Existing Profile</label>
+                        <x-searchable-select
+                            wire:key="new-master-profile-select"
+                            field="newMasterProfileId"
+                            :options="$masterProfileOptions"
+                            placeholder="None — create a new profile"
+                            searchPlaceholder="Search profiles…"
+                        />
+                        <p class="text-xs text-gray-400 mt-1">Pick this if the supplier is already a customer/user/etc. Leave blank to create a new profile.</p>
+                    </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1.5">Code <span class="text-red-500">*</span></label>
                         <input wire:model="newCode" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
@@ -242,6 +253,17 @@
             </div>
             <form wire:submit.prevent="updateSupplier" class="overflow-y-auto px-6 py-5 space-y-4">
                 <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Linked Profile</label>
+                        <x-searchable-select
+                            wire:key="edit-master-profile-select-{{ $editingId }}"
+                            field="editMasterProfileId"
+                            :options="$masterProfileOptions"
+                            placeholder="None — create a new profile"
+                            searchPlaceholder="Search profiles…"
+                        />
+                        <p class="text-xs text-gray-400 mt-1">Change this only to re-point this supplier at a different existing profile.</p>
+                    </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1.5">Code <span class="text-red-500">*</span></label>
                         <input wire:model="editCode" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">

@@ -63,6 +63,15 @@ class SupplierInvoice extends Model
                 throw SupplierInvoiceDeletionException::linkedToPurchaseOrder();
             }
 
+            // A payment's amount is already posted as a journal entry and
+            // allocated against specific AccountsSupplierBill rows — deleting
+            // this row alone would silently re-diverge Supplier.balance from
+            // the Accounts ledger, since the allocation/journal entry would
+            // be left behind untouched.
+            if ($invoice->type === SupplierInvoiceType::PAYMENT) {
+                throw SupplierInvoiceDeletionException::isPaymentWithAllocations();
+            }
+
             if (! $invoice->isLatestSerial()) {
                 throw SupplierInvoiceDeletionException::notLatestSerial();
             }

@@ -79,20 +79,26 @@ class Orders extends Component
     public function updateOrderStatus(int $orderId, string $status): void
     {
         $order = Order::with('items')->findOrFail($orderId);
-        $previousStatus = $order->status->value;
+        $oldStatus = $order->status;
+        $newStatus = OrderStatus::from($status);
+
+        if ($newStatus === OrderStatus::COMPLETED) {
+            $this->dispatch('toast', ['type' => 'error', 'message' => 'Mark as Completed from the order detail page — it needs the delivery/return details there.']);
+            return;
+        }
+
         $stockService = app(StockService::class);
 
         try {
-            DB::transaction(function () use ($order, $status, $previousStatus, $stockService) {
+            DB::transaction(function () use ($order, $status, $oldStatus, $newStatus, $stockService) {
                 $order->update(['status' => $status]);
 
-                $deductOnConfirm = (bool) Setting::get('deduct_on_order_confirm', true, 'inventory');
-                $restockOnRelease = (bool) Setting::get('restock_on_cancel_or_return', true, 'inventory');
+                $bookOnConfirm = (bool) Setting::get('book_on_order_confirm', true, 'inventory');
 
-                if ($deductOnConfirm && $status === 'confirmed' && $previousStatus !== 'confirmed') {
-                    $stockService->commitOrder($order);
-                } elseif ($restockOnRelease && in_array($status, ['cancelled', 'returned'], true) && $previousStatus === 'confirmed') {
-                    $stockService->releaseOrder($order);
+                if ($bookOnConfirm && ! $oldStatus->isBookable() && $newStatus->isBookable()) {
+                    $stockService->bookOrder($order);
+                } elseif ($bookOnConfirm && $oldStatus->isBookable() && ! $newStatus->isBookable()) {
+                    $stockService->releaseBooking($order, 'unbooked_cancelled');
                 }
             });
         } catch (InsufficientStockException $e) {

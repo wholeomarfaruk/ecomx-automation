@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Accounts\PostCourierCodCollected;
 use App\Courier\CourierManager;
+use App\Enums\Sales\CourierStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Courier;
 use App\Models\CourierShipment;
@@ -127,6 +129,20 @@ class CourierWebhookController extends Controller
             'courier_status' => $event->status,
             'courier_status_updated_at' => now(),
         ])->save();
+
+        // The courier's rider physically collected cash from the customer
+        // on delivery — that money is now sitting with the courier, not in
+        // a real bank/cash account, so record it as received into the
+        // courier's own cash-in-hand sub-account (1045.x) rather than
+        // waiting for the later bank settlement to be the first sign this
+        // order was ever paid.
+        if ($event->status === CourierStatus::DELIVERED) {
+            $collectedAmount = (float) ($event->rawData['collected_amount'] ?? 0);
+
+            if ($collectedAmount > 0) {
+                app(PostCourierCodCollected::class)->handle($shipment, $collectedAmount, now()->toDateString());
+            }
+        }
 
         return response()->json(['message' => 'ok']);
     }

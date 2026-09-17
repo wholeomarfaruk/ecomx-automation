@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Admin\Users;
 
+use App\Concerns\CreatesMasterProfile;
 use App\Livewire\Traits\WithMediaPicker;
 use App\Models\Country;
 use App\Models\Gender;
+use App\Models\MasterProfile;
 use App\Models\Panel;
 use App\Models\User;
 use App\Services\UserService;
@@ -15,7 +17,7 @@ use Spatie\Permission\Models\Role;
 
 class Users extends Component
 {
-    use WithMediaPicker;
+    use WithMediaPicker, CreatesMasterProfile;
 
     public $users;
     public $viewModal  = false;
@@ -24,6 +26,7 @@ class Users extends Component
     public $role_name;
     public $UserModal  = false;
     public $newUserName, $newUserEmail, $newUserPassword;
+    public string $newUserMasterProfileId = '';
     public string $newUserGender      = '';
     public string $newUserPhone       = '';
     public string $newUserCountryCode = '';
@@ -41,6 +44,7 @@ class Users extends Component
     public $genders;
     public array  $panelIds    = [];
     public ?int   $avatar_id    = null;
+    public string $editMasterProfileId = '';
     public string $editName     = '';
     public string $editEmail    = '';
     public string $editPassword = '';
@@ -175,6 +179,13 @@ class Users extends Component
 
         return view('livewire.admin.users.users', [
             'activeCount' => User::whereHas('devices', fn($d) => $d->where('last_active_at', '>=', $activeSince))->count(),
+            'masterProfileOptions' => MasterProfile::query()
+                ->where('status', 'active')
+                ->orderBy('display_name')
+                ->get()
+                ->mapWithKeys(fn (MasterProfile $profile) => [
+                    $profile->id => "{$profile->display_name} ({$profile->uuid})",
+                ]),
         ])->layout('layouts.admin.admin');
     }
 
@@ -215,6 +226,7 @@ class Users extends Component
         $this->role_name    = $user->roles->first()?->name;
         $this->avatar_id    = $user->avatar_id;
         $this->panelIds     = $user->panels->pluck('id')->toArray();
+        $this->editMasterProfileId = (string) ($user->master_profile_id ?? '');
         $this->editName     = $user->name;
         $this->editEmail    = $user->email;
         $this->editPassword = '';
@@ -294,6 +306,22 @@ class Users extends Component
 
         if ($this->editPassword !== '') {
             $data['password'] = $this->editPassword;
+        }
+
+        $profileAttributes = [
+            'display_name' => $this->editName,
+            'country_code' => $this->editCountryCode ?: null,
+            'phone'        => $this->editPhone ?: null,
+            'email'        => $this->editEmail,
+            'notes'        => $this->editAddress ?: null,
+        ];
+
+        $newProfileId = $this->editMasterProfileId ?: null;
+
+        if ($newProfileId && (int) $newProfileId !== $this->user->master_profile_id) {
+            $data['master_profile_id'] = (int) $newProfileId;
+        } else {
+            $this->syncMasterProfile($this->user->masterProfile, $profileAttributes);
         }
 
         $this->user->update($data);
@@ -447,6 +475,7 @@ class Users extends Component
         ]);
 
         $user = $userService->create([
+            'master_profile_id' => $this->newUserMasterProfileId ?: null,
             'name'         => $this->newUserName,
             'email'        => $this->newUserEmail,
             'password'     => $this->newUserPassword,
@@ -478,7 +507,7 @@ class Users extends Component
             ->log("User \"{$user->name}\" ({$user->email}) was created");
 
         $this->reset([
-            'newUserName', 'newUserEmail', 'newUserPassword',
+            'newUserMasterProfileId', 'newUserName', 'newUserEmail', 'newUserPassword',
             'newUserGender', 'newUserPhone', 'newUserCountryCode',
             'newUserRole', 'newUserPanels', 'newUserAddress', 'newUserBio',
         ]);

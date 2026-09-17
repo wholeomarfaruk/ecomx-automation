@@ -174,6 +174,10 @@ class ProductEdit extends Component
         } elseif ($this->activeTab === 'combo') {
             $this->activeTab = 'general';
         }
+
+        if ($value !== 'variable' && $this->activeTab === 'variants') {
+            $this->activeTab = 'general';
+        }
     }
 
     public function updatedGiftAllowed(bool $value): void
@@ -309,6 +313,11 @@ class ProductEdit extends Component
         ]);
 
         $product->categories()->sync($this->categoryIds);
+
+        if ($this->productType !== 'variable') {
+            $product->variants()->delete();
+            $product->productAttributes()->delete();
+        }
 
         $product->comboItems()->delete();
 

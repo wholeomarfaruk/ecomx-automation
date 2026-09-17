@@ -5,6 +5,7 @@
     'images'      => null,
     'placeholder' => 'All',
     'searchPlaceholder' => 'Search…',
+    'disabled'    => false,
 ])
 
 @php
@@ -42,11 +43,11 @@
         },
     }"
     @click.outside="open = false"
-    class="relative"
+    {{ $attributes->merge(['class' => 'relative']) }}
 >
-    <button type="button" @click="open = !open"
+    <button type="button" @click="open = !open" @if($disabled) disabled @endif
         class="flex items-center justify-between gap-2 text-sm rounded-lg border border-gray-300 px-3 py-2 bg-white hover:border-gray-400 transition w-full min-w-[160px]
-               focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+               focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed">
         <span class="flex items-center gap-2 min-w-0">
             <template x-if="selectedOption && selectedOption.image">
                 <img :src="selectedOption.image" alt="" class="w-5 h-5 rounded object-cover shrink-0">

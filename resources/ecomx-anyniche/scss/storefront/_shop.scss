@@ -1,0 +1,221 @@
+@use 'variables' as *;
+
+// =============================================================================
+// Shop / catalogue page — sidebar filters, toolbar, grid, pagination, drawer
+//
+// UI/SCSS only for now — search/sort/category/brand/price filters are visually
+// present but not yet wired to an Alpine controller (functionality lands in a
+// later pass). The grid itself uses real DB products via the shared
+// storefront.partials.product-card partial and Laravel's own paginator.
+// =============================================================================
+
+.jtc-shop {
+  &__head {
+    max-width: $container;
+    margin-inline: auto;
+    padding: 20px 20px 4px;
+    h1 { font-family: $font-display; font-weight: 600; font-size: clamp(1.6rem, 2.6vw, 2.1rem); margin: 0; color: $ink; }
+  }
+  &__crumb { font-size: 0.82rem; color: $muted; margin-bottom: 8px; span { margin: 0 4px; } }
+  &__headrow { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  &__count { font-size: 0.88rem; color: $muted; }
+
+  &__body {
+    max-width: $container;
+    margin-inline: auto;
+    padding: 14px 20px 60px;
+    display: flex;
+    gap: 28px;
+    align-items: flex-start;
+  }
+
+  &__main { flex: 1; min-width: 0; }
+}
+
+// ---- sidebar ----------------------------------------------------------------
+
+.jtc-filters {
+  width: 260px;
+  flex: none;
+  position: sticky;
+  top: 86px;
+
+  &__card { background: #fff; border: 1px solid $line; border-radius: $radius; padding: 18px; }
+  &__top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; h3 { font-family: $font-display; font-size: 1rem; margin: 0; color: $ink; } }
+  &__clear { font-size: 0.8rem; color: $blue; font-weight: 600; border: none; background: none; cursor: pointer; padding: 0; }
+
+  &__search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: $bg;
+    border: 1.5px solid $line;
+    border-radius: $radius;
+    padding: 2px 2px 2px 12px;
+    margin-bottom: 4px;
+    svg { color: $muted-2; flex: none; }
+    input { flex: 1; border: none; background: none; padding: 9px 10px; font-size: 0.86rem; color: $ink; outline: none; min-width: 0; }
+  }
+
+  &__group { border-top: 1px solid $line-soft; padding-top: 14px; margin-top: 14px; }
+  &__label { font-weight: 600; font-size: 0.88rem; margin-bottom: 10px; color: $ink; }
+  &__list { display: flex; flex-direction: column; gap: 9px; max-height: 230px; overflow-y: auto; }
+
+  &__check {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 0.86rem; color: $ink-soft; cursor: pointer;
+    input { width: 16px; height: 16px; accent-color: $blue; }
+    span { color: $muted-2; font-size: 0.78rem; margin-left: auto; }
+  }
+
+  &__price-inputs { display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+    input { width: 100%; min-width: 0; border: 1.5px solid $line; border-radius: $radius; padding: 9px 10px; font-size: 0.85rem; color: $ink; outline: none; &:focus { border-color: $blue; } }
+    span { color: $muted-2; flex: none; }
+  }
+  &__price-scale { display: flex; justify-content: space-between; font-size: 0.8rem; color: $muted; margin-top: 6px; strong { color: $ink; font-weight: 600; } }
+}
+
+// ---- toolbar ------------------------------------------------------------------
+
+.jtc-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+
+  &__filterbtn {
+    display: none; // shown on mobile/tablet
+    align-items: center; gap: 8px;
+    padding: 10px 16px;
+    border-radius: $radius;
+    border: 1.5px solid $line;
+    background: #fff;
+    color: $ink;
+    font-size: 0.88rem; font-weight: 600;
+    cursor: pointer; flex: none;
+    span { background: $green; color: #fff; font-size: 0.7rem; font-weight: 700; border-radius: $radius-pill; padding: 1px 7px; }
+  }
+
+  &__sort {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.86rem; color: $muted;
+    select { border: 1.5px solid $line; border-radius: $radius; padding: 9px 12px; font-size: 0.86rem; color: $ink; background: #fff; font-weight: 600; cursor: pointer; }
+  }
+}
+
+// Active-filter chips — named jtc-filterchip(s), not jtc-chip(s): that class
+// already exists in _product.scss for the homepage's "Discover more" pill
+// links, which look and behave differently (no remove icon, not a filter).
+.jtc-filterchips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.jtc-filterchip {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 8px 6px 12px;
+  border-radius: $radius-pill;
+  background: $blue-light;
+  color: $blue-dark;
+  font-size: 0.8rem; font-weight: 600;
+  border: none; cursor: pointer;
+}
+
+// ---- grid + pagination --------------------------------------------------------
+
+.jtc-shopgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 7px; }
+
+.jtc-pagination {
+  display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 28px;
+
+  // Laravel's Bootstrap-5 pagination view renders <ul class="pagination"> —
+  // reskin it to match the design-tool's button-based look instead of
+  // pulling in Bootstrap's own pagination styles on this page.
+  .pagination {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .page-item { display: contents; }
+  .page-link {
+    width: 38px; height: 38px;
+    border-radius: $radius;
+    border: 1px solid $line;
+    background: #fff;
+    color: $ink;
+    font-size: 0.86rem; font-weight: 600;
+    display: grid; place-items: center;
+    cursor: pointer;
+    text-decoration: none;
+    &:hover { border-color: $blue; color: $blue; }
+  }
+  .page-item.disabled .page-link { opacity: 0.4; cursor: default; pointer-events: none; }
+  .page-item.active .page-link { background: $blue; border-color: $blue; color: #fff; }
+}
+
+.jtc-empty {
+  text-align: center; padding: 80px 20px; color: $muted;
+  svg { margin: 0 auto 14px; color: $line; }
+  p { margin: 0; &:first-of-type { font-weight: 600; color: $ink; } }
+  p + p { font-size: 0.86rem; margin: 6px 0 16px; }
+}
+
+// ---- mobile filter drawer -------------------------------------------------
+
+.jtc-fdrawer {
+  position: fixed; top: 0; left: 0; bottom: 0;
+  width: min(340px, 88%);
+  background: $bg;
+  z-index: 100;
+  display: flex; flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: $shadow-pop;
+  &.is-open { transform: none; }
+
+  &__head { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid $line; background: #fff; h3 { font-size: 1.05rem; margin: 0; color: $ink; } }
+  &__close { width: 36px; height: 36px; border-radius: $radius; display: grid; place-items: center; color: $ink-soft; border: none; background: none; cursor: pointer; }
+  &__body { flex: 1; overflow-y: auto; padding: 18px 20px; }
+  &__foot { padding: 16px 20px; border-top: 1px solid $line; background: #fff; }
+}
+
+// ---- responsive -----------------------------------------------------------
+
+@media (max-width: $bp-tablet) {
+  .jtc-filters { display: none; }
+  .jtc-toolbar__filterbtn { display: flex; }
+}
+@media (max-width: 600px) {
+  .jtc-shop__head { padding: 12px 16px 2px; h1 { font-size: 1.25rem; } }
+  .jtc-shop__crumb { display: none; }
+  .jtc-shop__body { padding: 10px 14px 48px; gap: 16px; }
+}
+
+@media (max-width: 400px) {
+  .jtc-fdrawer {
+    width: min(300px, 90%);
+    &__head { padding: 14px 16px; }
+    &__body { padding: 14px 16px; }
+    &__foot { padding: 12px 16px; }
+  }
+
+  .jtc-filters__price-inputs {
+    flex-wrap: wrap;
+    input { flex: 1 1 100px; }
+  }
+
+  .jtc-toolbar {
+    gap: 8px;
+    &__filterbtn { padding: 8px 12px; font-size: 0.82rem; }
+    &__sort {
+      select { padding: 7px 8px; font-size: 0.8rem; }
+    }
+  }
+
+  .jtc-pagination {
+    gap: 4px;
+    .pagination { gap: 4px; }
+    .page-link { width: 32px; height: 32px; font-size: 0.8rem; }
+  }
+}

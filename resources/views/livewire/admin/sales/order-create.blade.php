@@ -184,6 +184,7 @@
                         </div>
                         @error('items.' . $i . '.quantity') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
                         @error('items.' . $i . '.unit_price') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
+                        @error('items.' . $i . '.purchase_price') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
                     @empty
                         <p class="text-sm text-gray-400">No items added yet. Search above to add a product or combo.</p>
                     @endforelse

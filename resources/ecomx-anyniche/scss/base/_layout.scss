@@ -1,0 +1,8 @@
+// Shared layout utility classes — ported from ecomx-fashion's
+// base/_layout.scss. Needed by components still using this theme's older
+// AnyNiche design system (review slider, related-products row, etc.).
+.row-scroll { display: flex; gap: 18px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 4px 8px; }
+.row-scroll > * { scroll-snap-align: start; flex: none; }
+
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }

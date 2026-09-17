@@ -1,0 +1,39 @@
+// Juwel Trade Corporation — SCSS entry. Base first (order matters for
+// @use), then components, then pages. Split from the original monolithic
+// app.scss into this module pattern (matches resources/ecomx-anyniche/scss/app.scss).
+//
+// Note: all @use rules must come before any @import/other rule (Sass
+// requirement), so Bootstrap's legacy @import is placed after this block.
+@use 'base/fonts';
+@use 'variables' as *;
+@use 'base/reset';
+@use 'base/palettes';
+@use 'base/layout';
+@use 'base/animations';
+
+// Components
+@use 'components/buttons-nav';
+@use 'components/typography';
+@use 'components/grid-list';
+@use 'components/section';
+@use 'components/review-card';
+@use 'components/overlay';
+@use 'components/accordion';
+@use 'components/footer';
+
+// Pages
+@use 'pages/home';
+@use 'pages/product-gallery';
+@use 'pages/checkout';
+@use 'pages/order-confirmation';
+
+// Storefront (header, hero, product, product-page, footer, modals, skeleton, shop, account)
+@use 'storefront/storefront';
+
+// Bootstrap (legacy @import — must follow all @use rules above)
+// NOTE: disabled — the `bootstrap` npm package isn't installed in this
+// project. The Bootstrap-based header (navbar/offcanvas/collapse classes)
+// will render unstyled/non-functional until Bootstrap CSS/JS is loaded some
+// other way (npm install + this import, or a CDN <link>/<script> in the
+// layout).
+// @import 'bootstrap/scss/bootstrap';

@@ -2,6 +2,7 @@
 
 namespace App\Actions\Fortify;
 
+use App\Concerns\CreatesMasterProfile;
 use App\Events\UserRegistered;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -12,7 +13,7 @@ use Laravel\Jetstream\Jetstream;
 
 class CreateNewUser implements CreatesNewUsers
 {
-    use PasswordValidationRules;
+    use PasswordValidationRules, CreatesMasterProfile;
 
     /**
      * Validate and create a newly registered user.
@@ -28,7 +29,13 @@ class CreateNewUser implements CreatesNewUsers
             'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature() ? ['accepted', 'required'] : '',
         ])->validate();
 
+        $masterProfile = $this->createMasterProfileFor([
+            'display_name' => $input['name'],
+            'email'        => $input['email'],
+        ]);
+
         $user = User::create([
+            'master_profile_id' => $masterProfile->id,
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => Hash::make($input['password']),

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Courier extends Model
 {
@@ -16,6 +17,7 @@ class Courier extends Model
         'type',
         'capabilities',
         'webhook_secret',
+        'cod_fee_rate',
         'is_active',
         'sort_order',
     ];
@@ -25,6 +27,7 @@ class Courier extends Model
         return [
             'capabilities' => 'array',
             'is_active' => 'boolean',
+            'cod_fee_rate' => 'decimal:2',
         ];
     }
 
@@ -41,6 +44,17 @@ class Courier extends Model
     public function activeAccount(): ?CourierAccount
     {
         return $this->accounts()->where('is_active', true)->orderByDesc('is_default')->first();
+    }
+
+    /**
+     * The "Courier Cash" ledger account (under 1045) tracking COD money
+     * this courier is holding but hasn't remitted yet — seeded once per
+     * courier by AccountSeeder::seedCourierCashAccounts(). Not to be
+     * confused with CourierAccount, which is API login credentials.
+     */
+    public function cashAccount(): HasOne
+    {
+        return $this->hasOne(Account::class);
     }
 
     public function hasCapability(string $capability): bool

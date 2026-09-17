@@ -28,18 +28,21 @@ class PostSalesReturn
         float $costAmount,
         string $entryDate,
         ?string $description = null,
+        ?string $purposeSuffix = null,
     ): array {
         return DB::transaction(function () use (
             $order, $salesReturnAccountId, $receivableOrCashAccountId,
-            $inventoryAccountId, $cogsAccountId, $saleAmount, $costAmount, $entryDate, $description
+            $inventoryAccountId, $cogsAccountId, $saleAmount, $costAmount, $entryDate, $description, $purposeSuffix
         ) {
+            $purposeSuffix ??= '';
+
             $returnEntry = $this->postJournalEntry->handle([
                 'entry_date'       => $entryDate,
                 'description'      => $description ?? "Sales return — Order #{$order->id}",
                 'transaction_type' => TransactionType::SALES_RETURN->value,
                 'source_type'      => Order::class,
                 'source_id'        => $order->id,
-                'purpose'          => 'sales_return',
+                'purpose'          => 'sales_return' . $purposeSuffix,
             ], [
                 ['account_id' => $salesReturnAccountId, 'debit' => $saleAmount],
                 ['account_id' => $receivableOrCashAccountId, 'credit' => $saleAmount],
@@ -53,7 +56,7 @@ class PostSalesReturn
                     'transaction_type' => TransactionType::SALES_RETURN->value,
                     'source_type'      => Order::class,
                     'source_id'        => $order->id,
-                    'purpose'          => 'sales_return_stock',
+                    'purpose'          => 'sales_return_stock' . $purposeSuffix,
                 ], [
                     ['account_id' => $inventoryAccountId, 'debit' => $costAmount],
                     ['account_id' => $cogsAccountId, 'credit' => $costAmount],

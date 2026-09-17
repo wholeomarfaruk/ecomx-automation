@@ -15,6 +15,13 @@
             </div>
         </div>
         <div class="flex items-center gap-2">
+            <a href="{{ route('admin.accounts.reports.order-ledger', ['orderId' => $order->id]) }}"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 border border-gray-200 hover:bg-gray-50 hover:text-gray-700 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                </svg>
+                Ledger
+            </a>
             <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium {{ $order->payment_status->badgeClass() }}">
                 {{ $order->payment_status->label() }}
             </span>
@@ -72,17 +79,68 @@
                                 </div>
                             @endif
 
-                            <div class="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2">
-                                <label class="text-xs text-gray-500 shrink-0">Returned Qty</label>
-                                <input wire:model="returnedQuantities.{{ $item->id }}" type="number" step="0.001" min="0" max="{{ $item->quantity }}"
-                                    class="w-24 rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                                <span class="text-xs text-gray-400">of {{ rtrim(rtrim(number_format($item->quantity, 3), '0'), '.') }}</span>
+                            <div class="mt-3 pt-3 border-t border-gray-100 flex flex-wrap items-center gap-x-6 gap-y-2">
+                                <div class="flex items-center gap-2">
+                                    <label class="text-xs text-gray-500 shrink-0">Delivered Qty</label>
+                                    @if($item->batchAllocations->isNotEmpty())
+                                        <span class="text-xs font-medium text-gray-700">{{ rtrim(rtrim(number_format($item->delivered_quantity, 3), '0'), '.') }}</span>
+                                        <span class="text-xs text-gray-400">of {{ rtrim(rtrim(number_format($item->quantity, 3), '0'), '.') }} (packed)</span>
+                                    @else
+                                        <input wire:model="deliveredQuantities.{{ $item->id }}" type="number" step="0.001" min="0" max="{{ $item->quantity }}"
+                                            class="w-24 rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                        <span class="text-xs text-gray-400">of {{ rtrim(rtrim(number_format($item->quantity, 3), '0'), '.') }}</span>
+                                    @endif
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <label class="text-xs text-gray-500 shrink-0">Returned Qty</label>
+                                    <input wire:model="returnedQuantities.{{ $item->id }}" type="number" step="0.001" min="0" max="{{ $item->quantity }}"
+                                        class="w-24 rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                    <span class="text-xs text-gray-400">of {{ rtrim(rtrim(number_format($item->quantity, 3), '0'), '.') }}</span>
+                                </div>
+                                @if($item->product_id)
+                                    <button wire:click="openPackModal({{ $item->id }})" type="button"
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375C2.754 3.75 2.25 4.254 2.25 4.875v1.5c0 .621.504 1.125 1.125 1.125Z"/>
+                                        </svg>
+                                        {{ $item->batchAllocations->isNotEmpty() ? 'Re-pack' : 'Pack from Batch' }}
+                                    </button>
+                                @endif
                             </div>
+
+                            @if($item->batchAllocations->isNotEmpty())
+                                <div class="mt-2 flex flex-wrap gap-1.5">
+                                    @foreach($item->batchAllocations as $allocation)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-600">
+                                            {{ $allocation->batch->batch_no ?? '—' }} ({{ rtrim(rtrim(number_format($allocation->quantity, 3), '0'), '.') }} @ {{ number_format($allocation->unit_cost, 2) }})
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @endif
                         </div>
                     @endforeach
                 </div>
 
                 <div class="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
+                    <button wire:click="saveDeliveries" type="button"
+                        class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        Save Deliveries
+                    </button>
+                </div>
+
+                <div class="mt-3 pt-3 border-t border-gray-100 flex flex-wrap items-end gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Return / RTO Charge</label>
+                        <input wire:model="returnCharge" type="number" step="0.01" min="0" placeholder="0.00"
+                            class="w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                    </div>
+                    <div class="flex-1 min-w-[180px]">
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Paid From</label>
+                        <x-searchable-select field="returnChargeCashAccountId" :value="$returnChargeCashAccountId"
+                            :options="$cashAccounts->mapWithKeys(fn ($a) => [(string) $a->id => $a->code . ' — ' . $a->name])"
+                            placeholder="— Select account —" search-placeholder="Search accounts…" />
+                        @error('returnChargeCashAccountId') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
                     <button wire:click="saveReturns" type="button"
                         class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
                         Save Returns
@@ -123,13 +181,24 @@
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-sm font-semibold text-gray-800">Payments</h2>
-                    <button wire:click="openPaymentModal" type="button"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-                        </svg>
-                        Add Payment
-                    </button>
+                    <div class="flex items-center gap-2">
+                        @if($order->paid_amount > 0)
+                            <button wire:click="openRefundModal" type="button"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"/>
+                                </svg>
+                                Refund
+                            </button>
+                        @endif
+                        <button wire:click="openPaymentModal" type="button"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                            </svg>
+                            Add Payment
+                        </button>
+                    </div>
                 </div>
 
                 <div class="space-y-2">
@@ -137,13 +206,18 @@
                         <div class="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-2.5">
                             <div>
                                 <span class="text-sm text-gray-700">{{ $payment->payment_method?->label() ?? '—' }}</span>
+                                @if($payment->type->value === 'refund')
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-50 text-red-500 ml-1">Refund</span>
+                                @endif
                                 @if($payment->transaction_id)
                                     <span class="text-xs text-gray-400 font-mono ml-2">{{ $payment->transaction_id }}</span>
                                 @endif
                                 <span class="block text-xs text-gray-400">{{ $payment->paid_at?->format('d M, Y H:i') ?? $payment->created_at->format('d M, Y H:i') }}</span>
                             </div>
                             <div class="text-right">
-                                <span class="text-sm font-medium text-gray-800">{{ number_format($payment->amount, 2) }}</span>
+                                <span class="text-sm font-medium {{ $payment->type->value === 'refund' ? 'text-red-500' : 'text-gray-800' }}">
+                                    {{ $payment->type->value === 'refund' ? '−' : '' }}{{ number_format($payment->amount, 2) }}
+                                </span>
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium {{ $payment->status->badgeClass() }} ml-2">
                                     {{ $payment->status->label() }}
                                 </span>
@@ -172,7 +246,15 @@
 
             {{-- Customer --}}
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <h2 class="text-sm font-semibold text-gray-800 mb-3">Customer</h2>
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-semibold text-gray-800">Customer</h2>
+                    @if($order->customer)
+                        <a href="{{ route('admin.accounts.reports.customer-ledger', ['customerId' => $order->customer->id]) }}"
+                            class="text-xs font-medium text-indigo-600 hover:text-indigo-700 transition">
+                            View Ledger →
+                        </a>
+                    @endif
+                </div>
                 <p class="text-sm font-medium text-gray-800">{{ $order->customer?->full_name ?? 'Guest' }}</p>
                 <p class="text-xs text-gray-400">{{ $order->customer?->phone ?? '' }}</p>
 
@@ -397,13 +479,11 @@
             </div>
             <form wire:submit.prevent="addPayment" class="px-6 py-5 space-y-4">
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Payment Method</label>
-                    <select wire:model="paymentMethod" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                        @foreach($paymentMethods as $pm)
-                            <option value="{{ $pm->value }}">{{ $pm->label() }}</option>
-                        @endforeach
-                    </select>
-                    @error('paymentMethod') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Received Into <span class="text-red-500">*</span></label>
+                    <x-searchable-select field="paymentAccountId" :value="$paymentAccountId"
+                        :options="$cashAccounts->mapWithKeys(fn ($a) => [(string) $a->id => $a->code . ' — ' . $a->name])"
+                        placeholder="— Select cash/bank account —" search-placeholder="Search accounts…" />
+                    @error('paymentAccountId') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1.5">Transaction ID</label>
@@ -429,6 +509,146 @@
                     <button type="submit" class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">Add Payment</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    {{-- Refund Modal --}}
+    <div x-cloak x-data="{ open: @entangle('refundModal') }" x-show="open" x-transition
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden" @click.outside="open = false">
+            <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
+                <div class="flex-1">
+                    <h2 class="text-base font-semibold text-gray-900">Refund</h2>
+                    <p class="text-xs text-gray-400 mt-0.5">Up to {{ number_format($order->paid_amount, 2) }} paid so far.</p>
+                </div>
+                <button @click="open = false" type="button" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <form wire:submit.prevent="refundOrder" class="px-6 py-5 space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Refund Amount <span class="text-red-500">*</span></label>
+                    <input wire:model="refundAmount" type="number" step="0.01" min="0.01" max="{{ $order->paid_amount }}"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                    @error('refundAmount') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                        <input wire:model.live="refundAsStoreCredit" type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-sm text-gray-700">Refund as store credit instead of cash</span>
+                    </label>
+                    <p class="text-xs text-gray-400 mt-1">Credits the customer's balance for a future order — no cash moves out.</p>
+                </div>
+
+                @unless($refundAsStoreCredit)
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Refund From <span class="text-red-500">*</span></label>
+                        <x-searchable-select field="refundCashAccountId" :value="$refundCashAccountId"
+                            :options="$cashAccounts->mapWithKeys(fn ($a) => [(string) $a->id => $a->code . ' — ' . $a->name])"
+                            placeholder="— Select cash/bank account —" search-placeholder="Search accounts…" />
+                        @error('refundCashAccountId') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                @endunless
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Note</label>
+                    <input wire:model="refundNote" type="text" placeholder="Reason for the refund"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                    @error('refundNote') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+                    <button @click="open = false" type="button" class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
+                    <button type="submit" class="px-5 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition">Record Refund</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- Pack Items Modal --}}
+    <div x-cloak x-data="{ open: @entangle('packModal') }" x-show="open" x-transition
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog">
+        <div class="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-visible" @click.outside="open = false">
+            <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100 rounded-t-2xl overflow-hidden">
+                <div class="flex-1">
+                    <h2 class="text-base font-semibold text-gray-900">Pack from Batch</h2>
+                    <p class="text-xs text-gray-400 mt-0.5">Pick which batch(es) this shipment's units came from.</p>
+                </div>
+                <button wire:click="closePackModal" @click="open = false" type="button" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <form wire:submit.prevent="savePacking" class="px-6 py-5 space-y-3">
+                @error('packAllocations') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
+
+                @foreach($packAllocations as $index => $row)
+                    <div class="flex items-end gap-2" wire:key="pack-row-{{ $index }}">
+                        <div class="flex-1">
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Batch</label>
+                            <x-searchable-select field="packAllocations.{{ $index }}.batch_id" :value="$row['batch_id']"
+                                :options="$packableBatches->mapWithKeys(fn ($b) => [(string) $b->id => $b->batch_no . ' — ' . rtrim(rtrim(number_format($b->quantity, 3), '0'), '.') . ' left @ ' . number_format($b->purchase_price ?? 0, 2)])"
+                                placeholder="— Select batch —" search-placeholder="Search batches…" />
+                        </div>
+                        <div class="w-28">
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Quantity</label>
+                            <input wire:model="packAllocations.{{ $index }}.quantity" type="number" step="0.001" min="0"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                        </div>
+                        @if(count($packAllocations) > 1)
+                            <button wire:click="removePackRow({{ $index }})" type="button"
+                                class="mb-0.5 w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        @endif
+                    </div>
+                @endforeach
+
+                <button wire:click="addPackRow" type="button"
+                    class="text-xs font-medium text-indigo-600 hover:text-indigo-700 transition">
+                    + Add another batch
+                </button>
+
+                <div class="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
+                    <button wire:click="closePackModal" @click="open = false" type="button" class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
+                    <button type="submit" class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">Save Packing</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- Confirm Cancel/Return with Payment on Order --}}
+    <div x-cloak x-data="{ open: @entangle('confirmReverseModal') }" x-show="open" x-transition
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden" @click.outside="open = false">
+            <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
+                <div class="flex-1">
+                    <h2 class="text-base font-semibold text-gray-900">This order has a payment</h2>
+                </div>
+                <button wire:click="cancelReverseModal" @click="open = false" type="button" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="px-6 py-5 space-y-3">
+                <p class="text-sm text-gray-700">
+                    The customer has paid <span class="font-semibold">{{ number_format($order->paid_amount, 2) }}</span> on this order.
+                </p>
+                <p class="text-sm text-gray-600">
+                    If you cancel/return it, the sale and cost will be reversed and the paid amount will be credited to the customer's account (store credit) — no cash will be refunded automatically.
+                </p>
+            </div>
+            <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100">
+                <button wire:click="cancelReverseModal" @click="open = false" type="button" class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
+                <button wire:click="confirmReverseAndUpdateStatus" type="button" class="px-5 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition">Confirm, Force Cancel/Return</button>
+            </div>
         </div>
     </div>
 

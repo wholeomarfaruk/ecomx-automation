@@ -149,10 +149,23 @@
                                         'out_of_stock' => 'Out of Stock',
                                         'backorder'    => 'Backorder',
                                     ];
+                                    $stockInfo = $product->stock_info;
                                 @endphp
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{ $stockStyles[$product->stock_status] ?? 'bg-gray-100 text-gray-500' }}">
                                     {{ $stockLabels[$product->stock_status] ?? $product->stock_status }}
                                 </span>
+                                <div class="text-xs text-gray-400 mt-1">
+                                    @if($stockInfo['quantity'] === null)
+                                        <span class="text-gray-300">—</span>
+                                    @elseif($product->product_type === \App\Enums\Product\ProductType::COMBO)
+                                        {{ (int) $stockInfo['quantity'] }} bundle{{ (int) $stockInfo['quantity'] === 1 ? '' : 's' }}
+                                    @elseif($product->product_type === \App\Enums\Product\ProductType::VARIABLE)
+                                        {{ rtrim(rtrim(number_format($stockInfo['quantity'], 3), '0'), '.') ?: '0' }}
+                                        <span class="text-gray-300">({{ $stockInfo['variant_count'] }} variant{{ $stockInfo['variant_count'] === 1 ? '' : 's' }})</span>
+                                    @else
+                                        {{ rtrim(rtrim(number_format($stockInfo['quantity'], 3), '0'), '.') ?: '0' }}
+                                    @endif
+                                </div>
                             </td>
                             <td class="px-5 py-3 text-center">
                                 @php

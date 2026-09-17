@@ -33,6 +33,29 @@ class StockIn extends Component
 
     public $note = '';
 
+    /**
+     * Deep-links here from a Purchase Order's Receiving link (?purchase_order=X&item=Y)
+     * so "Receive" on a PO item lands on this page with the PO, item,
+     * product/variant, remaining quantity, and suggested price already
+     * filled in — rather than duplicating batch-aware receiving logic
+     * inline on the PO page.
+     */
+    public function mount(): void
+    {
+        $poId = request()->query('purchase_order');
+        $itemId = request()->query('item');
+
+        if ($poId) {
+            $this->purchaseOrderId = (string) $poId;
+            $this->updatedPurchaseOrderId();
+        }
+
+        if ($itemId) {
+            $this->purchaseOrderItemId = (string) $itemId;
+            $this->updatedPurchaseOrderItemId();
+        }
+    }
+
     public function updatedProductId(): void
     {
         $this->variantId = '';
@@ -121,7 +144,7 @@ class StockIn extends Component
             return;
         }
 
-        $item = PurchaseOrderItem::with('variant.product')->find($this->purchaseOrderItemId);
+        $item = PurchaseOrderItem::with('product', 'variant')->find($this->purchaseOrderItemId);
 
         if (! $item) {
             return;
@@ -129,8 +152,8 @@ class StockIn extends Component
 
         $remaining = max(0, (float) $item->quantity - app(StockService::class)->receivedQuantityForPurchaseOrderItem($item));
 
-        $this->productId = (string) $item->variant->product_id;
-        $this->variantId = (string) $item->product_variant_id;
+        $this->productId = (string) $item->product_id;
+        $this->variantId = $item->product_variant_id ? (string) $item->product_variant_id : '';
         $this->quantity = $remaining > 0 ? (string) $remaining : '';
         $this->resetBatchSelection();
         $this->purchasePrice = $item->unit_price !== null ? (string) $item->unit_price : '';
@@ -220,17 +243,6 @@ class StockIn extends Component
             ? ProductVariant::where('product_id', $this->productId)->orderBy('sort_order')->get(['id', 'sku', 'stock_quantity'])
             : collect();
 
-        $existingBatches = collect();
-        if ($this->productId) {
-            $existingBatches = InventoryBatch::query()
-                ->where('warehouse_id', Warehouse::default()->id)
-                ->where('product_id', $this->productId)
-                ->where('variant_id', $this->variantId ?: null)
-                ->where('status', 'active')
-                ->orderByDesc('id')
-                ->get();
-        }
-
         $stockService = app(StockService::class);
 
         $purchaseOrders = PurchaseOrder::with('supplier')
@@ -240,7 +252,7 @@ class StockIn extends Component
 
         $purchaseOrderItems = collect();
         if ($this->purchaseOrderId !== '') {
-            $purchaseOrderItems = PurchaseOrderItem::with('variant.product')
+            $purchaseOrderItems = PurchaseOrderItem::with('product', 'variant')
                 ->where('purchase_order_id', $this->purchaseOrderId)
                 ->get()
                 ->map(function (PurchaseOrderItem $item) use ($stockService) {
@@ -248,6 +260,17 @@ class StockIn extends Component
                     $item->remaining = max(0, (float) $item->quantity - $item->received_so_far);
                     return $item;
                 });
+        }
+
+        $existingBatches = collect();
+        if ($this->productId) {
+            $existingBatches = InventoryBatch::query()
+                ->where('warehouse_id', Warehouse::default()->id)
+                ->where('product_id', $this->productId)
+                ->where('variant_id', $this->variantId ?: null)
+                ->where('status', 'active')
+                ->orderByDesc('id')
+                ->get();
         }
 
         return view('livewire.admin.inventory.stock-in', [

@@ -2,6 +2,9 @@
 
 namespace App\Livewire\Admin\Purchase;
 
+use App\Concerns\CreatesMasterProfile;
+use App\Enums\Profiles\MasterProfileType;
+use App\Models\MasterProfile;
 use App\Models\Supplier;
 use Illuminate\Support\Str;
 use Livewire\Component;
@@ -9,7 +12,7 @@ use Livewire\WithPagination;
 
 class Suppliers extends Component
 {
-    use WithPagination;
+    use WithPagination, CreatesMasterProfile;
 
     public string $search       = '';
     public string $filterStatus = '';
@@ -18,6 +21,7 @@ class Suppliers extends Component
 
     // create
     public bool   $createModal          = false;
+    public string $newMasterProfileId   = '';
     public string $newCode              = '';
     public string $newName              = '';
     public string $newCompanyName       = '';
@@ -30,6 +34,7 @@ class Suppliers extends Component
     // edit
     public bool   $editModal            = false;
     public ?int   $editingId            = null;
+    public string $editMasterProfileId  = '';
     public string $editCode             = '';
     public string $editName             = '';
     public string $editCompanyName      = '';
@@ -46,7 +51,7 @@ class Suppliers extends Component
     public function openCreateModal(): void
     {
         $this->reset([
-            'newCode', 'newName', 'newCompanyName', 'newEmail', 'newPhone',
+            'newMasterProfileId', 'newCode', 'newName', 'newCompanyName', 'newEmail', 'newPhone',
             'newAlternativePhone', 'newAddress', 'newNotes',
         ]);
         $this->newCode = 'SUP-' . str_pad((string) (Supplier::withTrashed()->max('id') + 1), 4, '0', STR_PAD_LEFT);
@@ -66,7 +71,16 @@ class Suppliers extends Component
             'newAddress'          => 'nullable|string',
         ]);
 
+        $masterProfile = $this->resolveMasterProfile($this->newMasterProfileId ?: null, [
+            'type'         => $this->newCompanyName !== '' ? MasterProfileType::ORGANIZATION->value : MasterProfileType::INDIVIDUAL->value,
+            'display_name' => $this->newCompanyName !== '' ? $this->newCompanyName : $this->newName,
+            'phone'        => $this->newPhone ?: null,
+            'email'        => $this->newEmail ?: null,
+            'notes'        => $this->newAddress ?: null,
+        ]);
+
         $supplier = Supplier::create([
+            'master_profile_id'  => $masterProfile->id,
             'code'               => $this->newCode,
             'name'               => $this->newName,
             'company_name'       => $this->newCompanyName ?: null,
@@ -93,6 +107,7 @@ class Suppliers extends Component
         $supplier = Supplier::findOrFail($id);
 
         $this->editingId            = $supplier->id;
+        $this->editMasterProfileId  = (string) ($supplier->master_profile_id ?? '');
         $this->editCode             = $supplier->code;
         $this->editName             = $supplier->name;
         $this->editCompanyName      = $supplier->company_name ?? '';
@@ -121,7 +136,26 @@ class Suppliers extends Component
             'editStatus'           => 'required|in:active,inactive',
         ]);
 
+        $profileAttributes = [
+            'type'         => $this->editCompanyName !== '' ? MasterProfileType::ORGANIZATION->value : MasterProfileType::INDIVIDUAL->value,
+            'display_name' => $this->editCompanyName !== '' ? $this->editCompanyName : $this->editName,
+            'phone'        => $this->editPhone ?: null,
+            'email'        => $this->editEmail ?: null,
+            'notes'        => $this->editAddress ?: null,
+        ];
+
+        $newProfileId = $this->editMasterProfileId ?: null;
+        $masterProfileId = $supplier->master_profile_id;
+
+        if ($newProfileId && (int) $newProfileId !== $supplier->master_profile_id) {
+            // Admin re-pointed this supplier at a different existing profile.
+            $masterProfileId = (int) $newProfileId;
+        } else {
+            $this->syncMasterProfile($supplier->masterProfile, $profileAttributes);
+        }
+
         $supplier->update([
+            'master_profile_id'  => $masterProfileId,
             'code'               => $this->editCode,
             'name'               => $this->editName,
             'company_name'       => $this->editCompanyName ?: null,
@@ -191,6 +225,13 @@ class Suppliers extends Component
             'totalCount'   => Supplier::count(),
             'activeCount'  => Supplier::where('status', 'active')->count(),
             'dueTotal'     => Supplier::where('balance', '>', 0)->sum('balance'),
+            'masterProfileOptions' => MasterProfile::query()
+                ->where('status', 'active')
+                ->orderBy('display_name')
+                ->get()
+                ->mapWithKeys(fn (MasterProfile $profile) => [
+                    $profile->id => "{$profile->display_name} ({$profile->uuid})",
+                ]),
         ])->layout('layouts.admin.admin');
     }
 }

@@ -1,0 +1,41 @@
+// Navbar links and CTA buttons — split out of the original monolithic app.scss.
+@use '../variables' as *;
+
+.navbar-link {
+    font-weight: 800;
+    font-size: 15px;
+}
+.navbar-link:hover {
+    color: $accent;
+}
+.nav-button {
+    background: $accent;
+    color: #fff;
+}
+.nav-button:hover {
+    color: #fff;
+    background: $accent-hover;
+}
+/* nav end */
+
+.btn-order {
+    background: $accent;
+    color: #fff;
+}
+.btn-order:hover {
+    background: $accent-hover;
+    color: #fff;
+}
+.btn-whatsapp, .btn-tel {
+    color: #fff;
+    background: #283147;
+    font-size: 25px;
+}
+.btn-tel:hover {
+    color: #fff;
+    background: #1b2234;
+}
+.btn-whatsapp:hover {
+    color: #fff;
+    background: #1b2234;
+}

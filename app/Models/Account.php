@@ -17,7 +17,7 @@ class Account extends Model
     protected $fillable = [
         'code', 'name', 'type', 'subtype', 'normal_balance', 'parent_id',
         'is_control_account', 'is_system', 'is_active', 'currency_id',
-        'opening_balance', 'description',
+        'opening_balance', 'description', 'courier_id',
     ];
 
     protected function casts(): array
@@ -45,6 +45,11 @@ class Account extends Model
     public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
+    }
+
+    public function courier(): BelongsTo
+    {
+        return $this->belongsTo(Courier::class);
     }
 
     public function lines(): HasMany
@@ -79,5 +84,24 @@ class Account extends Model
             (float) $totals->total_debit,
             (float) $totals->total_credit,
         );
+    }
+
+    /**
+     * This account's balance() as it should count toward a same-type roll-up
+     * (total income, total assets, total equity). A contra account
+     * (contra_asset, contra_equity, contra_income) deliberately has its
+     * normal_balance flipped relative to its type, so balance() already
+     * returns a positive number in *its own* direction — e.g. Sales Return
+     * (contra_income) shows a positive balance when returns happen. Summed
+     * blindly alongside normal income accounts that positive number reads as
+     * more revenue instead of less, which is exactly backwards; negating it
+     * here is what makes "sum every income-type account" actually net out to
+     * true net income.
+     */
+    public function signedForTypeTotal(): float
+    {
+        $isContra = str_starts_with((string) $this->subtype, 'contra_');
+
+        return $isContra ? -$this->balance() : $this->balance();
     }
 }

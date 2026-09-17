@@ -52,6 +52,12 @@ class AppServiceProvider extends ServiceProvider
         // used bare (no namespace prefix) — matches how the theme's blade views call them.
         Blade::anonymousComponentPath(resource_path('views/ecomx-fashion/components'), null);
 
+        // ecomx-anyniche theme's own components — registered with the
+        // 'anyniche' prefix (not null/bare) so its components don't
+        // collide with ecomx-fashion's same-named ones (e.g. ux-img,
+        // product-card). Its views use <x-anyniche::ux-img> etc.
+        Blade::anonymousComponentPath(resource_path('views/ecomx-anyniche/components'), 'anyniche');
+
         // Registers resources/views/layouts/landingpage/ as an anonymous
         // component path (no prefix — same bare-tag convention as the
         // ecomx-fashion components path above) so <x-landingpage-layout>

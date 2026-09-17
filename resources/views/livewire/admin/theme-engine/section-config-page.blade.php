@@ -60,6 +60,11 @@
                                 class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
                                 + Add Stat
                             </button>
+                        @elseif ($field['type'] === 'icon_list')
+                            <button type="button" wire:click="addIconItem('{{ $field['key'] }}')"
+                                class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
+                                + Add Badge
+                            </button>
                         @endif
                     </div>
 
@@ -80,6 +85,14 @@
                             value="{{ $values[$field['key']] ?? '' }}"
                             onchange="@this.call('updateText', '{{ $field['key'] }}', this.value)"
                             class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-400 focus:ring-indigo-400">
+                    @elseif ($field['type'] === 'checkbox')
+                        <label class="inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                            <input type="checkbox"
+                                {{ ($values[$field['key']] ?? true) ? 'checked' : '' }}
+                                onchange="@this.call('updateCheckbox', '{{ $field['key'] }}', this.checked)"
+                                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-400">
+                            Enabled
+                        </label>
                     @elseif ($field['type'] === 'category_select')
                         <select onchange="@this.call('updateCategorySelect', '{{ $field['key'] }}', this.value)"
                             class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-400 focus:ring-indigo-400">
@@ -217,6 +230,44 @@
                                 @endforeach
                             </div>
                         @endif
+                    @elseif ($field['type'] === 'icon_list')
+                        @if (empty($values[$field['key']] ?? []))
+                            <p class="text-sm text-gray-400">No trust badges added yet.</p>
+                        @else
+                            <div class="icon-list-sortable space-y-3" data-field="{{ $field['key'] }}" wire:ignore.self>
+                                @foreach ($values[$field['key']] as $i => $item)
+                                    <div class="flex items-start gap-2" wire:key="{{ $field['key'] }}-icon-{{ $i }}" data-index="{{ $i }}">
+                                        <span class="icon-list-drag-handle cursor-grab text-gray-300 shrink-0 mt-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" />
+                                            </svg>
+                                        </span>
+                                        <div class="flex-1 space-y-2">
+                                            <select onchange="@this.call('updateIconItem', '{{ $field['key'] }}', {{ $i }}, 'icon', this.value)"
+                                                class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-400 focus:ring-indigo-400">
+                                                @foreach (\App\Livewire\EcomxAnyniche\Sections\Trust::ICONS as $icon)
+                                                    <option value="{{ $icon }}" {{ ($item['icon'] ?? '') === $icon ? 'selected' : '' }}>{{ ucfirst($icon) }}</option>
+                                                @endforeach
+                                            </select>
+                                            <input type="text" placeholder="Title (e.g. Nationwide delivery)"
+                                                value="{{ $item['title'] ?? '' }}"
+                                                onchange="@this.call('updateIconItem', '{{ $field['key'] }}', {{ $i }}, 'title', this.value)"
+                                                class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-400 focus:ring-indigo-400">
+                                            <input type="text" placeholder="Description (e.g. Doorstep delivery across Bangladesh)"
+                                                value="{{ $item['description'] ?? '' }}"
+                                                onchange="@this.call('updateIconItem', '{{ $field['key'] }}', {{ $i }}, 'description', this.value)"
+                                                class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-400 focus:ring-indigo-400">
+                                        </div>
+                                        <button type="button" wire:click="removeIconItem('{{ $field['key'] }}', {{ $i }})"
+                                            class="shrink-0 mt-2 text-red-500 hover:text-red-700 transition">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
                     @endif
                 </div>
             @endforeach
@@ -274,11 +325,27 @@
                     },
                 });
             });
+
+            document.querySelectorAll('.icon-list-sortable').forEach((el) => {
+                if (el.dataset.sortableInit) return;
+                el.dataset.sortableInit = '1';
+
+                new Sortable(el, {
+                    handle: '.icon-list-drag-handle',
+                    animation: 150,
+                    onEnd: () => {
+                        const indexes = Array.from(el.querySelectorAll('[data-index]')).map(row => parseInt(row.dataset.index, 10));
+                        const root = el.closest('[wire\\:id]');
+                        const component = Livewire.find(root.getAttribute('wire:id'));
+                        component.call('reorderIconItems', el.dataset.field, indexes);
+                    },
+                });
+            });
         };
 
         initSortables();
         Livewire.hook('morph.updated', () => {
-            document.querySelectorAll('.text-list-sortable, .faq-list-sortable, .stat-list-sortable').forEach((el) => delete el.dataset.sortableInit);
+            document.querySelectorAll('.text-list-sortable, .faq-list-sortable, .stat-list-sortable, .icon-list-sortable').forEach((el) => delete el.dataset.sortableInit);
             initSortables();
         });
     });

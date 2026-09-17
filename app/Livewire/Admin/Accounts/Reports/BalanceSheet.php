@@ -17,18 +17,24 @@ class BalanceSheet extends Component
 {
     public function render(): mixed
     {
+        // Each row shows balance() (a positive figure in the account's own
+        // terms — e.g. Accumulated Depreciation grows as a positive number
+        // as more depreciation is booked), but the group totals need
+        // signedForTypeTotal() so a contra account (contra_asset,
+        // contra_equity, contra_income) correctly subtracts from its type's
+        // total instead of adding to it — see Account::signedForTypeTotal().
         $assets = Account::where('type', 'asset')->get()->map(fn ($a) => ['account' => $a, 'amount' => $a->balance()]);
         $liabilities = Account::where('type', 'liability')->get()->map(fn ($a) => ['account' => $a, 'amount' => $a->balance()]);
         $equity = Account::where('type', 'equity')->get()->map(fn ($a) => ['account' => $a, 'amount' => $a->balance()]);
 
-        $totalAssets = $assets->sum('amount');
+        $totalAssets = Account::where('type', 'asset')->get()->sum(fn ($a) => $a->signedForTypeTotal());
         $totalLiabilities = $liabilities->sum('amount');
 
-        $incomeTotal = Account::where('type', 'income')->get()->sum(fn ($a) => $a->balance());
-        $expenseTotal = Account::where('type', 'expense')->get()->sum(fn ($a) => $a->balance());
+        $incomeTotal = Account::where('type', 'income')->get()->sum(fn ($a) => $a->signedForTypeTotal());
+        $expenseTotal = Account::where('type', 'expense')->get()->sum(fn ($a) => $a->signedForTypeTotal());
         $currentPeriodProfit = $incomeTotal - $expenseTotal;
 
-        $totalEquity = $equity->sum('amount') + $currentPeriodProfit;
+        $totalEquity = Account::where('type', 'equity')->get()->sum(fn ($a) => $a->signedForTypeTotal()) + $currentPeriodProfit;
 
         return view('livewire.admin.accounts.reports.balance-sheet', [
             'assets'               => $assets,

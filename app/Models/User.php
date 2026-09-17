@@ -40,9 +40,11 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
+        'master_profile_id',
         'name',
         'email',
         'password',
+        'password_set_at',
         'avatar_id',
         'phone',
         'country_code',
@@ -76,6 +78,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'password_set_at' => 'datetime',
             'phone_verified_at' => 'datetime',
             'otp_expires_at' => 'datetime',
             'status' => Status::class,
@@ -84,6 +87,11 @@ class User extends Authenticatable
     public function avatar()
     {
         return $this->belongsTo(File::class, 'avatar_id');
+    }
+
+    public function masterProfile()
+    {
+        return $this->belongsTo(MasterProfile::class);
     }
 
     public function customer()

@@ -2,9 +2,10 @@
 
 namespace App\Livewire\Admin\Purchase;
 
-use App\Exceptions\Inventory\InsufficientStockException;
+use App\Enums\Product\ProductType;
 use App\Models\File;
 use App\Models\InventoryStockMovement;
+use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
@@ -26,14 +27,21 @@ class PurchaseOrderForm extends Component
     public string $deadline    = '';
     public string $notes       = '';
 
-    /** @var array<int, array{variant_id: string, quantity: string, unit_price: string}> */
+    /**
+     * Each item's `variant_id` is a "picker key": "v:{id}" for a specific
+     * ProductVariant (variable products) or "p:{id}" for a simple product,
+     * which has no variant row of its own. Kept as one field (rather than
+     * separate product_id/variant_id inputs) so the existing searchable-
+     * select picker, validation, and save() logic only need to branch on
+     * the prefix instead of tracking two parallel selections per row.
+     *
+     * @var array<int, array{variant_id: string, quantity: string, unit_price: string}>
+     */
     public array $items = [];
-
-    /** @var array<int, string> purchase_order_item_id => quantity to receive */
-    public array $receiveQuantities = [];
 
     public bool $showPriceHistory = false;
     public ?int $priceHistoryVariantId = null;
+    public ?int $priceHistoryProductId = null;
 
     public string $restockSearch = '';
 
@@ -51,7 +59,7 @@ class PurchaseOrderForm extends Component
 
     protected function loadOrder(int $id): void
     {
-        $order = PurchaseOrder::with('items.variant.product')->findOrFail($id);
+        $order = PurchaseOrder::with('items.product', 'items.variant')->findOrFail($id);
 
         $this->editingId  = $order->id;
         $this->orderNumber = $order->order_number;
@@ -62,7 +70,7 @@ class PurchaseOrderForm extends Component
 
         $this->items = $order->items->map(fn ($item) => [
             'id'          => $item->id,
-            'variant_id'  => (string) $item->product_variant_id,
+            'variant_id'  => $item->product_variant_id ? "v:{$item->product_variant_id}" : "p:{$item->product_id}",
             'quantity'    => (string) $item->quantity,
             'unit_price'  => $item->unit_price !== null ? (string) $item->unit_price : '',
         ])->all();
@@ -112,8 +120,38 @@ class PurchaseOrderForm extends Component
             $suggestedQty = max(1, (float) $variant->reorder_level - (float) $variant->stock_quantity);
         }
 
+        $suggestedPrice = app(PurchasePriceHistoryService::class)->suggestedPrice($variant->id);
+
+        $this->addRestockKey("v:{$variant->id}", $suggestedQty, $suggestedPrice);
+    }
+
+    /**
+     * Same as addLowStockItem(), for a simple (variant-less) product from the
+     * quick-add panel — its "reorder" figures live directly on the product's
+     * default-warehouse inventory_stocks row via low_stock_threshold, since
+     * simple products have no reorder_level/reorder_quantity of their own.
+     */
+    public function addLowStockProductItem(int $productId): void
+    {
+        $product = Product::find($productId);
+
+        if (! $product) {
+            return;
+        }
+
+        $threshold = (float) Setting::get('low_stock_threshold', 5, 'inventory');
+        $available = app(StockService::class)->available($product, null);
+        $suggestedQty = max(1, $threshold - $available);
+
+        $suggestedPrice = app(PurchasePriceHistoryService::class)->suggestedPriceForProduct($product->id);
+
+        $this->addRestockKey("p:{$product->id}", $suggestedQty, $suggestedPrice);
+    }
+
+    protected function addRestockKey(string $key, float $suggestedQty, ?float $suggestedPrice): void
+    {
         foreach ($this->items as $index => $item) {
-            if ((string) $item['variant_id'] === (string) $variantId) {
+            if ($item['variant_id'] === $key) {
                 $this->items[$index]['quantity'] = (string) ((float) $item['quantity'] + $suggestedQty);
                 return;
             }
@@ -125,10 +163,8 @@ class PurchaseOrderForm extends Component
             $this->items = [];
         }
 
-        $suggestedPrice = app(PurchasePriceHistoryService::class)->suggestedPrice($variant->id);
-
         $this->items[] = [
-            'variant_id' => (string) $variant->id,
+            'variant_id' => $key,
             'quantity'   => (string) $suggestedQty,
             'unit_price' => $suggestedPrice !== null ? (string) $suggestedPrice : '',
         ];
@@ -136,7 +172,7 @@ class PurchaseOrderForm extends Component
 
     public function updatedItems($value, $key): void
     {
-        // $key looks like "0.variant_id" — only react to the variant picker changing.
+        // $key looks like "0.variant_id" — only react to the picker changing.
         if (! str_ends_with($key, '.variant_id')) {
             return;
         }
@@ -147,19 +183,39 @@ class PurchaseOrderForm extends Component
             return;
         }
 
-        // Switching the variant on a row always refreshes its price to that
-        // variant's suggested price — an admin who wants a custom price types
-        // it after picking the variant, not before.
-        $suggested = app(PurchasePriceHistoryService::class)->suggestedPrice((int) $value);
+        // Switching the product/variant on a row always refreshes its price
+        // to that item's suggested price — an admin who wants a custom price
+        // types it after picking, not before.
+        $suggested = $this->suggestedPriceForKey($value);
 
         if ($suggested !== null) {
             $this->items[$index]['unit_price'] = (string) $suggested;
         }
     }
 
-    public function viewPriceHistory(int $variantId): void
+    protected function suggestedPriceForKey(string $key): ?float
     {
-        $this->priceHistoryVariantId = $variantId;
+        [$type, $id] = explode(':', $key) + [null, null];
+
+        if (! $id) {
+            return null;
+        }
+
+        $service = app(PurchasePriceHistoryService::class);
+
+        return $type === 'v' ? $service->suggestedPrice((int) $id) : $service->suggestedPriceForProduct((int) $id);
+    }
+
+    public function viewPriceHistory(string $key): void
+    {
+        [$type, $id] = explode(':', $key) + [null, null];
+
+        if (! $id) {
+            return;
+        }
+
+        $this->priceHistoryVariantId = $type === 'v' ? (int) $id : null;
+        $this->priceHistoryProductId = $type === 'p' ? (int) $id : null;
         $this->showPriceHistory = true;
     }
 
@@ -167,6 +223,7 @@ class PurchaseOrderForm extends Component
     {
         $this->showPriceHistory = false;
         $this->priceHistoryVariantId = null;
+        $this->priceHistoryProductId = null;
     }
 
     public function getGrandTotalProperty(): float
@@ -184,10 +241,44 @@ class PurchaseOrderForm extends Component
             'orderDate'   => 'nullable|date',
             'deadline'    => 'nullable|date',
             'items'       => 'required|array|min:1',
-            'items.*.variant_id' => 'required|integer|exists:product_variants,id',
+            'items.*.variant_id' => ['required', 'string', function ($attribute, $value, $fail) {
+                if (! $this->resolvePickerKey($value)) {
+                    $fail('Please select a valid product or variant.');
+                }
+            }],
             'items.*.quantity'   => 'required|numeric|min:0.001',
             'items.*.unit_price' => 'nullable|numeric|min:0',
         ];
+    }
+
+    /**
+     * Resolves one item row's "v:{id}"/"p:{id}" picker key into concrete
+     * product_id/product_variant_id values for saving, or null if the key is
+     * malformed or the referenced row no longer exists.
+     *
+     * @return array{product_id: int, product_variant_id: ?int}|null
+     */
+    protected function resolvePickerKey(string $key): ?array
+    {
+        [$type, $id] = explode(':', $key, 2) + [null, null];
+
+        if (! $id || ! ctype_digit($id)) {
+            return null;
+        }
+
+        if ($type === 'v') {
+            $variant = ProductVariant::find((int) $id);
+
+            return $variant ? ['product_id' => $variant->product_id, 'product_variant_id' => $variant->id] : null;
+        }
+
+        if ($type === 'p') {
+            return Product::whereKey((int) $id)->exists()
+                ? ['product_id' => (int) $id, 'product_variant_id' => null]
+                : null;
+        }
+
+        return null;
     }
 
     public function save(): void
@@ -215,11 +306,13 @@ class PurchaseOrderForm extends Component
         $keptItemIds = [];
 
         foreach ($this->items as $item) {
+            $resolved  = $this->resolvePickerKey($item['variant_id']);
             $quantity  = (float) $item['quantity'];
             $unitPrice = $item['unit_price'] !== '' ? (float) $item['unit_price'] : null;
 
             $itemData = [
-                'product_variant_id' => $item['variant_id'],
+                'product_id'         => $resolved['product_id'],
+                'product_variant_id' => $resolved['product_variant_id'],
                 'quantity'           => $quantity,
                 'unit_price'         => $unitPrice,
                 'total_amount'       => $unitPrice !== null ? round($quantity * $unitPrice, 2) : null,
@@ -249,26 +342,6 @@ class PurchaseOrderForm extends Component
         $this->loadOrder($order->id);
     }
 
-    public function receiveItem(int $itemId): void
-    {
-        $item = PurchaseOrderItem::with('variant.product', 'purchaseOrder')->findOrFail($itemId);
-        $quantity = (float) ($this->receiveQuantities[$itemId] ?? 0);
-
-        if ($quantity <= 0) {
-            return;
-        }
-
-        try {
-            app(StockService::class)->receivePurchaseOrderItem($item, $quantity);
-        } catch (InsufficientStockException $e) {
-            $this->addError("receiveQuantities.{$itemId}", $e->getMessage());
-            return;
-        }
-
-        unset($this->receiveQuantities[$itemId]);
-        $this->dispatch('toast', ['type' => 'success', 'message' => 'Item received']);
-    }
-
     public function render(): mixed
     {
         $variants = ProductVariant::with('product', 'values.productAttributeValue.attributeValue', 'media')->get();
@@ -277,10 +350,24 @@ class PurchaseOrderForm extends Component
             $labels = $variant->values->map(fn($v) => $v->productAttributeValue->attributeValue->value)->implode(' / ');
             $label = trim(($variant->product->name ?? 'Unknown product') . ($labels ? " ({$labels})" : '') . " [{$variant->sku}]");
 
-            return [$variant->id => $label];
+            return ["v:{$variant->id}" => $label];
         });
 
-        $variantImages = $this->resolveVariantImages($variants);
+        // Simple products have no ProductVariant row, so they need their own
+        // picker options ("p:{id}") alongside variants — otherwise a simple
+        // product could never be ordered on a PO at all.
+        $simpleProducts = Product::where('product_type', ProductType::SIMPLE->value)
+            ->whereDoesntHave('variants')
+            ->get(['id', 'name', 'code', 'featured_image_id']);
+
+        $productOptions = $simpleProducts->mapWithKeys(
+            fn (Product $product) => ["p:{$product->id}" => trim("{$product->name} [{$product->code}]")]
+        );
+
+        $variantOptions = $variantOptions->union($productOptions);
+
+        $variantImages = $this->resolveVariantImages($variants)
+            ->union($this->resolveProductImages($simpleProducts));
 
         $receivingItems = collect();
         $order = null;
@@ -289,7 +376,7 @@ class PurchaseOrderForm extends Component
             $order = PurchaseOrder::findOrFail($this->editingId);
             $stockService = app(StockService::class);
 
-            $receivingItems = PurchaseOrderItem::with('variant.product')
+            $receivingItems = PurchaseOrderItem::with('product', 'variant')
                 ->where('purchase_order_id', $this->editingId)
                 ->get();
 
@@ -306,11 +393,19 @@ class PurchaseOrderForm extends Component
         $priceHistory = collect();
         $priceHistorySummary = null;
         $priceHistoryVariant = null;
+        $priceHistoryProduct = null;
 
-        if ($this->showPriceHistory && $this->priceHistoryVariantId) {
-            $priceHistoryVariant = ProductVariant::with('product')->find($this->priceHistoryVariantId);
+        if ($this->showPriceHistory) {
             $service = app(PurchasePriceHistoryService::class);
-            $priceHistory = $service->forVariant($this->priceHistoryVariantId);
+
+            if ($this->priceHistoryVariantId) {
+                $priceHistoryVariant = ProductVariant::with('product')->find($this->priceHistoryVariantId);
+                $priceHistory = $service->forVariant($this->priceHistoryVariantId);
+            } elseif ($this->priceHistoryProductId) {
+                $priceHistoryProduct = Product::find($this->priceHistoryProductId);
+                $priceHistory = $service->forProduct($this->priceHistoryProductId);
+            }
+
             $priceHistorySummary = $service->summarize($priceHistory);
         }
 
@@ -328,6 +423,7 @@ class PurchaseOrderForm extends Component
             'priceHistory'        => $priceHistory,
             'priceHistorySummary' => $priceHistorySummary,
             'priceHistoryVariant' => $priceHistoryVariant,
+            'priceHistoryProduct' => $priceHistoryProduct,
         ])->layout('layouts.admin.admin');
     }
 
@@ -350,12 +446,48 @@ class PurchaseOrderForm extends Component
             ->orderBy('stock_quantity')
             ->get();
 
-        return $variants->groupBy('product_id')->map(function ($groupVariants) {
+        $variantGroups = $variants->groupBy('product_id')->map(function ($groupVariants) {
             return [
                 'product' => $groupVariants->first()->product,
-                'variants' => $groupVariants,
+                'variants' => $groupVariants->map(fn (ProductVariant $variant) => (object) [
+                    'key' => "v:{$variant->id}",
+                    'sku' => $variant->sku,
+                    'stock_quantity' => (float) $variant->stock_quantity,
+                ]),
             ];
         })->filter(fn ($group) => $group['product'] !== null)->values();
+
+        // Simple products have no variant row to carry stock_quantity/
+        // reorder_level, so their own inventory_stocks balance (default
+        // warehouse) is compared against the store-wide threshold instead —
+        // mirrors app/Livewire/Admin/Inventory/StockList.php's simple-product rows.
+        $stockService = app(StockService::class);
+
+        $simpleProductGroups = Product::where('product_type', ProductType::SIMPLE->value)
+            ->whereDoesntHave('variants')
+            ->get(['id', 'name', 'code'])
+            ->map(function (Product $product) use ($stockService, $threshold) {
+                $available = $stockService->available($product, null);
+
+                if ($available > $threshold) {
+                    return null;
+                }
+
+                return [
+                    'product' => $product,
+                    'variants' => collect([(object) [
+                        'key' => "p:{$product->id}",
+                        'sku' => $product->code,
+                        'stock_quantity' => $available,
+                    ]]),
+                ];
+            })
+            ->filter()
+            ->values();
+
+        return $variantGroups->concat($simpleProductGroups)
+            ->sortBy(fn ($group) => $group['variants']->min('stock_quantity'))
+            ->values();
     }
 
     /**
@@ -399,7 +531,7 @@ class PurchaseOrderForm extends Component
 
                 $variants = $productMatches
                     ? $group['variants']
-                    : $group['variants']->filter(fn (ProductVariant $variant) => str_contains(strtolower($variant->sku ?? ''), strtolower($search)));
+                    : $group['variants']->filter(fn ($variant) => str_contains(strtolower($variant->sku ?? ''), strtolower($search)));
 
                 return ['product' => $group['product'], 'variants' => $variants->values()];
             })
@@ -436,7 +568,30 @@ class PurchaseOrderForm extends Component
             $primaryMedia = $variant->media->firstWhere('is_primary', true) ?? $variant->media->first();
             $fileId = $primaryMedia?->media_id ?? $variant->product?->featured_image_id;
 
-            return [$variant->id => $fileId ? $urlsByFileId->get($fileId) : null];
+            return ["v:{$variant->id}" => $fileId ? $urlsByFileId->get($fileId) : null];
+        })->filter();
+    }
+
+    /**
+     * Same idea as resolveVariantImages(), for simple products (no variant
+     * of their own) — just each product's own featured image, keyed by its
+     * "p:{id}" picker key. $products must already carry featured_image_id.
+     */
+    protected function resolveProductImages(Collection $products): Collection
+    {
+        $fileIds = $products->pluck('featured_image_id')->filter()->unique()->values();
+
+        $urlsByFileId = File::with('items')
+            ->whereIn('id', $fileIds)
+            ->get()
+            ->mapWithKeys(function (File $file) {
+                $item = $file->items->firstWhere('type', 'original');
+                return [$file->id => $item ? asset('storage/' . $item->path) : null];
+            })
+            ->filter();
+
+        return $products->mapWithKeys(function (Product $product) use ($urlsByFileId) {
+            return ["p:{$product->id}" => $product->featured_image_id ? $urlsByFileId->get($product->featured_image_id) : null];
         })->filter();
     }
 }

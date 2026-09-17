@@ -1,0 +1,75 @@
+@use 'variables' as *;
+
+// =============================================================================
+// Legal / policy article pages (privacy policy, terms, etc.)
+// =============================================================================
+
+.jtc-legal {
+  @include container;
+  padding-top: 28px;
+  padding-bottom: 60px;
+
+  &__hero {
+    max-width: 720px;
+    margin: 0 auto 36px;
+    h1 { font-family: $font-display; font-weight: 600; font-size: clamp(1.6rem, 2.8vw, 2.1rem); margin: 0 0 8px; color: $ink; }
+    p { font-size: 0.94rem; color: $ink-soft; line-height: 1.65; margin: 0; }
+  }
+
+  &__updated {
+    font-size: 0.8rem !important;
+    color: $muted !important;
+    margin: 0 0 14px !important;
+  }
+
+  &__layout {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+  }
+}
+
+.jtc-legal__toc {
+  width: 230px;
+  flex: none;
+  position: sticky;
+  top: 86px;
+
+  &-label { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: $muted-2; font-weight: 700; margin-bottom: 10px; }
+
+  ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  a {
+    display: block;
+    padding: 7px 10px;
+    border-radius: $radius;
+    font-size: 0.84rem;
+    color: $ink-soft;
+    text-decoration: none;
+    &:hover { background: $surface-2; color: $ink; }
+  }
+}
+
+.jtc-legal__body {
+  flex: 1;
+  min-width: 0;
+
+  section { margin-bottom: 34px; &:last-child { margin-bottom: 0; } }
+
+  h2 { font-family: $font-display; font-weight: 600; font-size: 1.2rem; color: $ink; margin: 0 0 12px; scroll-margin-top: 96px; }
+  h3 { font-family: $font-display; font-weight: 600; font-size: 0.98rem; color: $ink; margin: 18px 0 8px; }
+  p { font-size: 0.9rem; color: $ink-soft; line-height: 1.7; margin: 0 0 12px; }
+  ul { margin: 0 0 12px; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+  li { font-size: 0.9rem; color: $ink-soft; line-height: 1.65; }
+  strong { color: $ink; }
+  a { color: $blue; font-weight: 600; text-decoration: none; &:hover { text-decoration: underline; } }
+}
+
+@media (max-width: $bp-tablet) {
+  .jtc-legal__toc { display: none; }
+}
+
+@media (max-width: 600px) {
+  .jtc-legal { padding-top: 18px; }
+}

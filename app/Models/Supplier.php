@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -12,7 +13,7 @@ class Supplier extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'code', 'name', 'company_name', 'email', 'phone', 'alternative_phone',
+        'master_profile_id', 'code', 'name', 'company_name', 'email', 'phone', 'alternative_phone',
         'address', 'balance', 'status', 'notes',
     ];
 
@@ -21,6 +22,11 @@ class Supplier extends Model
         return [
             'balance' => 'decimal:2',
         ];
+    }
+
+    public function masterProfile(): BelongsTo
+    {
+        return $this->belongsTo(MasterProfile::class);
     }
 
     public function invoices(): HasMany

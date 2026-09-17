@@ -2,12 +2,15 @@
 
 namespace App\Livewire\Admin\ThemeEngine;
 
-use App\Support\EcomxFashion\PageRegistry;
-use App\Support\EcomxFashion\PageSeoRegistry;
-use App\Support\EcomxFashion\PageSectionRegistry;
-use App\Support\EcomxFashion\PageSettingsRegistry;
+use App\Support\EcomxFashion\ThemeRegistry;
 use Livewire\Component;
 
+/**
+ * Theme-agnostic: PageRegistry/PageSeoRegistry/PageSectionRegistry/
+ * PageSettingsRegistry live one-per-theme under App\Support\{ThemeNamespace}\*,
+ * so this resolves the active theme's classes by name (via
+ * ThemeRegistry::active()) rather than hardcoding a single theme's import.
+ */
 class PageSectionManager extends Component
 {
     public string $page = 'home';
@@ -17,11 +20,37 @@ class PageSectionManager extends Component
     public string $metaDescription = '';
     public string $ogImage = '';
 
+    /** Studly-cased theme namespace, e.g. 'ecomx-anyniche' -> 'EcomxAnyniche'. */
+    protected static function themeNamespace(): string
+    {
+        return str_replace(' ', '', ucwords(str_replace('-', ' ', ThemeRegistry::active())));
+    }
+
+    protected static function pageRegistry(): string
+    {
+        return 'App\\Support\\' . static::themeNamespace() . '\\PageRegistry';
+    }
+
+    protected static function pageSeoRegistry(): string
+    {
+        return 'App\\Support\\' . static::themeNamespace() . '\\PageSeoRegistry';
+    }
+
+    protected static function pageSectionRegistry(): string
+    {
+        return 'App\\Support\\' . static::themeNamespace() . '\\PageSectionRegistry';
+    }
+
+    protected static function pageSettingsRegistry(): string
+    {
+        return 'App\\Support\\' . static::themeNamespace() . '\\PageSettingsRegistry';
+    }
+
     public function mount(string $page = 'home'): void
     {
         $this->page = $page;
 
-        $seo = PageSeoRegistry::forPage($this->page);
+        $seo = static::pageSeoRegistry()::forPage($this->page);
         $this->metaTitle = $seo['meta_title'];
         $this->metaDescription = $seo['meta_description'];
         $this->ogImage = $seo['og_image'];
@@ -34,7 +63,7 @@ class PageSectionManager extends Component
 
     public function saveSeo(): void
     {
-        PageSeoRegistry::save($this->page, [
+        static::pageSeoRegistry()::save($this->page, [
             'meta_title' => $this->metaTitle,
             'meta_description' => $this->metaDescription,
             'og_image' => $this->ogImage,
@@ -48,7 +77,7 @@ class PageSectionManager extends Component
 
     public function togglePublished(bool $value): void
     {
-        PageSettingsRegistry::setPublished($this->page, $value);
+        static::pageSettingsRegistry()::setPublished($this->page, $value);
 
         $this->dispatch('toast', [
             'type' => 'success',
@@ -58,7 +87,7 @@ class PageSectionManager extends Component
 
     public function toggleActive(string $key, bool $value): void
     {
-        PageSectionRegistry::setActive($this->page, $key, $value);
+        static::pageSectionRegistry()::setActive($this->page, $key, $value);
 
         $this->dispatch('toast', [
             'type' => 'success',
@@ -69,7 +98,7 @@ class PageSectionManager extends Component
     /** @param string[] $orderedKeys */
     public function reorder(array $orderedKeys): void
     {
-        PageSectionRegistry::reorder($this->page, $orderedKeys);
+        static::pageSectionRegistry()::reorder($this->page, $orderedKeys);
 
         $this->dispatch('toast', [
             'type' => 'success',
@@ -79,10 +108,10 @@ class PageSectionManager extends Component
 
     public function render()
     {
-        $sections = PageSectionRegistry::forPage($this->page);
+        $sections = static::pageSectionRegistry()::forPage($this->page);
 
         if (empty($sections)) {
-            $configuredKeys = PageRegistry::sectionKeysForPage($this->page);
+            $configuredKeys = static::pageRegistry()::sectionKeysForPage($this->page);
 
             $sections = array_map(fn (int $order, string $key) => [
                 'key' => $key,
@@ -93,7 +122,7 @@ class PageSectionManager extends Component
 
         return view('livewire.admin.theme-engine.page-section-manager', [
             'sections' => $sections,
-            'published' => PageSettingsRegistry::isPublished($this->page),
+            'published' => static::pageSettingsRegistry()::isPublished($this->page),
         ]);
     }
 }

@@ -36,6 +36,22 @@ class ProfitAndLoss extends Component
         return $account->normal_balance->signedDelta((float) $totals->total_debit, (float) $totals->total_credit);
     }
 
+    /**
+     * accountTotal() as it should count toward the income/expense group
+     * total — a contra-income account like Sales Return deliberately has
+     * normal_balance flipped relative to "income", so its own positive
+     * accountTotal() needs negating here or it reads as extra revenue
+     * instead of a reduction. Mirrors Account::signedForTypeTotal(), just
+     * over this report's own date-ranged total instead of balance().
+     */
+    protected function signedAccountTotal(Account $account): float
+    {
+        $isContra = str_starts_with((string) $account->subtype, 'contra_');
+        $total = $this->accountTotal($account);
+
+        return $isContra ? -$total : $total;
+    }
+
     public function render(): mixed
     {
         $incomeAccounts = Account::where('type', 'income')->get();
@@ -44,8 +60,8 @@ class ProfitAndLoss extends Component
         $income = $incomeAccounts->map(fn ($a) => ['account' => $a, 'amount' => $this->accountTotal($a)]);
         $expenses = $expenseAccounts->map(fn ($a) => ['account' => $a, 'amount' => $this->accountTotal($a)]);
 
-        $totalIncome = $income->sum('amount');
-        $totalExpenses = $expenses->sum('amount');
+        $totalIncome = $incomeAccounts->sum(fn ($a) => $this->signedAccountTotal($a));
+        $totalExpenses = $expenseAccounts->sum(fn ($a) => $this->signedAccountTotal($a));
 
         return view('livewire.admin.accounts.reports.profit-and-loss', [
             'income'         => $income,

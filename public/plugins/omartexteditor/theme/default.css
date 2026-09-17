@@ -1,0 +1,818 @@
+.omar-text-editor-content {
+  min-height: 200px;
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  padding: 12px;
+  font-family: -apple-system, Segoe UI, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  outline: none;
+}
+
+/* Contains floated children (e.g. left/right-aligned images) so the
+   container's height grows to include them — the standard clearfix, used
+   instead of `overflow: auto` because that would also clip absolutely
+   positioned table resize handles/selection strips that legitimately sit
+   just outside the content box's own edge. */
+.omar-text-editor-content::after {
+  content: '';
+  display: table;
+  clear: both;
+}
+
+/* When a status bar follows, the content area's bottom corners are square
+   (the status bar owns the rounded bottom edge instead). */
+.omar-text-editor-content:has(+ .omar-text-editor-statusbar) {
+  border-bottom: none;
+  border-radius: 0;
+}
+
+.omar-text-editor-content:focus {
+  border-color: #4a90d9;
+  box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
+}
+
+/* Menu bar */
+
+.omar-text-editor-menubar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+  border: 1px solid #ccc;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  background: #fff;
+  font-size: 13px;
+}
+
+.omar-text-editor-menubar-label {
+  padding: 5px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 3px;
+  color: #333;
+  cursor: pointer;
+}
+
+.omar-text-editor-menubar-label:hover {
+  background: #e8eaed;
+}
+
+.omar-text-editor-menubar-dropdown {
+  min-width: 200px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 4px;
+  font-family: -apple-system, Segoe UI, sans-serif;
+}
+
+.omar-text-editor-menubar-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 3px;
+  color: #222;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.omar-text-editor-menubar-item:hover {
+  background: #e8eaed;
+}
+
+.omar-text-editor-menubar-item.is-active {
+  background: #d7e6fa;
+  color: #205a9f;
+}
+
+.omar-text-editor-menubar-item.has-submenu::after {
+  content: '›';
+  margin-left: 12px;
+  color: #999;
+}
+
+.omar-text-editor-menubar-separator {
+  height: 1px;
+  margin: 4px 2px;
+  background: #eee;
+}
+
+/* Toolbar */
+
+.omar-text-editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px 4px 0 0;
+  background: #f6f7f9;
+}
+
+.omar-text-editor-menubar + .omar-text-editor-toolbar {
+  border-radius: 0;
+}
+
+.omar-text-editor-toolbar-group {
+  display: flex;
+  gap: 2px;
+}
+
+.omar-text-editor-toolbar-divider {
+  width: 1px;
+  align-self: stretch;
+  margin: 2px 4px;
+  background: #d8dbe0;
+}
+
+.omar-text-editor-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  color: #333;
+  cursor: pointer;
+}
+
+.omar-text-editor-toolbar-btn:hover {
+  background: #e8eaed;
+}
+
+.omar-text-editor-toolbar-btn.is-active {
+  background: #d7e6fa;
+  border-color: #a9c9f0;
+  color: #205a9f;
+}
+
+.omar-text-editor-toolbar-select {
+  height: 30px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  color: #333;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.omar-text-editor-toolbar-select:hover {
+  background: #e8eaed;
+}
+
+/* Image resize handle */
+
+.omar-text-editor-img-resize-handle {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  background: #4a90d9;
+  border: 1px solid #fff;
+  border-radius: 2px;
+  cursor: nwse-resize;
+  z-index: 900;
+}
+
+/* Media (video/audio/embed) resize handle */
+
+.omar-text-editor-media-resize-handle {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  background: #4a90d9;
+  border: 1px solid #fff;
+  border-radius: 2px;
+  cursor: nwse-resize;
+  z-index: 900;
+}
+
+.omar-text-editor-media-menu-button {
+  position: fixed;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 901;
+}
+
+.omar-text-editor-media-menu-button:hover {
+  background: #4a90d9;
+  border-color: #4a90d9;
+}
+
+/* Grid picker */
+
+.omar-text-editor-grid-picker {
+  position: fixed;
+  z-index: 1000;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+}
+
+.omar-text-editor-grid-picker-grid {
+  display: grid;
+  gap: 2px;
+}
+
+.omar-text-editor-grid-picker-cell {
+  width: 18px;
+  height: 18px;
+  border: 1px solid #ccc;
+  background: #f9f9f9;
+}
+
+.omar-text-editor-grid-picker-cell.is-active {
+  background: #cfe3fa;
+  border-color: #4a90d9;
+}
+
+.omar-text-editor-grid-picker-label {
+  margin-top: 6px;
+  text-align: center;
+  font-size: 12px;
+  color: #555;
+}
+
+.omar-text-editor-color-picker {
+  position: fixed;
+  z-index: 1000;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+  width: 176px;
+}
+
+.omar-text-editor-color-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+}
+
+.omar-text-editor-color-picker-swatch {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.omar-text-editor-color-picker-swatch:hover {
+  outline: 2px solid #4a90d9;
+  outline-offset: 1px;
+}
+
+.omar-text-editor-color-picker-custom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #333;
+  cursor: pointer;
+}
+
+.omar-text-editor-color-picker-custom input[type="color"] {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.omar-text-editor-color-picker-clear {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px 0;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  background: #f6f7f9;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.omar-text-editor-color-picker-clear:hover {
+  background: #e8eaed;
+}
+
+/* Status bar */
+
+.omar-text-editor-statusbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 10px;
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  background: #f6f7f9;
+  font-size: 12px;
+  color: #666;
+}
+
+.omar-text-editor-statusbar-branding {
+  margin-left: auto;
+  color: #999;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.omar-text-editor-statusbar-branding:hover {
+  color: #4a90d9;
+  text-decoration: underline;
+}
+
+.omar-text-editor-statusbar-segment:has(.omar-text-editor-statusbar-path-item) {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.omar-text-editor-statusbar-path-item {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 12px;
+  color: #4a90d9;
+  cursor: pointer;
+}
+
+.omar-text-editor-statusbar-path-item:hover {
+  text-decoration: underline;
+}
+
+/* Onboarding tour */
+
+.omar-text-editor-tour-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 1200;
+}
+
+.omar-text-editor-tour-highlight {
+  position: relative;
+  z-index: 1201;
+  outline: 2px solid #4a90d9;
+  outline-offset: 2px;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.omar-text-editor-tour-callout {
+  position: fixed;
+  z-index: 1202;
+  width: 260px;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  padding: 14px 16px;
+  font-family: -apple-system, Segoe UI, sans-serif;
+}
+
+.omar-text-editor-tour-title {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.omar-text-editor-tour-body {
+  font-size: 13px;
+  color: #444;
+  margin-bottom: 10px;
+}
+
+.omar-text-editor-tour-progress {
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 10px;
+}
+
+.omar-text-editor-tour-controls {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.omar-text-editor-tour-controls button {
+  padding: 5px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.omar-text-editor-tour-primary {
+  background: #4a90d9 !important;
+  border-color: #4a90d9 !important;
+  color: #fff;
+}
+
+/* Table column resize handle */
+
+.omar-text-editor-col-resize-handle {
+  position: absolute;
+  top: 0;
+  width: 6px;
+  cursor: col-resize;
+  /* Above the row-resize handle (below): a row handle spans the table's
+     full width, so without this a horizontal row border would swallow
+     clicks meant for any column border it crosses. */
+  z-index: 6;
+}
+
+/* Table row resize handle */
+
+.omar-text-editor-row-resize-handle {
+  position: absolute;
+  left: 0;
+  height: 6px;
+  cursor: row-resize;
+  z-index: 5;
+}
+
+/* Whole-table select + resize */
+
+.omar-text-editor-table-selected {
+  outline: 2px solid #4a90d9;
+  outline-offset: 1px;
+}
+
+.omar-text-editor-table-resize-handle {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  background: #4a90d9;
+  border: 1px solid #fff;
+  border-radius: 2px;
+  cursor: nwse-resize;
+  z-index: 900;
+}
+
+.omar-text-editor-table-move-handle {
+  position: fixed;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #4a90d9;
+  color: #fff;
+  border: 1px solid #fff;
+  border-radius: 3px;
+  cursor: grab;
+  z-index: 900;
+}
+
+.omar-text-editor-table-move-handle:active {
+  cursor: grabbing;
+}
+
+/* Multi-cell selection highlight */
+
+.omar-text-editor-cell-selected {
+  position: relative;
+}
+
+.omar-text-editor-cell-selected::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(74, 144, 217, 0.15);
+  pointer-events: none;
+}
+
+/* Column/row header select strips */
+
+.omar-text-editor-col-select-strip,
+.omar-text-editor-row-select-strip {
+  position: absolute;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  z-index: 6;
+  cursor: pointer;
+}
+
+.omar-text-editor-col-select-strip {
+  height: 8px;
+}
+
+.omar-text-editor-col-select-strip:hover,
+.omar-text-editor-row-select-strip:hover {
+  background: #4a90d9;
+  border-color: #4a90d9;
+}
+
+.omar-text-editor-row-select-strip {
+  width: 8px;
+}
+
+/* Dialog */
+
+.omar-text-editor-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.omar-text-editor-dialog {
+  background: #fff;
+  border-radius: 6px;
+  width: 420px;
+  max-width: 90vw;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  font-family: -apple-system, Segoe UI, sans-serif;
+}
+
+.omar-text-editor-dialog-header {
+  flex: none;
+  padding: 14px 18px;
+  font-weight: 600;
+  border-bottom: 1px solid #eee;
+}
+
+.omar-text-editor-dialog-body {
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.omar-text-editor-dialog-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: #444;
+}
+
+.omar-text-editor-dialog-note {
+  margin: -4px 0 0;
+  padding: 8px 10px;
+  border-radius: 4px;
+  background: #f6f7f9;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #555;
+}
+
+.omar-text-editor-dialog-field input[type="text"],
+.omar-text-editor-dialog-field select,
+.omar-text-editor-dialog-field textarea {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.omar-text-editor-dialog-field textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.omar-text-editor-dialog-field input[type="checkbox"] {
+  align-self: flex-start;
+}
+
+.omar-text-editor-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.omar-text-editor-dialog-footer button {
+  padding: 6px 14px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+}
+
+.omar-text-editor-dialog-primary {
+  background: #4a90d9 !important;
+  border-color: #4a90d9 !important;
+  color: #fff;
+}
+
+/* Picker dialog (emoticons, charmap) */
+
+.omar-text-editor-picker-dialog {
+  width: 360px;
+}
+
+.omar-text-editor-picker-search {
+  margin: 0 18px;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.omar-text-editor-picker-body {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  padding: 12px 18px 18px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.omar-text-editor-picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  border: none;
+  background: none;
+  border-radius: 4px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.omar-text-editor-picker-item:hover {
+  background: #f0f2f5;
+}
+
+.omar-text-editor-picker-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #888;
+  font-size: 13px;
+  padding: 12px 0;
+}
+
+.omar-text-editor-picker-heading {
+  grid-column: 1 / -1;
+  text-align: left;
+  padding: 4px 0;
+  font-size: 12px;
+  color: #888;
+}
+
+/* Search & replace dialog */
+
+.omar-text-editor-searchreplace-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 18px 18px;
+}
+
+.omar-text-editor-searchreplace-input {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.omar-text-editor-searchreplace-options {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: #444;
+}
+
+.omar-text-editor-searchreplace-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.omar-text-editor-searchreplace-buttons button {
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.omar-text-editor-searchreplace-buttons button:hover {
+  background: #f0f2f5;
+}
+
+.omar-text-editor-searchreplace-status {
+  font-size: 12px;
+  color: #666;
+}
+
+/* Context menu */
+
+.omar-text-editor-context-menu {
+  position: fixed;
+  z-index: 1000;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 4px;
+  min-width: 160px;
+  font-family: -apple-system, Segoe UI, sans-serif;
+  font-size: 13px;
+}
+
+.omar-text-editor-context-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 10px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.omar-text-editor-context-menu-item:hover {
+  background: #f0f2f5;
+}
+
+.omar-text-editor-context-menu-separator {
+  height: 1px;
+  margin: 4px 2px;
+  background: #eee;
+}
+
+/* Notifications */
+
+.omar-text-editor-notification-container {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.omar-text-editor-notification {
+  position: relative;
+  padding: 10px 32px 10px 14px;
+  border-radius: 4px;
+  font-family: -apple-system, Segoe UI, sans-serif;
+  font-size: 13px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+}
+
+.omar-text-editor-notification-info { background: #eaf2fc; color: #1c4c85; }
+.omar-text-editor-notification-success { background: #e8f7ee; color: #1e6b3a; }
+.omar-text-editor-notification-error { background: #fdeceb; color: #a3271d; }
+
+.omar-text-editor-notification-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  color: inherit;
+  opacity: 0.6;
+}
+
+.omar-text-editor-notification-close:hover {
+  opacity: 1;
+}

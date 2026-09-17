@@ -111,6 +111,31 @@
                 visibleClass: 'block sm:absolute -top-7 sm:border border-gray-800 left-5 sm:text-sm sm:bg-gray-900 sm:px-2 sm:py-1 sm:rounded-md'
             }))
 
+            // Rich text editor (omar-text-editor) — wraps its textarea in
+            // wire:ignore so Livewire's own re-renders never touch the
+            // editor's DOM; the editor syncs back to the textarea via native
+            // input/change events, which is what wire:model actually listens to.
+            Alpine.data('omarTextEditor', (options = {}) => ({
+                editor: null,
+                init(el) {
+                    const textarea = el.querySelector('textarea');
+                    if (!textarea) return;
+
+                    this.editor = window.OmarTextEditor.init({
+                        selector: `#${this.ensureId(textarea)}`,
+                        toolbar: options.toolbar ?? 'undo redo | blockformat | bold italic underline | link image table',
+                        plugins: options.plugins ?? ['link', 'image', 'table'],
+                        menubar: options.menubar ?? false,
+                    });
+
+                    el.addEventListener('alpine:destroy', () => this.editor?.destroy(), { once: true });
+                },
+                ensureId(textarea) {
+                    if (!textarea.id) textarea.id = 'omar-' + Math.random().toString(36).slice(2, 9);
+                    return textarea.id;
+                },
+            }))
+
         })
     </script>
     @livewire('admin.file.media-picker')

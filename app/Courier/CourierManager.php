@@ -190,6 +190,7 @@ class CourierManager extends Manager
             'status' => $response->status->value,
             'response_payload' => json_encode($response->rawResponse),
             'error_message' => $response->success ? null : $response->errorMessage,
+            'delivery_charge' => $response->deliveryFee,
         ]);
 
         if ($response->success) {
@@ -200,14 +201,26 @@ class CourierManager extends Manager
                 'raw_data' => json_encode($response->rawResponse),
             ]);
 
+            // The order's own courier_charge is the total cost of shipping
+            // this order — the courier's delivery fee plus the COD
+            // collection fee they charge on the amount collected, at that
+            // courier's own rate (Courier::cod_fee_rate, set in Courier
+            // Settings) — not just delivery_fee alone, since both are real
+            // costs incurred by booking this shipment.
+            $codFee = round((float) $shipment->cod_amount * ((float) $courier->cod_fee_rate / 100), 2);
+            $totalCourierCharge = round((float) ($response->deliveryFee ?? 0) + $codFee, 2);
+
             $order->forceFill([
                 'courier_provider' => $courierKey,
                 'courier_tracking_number' => $response->trackingNumber,
                 'courier_status' => $response->status,
+                'courier_charge' => $totalCourierCharge,
                 'courier_meta' => array_merge($order->courier_meta ?? [], [
                     'shipment_id' => $response->shipmentId,
                     'consignment_id' => $response->consignmentId,
                     'courier_shipment_id' => $shipment->id,
+                    'delivery_fee' => $response->deliveryFee,
+                    'cod_fee' => $codFee,
                 ]),
                 'courier_status_updated_at' => now(),
             ])->save();

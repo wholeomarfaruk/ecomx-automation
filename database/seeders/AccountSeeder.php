@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Account;
+use App\Models\Courier;
 use App\Models\Currency;
 use Illuminate\Database\Seeder;
 
@@ -25,6 +26,7 @@ class AccountSeeder extends Seeder
             ['code' => '1020', 'name' => 'Bank',                       'type' => 'asset',     'subtype' => 'bank'],
             ['code' => '1030', 'name' => 'Mobile Banking',             'type' => 'asset',     'subtype' => 'mobile_banking'],
             ['code' => '1040', 'name' => 'Dollar Card',                'type' => 'asset',     'subtype' => 'bank', 'currency_id' => $dollarCurrencyId],
+            ['code' => '1045', 'name' => 'Courier Cash',                'type' => 'asset',     'subtype' => 'courier', 'is_control_account' => true],
             ['code' => '1050', 'name' => 'Courier COD Receivable',     'type' => 'asset',     'subtype' => 'receivable', 'is_control_account' => true],
             ['code' => '1060', 'name' => 'Gateway Receivable',         'type' => 'asset',     'subtype' => 'receivable', 'is_control_account' => true],
             ['code' => '1100', 'name' => 'Accounts Receivable',        'type' => 'asset',     'subtype' => 'receivable', 'is_control_account' => true],
@@ -36,6 +38,7 @@ class AccountSeeder extends Seeder
             // Liabilities
             ['code' => '2100', 'name' => 'Accounts Payable',            'type' => 'liability', 'subtype' => 'payable', 'is_control_account' => true],
             ['code' => '2150', 'name' => 'Customer Credit',             'type' => 'liability', 'subtype' => 'payable', 'is_control_account' => true],
+            ['code' => '2160', 'name' => 'Customer Advance',            'type' => 'liability', 'subtype' => 'payable', 'is_control_account' => true],
             ['code' => '2200', 'name' => 'Loan Payable',                'type' => 'liability', 'subtype' => 'payable', 'is_control_account' => true],
             ['code' => '2300', 'name' => 'VAT Payable',                 'type' => 'liability', 'subtype' => 'tax'],
 
@@ -47,6 +50,7 @@ class AccountSeeder extends Seeder
 
             // Income
             ['code' => '4000', 'name' => 'Sales',                       'type' => 'income',    'subtype' => null],
+            ['code' => '4050', 'name' => 'Shipping Income',             'type' => 'income',    'subtype' => null],
             ['code' => '4100', 'name' => 'Other Income',                'type' => 'income',    'subtype' => null],
             ['code' => '4200', 'name' => 'Gain on Disposal',            'type' => 'income',    'subtype' => null],
             ['code' => '4900', 'name' => 'Sales Return',                'type' => 'income',    'subtype' => 'contra_income', 'normal_balance' => 'debit'],
@@ -106,6 +110,48 @@ class AccountSeeder extends Seeder
                     'is_active'      => true,
                 ]
             );
+        }
+
+        $this->seedCourierCashAccounts($codeToId['1045']);
+    }
+
+    /**
+     * One "Courier Cash" sub-account per courier (1046, 1047, ...) — tracks
+     * COD money that courier is physically holding after collecting it on
+     * delivery but before remitting it to a real bank account, separately
+     * per courier so their balances (and later settlement via
+     * PostCodSettlement) don't get mixed together under one shared bucket.
+     * Runs after CourierSeeder in DatabaseSeeder, and is safe to re-run —
+     * a courier added later just gets its account created on the next seed.
+     */
+    protected function seedCourierCashAccounts(int $courierCashParentId): void
+    {
+        $nextCode = 1046;
+
+        foreach (Courier::orderBy('sort_order')->get() as $courier) {
+            $account = Account::firstOrNew(['courier_id' => $courier->id]);
+
+            if ($account->exists) {
+                continue;
+            }
+
+            while (Account::where('code', (string) $nextCode)->exists()) {
+                $nextCode++;
+            }
+
+            $account->fill([
+                'code'           => (string) $nextCode,
+                'name'           => $courier->name,
+                'type'           => 'asset',
+                'subtype'        => 'courier',
+                'normal_balance' => 'debit',
+                'parent_id'      => $courierCashParentId,
+                'courier_id'     => $courier->id,
+                'is_system'      => true,
+                'is_active'      => true,
+            ])->save();
+
+            $nextCode++;
         }
     }
 }

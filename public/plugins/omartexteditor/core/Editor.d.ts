@@ -1,0 +1,73 @@
+import { EventBus } from './EventBus';
+import { Commands } from './Commands';
+import { Keymap } from './Keymap';
+import { StatusBar } from '../ui/StatusBar';
+import { MediaResizer } from '../ui/MediaResizer';
+export type PluginSetup = (editor: Editor) => void;
+export interface EditorOptions {
+    selector: string;
+    plugins?: string[];
+    toolbar?: string;
+    onboarding?: boolean;
+    menubar?: boolean;
+}
+export declare function registerPlugin(name: string, setup: PluginSetup): void;
+export declare class Editor {
+    readonly events: EventBus;
+    readonly commands: Commands;
+    private targetEl;
+    private editableEl;
+    private history;
+    private keymap;
+    private toolbar;
+    private statusBar;
+    private menuBar;
+    private mediaResizer;
+    private options;
+    constructor(options: EditorOptions);
+    private mountMenuBar;
+    private loadPlugins;
+    private mountToolbar;
+    private mount;
+    private pushHistory;
+    private bindEvents;
+    private handleStructuralKeydown;
+    private afterStructuralEdit;
+    private fireSelectionChange;
+    private insertFragmentAtCursor;
+    private registerBaseCommands;
+    private syncToTarget;
+    getContent(): string;
+    setContent(html: string): void;
+    execCommand(name: string, value?: string): boolean;
+    isActive(tagPredicate: (el: Element) => boolean): boolean;
+    isInlineFormatActive(canonicalTag: string): boolean;
+    getCurrentBlockFormat(): string | null;
+    getCurrentAlign(): string;
+    getCurrentLineHeight(): string;
+    getCurrentFontFamily(): string;
+    getCurrentFontSize(): string;
+    getBlockSpacing(): {
+        top: string;
+        bottom: string;
+        left: string;
+        right: string;
+    };
+    setBlockSpacing(sides: {
+        top?: string;
+        bottom?: string;
+        left?: string;
+        right?: string;
+    }): boolean;
+    isListActive(listTag: 'ul' | 'ol'): boolean;
+    isBlockquoteActive(): boolean;
+    isLinkActive(): boolean;
+    on(event: string, handler: (payload?: unknown) => void): void;
+    off(event: string, handler: (payload?: unknown) => void): void;
+    destroy(): void;
+    getStatusBar(): StatusBar;
+    getMediaResizer(): MediaResizer;
+    getOptions(): EditorOptions;
+    getKeymap(): Keymap;
+    getEditableElement(): HTMLElement;
+}

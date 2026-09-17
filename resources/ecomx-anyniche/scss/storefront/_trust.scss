@@ -1,0 +1,65 @@
+@use 'variables' as *;
+
+// =============================================================================
+// Trust badges strip (icon + title + description), shown near the top of
+// the homepage — see App\Livewire\EcomxAnyniche\Sections\Trust.
+// =============================================================================
+
+.jtc-trust {
+  background: $surface;
+  border-bottom: 1px solid $line;
+}
+
+.jtc-trust__inner {
+  @include container;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  padding-block: 24px;
+}
+
+.jtc-trust__item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: $ink;
+  }
+  p {
+    margin: 2px 0 0;
+    font-size: 0.82rem;
+    color: $muted;
+  }
+}
+
+.jtc-trust__icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: $radius;
+  background: $blue-light;
+  color: $blue;
+}
+
+@media (max-width: $bp-mobile) {
+  .jtc-trust__inner {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding-block: 16px;
+  }
+  .jtc-trust__item {
+    gap: 10px;
+    p { display: none; }
+  }
+  .jtc-trust__icon {
+    width: 36px;
+    height: 36px;
+  }
+}

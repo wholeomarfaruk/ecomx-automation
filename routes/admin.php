@@ -45,6 +45,7 @@ Route::get('/users/devices/{id}', App\Livewire\Admin\Users\DeviceDetail::class)-
 Route::get('/users/details', App\Livewire\Admin\Users\UserDetail::class)->name('users.show');
 Route::get('/users/blocks', App\Livewire\Admin\Users\BlockList::class)->name('users.blocks');
 Route::get('/users/active', App\Livewire\Admin\Users\ActiveList::class)->name('users.active');
+Route::get('/users/master-profile', App\Livewire\Admin\Users\MasterProfile::class)->name('master-profile');
 
 // Profile and Settings
 Route::get('/profile', App\Livewire\Admin\Profile\Profile::class)->name('profile');
@@ -108,6 +109,10 @@ Route::prefix('accounts')->name('accounts.')->middleware('module:accounts')->gro
         Route::get('/balance-sheet', App\Livewire\Admin\Accounts\Reports\BalanceSheet::class)->name('balance-sheet');
         Route::get('/cash-flow', App\Livewire\Admin\Accounts\Reports\CashFlow::class)->name('cash-flow');
         Route::get('/fees', App\Livewire\Admin\Accounts\Reports\FeeReport::class)->name('fees');
+        Route::get('/orders', App\Livewire\Admin\Accounts\Reports\OrderLedgers::class)->name('order-ledgers');
+        Route::get('/orders/{orderId}/ledger', App\Livewire\Admin\Accounts\Reports\OrderLedger::class)->name('order-ledger');
+        Route::get('/customers', App\Livewire\Admin\Accounts\Reports\CustomerLedgers::class)->name('customer-ledgers');
+        Route::get('/customers/{customerId}/ledger', App\Livewire\Admin\Accounts\Reports\CustomerLedger::class)->name('customer-ledger');
     });
 
     Route::prefix('settings')->name('settings.')->group(function () {

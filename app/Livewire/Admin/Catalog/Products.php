@@ -127,7 +127,7 @@ class Products extends Component
     public function render(): mixed
     {
         $products = Product::query()
-            ->with('brand')
+            ->with('brand', 'variants', 'comboItems.product.variants', 'comboItems.variant')
             ->when($this->search, fn($q) => $q->where(fn($s) => $s
                 ->where('name', 'like', "%{$this->search}%")
                 ->orWhere('slug', 'like', "%{$this->search}%")
