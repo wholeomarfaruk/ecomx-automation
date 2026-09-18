@@ -1,79 +1,89 @@
-// Checkout form / price summary page — split out of the original monolithic
-// app.scss.
+// Checkout form / price summary page — ported from ecomx-fashion's
+// pages/_checkout.scss (same markup/class names — the two themes' checkout
+// views are identical), retargeted at this theme's own $variables.scss
+// (same --pri/--ac/etc. custom properties either way, see base/_palettes.scss).
 @use '../variables' as *;
 
-.order-name {
-    font-size: 15px;
-    font-weight: 600;
-    color: #2e3850;
+.checkout{max-width:$maxw;margin:0 auto;padding:clamp(24px,4vw,40px) $gutter clamp(56px,8vw,96px);}
+.checkout__grid{display:grid;grid-template-columns:1.6fr 1fr;gap:clamp(20px,3vw,36px);align-items:flex-start;
+  @include mobile{grid-template-columns:1fr;}
 }
-.some-heading {
-    font-size: 1.5rem;
-    font-weight: bolder;
-    color: #2e3850;
-    margin-bottom: 1rem;
+
+.checkout__form{background:#fff;border:1px solid rgba(var(--pri-rgb),.07);border-radius:$radius;box-shadow:0 12px 34px rgba(var(--pri-rgb),.05);padding:clamp(20px,3.4vw,30px);
+  @include mobile{order:2;}
 }
-.box label {
-    font-weight: 600;
-    font-size: 13px;
-    color: #54596a;
+
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;
+  @include mobile{grid-template-columns:1fr;}
 }
-.box form input, input::placeholder {
-    font-size: 13px;
+
+.checkout .field textarea,.checkout .field select{width:100%;padding:13px 15px;border:1px solid rgba(var(--pri-rgb),.15);border-radius:$radius-sm;background:var(--sec);font-size:14px;color:var(--pri);outline:none;font-family:$font-body;resize:vertical;}
+.checkout .field select{resize:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%232A100C' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;}
+.checkout .field textarea:focus,.checkout .field select:focus{border-color:var(--ac);}
+.field__error{display:block;font-size:11.5px;color:var(--ac2);margin-top:5px;}
+
+// Saved-address picker (logged-in checkout) — same card language as .pay-option.
+.address-list{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;
+  @include mobile{grid-template-columns:1fr;}
 }
-.order-heading {
-    margin-top: 2px;
-    border-bottom: 2px dashed #8a8b8d;
+.address-card{position:relative;display:flex;gap:12px;align-items:flex-start;border:1.5px solid rgba(var(--pri-rgb),.12);border-radius:$radius-sm;padding:14px 40px 14px 16px;cursor:pointer;transition:border-color .2s,background .2s;background:#fff;}
+.address-card.is-on{border-color:var(--ac);background:var(--ac-soft);}
+.address-card input[type="radio"]{width:18px;height:18px;accent-color:var(--ac);flex:none;margin-top:2px;}
+.address-card__body{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.address-card__head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.address-card__head strong{font-size:13.5px;}
+.address-card__tag{font-size:10.5px;font-weight:600;color:rgba(var(--pri-rgb),.55);background:rgba(var(--pri-rgb),.06);border-radius:999px;padding:2px 8px;}
+.address-card__default{font-size:10.5px;font-weight:700;color:var(--ac2);background:var(--ac-soft);border-radius:999px;padding:2px 8px;}
+.address-card__phone{font-size:12px;color:rgba(var(--pri-rgb),.6);}
+.address-card__text{font-size:12px;color:rgba(var(--pri-rgb),.6);line-height:1.5;}
+.address-card__edit{position:absolute;top:12px;right:14px;background:none;border:none;font-size:11.5px;font-weight:600;color:rgba(var(--pri-rgb),.45);font-family:$font-body;cursor:pointer;padding:2px 4px;}
+.address-card__edit:hover{color:var(--ac2);text-decoration:underline;}
+
+.address-card--add{align-items:center;justify-content:center;flex-direction:column;gap:6px;border-style:dashed;color:rgba(var(--pri-rgb),.55);font-size:12.5px;font-weight:600;font-family:$font-body;min-height:88px;}
+.address-card--add:hover,.address-card--add.is-on{border-color:var(--ac);color:var(--ac2);border-style:solid;}
+.address-card__plus{font-size:22px;line-height:1;color:var(--ac);}
+
+.address-form{margin-bottom:4px;}
+.address-form__default-toggle{display:flex;align-items:center;gap:8px;font-size:12.5px;color:rgba(var(--pri-rgb),.65);cursor:pointer;margin:-6px 0 18px;}
+.address-form__default-toggle input{width:16px;height:16px;accent-color:var(--ac);}
+
+.pay-options{display:flex;flex-direction:column;gap:10px;}
+.pay-option{display:flex;justify-content:space-between;align-items:center;gap:14px;border:1.5px solid rgba(var(--pri-rgb),.12);border-radius:$radius-sm;padding:14px 16px;cursor:pointer;transition:border-color .2s;}
+.pay-option span{display:flex;flex-direction:column;gap:2px;}
+.pay-option strong{font-size:13.5px;}
+.pay-option small{font-size:11.5px;color:rgba(var(--pri-rgb),.5);}
+.pay-option.is-on{border-color:var(--ac);background:var(--ac-soft);}
+.pay-option input{width:18px;height:18px;accent-color:var(--ac);}
+
+.bkash-box{background:var(--ac-soft);border:1px solid rgba(var(--ac-rgb),.25);border-radius:$radius-sm;padding:16px 18px;margin-top:14px;}
+.bkash-box__title{font-size:13.5px;font-weight:700;margin-bottom:8px;}
+
+.checkout__summary-card{background:#fff;border:1px solid rgba(var(--pri-rgb),.07);border-radius:$radius;box-shadow:0 12px 34px rgba(var(--pri-rgb),.05);padding:clamp(20px,3.4vw,26px);position:sticky;top:88px;
+  @include mobile{order:1;position:static;}
 }
-.price-info h5 span {
-    color: #737e91;
+.checkout__items{display:flex;flex-direction:column;gap:14px;max-height:340px;overflow-y:auto;margin-bottom:16px;}
+.checkout__item{display:flex;gap:12px;}
+.checkout__item-media{flex:none;width:56px;height:70px;border-radius:$radius-sm;overflow:hidden;background:rgba(var(--pri-rgb),.05);}
+.checkout__item-media img{width:100%;height:100%;object-fit:cover;}
+.checkout__item-body{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;}
+.checkout__item-name{font-size:12.5px;font-weight:600;line-height:1.3;}
+.checkout__item-total{font-size:12.5px;font-weight:600;margin-top:2px;}
+
+.checkout__totals{border-top:1px solid rgba(var(--pri-rgb),.08);padding-top:14px;display:flex;flex-direction:column;gap:9px;}
+.checkout__totals-row{display:flex;justify-content:space-between;font-size:13px;}
+.checkout__totals-row--grand{font-size:15px;font-weight:700;border-top:1px solid rgba(var(--pri-rgb),.08);padding-top:9px;margin-top:2px;}
+.checkout__totals-row--save{background:var(--ac-soft);color:var(--ac2);font-weight:700;margin:2px -10px;padding:8px 10px;border-radius:$radius-sm;}
+
+// Clickable variant of the save row — infinite pulse to invite the click,
+// toggles .checkout__savings-tip open/closed (design/layout unchanged from
+// the static row above, just made interactive).
+.checkout__totals-row--save-toggle{border:none;width:calc(100% + 20px);font-family:$font-body;cursor:pointer;animation:checkoutSavingsPulse 2.2s ease-in-out infinite;}
+.checkout__savings-tip{display:flex;flex-direction:column;gap:6px;background:rgba(var(--pri-rgb),.03);border:1px solid rgba(var(--pri-rgb),.08);border-radius:$radius-sm;padding:10px 12px;margin:-2px -10px 2px;}
+
+@keyframes checkoutSavingsPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(var(--ac-rgb),.3);}
+  50%{box-shadow:0 0 0 5px rgba(var(--ac-rgb),0);}
 }
-.price-info h5 {
-    color: $accent;
-    font-size: 15px;
-}
-.price-info {
-    border-bottom: 2px dashed #8a8b8d;
-}
-.delete-btn {
-    border: 0;
-    background: #fff;
-    font-size: 18px;
-}
-.delete-btn:hover {
-    color: $accent;
-}
-.price-list {
-    font-weight: bold;
-    color: #1b2234;
-    margin-top: 20px;
-}
-.deli-price-info {
-    border-bottom: 2px dashed #8a8b8d;
-}
-.deli-price-text {
-    font-size: 15px;
-    color: #666;
-}
-.deli-price {
-    color: $accent;
-    font-weight: bold;
-}
-.subtotal-price-info {
-    border-bottom: 2px dashed #8a8b8d;
-}
-.subtotal-text {
-    color: #000;
-    font-weight: bold;
-    font-size: 15px;
-}
-.subtotal-text-green {
-    color: $accent;
-    font-weight: bold;
-}
-.i-text {
-    font-size: 13px;
-    color: #b7b6b6;
-    margin-top: 20px;
-    text-align: center;
-}
+
+.checkout__success{max-width:480px;margin:40px auto;text-align:center;background:#fff;border:1px solid rgba(var(--pri-rgb),.07);border-radius:$radius;box-shadow:0 12px 34px rgba(var(--pri-rgb),.05);padding:clamp(32px,5vw,48px);}
+.checkout__success-icon{width:56px;height:56px;border-radius:999px;background:var(--ac);color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;}

@@ -60,5 +60,47 @@
             "active": true,
             "order": 10
         }
+    ],
+    "shop": [],
+    "category": [],
+    "product": [],
+    "reviews": [],
+    "track": [],
+    "track.show": [],
+    "checkout": [],
+    "account": [],
+    "privacy-policy": [
+        {
+            "key": "privacy-content",
+            "active": true,
+            "order": 0
+        }
+    ],
+    "about": [
+        {
+            "key": "about-hero",
+            "active": true,
+            "order": 0
+        },
+        {
+            "key": "about-stats",
+            "active": true,
+            "order": 1
+        },
+        {
+            "key": "about-story",
+            "active": true,
+            "order": 2
+        },
+        {
+            "key": "about-features",
+            "active": true,
+            "order": 3
+        },
+        {
+            "key": "about-cta",
+            "active": true,
+            "order": 4
+        }
     ]
 }

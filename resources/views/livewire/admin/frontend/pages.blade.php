@@ -1,8 +1,18 @@
 <div x-data x-init="$store.pageName = { name: 'Frontend', slug: 'frontend' }">
     <div class="bg-white rounded-xl border border-gray-200 p-6">
-        <p class="text-sm text-gray-500 mb-6">
-            All registered pages for the active theme. Click a page to manage its sections.
-        </p>
+        <div class="flex items-start justify-between gap-4 mb-6">
+            <p class="text-sm text-gray-500">
+                All registered pages for the active theme. Click a page to manage its sections.
+            </p>
+            <button type="button" wire:click="syncAllPages"
+                class="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition whitespace-nowrap"
+                title="Register every page's sections now, instead of only after visiting each one">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                </svg>
+                Sync all pages
+            </button>
+        </div>
 
         @if (empty($pages))
             <x-empty-state title="No pages registered" description="The active theme has no pages configured." />

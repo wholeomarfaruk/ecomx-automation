@@ -8,5 +8,50 @@
         "meta_title": "",
         "meta_description": "",
         "og_image": ""
+    },
+    "home": {
+        "meta_title": "",
+        "meta_description": "",
+        "og_image": ""
+    },
+    "shop": {
+        "meta_title": "",
+        "meta_description": "",
+        "og_image": ""
+    },
+    "category": {
+        "meta_title": "",
+        "meta_description": "",
+        "og_image": ""
+    },
+    "product": {
+        "meta_title": "",
+        "meta_description": "",
+        "og_image": ""
+    },
+    "reviews": {
+        "meta_title": "",
+        "meta_description": "",
+        "og_image": ""
+    },
+    "track.show": {
+        "meta_title": "",
+        "meta_description": "",
+        "og_image": ""
+    },
+    "checkout": {
+        "meta_title": "",
+        "meta_description": "",
+        "og_image": ""
+    },
+    "account": {
+        "meta_title": "",
+        "meta_description": "",
+        "og_image": ""
+    },
+    "privacy-policy": {
+        "meta_title": "",
+        "meta_description": "",
+        "og_image": ""
     }
 }

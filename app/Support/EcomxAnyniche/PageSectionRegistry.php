@@ -116,6 +116,39 @@ class PageSectionRegistry
         return array_keys(static::read());
     }
 
+    /**
+     * Writes every config-declared page's default section list into
+     * page-sections.json in one pass, for any page not already present in
+     * the file — so a fresh page (declared in config('{theme}.pages') but
+     * never visited/toggled in the admin section editor yet) shows up
+     * immediately instead of silently having "no sections registered" until
+     * someone opens it once. Never touches a page that's already saved —
+     * that's real admin-edited state (including a page deliberately cleared
+     * to zero active sections) and must not be clobbered.
+     *
+     * @return string[] Page keys that were newly seeded by this call.
+     */
+    public static function syncAllPages(): array
+    {
+        $data = static::read();
+        $seeded = [];
+
+        foreach (PageRegistry::all() as $page => $meta) {
+            if (array_key_exists($page, $data)) {
+                continue;
+            }
+
+            $data[$page] = static::defaultsFromConfig($page);
+            $seeded[] = $page;
+        }
+
+        if ($seeded !== []) {
+            static::write($data);
+        }
+
+        return $seeded;
+    }
+
     public static function setActive(string $page, string $key, bool $active): void
     {
         $data = static::read();

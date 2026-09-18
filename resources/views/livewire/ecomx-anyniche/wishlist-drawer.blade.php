@@ -35,7 +35,7 @@
                     @endphp
                     <div class="jtc-cart__line" wire:key="wish-item-{{ $item->id }}">
                         <a href="{{ $product?->url ?? '#' }}">
-                            <img class="jtc-cart__thumb" src="{{ $item->display_image ? file_path($item->display_image) : '' }}" alt="{{ $product?->name ?? '' }}">
+                            <x-anyniche::ux-img class="jtc-cart__thumb" :id="$item->display_image" :w="200" :alt="$product?->name ?? ''" />
                         </a>
                         <div>
                             <a href="{{ $product?->url ?? '#' }}" class="jtc-cart__name" style="color:inherit;text-decoration:none">{{ $product?->name ?? 'Deleted product' }}</a>

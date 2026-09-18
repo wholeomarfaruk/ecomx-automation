@@ -35,6 +35,12 @@ namespace App\Support\EcomxAnyniche;
  *     items, drag-reorderable. 'icon' is a bare identifier (not markup) —
  *     the frontend component maps it to an inline SVG; see Trust::ICONS.
  *   - 'checkbox': single boolean toggle (value stored as a bare bool).
+ *   - 'rich_text': long-form HTML content edited via the omar-text-editor
+ *     rich text component (value stored as a bare HTML string). For
+ *     article-style pages (e.g. privacy-content) rather than homepage tiles.
+ *   - 'feature_list': repeatable {title, description} pairs, drag-reorderable —
+ *     like 'icon_list' but with no icon, for a plain heading+paragraph card
+ *     grid (e.g. about-features) whose design has no icon slot at all.
  * New field types can be added here + a matching form partial as sections
  * gain more configurable fields.
  */
@@ -67,6 +73,31 @@ class SectionSchema
             $section === 'discover-chips' => [
                 ['key' => 'categoryIds', 'label' => 'Categories (max 18)', 'type' => 'category_multi_select', 'max' => 18],
             ],
+            $section === 'privacy-content' => [
+                ['key' => 'title', 'label' => 'Page title', 'type' => 'text', 'placeholder' => 'Privacy policy'],
+                ['key' => 'intro', 'label' => 'Intro paragraph', 'type' => 'text', 'placeholder' => 'Shown under the title, above the policy content.'],
+                ['key' => 'body', 'label' => 'Policy content', 'type' => 'rich_text'],
+            ],
+            $section === 'about-hero' => [
+                ['key' => 'title', 'label' => 'Hero title', 'type' => 'text', 'placeholder' => "Bangladesh's online store, built for how you actually shop"],
+                ['key' => 'intro', 'label' => 'Hero intro', 'type' => 'text', 'placeholder' => 'Shown under the title.'],
+            ],
+            $section === 'about-stats' => [
+                ['key' => 'items', 'label' => 'Stats', 'type' => 'stat_list'],
+            ],
+            $section === 'about-story' => [
+                ['key' => 'title', 'label' => 'Heading', 'type' => 'text', 'placeholder' => 'Our story'],
+                ['key' => 'body', 'label' => 'Story content', 'type' => 'rich_text'],
+            ],
+            $section === 'about-features' => [
+                ['key' => 'items', 'label' => 'Feature cards', 'type' => 'feature_list'],
+            ],
+            $section === 'about-cta' => [
+                ['key' => 'title', 'label' => 'Heading', 'type' => 'text', 'placeholder' => 'Still have a question?'],
+                ['key' => 'subtitle', 'label' => 'Subtitle', 'type' => 'text', 'placeholder' => 'Our team is happy to help before or after you order.'],
+                ['key' => 'trackLabel', 'label' => '"Track order" button text', 'type' => 'text', 'placeholder' => 'Track an order'],
+                ['key' => 'callLabel', 'label' => '"Call us" button text', 'type' => 'text', 'placeholder' => 'Call us'],
+            ],
             default => [],
         };
     }
@@ -76,7 +107,7 @@ class SectionSchema
     {
         return array_map(
             fn (array $field) => match ($field['type']) {
-                'text', 'category_select' => '',
+                'text', 'category_select', 'rich_text' => '',
                 'checkbox' => true,
                 default => [],
             },

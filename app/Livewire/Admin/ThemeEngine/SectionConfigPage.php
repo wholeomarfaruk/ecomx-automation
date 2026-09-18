@@ -276,6 +276,31 @@ class SectionConfigPage extends Component
         ));
     }
 
+    public function addFeatureItem(string $fieldKey): void
+    {
+        $this->values[$fieldKey][] = ['title' => '', 'description' => ''];
+    }
+
+    public function updateFeatureItem(string $fieldKey, int $index, string $part, string $value): void
+    {
+        $this->values[$fieldKey][$index][$part] = $value;
+    }
+
+    public function removeFeatureItem(string $fieldKey, int $index): void
+    {
+        unset($this->values[$fieldKey][$index]);
+        $this->values[$fieldKey] = array_values($this->values[$fieldKey]);
+    }
+
+    /** @param int[] $orderedIndexes Current indexes of $values[$fieldKey], in their new order. */
+    public function reorderFeatureItems(string $fieldKey, array $orderedIndexes): void
+    {
+        $this->values[$fieldKey] = array_values(array_map(
+            fn (int $i) => $this->values[$fieldKey][$i],
+            $orderedIndexes
+        ));
+    }
+
     public function save(): void
     {
         static::pageSectionConfigRegistry()::save($this->page, $this->section, $this->values);

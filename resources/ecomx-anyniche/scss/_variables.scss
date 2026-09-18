@@ -9,3 +9,21 @@ $accent-hover: #145E92;
 $font-family-sans-serif: 'Open Sans', 'Noto Sans Bengali', sans-serif;
 $font-size-base: 0.9rem;
 $line-height-base: 1.6;
+
+// Layout tokens for the pages/* tree (checkout, order-confirmation, ...) —
+// ported from ecomx-fashion's base/_variables.scss so its page SCSS can be
+// copied here unmodified. $font-body reuses this theme's own font stack
+// instead of ecomx-fashion's Inter, since typography is brand identity and
+// shouldn't change when porting a page's layout/structure.
+$radius: 14px;
+$radius-sm: 10px;
+
+$maxw: 1440px;
+$gutter: clamp(12px, 4vw, 56px);
+
+$font-body: $font-family-sans-serif;
+
+$bp-mobile: 900px;
+
+@mixin mobile { @media (max-width: #{$bp-mobile - 1px}) { @content; } }
+@mixin desktop { @media (min-width: $bp-mobile) { @content; } }

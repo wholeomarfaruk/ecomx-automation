@@ -47,7 +47,7 @@
                     $productHasVariants = $product && $product->variants()->where('status', 'active')->exists();
                 @endphp
                 <div class="jtc-cart__line" wire:key="cart-item-{{ $item->id }}">
-                    <img class="jtc-cart__thumb" src="{{ $item->display_image ? file_path($item->display_image) : '' }}" alt="{{ $product?->name ?? '' }}">
+                    <x-anyniche::ux-img class="jtc-cart__thumb" :id="$item->display_image" :w="200" :alt="$product?->name ?? ''" />
                     <div>
                         <div class="jtc-cart__name">{{ $product?->name ?? 'Deleted product' }}</div>
                         <div class="jtc-cart__meta">

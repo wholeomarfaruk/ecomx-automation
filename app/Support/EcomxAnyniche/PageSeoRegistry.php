@@ -74,4 +74,40 @@ class PageSeoRegistry
 
         static::write($data);
     }
+
+    /**
+     * Writes an empty SEO entry into page-seo.json for every config-declared
+     * page not already present, so every page has a visible, editable row
+     * from the moment it's registered — forPage() already tolerates a
+     * missing entry via its defaults, so this is purely for admin
+     * discoverability/consistency with PageSectionRegistry::syncAllPages(),
+     * not a functional requirement. Never touches a page that already has
+     * saved SEO fields.
+     *
+     * @return string[] Page keys that were newly seeded by this call.
+     */
+    public static function syncAllPages(): array
+    {
+        $data = static::read();
+        $seeded = [];
+
+        foreach (PageRegistry::all() as $page => $meta) {
+            if (array_key_exists($page, $data)) {
+                continue;
+            }
+
+            $data[$page] = [
+                'meta_title' => '',
+                'meta_description' => '',
+                'og_image' => '',
+            ];
+            $seeded[] = $page;
+        }
+
+        if ($seeded !== []) {
+            static::write($data);
+        }
+
+        return $seeded;
+    }
 }

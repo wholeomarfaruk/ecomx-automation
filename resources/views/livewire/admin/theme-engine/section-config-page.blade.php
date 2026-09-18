@@ -65,6 +65,11 @@
                                 class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
                                 + Add Badge
                             </button>
+                        @elseif ($field['type'] === 'feature_list')
+                            <button type="button" wire:click="addFeatureItem('{{ $field['key'] }}')"
+                                class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
+                                + Add Card
+                            </button>
                         @endif
                     </div>
 
@@ -85,6 +90,8 @@
                             value="{{ $values[$field['key']] ?? '' }}"
                             onchange="@this.call('updateText', '{{ $field['key'] }}', this.value)"
                             class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-400 focus:ring-indigo-400">
+                    @elseif ($field['type'] === 'rich_text')
+                        <x-rich-text-editor :wire-model="'values.' . $field['key']" class="w-full" />
                     @elseif ($field['type'] === 'checkbox')
                         <label class="inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                             <input type="checkbox"
@@ -268,6 +275,38 @@
                                 @endforeach
                             </div>
                         @endif
+                    @elseif ($field['type'] === 'feature_list')
+                        @if (empty($values[$field['key']] ?? []))
+                            <p class="text-sm text-gray-400">No feature cards added yet.</p>
+                        @else
+                            <div class="feature-list-sortable space-y-3" data-field="{{ $field['key'] }}" wire:ignore.self>
+                                @foreach ($values[$field['key']] as $i => $item)
+                                    <div class="flex items-start gap-2" wire:key="{{ $field['key'] }}-feature-{{ $i }}" data-index="{{ $i }}">
+                                        <span class="feature-list-drag-handle cursor-grab text-gray-300 shrink-0 mt-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" />
+                                            </svg>
+                                        </span>
+                                        <div class="flex-1 space-y-2">
+                                            <input type="text" placeholder="Title (e.g. Nationwide delivery)"
+                                                value="{{ $item['title'] ?? '' }}"
+                                                onchange="@this.call('updateFeatureItem', '{{ $field['key'] }}', {{ $i }}, 'title', this.value)"
+                                                class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-400 focus:ring-indigo-400">
+                                            <input type="text" placeholder="Description"
+                                                value="{{ $item['description'] ?? '' }}"
+                                                onchange="@this.call('updateFeatureItem', '{{ $field['key'] }}', {{ $i }}, 'description', this.value)"
+                                                class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-400 focus:ring-indigo-400">
+                                        </div>
+                                        <button type="button" wire:click="removeFeatureItem('{{ $field['key'] }}', {{ $i }})"
+                                            class="shrink-0 mt-2 text-red-500 hover:text-red-700 transition">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
                     @endif
                 </div>
             @endforeach
@@ -341,11 +380,27 @@
                     },
                 });
             });
+
+            document.querySelectorAll('.feature-list-sortable').forEach((el) => {
+                if (el.dataset.sortableInit) return;
+                el.dataset.sortableInit = '1';
+
+                new Sortable(el, {
+                    handle: '.feature-list-drag-handle',
+                    animation: 150,
+                    onEnd: () => {
+                        const indexes = Array.from(el.querySelectorAll('[data-index]')).map(row => parseInt(row.dataset.index, 10));
+                        const root = el.closest('[wire\\:id]');
+                        const component = Livewire.find(root.getAttribute('wire:id'));
+                        component.call('reorderFeatureItems', el.dataset.field, indexes);
+                    },
+                });
+            });
         };
 
         initSortables();
         Livewire.hook('morph.updated', () => {
-            document.querySelectorAll('.text-list-sortable, .faq-list-sortable, .stat-list-sortable, .icon-list-sortable').forEach((el) => delete el.dataset.sortableInit);
+            document.querySelectorAll('.text-list-sortable, .faq-list-sortable, .stat-list-sortable, .icon-list-sortable, .feature-list-sortable').forEach((el) => delete el.dataset.sortableInit);
             initSortables();
         });
     });

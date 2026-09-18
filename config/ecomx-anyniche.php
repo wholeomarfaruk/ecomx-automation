@@ -32,6 +32,12 @@ return [
         'category-row-4' => 'ecomx-anyniche.sections.category-row',
         'category-row-5' => 'ecomx-anyniche.sections.category-row',
         'discover-chips' => 'ecomx-anyniche.sections.discover-chips',
+        'privacy-content' => 'ecomx-anyniche.sections.privacy-content',
+        'about-hero' => 'ecomx-anyniche.sections.about-hero',
+        'about-stats' => 'ecomx-anyniche.sections.about-stats',
+        'about-story' => 'ecomx-anyniche.sections.about-story',
+        'about-features' => 'ecomx-anyniche.sections.about-features',
+        'about-cta' => 'ecomx-anyniche.sections.about-cta',
     ],
 
     // Registry of pages for this theme: key => [label, icon, route, sections].
@@ -109,13 +115,21 @@ return [
             'label' => 'About Us',
             'icon' => 'icon-info',
             'route' => 'about',
-            'sections' => [],
+            'sections' => [
+                'about-hero',
+                'about-stats',
+                'about-story',
+                'about-features',
+                'about-cta',
+            ],
         ],
         'privacy-policy' => [
             'label' => 'Privacy Policy',
             'icon' => 'icon-shield',
             'route' => 'privacy-policy',
-            'sections' => [],
+            'sections' => [
+                'privacy-content',
+            ],
         ],
     ],
 ];

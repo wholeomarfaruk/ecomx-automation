@@ -80,9 +80,6 @@
         @if($hasSizes)
             {{-- Sizes --}}
             <div class="jtc-pd-sizes">
-                @if($showSizePrompt)
-                    <div class="jtc-pd-sizes__prompt">👇 Choose your size first</div>
-                @endif
                 <div class="jtc-pd-sizes__head">
                     <span class="jtc-pd-info__brand" style="color:#14201c">Size @if($selectedSize) — {{ $selectedSize }} @endif</span>
                     <button type="button" class="jtc-pd-sizes__guide" wire:click="toggleSizeGuide">Size guide</button>
