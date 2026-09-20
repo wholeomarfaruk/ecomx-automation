@@ -219,19 +219,19 @@ class EngineManager
             ];
         }
 
-        $npmVersions = static::installedNpmVersions();
+        $npmVersions = static::declaredNpmVersions();
 
         foreach ($dependencies['npm'] ?? [] as $package => $constraint) {
-            $installed = $npmVersions[$package] ?? null;
-            $satisfied = $installed !== null && Semver::satisfies($installed, $constraint);
+            $declared = $npmVersions[$package] ?? null;
+            $satisfied = $declared !== null && static::npmConstraintSatisfies($declared, $constraint);
 
             $checks[] = [
                 'group' => 'Dependencies',
                 'label' => "npm package \"{$package}\" {$constraint}",
                 'ok' => $satisfied,
-                'detail' => $installed === null
+                'detail' => $declared === null
                     ? "Package \"{$package}\" is not in package.json dependencies (or is a devDependency)."
-                    : ($satisfied ? null : "Installed version {$installed} does not satisfy {$constraint}."),
+                    : ($satisfied ? null : "Declared version {$declared} in package.json does not satisfy {$constraint}."),
             ];
         }
 
@@ -287,8 +287,16 @@ class EngineManager
         return $versions;
     }
 
-    /** @return array<string, string> npm package name => installed version, production (non-dev) only. */
-    protected static function installedNpmVersions(): array
+    /**
+     * @return array<string, string> npm package name => declared version constraint,
+     *         read from package.json's production "dependencies" only (never
+     *         devDependencies). Deliberately does NOT look at node_modules —
+     *         a production deploy may ship only the built assets (public/build)
+     *         without node_modules present at all, so "installed" isn't a
+     *         meaningful signal there. package.json's declared constraint is
+     *         the actual contract the build was produced under.
+     */
+    protected static function declaredNpmVersions(): array
     {
         $path = base_path('package.json');
 
@@ -297,32 +305,26 @@ class EngineManager
         }
 
         $json = json_decode(file_get_contents($path), true) ?? [];
-        $declared = $json['dependencies'] ?? [];
 
-        $versions = [];
-
-        foreach (array_keys($declared) as $name) {
-            $installed = static::resolveNpmInstalledVersion($name);
-
-            if ($installed !== null) {
-                $versions[$name] = $installed;
-            }
-        }
-
-        return $versions;
+        return $json['dependencies'] ?? [];
     }
 
-    protected static function resolveNpmInstalledVersion(string $name): ?string
+    /**
+     * True when package.json's declared constraint guarantees versions
+     * satisfying the theme's required constraint — i.e. the declared range
+     * is a subset of (or equal to) the required range. Checked by testing
+     * the declared constraint's own bounds against the required constraint,
+     * since there's no installed version to test directly.
+     */
+    protected static function npmConstraintSatisfies(string $declared, string $required): bool
     {
-        $pkgPath = base_path('node_modules/' . $name . '/package.json');
-
-        if (! file_exists($pkgPath)) {
-            return null;
+        if ($declared === $required) {
+            return true;
         }
 
-        $json = json_decode(file_get_contents($pkgPath), true) ?? [];
+        $declaredVersion = ltrim($declared, '^~>=< ');
 
-        return $json['version'] ?? null;
+        return Semver::satisfies($declaredVersion, $required) && Semver::satisfies($declaredVersion, $declared);
     }
 
     protected static function checkFiles(array $manifest, array &$checks): void
@@ -356,9 +358,11 @@ class EngineManager
     protected static function checkRoutes(array $manifest, array &$checks): void
     {
         $routeFile = $manifest['routes']['file'] ?? null;
+        $routeNames = [];
 
         if ($routeFile !== null) {
-            $exists = file_exists(base_path($routeFile));
+            $absolute = base_path($routeFile);
+            $exists = file_exists($absolute);
 
             $checks[] = [
                 'group' => 'Routes',
@@ -366,6 +370,10 @@ class EngineManager
                 'ok' => $exists,
                 'detail' => $exists ? null : "Missing route file: {$routeFile}",
             ];
+
+            if ($exists) {
+                $routeNames = static::loadRouteNames($absolute);
+            }
         }
 
         foreach ($manifest['pages'] ?? [] as $key => $page) {
@@ -375,14 +383,60 @@ class EngineManager
                 continue;
             }
 
-            $exists = Route::has($name);
+            // A theme's routes are only registered in the live router while
+            // its engine happens to be the active one for this request (see
+            // loadActiveThemeRoute()) — so an inactive theme would otherwise
+            // always fail here and could never pass validation to become
+            // active in the first place. Check the live router first (cheap,
+            // and authoritative when true); fall back to statically loading
+            // the declared route file into an isolated router so an inactive
+            // theme can still be validated on its own merits.
+            $exists = Route::has($name) || in_array($name, $routeNames, true);
 
             $checks[] = [
                 'group' => 'Routes',
                 'label' => "Route \"{$name}\" is registered",
                 'ok' => $exists,
-                'detail' => $exists ? null : "No route named \"{$name}\" found in the router.",
+                'detail' => $exists ? null : "No route named \"{$name}\" found in the router or declared in {$routeFile}.",
             ];
+        }
+    }
+
+    /**
+     * Requires a theme's route file against a throwaway Router bound in the
+     * container in place of the real one, so its Route::name()/->group()
+     * calls land on an isolated RouteCollection instead of the app's live
+     * router — then restores the real router. Never mutates the live router,
+     * so this is safe to call for a theme that isn't currently active.
+     *
+     * @return array<int, string> route names declared by the file
+     */
+    protected static function loadRouteNames(string $absolutePath): array
+    {
+        $container = app();
+        $originalRouter = $container->make('router');
+
+        $sandboxRouter = new \Illuminate\Routing\Router($container->make('events'), $container);
+        $container->instance('router', $sandboxRouter);
+        \Illuminate\Support\Facades\Route::clearResolvedInstance('router');
+
+        try {
+            require $absolutePath;
+
+            return collect($sandboxRouter->getRoutes()->getRoutes())
+                ->map(fn ($route) => $route->getName())
+                ->filter()
+                ->values()
+                ->all();
+        } catch (\Throwable) {
+            // Route file couldn't be loaded in isolation (e.g. it references
+            // something only available mid-request) — treat as "no names
+            // known from static load"; the live-router check above still
+            // applies for an already-active theme.
+            return [];
+        } finally {
+            $container->instance('router', $originalRouter);
+            \Illuminate\Support\Facades\Route::clearResolvedInstance('router');
         }
     }
 
