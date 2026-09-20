@@ -47,12 +47,12 @@
                             @endif
                         </div>
 
-                        @if ($reportSlug === $slug && $report)
+                        @if ($reportSlug === $slug && $reportChecks)
                             <div class="mt-3 pt-3 border-t border-gray-100 text-xs space-y-1">
-                                <div class="font-semibold mb-1 {{ $report->passed() ? 'text-emerald-600' : 'text-red-600' }}">
-                                    {{ $report->passed() ? 'READY' : 'NOT READY' }}
+                                <div class="font-semibold mb-1 {{ $reportPassed ? 'text-emerald-600' : 'text-red-600' }}">
+                                    {{ $reportPassed ? 'READY' : 'NOT READY' }}
                                 </div>
-                                @foreach ($report->grouped() as $group => $checks)
+                                @foreach ($reportGrouped as $group => $checks)
                                     @foreach ($checks as $check)
                                         <div class="{{ $check['ok'] ? 'text-emerald-600' : 'text-red-600' }}">
                                             {{ $check['ok'] ? '✓' : '✗' }} {{ $check['label'] }}
