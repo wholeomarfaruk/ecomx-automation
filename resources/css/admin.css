@@ -2,6 +2,7 @@
 @import "tailwindcss";
 
 @plugin 'tailwind-scrollbar';
+@plugin '@tailwindcss/forms';
 
 [x-cloak] {
     display: none;

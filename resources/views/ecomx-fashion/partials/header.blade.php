@@ -1,12 +1,11 @@
-{{-- Main nav — plain links only, no dropdown/mega-menu submenus. --}}
+{{-- Main nav — plain links only, no dropdown/mega-menu submenus.
+     Items come from App\Support\EcomxFashion\MenuRegistry ('main-nav'/'topbar'
+     menus, admin-editable at /admin/frontend/menus) — the same list now
+     drives both the desktop nav below and the mobile drawer further down,
+     so there's a single source instead of two hand-maintained copies. --}}
 @php
-    $nav = [
-        ['label'=>'New In','route'=>'ecomx-fashion.shop','key'=>'new','flash'=>false],
-        ['label'=>'Women','route'=>'ecomx-fashion.shop','key'=>'women','flash'=>false,'params'=>['cat'=>['women']]],
-        ['label'=>'Men','route'=>'ecomx-fashion.shop','key'=>'men','flash'=>false,'params'=>['cat'=>['men']]],
-        ['label'=>'Accessories','route'=>'ecomx-fashion.shop','key'=>'acc','flash'=>false],
-        ['label'=>'Flash Sale','route'=>'ecomx-fashion.shop','key'=>'sale','flash'=>true,'params'=>['offer'=>['flash_sale']]],
-    ];
+    $nav = \App\Support\EcomxFashion\MenuRegistry::items('main-nav');
+    $topbarLinks = \App\Support\EcomxFashion\MenuRegistry::items('topbar');
 
     $active = $active ?? '';
 
@@ -25,29 +24,46 @@
     $brandMarkUrl ??= asset('frontend/img/seldom-rounded.png');
     $siteName = \App\Models\Setting::get('site_name', 'Seldom Fashion') ?: 'Seldom Fashion';
 
-    $isNavActive = function ($n) use ($active) {
-        // Explicit active key থাকলে সেটা priority পাবে
-        if ($active === $n['key']) {
-            return true;
-        }
+    // Matches a nav item's stored url (path + query string, e.g.
+    // "/shop?cat[]=women") against the current request — path must match,
+    // and every query param the item's url specifies must also be present
+    // (as an array-inclusive match) in the current request's query string.
+    // Replaces the old hardcoded 'key'-based match now that nav items come
+    // from MenuRegistry (plain url strings, not route-name+params tuples) —
+    // same visual result (New In active only with no cat/offer filter,
+    // Women/Men/Flash Sale active only when their own filter is set) without
+    // hardcoding each label's matching rule by hand.
+    $isNavActive = function (array $item) {
+        $parts = parse_url($item['url']);
+        $path = $parts['path'] ?? '';
 
-        // Current route shop না হলে inactive
-        if (!request()->routeIs($n['route'])) {
+        if (! request()->is(ltrim($path, '/') ?: '/')) {
             return false;
         }
 
-        // URL query parameter pattern match
-        $cat = request()->query('cat');
-        $offer = request()->query('offer');
+        parse_str($parts['query'] ?? '', $itemQuery);
 
-        return match ($n['key']) {
-            'women' => is_array($cat) && in_array('women', $cat),
-            'men'   => is_array($cat) && in_array('men', $cat),
-            'sale'  => is_array($offer) && in_array('flash_sale', $offer),
-            'acc'   => is_array($cat) && in_array('accessories', $cat),
-            'new'   => !$cat && !$offer,
-            default => false,
-        };
+        foreach ($itemQuery as $key => $value) {
+            $current = request()->query($key);
+
+            if (is_array($value)) {
+                if (! is_array($current) || array_diff($value, $current) !== []) {
+                    return false;
+                }
+            } elseif ((string) $current !== (string) $value) {
+                return false;
+            }
+        }
+
+        // An item with no query params (e.g. "New In" -> /shop) only counts
+        // as active when the request also has none of the filter params this
+        // nav manages — otherwise "New In" would stay highlighted while
+        // "Women"/"Flash Sale" are also legitimately active on ?cat[]=women.
+        if ($itemQuery === [] && (request()->query('cat') || request()->query('offer'))) {
+            return false;
+        }
+
+        return true;
     };
 @endphp
 
@@ -56,9 +72,9 @@
         <div class="topbar__inner">
             <span>Free delivery across Bangladesh on orders over ৳5,000 · bKash, Nagad &amp; COD accepted</span>
             <div class="topbar__links">
-                <a href="{{ route('ecomx-fashion.track') }}">Track Order</a>
-                <a href="{{ route('ecomx-fashion.home') }}">About Us</a>
-                <a href="tel:{{ config('ecomx-fashion.phone') }}">Contact</a>
+                @foreach ($topbarLinks as $link)
+                    <a href="{{ $link['url'] }}"{!! $link['new_tab'] ? ' target="_blank" rel="noopener"' : '' !!}>{{ $link['label'] }}</a>
+                @endforeach
             </div>
         </div>
     </div>
@@ -78,9 +94,9 @@
             <nav class="nav" aria-label="Main">
                 @foreach($nav as $n)
                     <div class="nav__item">
-                        <a href="{{ route($n['route'], $n['params'] ?? []) }}" class="nav__link  {{ $isNavActive($n) ? 'is-active' : '' }}" @mouseenter="mega=null">
+                        <a href="{{ $n['url'] }}"{!! $n['new_tab'] ? ' target="_blank" rel="noopener"' : '' !!} class="nav__link  {{ $isNavActive($n) ? 'is-active' : '' }}" @mouseenter="mega=null">
                             {{ $n['label'] }}
-                            @if($n['flash'])<span class="nav__badge">⚡HOT</span>@endif
+                            @if(str_contains(mb_strtolower($n['label']), 'flash sale'))<span class="nav__badge">⚡HOT</span>@endif
                         </a>
                     </div>
                 @endforeach
@@ -161,13 +177,13 @@
                     <button class="modal__close" @click="drawer=false" aria-label="Close">✕</button>
                 </div>
                 @foreach($nav as $n)
-                    <a href="{{ route($n['route'], $n['params'] ?? []) }}" class="drawer__link"><span>{{ $n['label'] }}</span><span style="color:rgba(var(--pri-rgb),.35)">→</span></a>
+                    <a href="{{ $n['url'] }}"{!! $n['new_tab'] ? ' target="_blank" rel="noopener"' : '' !!} class="drawer__link"><span>{{ $n['label'] }}</span><span style="color:rgba(var(--pri-rgb),.35)">→</span></a>
                 @endforeach
                 <a href="{{ route('ecomx-fashion.reviews') }}" style="margin-top:18px;font-size:13.5px;color:var(--ac2)">Customer Reviews ★ 4.8</a>
                 <div style="margin-top:20px;display:flex;flex-direction:column;gap:12px;border-top:1px solid rgba(var(--pri-rgb),.07);padding-top:18px">
-                    <a href="{{ route('ecomx-fashion.track') }}" style="font-size:13.5px">Track Order</a>
-                    <a href="{{ route('ecomx-fashion.home') }}" style="font-size:13.5px">About Us</a>
-                    <a href="tel:{{ config('ecomx-fashion.phone') }}" style="font-size:13.5px">Contact</a>
+                    @foreach ($topbarLinks as $link)
+                        <a href="{{ $link['url'] }}"{!! $link['new_tab'] ? ' target="_blank" rel="noopener"' : '' !!} style="font-size:13.5px">{{ $link['label'] }}</a>
+                    @endforeach
                 </div>
             </div>
         </div>

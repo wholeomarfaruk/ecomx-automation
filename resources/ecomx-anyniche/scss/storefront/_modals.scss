@@ -223,6 +223,12 @@
     &:hover { background: $surface-2; }
     &--sale { color: $green; }
   }
+  &__icon {
+    width: 16px;
+    height: 16px;
+    flex: none;
+    color: currentColor;
+  }
   &__link-img {
     width: 30px;
     height: 30px;

@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\CompanyPrintController;
 use App\Http\Controllers\Admin\FileUploadController;
 use App\Livewire\Admin\Frontend\Appearance as FrontendAppearance;
 use App\Livewire\Admin\Frontend\Components as FrontendComponents;
+use App\Livewire\Admin\Frontend\Icons as FrontendIcons;
 use App\Livewire\Admin\Frontend\Menus as FrontendMenus;
 use App\Livewire\Admin\Frontend\PageShow as FrontendPageShow;
 use App\Livewire\Admin\Frontend\Pages as FrontendPages;
@@ -16,6 +17,11 @@ use App\Livewire\Admin\ThemeEngine\SectionConfigPage;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/dashboard', \App\Livewire\Admin\Dashboard\Dashboard::class)->name('dashboard');
+
+// Icon gallery — view-only reference for App\Support\IconLibrary (the shared
+// icon set behind <x-icon>/<x-anyniche::icon> and the Menus icon picker).
+// Sidebar link sits right after Activity Log — see partials/sidebar.blade.php.
+Route::get('/icons', FrontendIcons::class)->name('icons');
 
 // Frontend Menu — registered pages of the active theme + per-page section settings.
 // The {page} wildcard must stay registered after the literal routes below it,

@@ -12,6 +12,10 @@
         $footerLogoUrl = null;
     }
     $footerLogoUrl ??= asset('logo/ecomx-square-logo.png');
+
+    // Admin-editable, see App\Support\EcomxAnyniche\MenuRegistry — was two hardcoded <ul> lists.
+    $footerLinks = \App\Support\EcomxAnyniche\MenuRegistry::items('footer-links');
+    $footerLegal = \App\Support\EcomxAnyniche\MenuRegistry::items('footer-legal');
 @endphp
 <footer class="jtc-footer">
     <div class="jtc-footer__inner">
@@ -30,19 +34,17 @@
             <div>
                 <h4>Useful links</h4>
                 <ul>
-                    <li><a href="{{ route('ecomx-anyniche.shop') }}">All products</a></li>
-                    <li><a href="{{ route('ecomx-anyniche.about') }}">About us</a></li>
-                    <li><a href="{{ route('ecomx-anyniche.reviews') }}">Reviews</a></li>
-                    <li><a href="{{ route('ecomx-anyniche.track') }}">Track order</a></li>
+                    @foreach ($footerLinks as $link)
+                        <li><a href="{{ $link['url'] }}"{!! $link['new_tab'] ? ' target="_blank" rel="noopener"' : '' !!}>{{ $link['label'] }}</a></li>
+                    @endforeach
                 </ul>
             </div>
             <div>
                 <h4>Legal</h4>
                 <ul>
-                    <li><a href="{{ route('ecomx-anyniche.privacy-policy') }}">Privacy policy</a></li>
-                    <li><a href="#">Delivery policy</a></li>
-                    <li><a href="#">Terms &amp; conditions</a></li>
-                    <li><a href="#">Refund &amp; returns</a></li>
+                    @foreach ($footerLegal as $link)
+                        <li><a href="{{ $link['url'] }}"{!! $link['new_tab'] ? ' target="_blank" rel="noopener"' : '' !!}>{{ $link['label'] }}</a></li>
+                    @endforeach
                 </ul>
             </div>
             <div>

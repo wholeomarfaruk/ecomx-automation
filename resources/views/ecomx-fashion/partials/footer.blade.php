@@ -1,3 +1,12 @@
+@php
+    // Admin-editable, see App\Support\EcomxFashion\MenuRegistry — was three
+    // hand-maintained ['Title', [[label, route], ...]] arrays.
+    $footerColumns = [
+        'Shop' => \App\Support\EcomxFashion\MenuRegistry::items('footer-shop'),
+        'About' => \App\Support\EcomxFashion\MenuRegistry::items('footer-about'),
+        'Help' => \App\Support\EcomxFashion\MenuRegistry::items('footer-help'),
+    ];
+@endphp
 <footer class="footer">
     <div class="container">
         <div class="newsletter" x-data="{ email:'', sent:false }">
@@ -18,14 +27,12 @@
                 <p class="brand__name" style="margin-bottom:12px">SELDOM <span style="color:var(--ac2)">FASHION</span></p>
                 <p class="muted" style="font-size:12.5px;line-height:1.7;max-width:240px">Considered clothing, made rarely and made well. Designed in Dhaka, Bangladesh.</p>
             </div>
-            @foreach([
-                ['Shop',[['New In','ecomx-fashion.shop'],['Women','ecomx-fashion.category'],['Men','ecomx-fashion.category'],['Accessories','ecomx-fashion.shop']]],
-                ['About',[['Our Story','ecomx-fashion.home'],['Ateliers','ecomx-fashion.home'],['Sustainability','ecomx-fashion.home'],['Reviews','ecomx-fashion.reviews']]],
-                ['Help',[['Track Order','ecomx-fashion.track'],['Size Guide','ecomx-fashion.product'],['Care Guide','ecomx-fashion.home'],['Contact','ecomx-fashion.home']]],
-            ] as [$title,$links])
+            @foreach ($footerColumns as $title => $links)
                 <div style="display:flex;flex-direction:column;gap:11px">
                     <span class="kicker" style="color:rgba(var(--pri-rgb),.45)">{{ $title }}</span>
-                    @foreach($links as [$l,$r])<a href="{{ route($r) }}" style="font-size:13px;color:rgba(var(--pri-rgb),.72)">{{ $l }}</a>@endforeach
+                    @foreach ($links as $link)
+                        <a href="{{ $link['url'] }}"{!! $link['new_tab'] ? ' target="_blank" rel="noopener"' : '' !!} style="font-size:13px;color:rgba(var(--pri-rgb),.72)">{{ $link['label'] }}</a>
+                    @endforeach
                 </div>
             @endforeach
         </div>

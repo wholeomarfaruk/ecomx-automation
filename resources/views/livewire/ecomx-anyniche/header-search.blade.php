@@ -9,8 +9,8 @@
                 wire:click="selectCategory(null)" @click="selectedCategory = null; searchCatOpen = false">All categories</button>
         @foreach ($categories as $cat)
             <button type="button" class="jtc-search__option"
-                    :class="selectedCategory === @js($cat->name) && 'is-active'"
-                    wire:click="selectCategory(@js($cat->name))" @click="selectedCategory = @js($cat->name); searchCatOpen = false">{{ $cat->name }}</button>
+                    :class="selectedCategory === @js($cat['name']) && 'is-active'"
+                    wire:click="selectCategory(@js($cat['name']))" @click="selectedCategory = @js($cat['name']); searchCatOpen = false">{{ $cat['name'] }}</button>
         @endforeach
     </div>
     <div class="jtc-search__scrim" x-show="searchCatOpen" @click="searchCatOpen = false" x-cloak></div>

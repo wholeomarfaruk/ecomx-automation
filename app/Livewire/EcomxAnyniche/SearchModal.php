@@ -2,8 +2,8 @@
 
 namespace App\Livewire\EcomxAnyniche;
 
-use App\Models\Category;
 use App\Models\Product;
+use App\Support\EcomxAnyniche\MenuRegistry;
 use Livewire\Component;
 
 class SearchModal extends Component
@@ -52,7 +52,7 @@ class SearchModal extends Component
     public function render()
     {
         return view('livewire.ecomx-anyniche.search-modal', [
-            'categories' => Category::active()->get(),
+            'categories' => MenuRegistry::searchCategoryItems(),
         ]);
     }
 }

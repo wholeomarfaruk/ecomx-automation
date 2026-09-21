@@ -49,24 +49,17 @@
     "src": "node_modules/boxicons/fonts/boxicons.woff2"
   },
   "resources/css/admin.css": {
-    "file": "assets/app-DqDtfkwT.css",
-    "src": "resources/css/app.css",
+    "file": "assets/admin-REDB_oCm.css",
+    "src": "resources/css/admin.css",
     "isEntry": true,
     "name": "admin",
     "names": [
-      "app.css",
       "admin.css"
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-DqDtfkwT.css",
-    "src": "resources/css/app.css",
-    "isEntry": true,
-    "name": "admin",
-    "names": [
-      "app.css",
-      "admin.css"
-    ]
+    "file": "assets/app-C-nJAnM9.css",
+    "src": "resources/css/app.css"
   },
   "resources/ecomx-anyniche/js/app.js": {
     "file": "assets/app-DoCX-6ql.js",
@@ -81,7 +74,7 @@
     ]
   },
   "resources/ecomx-anyniche/scss/app.scss": {
-    "file": "assets/app-cwEMEaZY.css",
+    "file": "assets/app-CFxEPwOz.css",
     "src": "resources/ecomx-anyniche/scss/app.scss",
     "isEntry": true,
     "name": "app",

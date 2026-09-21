@@ -2,8 +2,8 @@
 
 namespace App\Livewire\EcomxAnyniche;
 
-use App\Models\Category;
 use App\Models\Product;
+use App\Support\EcomxAnyniche\MenuRegistry;
 use Livewire\Component;
 
 class HeaderSearch extends Component
@@ -50,7 +50,7 @@ class HeaderSearch extends Component
     public function render()
     {
         return view('livewire.ecomx-anyniche.header-search', [
-            'categories' => Category::active()->get(),
+            'categories' => MenuRegistry::searchCategoryItems(),
         ]);
     }
 }

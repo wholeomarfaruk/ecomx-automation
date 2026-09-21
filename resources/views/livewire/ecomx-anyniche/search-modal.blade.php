@@ -22,8 +22,8 @@
                     <button type="button" wire:click="selectCategory(null)" @click="searchModalCatOpen = false"
                             @class(['jtc-search__option' => true, 'is-active' => ! $category])>All categories</button>
                     @foreach ($categories as $cat)
-                        <button type="button" wire:click="selectCategory(@js($cat->name))" @click="searchModalCatOpen = false"
-                                @class(['jtc-search__option' => true, 'is-active' => $category === $cat->name])>{{ $cat->name }}</button>
+                        <button type="button" wire:click="selectCategory(@js($cat['name']))" @click="searchModalCatOpen = false"
+                                @class(['jtc-search__option' => true, 'is-active' => $category === $cat['name']])>{{ $cat['name'] }}</button>
                     @endforeach
                 </div>
                 <div class="jtc-search__scrim" x-show="searchModalCatOpen" @click="searchModalCatOpen = false" x-cloak></div>
