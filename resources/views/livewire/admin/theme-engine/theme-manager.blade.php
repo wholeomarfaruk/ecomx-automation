@@ -44,6 +44,14 @@
                                     class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50">
                                     Activate
                                 </button>
+                            @else
+                                <button type="button"
+                                    wire:click="activate('{{ $slug }}')"
+                                    wire:loading.attr="disabled"
+                                    wire:confirm="Re-run activation for {{ $meta['name'] }}? Use this if the storefront is showing stale theme state."
+                                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition disabled:opacity-50">
+                                    Reinit
+                                </button>
                             @endif
                         </div>
 
