@@ -115,11 +115,13 @@
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     @foreach($files as $file)
                         @php
-                            $isSelected = in_array($file->id, $selected);
-                            $fileUrl    = file_path($file->id);
+                            $isSelected  = in_array($file->id, $selected);
+                            $fileUrl     = file_path($file->id);
+                            $thumbUrl    = file_path($file->id, 'thumbnail');
+                            $hasThumb    = $thumbUrl && $thumbUrl !== $fileUrl;
                         @endphp
 
-                        <div class="group relative rounded-xl border-2 overflow-hidden transition-all
+                        <div class="group relative rounded-xl border-2 transition-all
                             {{ $isSelected ? 'border-indigo-500 ring-2 ring-indigo-500 ring-offset-1' : 'border-gray-200 hover:border-gray-300 hover:shadow-md' }}">
 
                             {{-- Checkbox --}}
@@ -133,53 +135,150 @@
                                 >
                             </div>
 
-                            {{-- Action buttons (dimmed by default, full opacity on hover/focus/touch) --}}
-                            <div class="absolute top-2 right-2 z-10 flex gap-1 opacity-70 group-hover:opacity-100 group-focus-within:opacity-100 transition">
-                                {{-- Preview --}}
-                                <a data-fancybox
-                                   href="{{ $fileUrl }}"
-                                   @if($file->type === 'video') data-type="video" @endif
-                                   class="w-6 h-6 rounded bg-sky-500 text-white flex items-center justify-center hover:bg-sky-600 shadow">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                                    </svg>
-                                </a>
+                            {{-- Action menu --}}
+                            <div class="absolute top-2 right-2 z-20 opacity-70 group-hover:opacity-100 group-focus-within:opacity-100 transition"
+                                 x-data="{ open: false, sub: false }" @click.outside="open = false; sub = false">
 
-                                {{-- Download --}}
-                                <a href="{{ $fileUrl }}" download="{{ $file->name }}"
-                                   onclick="event.stopPropagation()"
-                                   class="w-6 h-6 rounded bg-violet-500 text-white flex items-center justify-center hover:bg-violet-600 shadow">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                                    </svg>
-                                </a>
-
-                                {{-- Copy URL --}}
+                                {{-- 3-dot trigger --}}
                                 <button
                                     type="button"
-                                    onclick="navigator.clipboard.writeText('{{ $fileUrl }}').then(() => { Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'URL copied!', showConfirmButton: false, timer: 2000, timerProgressBar: true }); }); event.stopPropagation();"
-                                    class="w-6 h-6 rounded bg-emerald-500 text-white flex items-center justify-center hover:bg-emerald-600 shadow"
+                                    x-on:click.stop="open = !open; sub = false"
+                                    class="w-6 h-6 rounded bg-gray-800/80 text-white flex items-center justify-center hover:bg-gray-900 shadow"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 6.75a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM12 13.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM12 20.25a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" />
                                     </svg>
                                 </button>
 
-                                {{-- Delete --}}
-                                <button
-                                    type="button"
-                                    x-on:click.stop="confirmDelete({{ $file->id }})"
-                                    class="w-6 h-6 rounded bg-red-500 text-white flex items-center justify-center hover:bg-red-600 shadow"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                                    </svg>
-                                </button>
+                                {{-- Dropdown --}}
+                                <div x-cloak x-show="open" x-transition.origin.top.right
+                                     x-on:click.stop
+                                     class="absolute right-0 mt-1 w-44 rounded-lg bg-white shadow-lg border border-gray-100 py-1 text-sm">
+
+                                    {{-- Root menu --}}
+                                    <template x-if="!sub">
+                                        <div>
+                                            <a data-fancybox
+                                               href="{{ $fileUrl }}"
+                                               @if($file->type === 'video') data-type="video" @endif
+                                               x-on:click="open = false"
+                                               class="flex items-center gap-2 px-3 py-1.5 text-gray-700 hover:bg-gray-50">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-sky-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                                </svg>
+                                                Preview
+                                            </a>
+
+                                            <a href="{{ $fileUrl }}" download="{{ $file->name }}"
+                                               x-on:click="open = false"
+                                               class="flex items-center gap-2 px-3 py-1.5 text-gray-700 hover:bg-gray-50">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-violet-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                                </svg>
+                                                Download
+                                            </a>
+
+                                            {{-- Copy URL submenu trigger --}}
+                                            <button type="button" x-on:click="sub = 'copy'"
+                                                class="w-full flex items-center justify-between gap-2 px-3 py-1.5 text-gray-700 hover:bg-gray-50">
+                                                <span class="flex items-center gap-2">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" />
+                                                    </svg>
+                                                    Copy URL
+                                                </span>
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                                                </svg>
+                                            </button>
+
+                                            {{-- Thumbnail submenu trigger (images only) --}}
+                                            @if($file->type === 'image')
+                                                <button type="button" x-on:click="sub = 'thumbnail'"
+                                                    class="w-full flex items-center justify-between gap-2 px-3 py-1.5 text-gray-700 hover:bg-gray-50">
+                                                    <span class="flex items-center gap-2">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Z" />
+                                                        </svg>
+                                                        Thumbnail
+                                                    </span>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                                                    </svg>
+                                                </button>
+                                            @endif
+
+                                            <div class="my-1 border-t border-gray-100"></div>
+
+                                            <button type="button" x-on:click.stop="open = false; confirmDelete({{ $file->id }})"
+                                                class="w-full flex items-center gap-2 px-3 py-1.5 text-red-600 hover:bg-red-50">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                                </svg>
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </template>
+
+                                    {{-- Copy URL submenu --}}
+                                    <template x-if="sub === 'copy'">
+                                        <div>
+                                            <button type="button" x-on:click="sub = false"
+                                                class="w-full flex items-center gap-2 px-3 py-1.5 text-gray-500 hover:bg-gray-50 border-b border-gray-100 mb-1">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                                                </svg>
+                                                Back
+                                            </button>
+
+                                            <button type="button"
+                                                x-on:click.stop="navigator.clipboard.writeText('{{ $fileUrl }}').then(() => { Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Original URL copied!', showConfirmButton: false, timer: 2000, timerProgressBar: true }); }); open = false; sub = false;"
+                                                class="w-full flex items-center gap-2 px-3 py-1.5 text-gray-700 hover:bg-gray-50">
+                                                Original
+                                            </button>
+
+                                            @if($file->type === 'image')
+                                                <button type="button"
+                                                    x-on:click.stop="navigator.clipboard.writeText('{{ $thumbUrl }}').then(() => { Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Thumbnail URL copied!', showConfirmButton: false, timer: 2000, timerProgressBar: true }); }); open = false; sub = false;"
+                                                    class="w-full flex items-center gap-2 px-3 py-1.5 text-gray-700 hover:bg-gray-50">
+                                                    Thumbnail
+                                                    @if(!$hasThumb)
+                                                        <span class="text-[10px] text-gray-400">(falls back to original)</span>
+                                                    @endif
+                                                </button>
+                                            @endif
+                                        </div>
+                                    </template>
+
+                                    {{-- Thumbnail submenu --}}
+                                    @if($file->type === 'image')
+                                        <template x-if="sub === 'thumbnail'">
+                                            <div>
+                                                <button type="button" x-on:click="sub = false"
+                                                    class="w-full flex items-center gap-2 px-3 py-1.5 text-gray-500 hover:bg-gray-50 border-b border-gray-100 mb-1">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                                                    </svg>
+                                                    Back
+                                                </button>
+
+                                                <button type="button"
+                                                    x-on:click.stop="open = false; sub = false; $wire.regenerateThumbnail({{ $file->id }})"
+                                                    class="w-full flex items-center gap-2 px-3 py-1.5 text-gray-700 hover:bg-gray-50">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                                    </svg>
+                                                    Regenerate
+                                                </button>
+                                            </div>
+                                        </template>
+                                    @endif
+                                </div>
                             </div>
 
                             {{-- Media preview --}}
-                            <div class="aspect-square bg-gray-100 overflow-hidden cursor-pointer"
+                            <div class="aspect-square bg-gray-100 overflow-hidden rounded-t-[10px] cursor-pointer"
                                  wire:click="toggleSelect({{ $file->id }})">
                                 @if($file->type === 'video')
                                     <div class="relative w-full h-full flex items-center justify-center">
@@ -194,7 +293,7 @@
                                     </div>
                                 @else
                                     <img
-                                        src="{{ $fileUrl }}"
+                                        src="{{ $thumbUrl }}"
                                         alt="{{ $file->name }}"
                                         class="w-full h-full object-cover"
                                         loading="lazy"
@@ -203,7 +302,7 @@
                             </div>
 
                             {{-- File info footer --}}
-                            <div class="px-2 py-2 bg-white border-t border-gray-100">
+                            <div class="px-2 py-2 bg-white border-t border-gray-100 rounded-b-[10px]">
                                 <p class="text-xs font-medium text-gray-700 truncate" title="{{ $file->name }}">
                                     {{ $file->name }}
                                 </p>

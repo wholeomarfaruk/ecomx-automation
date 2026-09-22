@@ -18,6 +18,7 @@
                         'marketing'    => ['label' => 'Marketing',     'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 1 1 0-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 0 1-1.44-4.282m3.102.069a18.03 18.03 0 0 1-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 0 1 8.835 2.535M10.34 6.66a23.847 23.847 0 0 0 8.835-2.535m0 0A23.74 23.74 0 0 0 18.795 3m.38 1.125a23.91 23.91 0 0 1 1.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 0 0 1.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 0 1 0 3.46"/>'],
                         'queue'        => ['label' => 'Queue Setup',   'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>'],
                         'modules'      => ['label' => 'Modules',       'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"/>'],
+                        'media'        => ['label' => 'Media',         'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>'],
                     ];
                 @endphp
 
@@ -949,6 +950,66 @@
                             @endforeach
 
                             <p class="text-xs text-gray-400 pt-1">Disabling a module also hides it from the sidebar and blocks direct access to its pages. Turning on a dependent module automatically turns on the modules it needs.</p>
+                        </div>
+                    @endif
+
+                    {{-- ══════════════════ MEDIA — THUMBNAIL SETTINGS ══════════════════ --}}
+                    @if ($activeGroup === 'media')
+                        <div class="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-sky-100 flex items-center justify-center shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-sm font-semibold text-gray-900">Thumbnail Settings</h2>
+                                <p class="text-xs text-gray-400">Controls the auto-generated preview image created for every uploaded photo.</p>
+                            </div>
+                        </div>
+
+                        <div class="px-6 py-5 space-y-5">
+                            <div class="flex items-center justify-between gap-4 rounded-xl border border-gray-200 px-4 py-3.5 {{ $thumbnail_enabled ? 'bg-gray-50' : 'bg-white' }}">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-800">Generate Thumbnail</p>
+                                    <p class="text-xs text-gray-400 mt-0.5">New image uploads get a small preview variant queued automatically.</p>
+                                </div>
+                                <button wire:click="$toggle('thumbnail_enabled')" type="button"
+                                    class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-all focus:outline-none
+                                        {{ $thumbnail_enabled ? 'bg-emerald-500 ring-2 ring-emerald-200' : 'bg-gray-300' }}">
+                                    <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform
+                                        {{ $thumbnail_enabled ? 'translate-x-6' : 'translate-x-1' }}"></span>
+                                </button>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-gray-100 pt-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Thumbnail Width (px)</label>
+                                    <input wire:model="thumbnail_width" type="number" min="50" max="1000"
+                                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                    @error('thumbnail_width') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                    <p class="text-xs text-gray-400 mt-1.5">Height is calculated automatically to preserve aspect ratio — never cropped.</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Thumbnail Format</label>
+                                    <select wire:model="thumbnail_format"
+                                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                        <option value="avif">AVIF</option>
+                                    </select>
+                                    <p class="text-xs text-gray-400 mt-1.5">More formats can be added later.</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Thumbnail Quality (%)</label>
+                                    <input wire:model="thumbnail_quality" type="number" min="1" max="100"
+                                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                    @error('thumbnail_quality') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+
+                            <p class="text-xs text-gray-400 border-t border-gray-100 pt-4">
+                                Changing these settings only affects new uploads. Use "Regenerate thumbnail" on an existing file in Media &rarr; Uploads to apply new settings to it.
+                            </p>
                         </div>
                     @endif
 

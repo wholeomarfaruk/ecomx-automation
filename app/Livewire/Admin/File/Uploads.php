@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\File;
 use App\Livewire\Traits\WithMediaPicker;
 use App\Models\File;
 use App\Models\FileItem;
+use App\Services\Media\ThumbnailService;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -89,6 +90,20 @@ class Uploads extends Component
         $this->dispatch('toast', [
             'type'    => 'success',
             'message' => 'Selected files deleted successfully.',
+        ]);
+    }
+
+    public function regenerateThumbnail(int $id): void
+    {
+        $file = File::find($id);
+
+        if ($file) {
+            app(ThumbnailService::class)->generate($file);
+        }
+
+        $this->dispatch('toast', [
+            'type' => 'success',
+            'message' => 'Thumbnail regenerated.',
         ]);
     }
 

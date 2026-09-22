@@ -11,6 +11,7 @@
     "require": {
         "php": "^8.2",
         "composer/semver": "*",
+        "intervention/image": "^3.0",
         "kreait/laravel-firebase": "^7.2",
         "laravel/fortify": "^1.30",
         "laravel/framework": "^12.0",

@@ -203,7 +203,7 @@
                                                 </svg>
                                             @else
                                                 <img
-                                                    src="{{ file_path($file->id) }}"
+                                                    src="{{ file_path($file->id, 'thumbnail') }}"
                                                     alt="{{ $file->name }}"
                                                     class="w-full h-full object-cover"
                                                     loading="lazy"
@@ -256,7 +256,7 @@
                                         </svg>
                                     </div>
                                 @else
-                                    <img src="{{ file_path($selId) }}" alt="" class="h-12 w-12 rounded-lg border border-gray-300 object-cover">
+                                    <img src="{{ file_path($selId, 'thumbnail') }}" alt="" class="h-12 w-12 rounded-lg border border-gray-300 object-cover">
                                 @endif
                                 <button
                                     wire:click="removeSelect({{ $selId }})"

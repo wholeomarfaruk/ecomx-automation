@@ -111,6 +111,12 @@ class SiteSettings extends Component
     public bool $inventory_enabled = true;
     public bool $accounts_enabled  = true;
 
+    // Media — thumbnail generation (see App\Services\Media\ThumbnailService)
+    public bool $thumbnail_enabled = true;
+    public int  $thumbnail_width   = 200;
+    public string $thumbnail_format  = 'avif';
+    public int  $thumbnail_quality = 65;
+
     /** @var array<int, string> */
     public array $timezoneOptions = [];
 
@@ -484,6 +490,32 @@ class SiteSettings extends Component
             ]);
         }
 
+        if ($this->activeGroup === 'media') {
+            $this->validate([
+                'thumbnail_width'   => 'required|integer|min:50|max:1000',
+                'thumbnail_quality' => 'required|integer|min:1|max:100',
+            ]);
+
+            $old = [
+                'thumbnail_enabled' => (bool) Setting::get('thumbnail_enabled', config('media.thumbnail.enabled'), 'media'),
+                'thumbnail_width'   => Setting::get('thumbnail_width',   config('media.thumbnail.width'),   'media'),
+                'thumbnail_format'  => Setting::get('thumbnail_format',  config('media.thumbnail.format'),  'media'),
+                'thumbnail_quality' => Setting::get('thumbnail_quality', config('media.thumbnail.quality'), 'media'),
+            ];
+
+            Setting::set('thumbnail_enabled', $this->thumbnail_enabled ? '1' : '0', 'media');
+            Setting::set('thumbnail_width',   $this->thumbnail_width,   'media');
+            Setting::set('thumbnail_format',  $this->thumbnail_format,  'media');
+            Setting::set('thumbnail_quality', $this->thumbnail_quality, 'media');
+
+            $this->logSettingsChange('Media settings were updated', $old, [
+                'thumbnail_enabled' => $this->thumbnail_enabled,
+                'thumbnail_width'   => $this->thumbnail_width,
+                'thumbnail_format'  => $this->thumbnail_format,
+                'thumbnail_quality' => $this->thumbnail_quality,
+            ]);
+        }
+
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Settings saved successfully']);
     }
 
@@ -589,6 +621,11 @@ class SiteSettings extends Component
 
         $this->queue_notes = Setting::get('notes', '', 'queue');
         $this->queue_cron_supervisor_path = Setting::get('cron_supervisor_path', '', 'queue');
+
+        $this->thumbnail_enabled = (bool) Setting::get('thumbnail_enabled', config('media.thumbnail.enabled'), 'media');
+        $this->thumbnail_width   = (int) Setting::get('thumbnail_width',   config('media.thumbnail.width'),   'media');
+        $this->thumbnail_format  = Setting::get('thumbnail_format',        config('media.thumbnail.format'),  'media');
+        $this->thumbnail_quality = (int) Setting::get('thumbnail_quality', config('media.thumbnail.quality'), 'media');
 
         $this->purchase_enabled  = (bool) Setting::get('purchase_enabled',  '1', 'modules');
         $this->inventory_enabled = (bool) Setting::get('inventory_enabled', '1', 'modules');

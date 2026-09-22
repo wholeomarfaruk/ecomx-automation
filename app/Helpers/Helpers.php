@@ -7,6 +7,10 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 if (!function_exists('file_path')) {
+    /**
+     * $type = 'thumbnail' falls back to the original when no thumbnail
+     * exists (generation is best-effort — see App\Services\Media\ThumbnailService).
+     */
     function file_path($id, $type = 'original')
     {
         $file = File::with('items')->find($id);
@@ -16,6 +20,10 @@ if (!function_exists('file_path')) {
         }
 
         $item = $file->items->firstWhere('type', $type);
+
+        if (!$item && $type === 'thumbnail') {
+            $item = $file->items->firstWhere('type', 'original');
+        }
 
         return $item ? asset('storage/' . $item->path) : null;
     }

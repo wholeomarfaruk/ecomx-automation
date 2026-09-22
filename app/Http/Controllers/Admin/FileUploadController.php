@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\File\Type;
 use App\Http\Controllers\Controller;
+use App\Services\Media\ThumbnailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Models\File;
@@ -76,6 +77,10 @@ public function storeAdmin(Request $request)
         'size' => filesize($finalFullPath),
         'path' => $finalPath,
     ]);
+
+    if (Type::fromExtension($upload->getClientOriginalExtension()) === Type::IMAGE) {
+        app(ThumbnailService::class)->generate($file);
+    }
 
     activity('uploads')
         ->causedBy(auth()->user())
