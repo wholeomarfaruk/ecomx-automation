@@ -3,15 +3,14 @@
 namespace App\Console\Commands;
 
 use App\Enums\File\Type;
-use App\Models\Attribute;
-use App\Models\AttributeValue;
+use App\Enums\Product\ProductType;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\File;
 use App\Models\FileItem;
 use App\Models\Product;
-use App\Models\ProductVariant;
-use App\Models\ProductVariantValue;
+use App\Services\Media\ThumbnailService;
+use App\Services\StockService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -19,47 +18,43 @@ use Illuminate\Support\Str;
 
 class ImportSeldomFashionFeed extends Command
 {
-    protected $signature = 'import:seldom-fashion-feed {--limit=0 : Import only the first N products (0 = all)} {--category=Women : Category name to assign imported products to}';
+    protected $signature = 'import:seldom-fashion-feed
+        {--limit=0 : Import only the first N products from the list (0 = all)}
+        {--offset=0 : Skip the first N products in the list — use to resume a run that stopped partway}
+        {--category=Women : Category name to assign imported products to}
+        {--stock=10 : Initial stock quantity for newly imported products}';
 
-    protected $description = 'Import products from seldomfashion.com/facebook-product-feed.xml into the catalog';
+    protected $description = 'Import simple products from the seldomfashion.com JSON product API into the catalog';
 
-    private const FEED_URL = 'https://seldomfashion.com/facebook-product-feed.xml';
+    private const API_LIST_URL = 'https://seldomfashion.com/api/products';
 
-    private const COLOR_WORDS = [
-        'Purple', 'Pink', 'Cream', 'Olive', 'Silver', 'Blush', 'Rose', 'Sky', 'Gold',
-        'Green', 'Blue', 'Red', 'Black', 'White', 'Grey', 'Gray', 'Maroon', 'Navy',
-        'Peach', 'Mint', 'Lavender', 'Lilac', 'Beige', 'Brown', 'Orange', 'Yellow',
-        'Wine', 'Coral', 'Teal', 'Turquoise', 'Charcoal', 'Ash', 'Magenta',
-    ];
-
-    public function handle(): int
+    public function handle(StockService $stockService, ThumbnailService $thumbnailService): int
     {
-        $this->info('Fetching feed: ' . self::FEED_URL);
+        $this->info('Fetching feed: ' . self::API_LIST_URL);
 
-        $xmlBody = Http::withHeaders(['User-Agent' => 'Mozilla/5.0'])->get(self::FEED_URL)->body();
-        $xml = simplexml_load_string($xmlBody);
-
-        if ($xml === false) {
-            $this->error('Failed to parse feed XML');
+        try {
+            $response = Http::withHeaders(['User-Agent' => 'Mozilla/5.0'])->timeout(30)->retry(3, 2000)->get(self::API_LIST_URL);
+        } catch (\Throwable $e) {
+            $this->error('Failed to fetch product list: ' . $e->getMessage());
             return self::FAILURE;
         }
 
-        $namespaces = $xml->channel->item[0]->getNamespaces(true);
-        $g = $namespaces['g'];
+        if (! $response->ok()) {
+            $this->error("Failed to fetch product list — HTTP {$response->status()}");
+            return self::FAILURE;
+        }
 
-        $sizeAttribute = Attribute::firstOrCreate(
-            ['slug' => 'size'],
-            ['name' => 'Size', 'type' => 'select', 'status' => 'active']
-        );
-        $unstitchedValue = AttributeValue::firstOrCreate(
-            ['attribute_id' => $sizeAttribute->id, 'slug' => 'unstitched'],
-            ['value' => 'Unstitched', 'sort_order' => 1]
-        );
+        $products = $response->json();
 
-        $colorAttribute = Attribute::firstOrCreate(
-            ['slug' => 'color'],
-            ['name' => 'Color', 'type' => 'color', 'status' => 'active']
-        );
+        if (! is_array($products)) {
+            $this->error('Failed to parse product list JSON');
+            return self::FAILURE;
+        }
+
+        $offset = (int) $this->option('offset');
+        if ($offset > 0) {
+            $products = array_slice($products, $offset, null, true);
+        }
 
         $brand = Brand::firstOrCreate(
             ['slug' => Str::slug('Seldom Fashion')],
@@ -73,65 +68,48 @@ class ImportSeldomFashionFeed extends Command
             $this->warn("Category '{$categoryName}' not found — imported products will not be assigned to any category.");
         }
 
+        $stockQuantity = (float) $this->option('stock');
         $maxSort = Product::max('sort_order') ?? 0;
         $imported = 0;
         $skipped = 0;
 
         $limit = (int) $this->option('limit');
-        $items = $xml->channel->item;
 
-        foreach ($items as $index => $item) {
+        foreach ($products as $index => $item) {
             if ($limit > 0 && $imported >= $limit) {
                 break;
             }
 
-            $c = $item->children($g);
-            $title = trim((string) $c->title);
-            $link = trim((string) $c->link);
-            $slug = Str::slug(basename(rtrim($link, '/')));
-            $imageUrl = trim((string) $c->image_link);
+            $feedId = $item['id'] ?? null;
+            $title = trim((string) ($item['name'] ?? ''));
 
-            $existingProduct = Product::where('slug', $slug)->first();
-            if ($existingProduct) {
-                if (! $existingProduct->featured_image_id) {
-                    $file = $this->downloadImage($imageUrl, $slug);
-                    if ($file) {
-                        $existingProduct->update([
-                            'featured_image_id' => $file->id,
-                            'image_ids' => [$file->id],
-                        ]);
+            if ($feedId === null || $title === '') {
+                $this->warn("Skip: malformed entry at index {$index}");
+                continue;
+            }
 
-                        $variant = $existingProduct->variants()->first();
-                        if ($variant) {
-                            $variant->media()->create([
-                                'media_id' => $file->id,
-                                'is_primary' => true,
-                                'sort_order' => 1,
-                            ]);
-                        }
+            $slug = Str::slug($title . '-' . $feedId);
 
-                        $this->info("Image added for existing product: {$title}");
-                    }
-                } else {
-                    $this->line("Skip (exists): {$title}");
-                }
-
+            if (Product::where('slug', $slug)->exists()) {
+                $this->line("Skip (exists): {$title}");
                 $skipped++;
                 continue;
             }
 
-            $price = $this->extractAmount((string) $c->price);
-            $salePrice = $this->extractAmount((string) $c->sale_price);
+            $price = $this->extractAmount($item['price'] ?? null);
+            $salePrice = $this->extractAmount($item['sale_price'] ?? null);
+            $purchasePrice = $this->extractAmount($item['purchase_price'] ?? null);
+
             if ($salePrice !== null && $price !== null && $salePrice >= $price) {
                 $salePrice = null;
             }
 
-            $description = html_entity_decode((string) $c->description, ENT_QUOTES | ENT_HTML5);
-            $feedId = trim((string) $c->id);
+            $description = html_entity_decode((string) ($item['description_raw'] ?? ''), ENT_QUOTES | ENT_HTML5);
+            $shortDescription = $item['short_description'] ?? null;
 
-            $code = 'SF-' . str_pad($feedId, 4, '0', STR_PAD_LEFT);
+            $code = 'SF-' . str_pad((string) $feedId, 4, '0', STR_PAD_LEFT);
             if (Product::where('code', $code)->exists()) {
-                $code = 'SF-' . str_pad($feedId, 4, '0', STR_PAD_LEFT) . '-' . Str::random(4);
+                $code = 'SF-' . str_pad((string) $feedId, 4, '0', STR_PAD_LEFT) . '-' . Str::random(4);
             }
 
             $maxSort++;
@@ -140,14 +118,15 @@ class ImportSeldomFashionFeed extends Command
                 'code' => $code,
                 'name' => $title,
                 'slug' => $slug,
-                'short_description' => Str::limit(strip_tags($description), 150),
+                'short_description' => $shortDescription ? Str::limit(strip_tags($shortDescription), 150) : Str::limit(strip_tags($description), 150),
                 'description' => $description,
                 'brand_id' => $brand->id,
                 'status' => 'active',
                 'stock_status' => 'in_stock',
-                'product_type' => 'variable',
+                'product_type' => ProductType::SIMPLE->value,
                 'price' => $price,
                 'sale_price' => $salePrice,
+                'purchase_price' => $purchasePrice,
                 'sort_order' => $maxSort,
             ]);
 
@@ -155,73 +134,35 @@ class ImportSeldomFashionFeed extends Command
                 $product->categories()->sync([$category->id]);
             }
 
-            // Size attribute (always "Unstitched")
-            $productSizeAttr = $product->productAttributes()->create(['attribute_id' => $sizeAttribute->id]);
-            $product->attributeOrder()->create(['product_attribute_id' => $productSizeAttr->id, 'sort_order' => 1]);
-            $productSizeAttrValue = $productSizeAttr->values()->create([
-                'attribute_value_id' => $unstitchedValue->id,
-                'sort_order' => 1,
-            ]);
+            // Download featured image + gallery images as Files, generating a
+            // thumbnail for each via ThumbnailService (same pipeline as manual uploads).
+            $imageUrls = collect([$item['featured_image'] ?? null])
+                ->merge($item['gallery_images'] ?? [])
+                ->filter()
+                ->unique()
+                ->values();
 
-            // Color attribute, only if found in the title
-            $colorName = $this->extractColor($title);
-            $productColorAttrValue = null;
-            if ($colorName !== null) {
-                $colorValue = AttributeValue::firstOrCreate(
-                    ['attribute_id' => $colorAttribute->id, 'slug' => Str::slug($colorName)],
-                    ['value' => $colorName, 'sort_order' => 1]
-                );
-
-                $productColorAttr = $product->productAttributes()->create(['attribute_id' => $colorAttribute->id]);
-                $product->attributeOrder()->create(['product_attribute_id' => $productColorAttr->id, 'sort_order' => 2]);
-                $productColorAttrValue = $productColorAttr->values()->create([
-                    'attribute_value_id' => $colorValue->id,
-                    'sort_order' => 1,
-                ]);
+            $fileIds = [];
+            foreach ($imageUrls as $position => $imageUrl) {
+                $file = $this->downloadImage($imageUrl, $slug . '-' . $position);
+                if ($file) {
+                    $thumbnailService->generate($file);
+                    $fileIds[] = $file->id;
+                }
             }
 
-            // Download the image and register it as a File
-            $file = $this->downloadImage($imageUrl, $slug);
-            if ($file) {
+            if (! empty($fileIds)) {
                 $product->update([
-                    'featured_image_id' => $file->id,
-                    'image_ids' => [$file->id],
+                    'featured_image_id' => $fileIds[0],
+                    'image_ids' => $fileIds,
                 ]);
             }
 
-            // Single variant combining Size (+ Color if present)
-            $valueIds = collect([$productSizeAttrValue->id, $productColorAttrValue?->id])->filter()->sort()->values();
-            $combinationKey = $valueIds->implode('-');
-            $labels = collect([$unstitchedValue->value, $colorName])->filter()->implode('-');
-            $sku = Str::limit(strtoupper($code . '-' . Str::slug($labels, '-')), 190, '');
-
-            $variant = ProductVariant::create([
-                'product_id' => $product->id,
-                'sku' => $sku,
-                'combination_key' => $combinationKey,
-                'price' => $price,
-                'sale_price' => $salePrice,
-                'stock_quantity' => 10,
-                'status' => 'active',
-                'sort_order' => 1,
-            ]);
-
-            foreach ($valueIds as $productAttributeValueId) {
-                ProductVariantValue::create([
-                    'product_variant_id' => $variant->id,
-                    'product_attribute_value_id' => $productAttributeValueId,
-                ]);
+            if ($stockQuantity > 0) {
+                $stockService->setAbsolute($product, null, $stockQuantity, note: 'Initial stock from Seldom Fashion import');
             }
 
-            if ($file) {
-                $variant->media()->create([
-                    'media_id' => $file->id,
-                    'is_primary' => true,
-                    'sort_order' => 1,
-                ]);
-            }
-
-            $this->info("Imported: {$title}" . ($colorName ? " [{$colorName}]" : ''));
+            $this->info("Imported: {$title}" . ($price === null ? ' [no price — set manually]' : ''));
             $imported++;
         }
 
@@ -231,9 +172,17 @@ class ImportSeldomFashionFeed extends Command
         return self::SUCCESS;
     }
 
-    private function extractAmount(string $raw): ?float
+    private function extractAmount(mixed $raw): ?float
     {
-        $raw = trim($raw);
+        if ($raw === null) {
+            return null;
+        }
+
+        if (is_numeric($raw)) {
+            return (float) $raw;
+        }
+
+        $raw = trim((string) $raw);
         if ($raw === '') {
             return null;
         }
@@ -245,26 +194,15 @@ class ImportSeldomFashionFeed extends Command
         return null;
     }
 
-    private function extractColor(string $title): ?string
-    {
-        foreach (self::COLOR_WORDS as $color) {
-            if (preg_match('/\b' . preg_quote($color, '/') . '\b/i', $title)) {
-                return $color;
-            }
-        }
-
-        return null;
-    }
-
     private function downloadImage(string $url, string $slug): ?File
     {
         if ($url === '') {
-            $this->warn("  Image download skipped for {$slug}: feed had no image_link");
+            $this->warn("  Image download skipped for {$slug}: no image URL");
             return null;
         }
 
         try {
-            $response = Http::withHeaders(['User-Agent' => 'Mozilla/5.0'])->timeout(30)->get($url);
+            $response = Http::withHeaders(['User-Agent' => 'Mozilla/5.0'])->timeout(30)->retry(2, 1500)->get($url);
         } catch (\Throwable $e) {
             $this->warn("  Image download failed for {$slug}: {$url} — " . $e->getMessage());
             return null;
