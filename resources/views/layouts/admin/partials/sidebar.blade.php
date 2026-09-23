@@ -65,7 +65,7 @@
             </button>
         </div>
 
-        <div class="px-4 space-y-2">
+        <div class="px-4 space-y-2 z-1">
             <div class="h-[64vh] scrollbar scrollbar-thumb-gray-900 scrollbar-thin scrollbar-track-transparent"
                 :class="$store.sidebar.full ? 'overflow-y-scroll' : ''">
 
@@ -929,7 +929,7 @@
             </div>
         </div>
 
-        <div>
+        <div class="z-2 bg-gray-900">
             <hr class="border-gray-700">
 
             <div x-data="{ openProfile: false }" class="relative px-2 py-2">
