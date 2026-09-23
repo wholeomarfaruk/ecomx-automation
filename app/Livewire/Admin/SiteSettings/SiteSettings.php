@@ -186,6 +186,24 @@ class SiteSettings extends Component
 
     public function save(): void
     {
+        if ($this->activeGroup === 'application') {
+            $this->validate([
+                'site_short_name' => 'nullable|string|max:50',
+            ]);
+
+            $old = [
+                'site_short_name' => Setting::get('site_short_name'),
+            ];
+
+            Setting::set('site_short_name', $this->site_short_name);
+
+            $new = [
+                'site_short_name' => $this->site_short_name,
+            ];
+
+            $this->logSettingsChange('Application settings were updated', $old, $new);
+        }
+
         if ($this->activeGroup === 'general') {
             $this->validate([
                 'site_name'       => 'required|string|max:100',

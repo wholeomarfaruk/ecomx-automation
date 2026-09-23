@@ -24,13 +24,13 @@
                  class="flex items-center gap-3 px-4 w-full overflow-hidden">
                 @if($logoWhiteUrl)
                     <img src="{{ $logoWhiteUrl }}" alt="{{ $siteName }}"
-                         class="h-14 w-full object-contain object-left">
+                         class="h-10 w-10 object-contain shrink-0">
                 @else
                     <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0 shadow-sm">
                         <span class="text-white font-black text-base leading-none select-none">{{ $initial }}</span>
                     </div>
-                    <span class="text-white font-bold text-base tracking-tight truncate leading-none">{{ $siteName }}</span>
                 @endif
+                <span class="text-white font-bold text-base tracking-tight truncate leading-none">{{ $siteName }}</span>
             </div>
 
             <div x-show="!$store.sidebar.full" x-cloak
