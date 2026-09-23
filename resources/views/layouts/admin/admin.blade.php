@@ -82,6 +82,7 @@
             // Creating component Dropdown
             Alpine.data('dropdown', () => ({
                 open: false,
+                menuStyle: '',
                 init() {
                     // Close children when sidebar collapses
                     this.$watch('$store.sidebar.full', val => {
@@ -91,10 +92,19 @@
                 toggle(tab) {
                     this.open = !this.open;
                     Alpine.store('sidebar').active = tab;
+                    if (this.open) this.positionMenu();
+                },
+                // Collapsed-mode submenu is teleported to <body> so the
+                // sidebar's own overflow-y-scroll (needed to scroll the
+                // menu list) doesn't clip the popout — same reasoning as
+                // the tooltip's positionTooltip().
+                positionMenu() {
+                    const rect = this.$el.getBoundingClientRect();
+                    this.menuStyle = `position: fixed; top: ${rect.top}px; left: ${rect.right + 8}px; z-index: 60;`;
                 },
                 activeClass: 'bg-gray-800 text-gray-200',
                 expandedClass: 'border-l border-gray-400 ml-4 pl-4',
-                shrinkedClass: 'sm:absolute top-0 left-20 sm:shadow-md sm:z-10 sm:bg-gray-900 sm:rounded-md sm:p-4 border-l sm:border-none border-gray-400 ml-4 pl-4 sm:ml-0 w-28'
+                shrinkedClass: 'sm:shadow-md sm:z-10 sm:bg-gray-900 sm:rounded-md sm:p-4 border-l sm:border-none border-gray-400 ml-4 pl-4 sm:ml-0 w-28'
             }));
             // Creating component Sub Dropdown
             Alpine.data('sub_dropdown', () => ({
@@ -108,7 +118,15 @@
             // Creating tooltip
             Alpine.data('tooltip', () => ({
                 show: false,
-                visibleClass: 'block sm:absolute -top-7 sm:border border-gray-800 left-5 sm:text-sm sm:bg-gray-900 sm:px-2 sm:py-1 sm:rounded-md'
+                tooltipStyle: '',
+                visibleClass: 'block sm:border border-gray-800 sm:text-sm sm:bg-gray-900 sm:px-2 sm:py-1 sm:rounded-md',
+                // Teleported tooltips escape the sidebar's scroll clipping —
+                // position is computed from the trigger element instead of
+                // relying on CSS `absolute`, which the scroll container clips.
+                positionTooltip() {
+                    const rect = this.$el.getBoundingClientRect();
+                    this.tooltipStyle = `position: fixed; top: ${rect.top}px; left: ${rect.right + 8}px; z-index: 60;`;
+                }
             }))
 
             // Rich text editor (omar-text-editor) — wraps its textarea in
