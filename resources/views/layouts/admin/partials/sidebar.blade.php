@@ -1,4 +1,4 @@
-    <div class="h-screen z-1 bg-gray-900 transition-all duration-300 space-y-2 fixed sm:sticky flex justify-around flex-col"
+    <div class="h-screen z-30 bg-gray-900 transition-all duration-300 space-y-2 fixed sm:sticky flex justify-around flex-col"
         x-bind:class="{
             'w-64': $store.sidebar.full,
             'w-64 sm:w-20': !$store.sidebar.full,
@@ -959,7 +959,7 @@
 
                 <div x-cloak x-show="openProfile" x-transition
                     @click.outside="openProfile = false"
-                    class="absolute bottom-16 left-2 right-2 bg-gray-900 border border-gray-700 rounded-lg shadow-lg overflow-hidden z-2">
+                    class="absolute bottom-16 left-2 right-2 bg-gray-800 border border-gray-700 rounded-lg shadow-lg overflow-hidden z-50">
                     <a href="{{ route('admin.profile') }}"
                         class="block px-4 py-3 text-sm text-gray-300 hover:bg-gray-700 hover:text-white">
                         My Profile
