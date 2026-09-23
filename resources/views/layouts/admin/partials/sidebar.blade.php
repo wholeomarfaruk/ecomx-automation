@@ -66,8 +66,7 @@
         </div>
 
         <div class="px-4 space-y-2">
-            <div class="h-[64vh] scrollbar scrollbar-thumb-gray-900 scrollbar-thin scrollbar-track-transparent"
-                :class="$store.sidebar.full ? 'overflow-y-scroll' : ''">
+            <div class="h-[64vh] overflow-y-scroll overflow-x-hidden scrollbar scrollbar-thumb-gray-900 scrollbar-thin scrollbar-track-transparent">
 
                 <div class="mt-4 mb-1">
                     <h2 class="text-gray-500 text-md font-semibold" :class="{ 'hidden': !$store.sidebar.full }"
