@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Sales;
 
+use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\OrderStatus;
 use App\Exceptions\Inventory\InsufficientStockException;
 use App\Exceptions\Sales\CouponNotApplicableException;
@@ -38,7 +39,7 @@ use Livewire\Component;
  *    InsufficientStockException rolls the whole edit back.
  *  - Changing a line resets its line discount (e.g. a storefront offer
  *    discount), since that was calculated for the original line.
- *  - Notes can be edited at any status.
+ *  - Source and notes are informational, so they can be edited at any status.
  */
 class OrderEditor extends Component
 {
@@ -70,8 +71,9 @@ class OrderEditor extends Component
     public string $billingAddressId = '';
     public string $shippingAddressId = '';
 
-    // Notes
+    // Source & notes (informational — editable at any status)
     public bool $notesModal = false;
+    public string $source = '';
     public string $customerNote = '';
     public string $adminNote = '';
 
@@ -685,6 +687,7 @@ class OrderEditor extends Component
     {
         $order = Order::findOrFail($this->orderId);
 
+        $this->source = $order->source->value;
         $this->customerNote = $order->customer_note ?? '';
         $this->adminNote = $order->admin_note ?? '';
 
@@ -695,20 +698,22 @@ class OrderEditor extends Component
     public function saveNotes(): void
     {
         $this->validate([
+            'source'       => ['required', \Illuminate\Validation\Rule::enum(OrderSource::class)],
             'customerNote' => 'nullable|string|max:5000',
             'adminNote'    => 'nullable|string|max:5000',
         ]);
 
         $order = Order::findOrFail($this->orderId);
-        $before = ['customer_note' => $order->customer_note, 'admin_note' => $order->admin_note];
+        $before = ['source' => $order->source->value, 'customer_note' => $order->customer_note, 'admin_note' => $order->admin_note];
 
         $order->update([
+            'source'        => $this->source,
             'customer_note' => trim($this->customerNote) ?: null,
             'admin_note'    => trim($this->adminNote) ?: null,
         ]);
 
         $this->notesModal = false;
-        $this->saved($order, 'notes updated', ['before' => $before, 'after' => ['customer_note' => $order->customer_note, 'admin_note' => $order->admin_note]]);
+        $this->saved($order, 'source & notes updated', ['before' => $before, 'after' => ['source' => $order->source->value, 'customer_note' => $order->customer_note, 'admin_note' => $order->admin_note]]);
     }
 
     public function render(): mixed
@@ -759,6 +764,7 @@ class OrderEditor extends Component
             'customerOptions'   => $customerOptions,
             'customerAddresses' => $customerAddresses,
             'editItemsTotal'    => $editItemsTotal,
+            'sources'           => OrderSource::cases(),
         ]);
     }
 }
