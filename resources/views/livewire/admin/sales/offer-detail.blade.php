@@ -20,6 +20,17 @@
         </button>
     </div>
 
+    @if($errors->any())
+        <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+            <p class="text-sm font-medium text-red-700 mb-1">Please fix the following before saving:</p>
+            <ul class="list-disc list-inside text-xs text-red-600 space-y-0.5">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="grid grid-cols-12 gap-6">
 
         <div class="col-span-12 lg:col-span-8 space-y-6">
@@ -65,22 +76,11 @@
                 <h2 class="text-sm font-semibold text-gray-800 mb-4">Target Products (Optional)</h2>
                 <p class="text-xs text-gray-400 mb-3">Leave empty to apply this offer based on conditions only (e.g. brand or category), rather than specific products.</p>
 
-                <div class="relative mb-4">
-                    <input wire:model.live.debounce.300ms="productSearch" type="text" placeholder="Search products to add…"
-                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                    @if($productSearch !== '')
-                        <div class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                            @forelse($productOptions as $option)
-                                <button type="button" wire:click="addItem({{ $option->id }})"
-                                    class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center justify-between">
-                                    <span>{{ $option->name }}</span>
-                                    <span class="text-xs text-gray-400 font-mono">{{ $option->code }}</span>
-                                </button>
-                            @empty
-                                <p class="px-3 py-2 text-xs text-gray-400">No matching products found.</p>
-                            @endforelse
-                        </div>
-                    @endif
+                <div class="mb-4">
+                    <x-searchable-select wire:key="offer-product-picker-{{ count($items) }}"
+                        field="productPickerId" :value="$productPickerId"
+                        :options="$productOptions" :images="$productImages"
+                        placeholder="— Select a product to add —" search-placeholder="Search by name or code…" />
                 </div>
 
                 <div class="space-y-2">

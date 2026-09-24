@@ -17,7 +17,8 @@ class OfferDetail extends Component
 
     /** @var array<int, array{product_id: string, label: string}> */
     public array $items = [];
-    public string $productSearch = '';
+    /** Bound to the Target Products searchable-select; picking a product adds it to $items and resets. */
+    public string $productPickerId = '';
 
     public function mount(int $id): void
     {
@@ -45,6 +46,15 @@ class OfferDetail extends Component
         $this->hydrateDiscountRulesFrom($promotion);
     }
 
+    public function updatedProductPickerId(string $value): void
+    {
+        if ($value !== '') {
+            $this->addItem((int) $value);
+        }
+
+        $this->productPickerId = '';
+    }
+
     public function addItem(int $productId): void
     {
         $product = Product::active()->find($productId);
@@ -54,7 +64,6 @@ class OfferDetail extends Component
         }
 
         if (collect($this->items)->contains('product_id', (string) $product->id)) {
-            $this->productSearch = '';
             return;
         }
 
@@ -62,14 +71,23 @@ class OfferDetail extends Component
             'product_id' => (string) $product->id,
             'label'      => $product->name,
         ];
-
-        $this->productSearch = '';
     }
 
     public function removeItem(int $index): void
     {
         unset($this->items[$index]);
         $this->items = array_values($this->items);
+    }
+
+    protected function validationAttributes(): array
+    {
+        return [
+            'conditions.*.type'     => 'condition type',
+            'conditions.*.operator' => 'condition operator',
+            'conditions.*.value'    => 'condition value',
+            'discountRules.*.type'  => 'discount rule type',
+            'offerType'             => 'offer type',
+        ];
     }
 
     protected function rules(): array
@@ -117,17 +135,22 @@ class OfferDetail extends Component
 
     public function render(): mixed
     {
-        $productOptions = collect();
-        if ($this->productSearch !== '') {
-            $productOptions = Product::active()
-                ->where(fn ($q) => $q->where('name', 'like', "%{$this->productSearch}%")
-                    ->orWhere('code', 'like', "%{$this->productSearch}%"))
-                ->limit(10)
-                ->get();
-        }
+        $products = Product::active()
+            ->whereNotIn('id', array_column($this->items, 'product_id'))
+            ->with('featuredImage.items')
+            ->get(['id', 'name', 'code', 'featured_image_id']);
 
         return view('livewire.admin.sales.offer-detail', [
-            'productOptions' => $productOptions,
+            'productOptions' => $products->mapWithKeys(fn ($p) => [$p->id => $p->code ? "{$p->name} ({$p->code})" : $p->name]),
+            // Eager-loaded thumbnail (falls back to original) — same resolution as
+            // file_path($id, 'thumbnail') without a query per product.
+            'productImages'  => $products->mapWithKeys(function ($p) {
+                // getRelation(): $p->featuredImage resolves to the getFeaturedImageAttribute() URL string, not the relation.
+                $items = $p->getRelation('featuredImage')?->items;
+                $item = $items?->firstWhere('type', 'thumbnail') ?? $items?->firstWhere('type', 'original');
+
+                return [$p->id => $item ? asset('storage/' . $item->path) : null];
+            }),
         ])->layout('layouts.admin.admin');
     }
 }
