@@ -10,6 +10,7 @@ use App\Actions\Accounts\PostRtoFee;
 use App\Actions\Accounts\RefundCustomerAdvance;
 use App\Actions\Accounts\RefundOrder;
 use App\Actions\Accounts\ReverseOrder;
+use App\Actions\Sales\DuplicateOrder;
 use App\Actions\Sales\PackOrderItem;
 use App\Enums\Sales\CourierStatus;
 use App\Enums\Sales\FulfillmentStatus;
@@ -29,7 +30,9 @@ use App\Models\OrderItem;
 use App\Models\Setting;
 use App\Services\StockService;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\On;
 use Livewire\Component;
+use Spatie\Activitylog\Models\Activity;
 
 class OrderDetail extends Component
 {
@@ -91,6 +94,46 @@ class OrderDetail extends Component
             $this->returnedQuantities[$item->id] = (string) $item->returned_quantity;
             $this->deliveredQuantities[$item->id] = (string) $item->delivered_quantity;
         }
+    }
+
+    /**
+     * OrderEditor (embedded on this page) saved a change — pick up new/removed
+     * lines in the per-item quantity inputs; the rest re-renders from the DB.
+     */
+    #[On('order-updated')]
+    public function refreshAfterEdit(): void
+    {
+        $order = Order::with('items')->findOrFail($this->orderId);
+
+        $this->returnedQuantities = [];
+        $this->deliveredQuantities = [];
+
+        foreach ($order->items as $item) {
+            $this->returnedQuantities[$item->id] = (string) $item->returned_quantity;
+            $this->deliveredQuantities[$item->id] = (string) $item->delivered_quantity;
+        }
+    }
+
+    /** "Duplicate" header button — new Pending order with the same customer/items/charges (see DuplicateOrder). */
+    public function duplicateOrder(): void
+    {
+        $source = Order::findOrFail($this->orderId);
+        $copy = app(DuplicateOrder::class)->handle($source);
+
+        activity('sales')
+            ->causedBy(auth()->user())
+            ->performedOn($copy)
+            ->event('created')
+            ->log("Order #{$copy->id} created as a duplicate of Order #{$source->id}");
+
+        activity('sales')
+            ->causedBy(auth()->user())
+            ->performedOn($source)
+            ->event('updated')
+            ->log("Order #{$source->id} duplicated as Order #{$copy->id}");
+
+        $this->dispatch('toast', ['type' => 'success', 'message' => "Order #{$copy->id} created"]);
+        $this->redirect(route('admin.sales.orders.show', $copy->id), navigate: true);
     }
 
     /** This page always books for its own order — wraps the trait's generic method so the view can call openBookingModal() with no arguments, same as before. */
@@ -676,6 +719,8 @@ class OrderDetail extends Component
             'items.combo.items.variant',
             'items.batchAllocations.batch',
             'payments',
+            'charges',
+            'offers',
             'courierShipments.courier',
             'courierShipments.courierAccount',
             'courierShipments.trackingEvents',
@@ -693,6 +738,13 @@ class OrderDetail extends Component
             'canManageCourier'    => $canManageCourier,
             'cashAccounts'        => Account::active()->whereIn('subtype', ['cash', 'bank', 'mobile_banking'])->orderBy('code')->get(),
             'packableBatches'     => $this->packableBatchesForCurrentItem(),
+            'timeline'            => Activity::query()
+                ->where('subject_type', Order::class)
+                ->where('subject_id', $order->id)
+                ->with('causer')
+                ->latest('id')
+                ->limit(100)
+                ->get(),
         ])->layout('layouts.admin.admin');
     }
 }

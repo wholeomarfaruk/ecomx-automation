@@ -14,7 +14,13 @@
                 <p class="text-xs text-gray-400">{{ $order->created_at->format('M d, Y H:i') }} · {{ $order->source->label() }}</p>
             </div>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+            <a href="{{ route('admin.sales.orders.print', [$order->id, 'invoice']) }}" target="_blank"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 border border-gray-200 hover:bg-gray-50 hover:text-gray-700 transition">Invoice</a>
+            <a href="{{ route('admin.sales.orders.print', [$order->id, 'packing-slip']) }}" target="_blank"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 border border-gray-200 hover:bg-gray-50 hover:text-gray-700 transition">Packing Slip</a>
+            <button type="button" wire:click="duplicateOrder" wire:confirm="Create a new Pending order with the same customer, items and charges?"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 border border-gray-200 hover:bg-gray-50 hover:text-gray-700 transition">Duplicate</button>
             <a href="{{ route('admin.accounts.reports.order-ledger', ['orderId' => $order->id]) }}"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 border border-gray-200 hover:bg-gray-50 hover:text-gray-700 transition">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -179,6 +185,12 @@
                         <span class="text-gray-500">Tax</span>
                         <span class="text-gray-700">+{{ number_format($order->tax_amount, 2) }}</span>
                     </div>
+                    @foreach($order->charges as $charge)
+                        <div class="flex items-center gap-8 text-sm">
+                            <span class="text-gray-500">{{ $charge->label }}</span>
+                            <span class="text-gray-700">+{{ number_format($charge->amount, 2) }}</span>
+                        </div>
+                    @endforeach
                     <div class="flex items-center gap-8 text-base pt-1.5 border-t border-gray-100 mt-1">
                         <span class="font-semibold text-gray-800">Total</span>
                         <span class="font-bold text-indigo-600">{{ number_format($order->total_amount, 2) }}</span>
@@ -248,10 +260,40 @@
                     </div>
                 </div>
             </div>
+
+            {{-- Timeline (activity log for this order) --}}
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                <h2 class="text-sm font-semibold text-gray-800 mb-4">Timeline</h2>
+                <ol class="relative border-l border-gray-200 ml-2 space-y-4">
+                    @foreach($timeline as $entry)
+                        <li class="ml-4" x-data="{ open: false }">
+                            <span class="absolute -left-1.5 mt-1.5 w-3 h-3 rounded-full border-2 border-white {{ $entry->event === 'created' ? 'bg-emerald-500' : 'bg-indigo-400' }}"></span>
+                            <p class="text-sm text-gray-800">{{ $entry->description }}</p>
+                            <p class="text-xs text-gray-400">
+                                {{ local_time($entry->created_at)?->format('d M Y, h:i A') }}
+                                · {{ $entry->causer?->name ?? 'System' }}
+                                @if($entry->properties->has('changes'))
+                                    · <button type="button" @click="open = !open" class="text-indigo-500 hover:text-indigo-600" x-text="open ? 'Hide details' : 'Details'"></button>
+                                @endif
+                            </p>
+                            @if($entry->properties->has('changes'))
+                                <pre x-show="open" x-cloak class="mt-2 p-2 rounded-lg bg-gray-50 text-[11px] text-gray-600 whitespace-pre-wrap break-words">{{ json_encode($entry->properties->get('changes'), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) }}</pre>
+                            @endif
+                        </li>
+                    @endforeach
+                    <li class="ml-4">
+                        <span class="absolute -left-1.5 mt-1.5 w-3 h-3 rounded-full border-2 border-white bg-gray-400"></span>
+                        <p class="text-sm text-gray-800">Order placed ({{ $order->source->label() }})</p>
+                        <p class="text-xs text-gray-400">{{ local_time($order->placed_at ?? $order->created_at)?->format('d M Y, h:i A') }}</p>
+                    </li>
+                </ol>
+            </div>
         </div>
 
         {{-- Right --}}
         <div class="col-span-12 lg:col-span-4 space-y-6">
+            @livewire('admin.sales.order-editor', ['orderId' => $order->id], key('order-editor-' . $order->id))
+
 
             {{-- Customer --}}
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">

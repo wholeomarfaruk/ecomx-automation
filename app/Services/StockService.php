@@ -304,6 +304,42 @@ class StockService
         ]);
     }
 
+    /** Whether this order's stock is currently booked (confirmed and not yet released/completed). */
+    public function isOrderBooked(Order $order): bool
+    {
+        return $this->orderAlreadyBooked($order);
+    }
+
+    /**
+     * Books one order line's quantity — for a line added to, or re-added
+     * after editing on, an already-booked order (admin order editing). No-op
+     * for lines without a product (combos).
+     *
+     * @throws InsufficientStockException
+     */
+    public function bookItem(OrderItem $item, ?string $note = null, ?Warehouse $warehouse = null): void
+    {
+        if (! $item->product_id || (float) $item->quantity <= 0) {
+            return;
+        }
+
+        $this->adjustBooking($item, (float) $item->quantity, 'booked', $warehouse ?? Warehouse::default(), $note);
+    }
+
+    /**
+     * Releases exactly this line's booked quantity (not the whole stock
+     * row's booking, unlike releaseBooking()) — call with the line's
+     * pre-edit state before changing/removing it on a booked order.
+     */
+    public function releaseItemBooking(OrderItem $item, ?string $note = null, ?Warehouse $warehouse = null): void
+    {
+        if (! $item->product_id || (float) $item->quantity <= 0) {
+            return;
+        }
+
+        $this->adjustBooking($item, -(float) $item->quantity, 'unbooked_cancelled', $warehouse ?? Warehouse::default(), $note);
+    }
+
     protected function orderAlreadyBooked(Order $order): bool
     {
         return InventoryStockBookingMovement::query()

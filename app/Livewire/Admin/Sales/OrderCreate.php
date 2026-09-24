@@ -2,13 +2,13 @@
 
 namespace App\Livewire\Admin\Sales;
 
-use App\Concerns\CreatesMasterProfile;
 use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\OrderStatus;
 use App\Enums\Sales\PaymentStatus;
 use App\Enums\Sales\FulfillmentStatus;
 use App\Exceptions\Inventory\InsufficientStockException;
 use App\Exceptions\Sales\CouponNotApplicableException;
+use App\Livewire\Concerns\QuickAddsCustomer;
 use App\Models\Combo;
 use App\Models\Coupon;
 use App\Models\Customer;
@@ -26,18 +26,12 @@ use Livewire\Component;
 
 class OrderCreate extends Component
 {
-    use CreatesMasterProfile;
+    use QuickAddsCustomer;
 
     public string $customerId  = '';
 
     public string $billingAddressId  = '';
     public string $shippingAddressId = '';
-
-    /** "+" next to the customer search — quick-add a customer with a delivery address without leaving the order. */
-    public bool   $newCustomerModal   = false;
-    public string $newCustomerName    = '';
-    public string $newCustomerPhone   = '';
-    public string $newCustomerAddress = '';
 
     public string $source             = 'admin';
     public string $status             = 'pending';
@@ -82,86 +76,12 @@ class OrderCreate extends Component
         $this->shippingAddressId = '';
     }
 
-    public function openNewCustomerModal(): void
+    /** QuickAddsCustomer hook: select the new customer and their address for this order. */
+    protected function customerQuickAdded(Customer $customer, DeliveryAddress $address): void
     {
-        $this->reset(['newCustomerName', 'newCustomerPhone', 'newCustomerAddress']);
-        $this->resetValidation();
-
-        $this->newCustomerModal = true;
-    }
-
-    /**
-     * Creates MasterProfile + Customer (same as Customers → Add Customer)
-     * plus a default DeliveryAddress, then selects the customer and that
-     * address as both billing and shipping for this order.
-     */
-    public function createNewCustomer(): void
-    {
-        $this->validate([
-            'newCustomerName'    => 'required|string|max:255',
-            'newCustomerPhone'   => 'required|string|max:20',
-            'newCustomerAddress' => 'required|string|max:1000',
-        ], [], [
-            'newCustomerName'    => 'name',
-            'newCustomerPhone'   => 'phone',
-            'newCustomerAddress' => 'delivery address',
-        ]);
-
-        $name = trim($this->newCustomerName);
-        $phone = PhoneNumber::national($this->newCustomerPhone);
-
-        if (Customer::where('phone', $phone)->exists()) {
-            $this->addError('newCustomerPhone', 'A customer with this phone number already exists — search for them instead.');
-
-            return;
-        }
-
-        [$firstName, $lastName] = array_pad(explode(' ', $name, 2), 2, null);
-
-        [$customer, $address] = DB::transaction(function () use ($name, $phone, $firstName, $lastName) {
-            $masterProfile = $this->createMasterProfileFor([
-                'display_name' => $name,
-                'first_name'   => $firstName,
-                'last_name'    => $lastName,
-                'phone'        => $phone,
-            ]);
-
-            $customer = Customer::create([
-                'master_profile_id' => $masterProfile->id,
-                'customer_code'     => 'CUS-' . str_pad((string) (Customer::withTrashed()->max('id') + 1), 5, '0', STR_PAD_LEFT),
-                'first_name'        => $firstName,
-                'last_name'         => $lastName,
-                'full_name'         => $name,
-                'phone'             => $phone,
-                'status'            => 'active',
-            ]);
-
-            $address = DeliveryAddress::create([
-                'customer_id'         => $customer->id,
-                'address_type'        => 'Home',
-                'name'                => $name,
-                'phone'               => $phone,
-                'full_address'        => trim($this->newCustomerAddress),
-                'is_default_billing'  => true,
-                'is_default_shipping' => true,
-                'is_active'           => true,
-            ]);
-
-            return [$customer, $address];
-        });
-
-        activity('customers')
-            ->causedBy(auth()->user())
-            ->performedOn($customer)
-            ->event('created')
-            ->log("Customer \"{$customer->full_name}\" was added from order create");
-
         $this->selectCustomer($customer->id);
         $this->billingAddressId  = (string) $address->id;
         $this->shippingAddressId = (string) $address->id;
-
-        $this->newCustomerModal = false;
-        $this->dispatch('toast', ['type' => 'success', 'message' => 'Customer added and selected']);
     }
 
     public function updatedProductPickerId(string $value): void

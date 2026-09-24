@@ -20,7 +20,7 @@ class Order extends Model
         'customer_id', 'source',
         'status', 'payment_status', 'fulfillment_status',
         'currency',
-        'subtotal', 'discount_amount', 'shipping_amount', 'shipping_discount', 'tax_amount',
+        'subtotal', 'discount_amount', 'shipping_amount', 'shipping_discount', 'tax_amount', 'charges_amount',
         'total_amount', 'paid_amount', 'due_amount',
         'customer_note', 'admin_note',
         'billing_address_id', 'shipping_address_id', 'coupon_id', 'coupon_code',
@@ -43,6 +43,7 @@ class Order extends Model
             'shipping_amount'    => 'decimal:2',
             'shipping_discount'  => 'decimal:2',
             'tax_amount'         => 'decimal:2',
+            'charges_amount'     => 'decimal:2',
             'total_amount'       => 'decimal:2',
             'paid_amount'        => 'decimal:2',
             'due_amount'         => 'decimal:2',
@@ -78,6 +79,12 @@ class Order extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(OrderPayment::class);
+    }
+
+    /** Named extra charges (gift wrap, COD fee, …) — summed into charges_amount by recalculateTotals(). */
+    public function charges(): HasMany
+    {
+        return $this->hasMany(OrderCharge::class);
     }
 
     /** Offers this order was placed with (see App\Services\OfferService). */
@@ -124,9 +131,12 @@ class Order extends Model
         $paidIn  = $this->payments()->where('status', PaymentStatus::PAID)->where('type', OrderPaymentType::PAYMENT)->sum('amount');
         $paidOut = $this->payments()->where('status', PaymentStatus::REFUNDED)->where('type', OrderPaymentType::REFUND)->sum('amount');
 
+        $chargesTotal = (float) $this->charges()->sum('amount');
+
         $this->subtotal          = $itemsTotal;
         $this->shipping_discount = $shippingDiscount;
-        $this->total_amount      = $itemsTotal - $this->discount_amount + $netShipping + $this->tax_amount;
+        $this->charges_amount    = $chargesTotal;
+        $this->total_amount      = $itemsTotal - $this->discount_amount + $netShipping + $this->tax_amount + $chargesTotal;
         $this->paid_amount       = max(0, (float) $paidIn - (float) $paidOut);
         $this->due_amount        = max(0, $this->total_amount - $this->paid_amount);
         $this->save();

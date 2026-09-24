@@ -54,6 +54,7 @@ class AccountSeeder extends Seeder
             ['code' => '4100', 'name' => 'Other Income',                'type' => 'income',    'subtype' => null],
             ['code' => '4200', 'name' => 'Gain on Disposal',            'type' => 'income',    'subtype' => null],
             ['code' => '4900', 'name' => 'Sales Return',                'type' => 'income',    'subtype' => 'contra_income', 'normal_balance' => 'debit'],
+            ['code' => '4910', 'name' => 'Sales Discount',              'type' => 'income',    'subtype' => 'contra_income', 'normal_balance' => 'debit'],
 
             // Expenses
             ['code' => '5000', 'name' => 'Cost of Goods Sold',           'type' => 'expense',   'subtype' => 'cogs'],

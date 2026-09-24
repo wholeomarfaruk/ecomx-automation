@@ -27,6 +27,9 @@ class PostSaleWithCogs
     /**
      * @param  array<int, float>|null  $itemAmounts  order_item_id => sale amount to recognize now (partial completion); omitted/null means every non-gift item's full total_amount
      * @param  array<int, float>|null  $itemCogsAmounts  order_item_id => cost amount to recognize now; omitted/null means quantity * purchase_price for every item
+     * @param  float  $discountAmount  order-level discount, debited to $discountAccountId (Sales Discount) — posted once, with the first sale entry
+     * @param  float  $taxAmount  order-level tax, credited to $taxAccountId (VAT Payable)
+     * @param  float  $chargesAmount  order-level extra charges (OrderCharge), credited to $chargesAccountId (Other Income)
      */
     public function handle(
         Order $order,
@@ -41,6 +44,12 @@ class PostSaleWithCogs
         ?string $purposeSuffix = null,
         ?array $itemAmounts = null,
         ?array $itemCogsAmounts = null,
+        float $discountAmount = 0.0,
+        ?int $discountAccountId = null,
+        float $taxAmount = 0.0,
+        ?int $taxAccountId = null,
+        float $chargesAmount = 0.0,
+        ?int $chargesAccountId = null,
     ): array {
         $order->loadMissing('items', 'customer');
 
@@ -58,7 +67,11 @@ class PostSaleWithCogs
         $shippingAmount = $shippingAmount !== null ? round($shippingAmount, 2) : 0.0;
         $includeShipping = $shippingAmount > 0 && $shippingIncomeAccountId !== null;
 
-        $receivableDebit = $saleAmount + ($includeShipping ? $shippingAmount : 0.0);
+        $discountAmount = $discountAccountId !== null ? round(max(0.0, $discountAmount), 2) : 0.0;
+        $taxAmount = $taxAccountId !== null ? round(max(0.0, $taxAmount), 2) : 0.0;
+        $chargesAmount = $chargesAccountId !== null ? round(max(0.0, $chargesAmount), 2) : 0.0;
+
+        $receivableDebit = $saleAmount + ($includeShipping ? $shippingAmount : 0.0) + $taxAmount + $chargesAmount - $discountAmount;
 
         $saleLines = [
             [
@@ -70,8 +83,20 @@ class PostSaleWithCogs
             ['account_id' => $salesAccountId, 'credit' => $saleAmount],
         ];
 
+        if ($discountAmount > 0) {
+            $saleLines[] = ['account_id' => $discountAccountId, 'debit' => $discountAmount];
+        }
+
         if ($includeShipping) {
             $saleLines[] = ['account_id' => $shippingIncomeAccountId, 'credit' => $shippingAmount];
+        }
+
+        if ($taxAmount > 0) {
+            $saleLines[] = ['account_id' => $taxAccountId, 'credit' => $taxAmount];
+        }
+
+        if ($chargesAmount > 0) {
+            $saleLines[] = ['account_id' => $chargesAccountId, 'credit' => $chargesAmount];
         }
 
         $saleEntry = $this->postJournalEntry->handle([

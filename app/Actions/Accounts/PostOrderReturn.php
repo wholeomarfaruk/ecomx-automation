@@ -42,13 +42,19 @@ class PostOrderReturn
         );
 
         $shippingAmount = $isFullReturn ? $this->unreversedShippingAmount($order) : 0.0;
-        $reverseAmount = $saleAmount + $shippingAmount;
+
+        // On a full return, also reverse the order-level tax and extra
+        // charges posted at completion — debited back to their own accounts
+        // (VAT Payable / Other Income), not Sales Return. account_id => amount.
+        $adjustments = $isFullReturn ? $this->unreversedAdjustments($order) : [];
+
+        $reverseAmount = $saleAmount + $shippingAmount + array_sum($adjustments);
 
         if ($reverseAmount <= 0 && $costAmount <= 0) {
             return null;
         }
 
-        return DB::transaction(function () use ($order, $entryDate, $description, $reverseAmount, $costAmount) {
+        return DB::transaction(function () use ($order, $entryDate, $description, $reverseAmount, $costAmount, $adjustments) {
             $invoice = AccountsCustomerInvoice::where('order_id', $order->id)->first();
 
             // Split the reversed amount between what's still open on the
@@ -61,7 +67,7 @@ class PostOrderReturn
             $alreadyPaid = $invoice ? min($reverseAmount, (float) $invoice->amount_allocated) : 0.0;
             $stillOpen = $reverseAmount - $alreadyPaid;
 
-            $result = $this->postSalesReturnSplit($order, $stillOpen, $alreadyPaid, $costAmount, $entryDate, $description);
+            $result = $this->postSalesReturnSplit($order, $stillOpen, $alreadyPaid, $costAmount, $entryDate, $description, $adjustments);
 
             if ($invoice) {
                 $this->drawDownInvoice($invoice, $reverseAmount, $alreadyPaid, $result['return']->id);
@@ -90,13 +96,14 @@ class PostOrderReturn
     }
 
     /**
+     * @param  array<int, float>  $adjustments  account_id => amount debited to that account instead of Sales Return
      * @return array{return: JournalEntry, stock: ?JournalEntry}
      */
-    protected function postSalesReturnSplit(Order $order, float $stillOpen, float $alreadyPaid, float $costAmount, string $entryDate, ?string $description): array
+    protected function postSalesReturnSplit(Order $order, float $stillOpen, float $alreadyPaid, float $costAmount, string $entryDate, ?string $description, array $adjustments = []): array
     {
         $purposeSuffix = $this->nextPurposeSuffix($order);
 
-        if ($alreadyPaid <= 0) {
+        if ($alreadyPaid <= 0 && $adjustments === []) {
             // Nothing was collected yet for the returned portion — plain
             // reversal against Receivable, same as PostSalesReturn always did.
             return $this->postSalesReturn->handle(
@@ -114,9 +121,16 @@ class PostOrderReturn
         }
 
         $customer = $order->customer;
-        $lines = [
-            ['account_id' => $this->accountId('4900'), 'debit' => $stillOpen + $alreadyPaid],
-        ];
+        // PostJournalEntry rejects zero lines — a full return with only
+        // tax/charges left to reverse has no Sales Return portion.
+        $salesReturnDebit = round($stillOpen + $alreadyPaid - array_sum($adjustments), 2);
+        $lines = $salesReturnDebit > 0
+            ? [['account_id' => $this->accountId('4900'), 'debit' => $salesReturnDebit]]
+            : [];
+
+        foreach ($adjustments as $accountId => $amount) {
+            $lines[] = ['account_id' => $accountId, 'debit' => $amount];
+        }
 
         if ($stillOpen > 0) {
             $lines[] = [
@@ -127,12 +141,14 @@ class PostOrderReturn
             ];
         }
 
-        $lines[] = [
-            'account_id'     => $this->accountId('2150'),
-            'credit'         => $alreadyPaid,
-            'subledger_type' => $customer ? Customer::class : null,
-            'subledger_id'   => $customer?->id,
-        ];
+        if ($alreadyPaid > 0) {
+            $lines[] = [
+                'account_id'     => $this->accountId('2150'),
+                'credit'         => $alreadyPaid,
+                'subledger_type' => $customer ? Customer::class : null,
+                'subledger_id'   => $customer?->id,
+            ];
+        }
 
         $returnEntry = $this->postJournalEntry->handle([
             'entry_date'       => $entryDate,
@@ -201,6 +217,53 @@ class PostOrderReturn
         return max(0.0, round($posted - $alreadyReversed, 2));
     }
 
+    /**
+     * Tax (2300) and extra charges (4100) posted with this order's sale
+     * entries and not yet reversed by an earlier return — account_id =>
+     * amount, zero amounts omitted.
+     *
+     * @return array<int, float>
+     */
+    protected function unreversedAdjustments(Order $order): array
+    {
+        $adjustments = [];
+
+        foreach (['2300', '4100'] as $code) {
+            $accountId = Account::where('code', $code)->value('id');
+
+            if (! $accountId) {
+                continue;
+            }
+
+            $amount = round(
+                $this->postedAmount($order, $accountId, 'sale%', 'credit')
+                    - $this->postedAmount($order, $accountId, 'sales_return%', 'debit'),
+                2
+            );
+
+            if ($amount > 0) {
+                $adjustments[$accountId] = $amount;
+            }
+        }
+
+        return $adjustments;
+    }
+
+    /** Sum of one side of $accountId's lines across this order's journal entries whose purpose matches $purposeLike. */
+    protected function postedAmount(Order $order, int $accountId, string $purposeLike, string $side): float
+    {
+        $entryIds = JournalEntry::query()
+            ->where('source_type', Order::class)
+            ->where('source_id', $order->id)
+            ->where('purpose', 'like', $purposeLike)
+            ->pluck('id');
+
+        return (float) JournalEntryLine::query()
+            ->whereIn('journal_entry_id', $entryIds)
+            ->where('account_id', $accountId)
+            ->sum($side);
+    }
+
     protected function drawDownInvoice(AccountsCustomerInvoice $invoice, float $reverseAmount, float $alreadyPaid, int $returnEntryId): void
     {
         if ($alreadyPaid > 0) {
@@ -235,6 +298,15 @@ class PostOrderReturn
         $saleAmount = 0.0;
         $costAmount = 0.0;
 
+        // Returned items are refunded net of their share of the order-level
+        // discount actually posted at completion (Sales Discount, 4910) —
+        // otherwise a partial return would refund more than was charged.
+        // 0 for orders completed before discounts were posted.
+        $discountAccountId = Account::where('code', '4910')->value('id');
+        $postedDiscount = $discountAccountId ? $this->postedAmount($order, $discountAccountId, 'sale%', 'debit') : 0.0;
+        $itemsSubtotal = (float) $order->items->sum(fn (OrderItem $item) => $item->is_gift ? 0 : (float) $item->total_amount);
+        $discountFactor = $itemsSubtotal > 0 ? max(0.0, 1 - $postedDiscount / $itemsSubtotal) : 1.0;
+
         foreach ($order->items as $item) {
             if ($item->is_gift) {
                 continue;
@@ -261,7 +333,7 @@ class PostOrderReturn
             }
 
             $orderedQty = (float) $item->quantity;
-            $unitPrice = $orderedQty > 0 ? (float) $item->total_amount / $orderedQty : 0.0;
+            $unitPrice = $orderedQty > 0 ? (float) $item->total_amount / $orderedQty * $discountFactor : 0.0;
             $unitCost = (float) $item->purchase_price;
 
             $saleAmount += round($unitPrice * $newlyReturned, 2);

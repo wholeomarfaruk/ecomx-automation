@@ -76,6 +76,13 @@ class PostOrderCompletion
                 ? null
                 : max(0.0, (float) $order->shipping_amount - (float) $order->shipping_discount);
 
+            // Order-level discount / tax / extra charges are recognized once,
+            // with the first sale entry (same as shipping), so the customer
+            // invoice equals the order total.
+            $discountAmount = $alreadyShipped ? 0.0 : (float) $order->discount_amount;
+            $taxAmount = $alreadyShipped ? 0.0 : (float) $order->tax_amount;
+            $chargesAmount = $alreadyShipped ? 0.0 : (float) $order->charges_amount;
+
             try {
                 $result = $this->postSaleWithCogs->handle(
                     order: $order,
@@ -89,6 +96,12 @@ class PostOrderCompletion
                     purposeSuffix: $purposeSuffix,
                     itemAmounts: $itemAmounts,
                     itemCogsAmounts: $itemCogsAmounts,
+                    discountAmount: $discountAmount,
+                    discountAccountId: $discountAmount > 0 ? $this->accountId('4910') : null,
+                    taxAmount: $taxAmount,
+                    taxAccountId: $taxAmount > 0 ? $this->accountId('2300') : null,
+                    chargesAmount: $chargesAmount,
+                    chargesAccountId: $chargesAmount > 0 ? $this->accountId('4100') : null,
                 );
             } catch (DuplicateJournalEntryException) {
                 return;
