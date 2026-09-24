@@ -241,6 +241,8 @@
   color: #fff;
   &--new  { background: $blue; }
   &--deal { background: $green; }
+  // Offer badge (App\Services\OfferService) — warm so it reads apart from the sale %.
+  &--offer { background: #E8590C; max-width: 170px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
 
 .jtc-wish {

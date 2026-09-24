@@ -4,11 +4,15 @@
     $productId = $product['id'] ?? null;
     $isWished = $product['is_wished'] ?? false;
     $hasSale = !empty($product['sale']);
+    $offerBadges = $productId && empty($product['demo']) ? app(\App\Services\OfferService::class)->badgesForProductId((int) $productId) : [];
 @endphp
 <div class="pcard" x-data="{ added:false, wished: @js($isWished) }">
     <a href="{{ $productUrl }}" class="pcard__media">
         <x-ux-img :id="$product['img']" :w="700" :alt="$product['name']" class="pcard__img" />
         @if(!empty($product['tag']))<span class="pcard__tag">{{ $product['tag'] }}</span>@endif
+        @if($offerBadges !== [])
+            <span class="pcard__offer" title="{{ $offerBadges[0]['name'] }}">🎁 {{ $offerBadges[0]['label'] }}@if(count($offerBadges) > 1) +{{ count($offerBadges) - 1 }}@endif</span>
+        @endif
         @if ($productId)
             <button type="button" class="pcard__wish" :class="wished && 'is-on'" @click.prevent="wished = !wished" wire:click.prevent.debounce.500ms="setWishlist({{ $productId }}, wished)" aria-label="Add to wishlist"><x-icon name="heart" /></button>
         @else

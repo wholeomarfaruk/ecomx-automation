@@ -3,12 +3,16 @@
     $p = $product;
     $productId = $p['id'] ?? null;
     $isWished = $p['is_wished'] ?? false;
+    $offerBadges = $productId && empty($p['demo']) ? app(\App\Services\OfferService::class)->badgesForProductId((int) $productId) : [];
 @endphp
 <article {{ $attributes->merge(['class' => 'jtc-card ' . ($rail ? 'jtc-card--rail' : '')]) }} x-data="{ wished: @js($isWished) }">
     <div class="jtc-card__media">
         <div class="jtc-card__badges">
             @if(!empty($p['showNew']))<span class="jtc-badge jtc-badge--new">New</span>@endif
             @if(!empty($p['showDealPct']))<span class="jtc-badge jtc-badge--deal">{{ $p['pctText'] }}</span>@endif
+            @foreach(array_slice($offerBadges, 0, 2) as $offerBadge)
+                <span class="jtc-badge jtc-badge--offer" title="{{ $offerBadge['name'] }}">🎁 {{ $offerBadge['label'] }}</span>
+            @endforeach
         </div>
         @if($productId)
             <button type="button" class="jtc-wish" aria-label="Save" :class="wished && 'is-wished'"

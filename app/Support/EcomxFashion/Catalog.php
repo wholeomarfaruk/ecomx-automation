@@ -10,7 +10,9 @@ class Catalog
 {
     public static function products(): array
     {
-        return [
+        // 'demo' => true: placeholder ids that can collide with real product ids,
+        // so cards must not look them up (e.g. OfferService offer badges).
+        return array_map(fn (array $p) => $p + ['demo' => true], [
             ['id'=>1,'slug'=>'sculpted-wool-coat','name'=>'Sculpted Wool Coat','price'=>12900,'sale'=>null,'tag'=>'New','cat'=>'Outerwear','img'=>'photo-1539109136881-3be0616acf4b','colors'=>['#C8B49A','#111111','#6B6F63'],'stock'=>6],
             ['id'=>2,'slug'=>'silk-slip-dress','name'=>'Silk Slip Dress','price'=>7900,'sale'=>5530,'tag'=>'Flash Sale','cat'=>'Dresses','img'=>'photo-1515886657613-9f3515b0c78f','colors'=>['#3E4A3D','#111111'],'stock'=>4],
             ['id'=>3,'slug'=>'relaxed-linen-shirt','name'=>'Relaxed Linen Shirt','price'=>3950,'sale'=>2960,'tag'=>'Flash Sale','cat'=>'Shirts','img'=>'photo-1495385794356-15371f348c31','colors'=>['#F1EDE4','#9DB0C4'],'stock'=>9],
@@ -23,7 +25,7 @@ class Catalog
             ['id'=>10,'slug'=>'sculpt-leather-heel','name'=>'Sculpt Leather Heel','price'=>6200,'sale'=>null,'tag'=>'Bestseller','cat'=>'Shoes','img'=>'photo-1543163521-1bf539c55dd2','colors'=>['#B08968','#111111'],'stock'=>5],
             ['id'=>11,'slug'=>'cotton-oxford-shirt','name'=>'Cotton Oxford Shirt','price'=>3100,'sale'=>2325,'tag'=>'Flash Sale','cat'=>'Shirts','img'=>'photo-1552374196-c4e7ffc6e126','colors'=>['#FFFFFF','#9DB0C4','#111111'],'stock'=>10],
             ['id'=>12,'slug'=>'wide-leg-trouser','name'=>'Wide-Leg Trouser','price'=>5600,'sale'=>null,'tag'=>'','cat'=>'Trousers','img'=>'photo-1529139574466-a303027c1d8b','colors'=>['#111111','#C8B49A'],'stock'=>12],
-        ];
+        ]);
     }
 
     public static function flashSale(): array

@@ -3,11 +3,15 @@
     $save = $item['price'] - $item['sale'];
     $productId = $item['id'] ?? null;
     $isWished = $item['is_wished'] ?? false;
+    $offerBadges = $productId && empty($item['demo']) ? app(\App\Services\OfferService::class)->badgesForProductId((int) $productId) : [];
 @endphp
 <div class="fcard" x-data="{ added:false, wished: @js($isWished) }">
     <a href="{{ $item['url'] ?? route('ecomx-fashion.product') }}" class="fcard__media">
         <x-ux-img :id="$item['img']" :w="500" :alt="$item['name']" class="fcard__img" />
         <span class="fcard__save">Save <span class="sym">৳</span>{{ number_format($save) }}</span>
+        @if($offerBadges !== [])
+            <span class="pcard__offer" title="{{ $offerBadges[0]['name'] }}">🎁 {{ $offerBadges[0]['label'] }}@if(count($offerBadges) > 1) +{{ count($offerBadges) - 1 }}@endif</span>
+        @endif
         @if ($productId)
             <button type="button" class="pcard__wish" :class="wished && 'is-on'" @click.prevent="wished = !wished" wire:click.prevent.debounce.500ms="setWishlist({{ $productId }}, wished)" aria-label="Wishlist"><x-icon name="heart" /></button>
         @else

@@ -46,6 +46,9 @@ class OfferService
 {
     protected ?Collection $activeOffers = null;
 
+    /** @var array<int, list<array{name: string, label: string}>> product id => badges, memoized per request */
+    protected array $productBadges = [];
+
     /** Active offers with everything evaluation needs, highest priority first (memoized per request). */
     public function activeOffers(): Collection
     {
@@ -174,23 +177,62 @@ class OfferService
 
         return $this->activeOffers()
             ->filter(fn (Promotion $promotion) => $promotion->discountRules->isNotEmpty() && $this->lineEligible($promotion, $line, anyVariant: true))
-            ->map(fn (Promotion $promotion) => [
-                'name'  => $promotion->name,
-                'label' => $this->label($promotion) . $this->conditionHint($promotion),
-            ])
+            ->map(fn (Promotion $promotion) => $this->badge($promotion))
             ->values()
             ->all();
     }
 
-    /** Short customer-facing summary of an offer's first discount rule, e.g. "20% off", "Buy 2 Get 1". */
+    /**
+     * offersForProduct() by id, for product cards that only carry a plain
+     * array. Cheap when it can be: no active offers → no query; offers whose
+     * Target Products exclude this product are ruled out without loading it;
+     * the product (with categories/brand) is only fetched if an offer could
+     * still apply. Memoized per product for the request.
+     *
+     * @return list<array{name: string, label: string}>
+     */
+    public function badgesForProductId(int $productId): array
+    {
+        if (array_key_exists($productId, $this->productBadges)) {
+            return $this->productBadges[$productId];
+        }
+
+        $candidates = $this->activeOffers()->filter(fn (Promotion $promotion) => $promotion->discountRules->isNotEmpty()
+            && ($promotion->items->isEmpty() || $promotion->items->contains(
+                fn ($item) => $item->variant_id || (int) $item->product_id === $productId
+            )));
+
+        if ($candidates->isEmpty()) {
+            return $this->productBadges[$productId] = [];
+        }
+
+        // The product row is only needed to check product/category/brand
+        // conditions or a variant-specific target; otherwise the candidates
+        // above already are the answer, with no query at all.
+        $needsProduct = $candidates->contains(fn (Promotion $promotion) => $promotion->items->contains(fn ($item) => $item->variant_id)
+            || $promotion->conditions->contains(fn (PromotionCondition $c) => $this->isLineCondition($c)));
+
+        if (! $needsProduct) {
+            return $this->productBadges[$productId] = $candidates->map(fn (Promotion $promotion) => $this->badge($promotion))->values()->all();
+        }
+
+        $product = Product::with('categories', 'brand')->find($productId);
+
+        return $this->productBadges[$productId] = $product ? $this->offersForProduct($product) : [];
+    }
+
+    /** Short customer-facing summary of an offer's discount rules, e.g. "20% off", "Buy 2 Get 1 free + Free delivery". */
     public function label(Promotion $promotion): string
     {
-        $rule = $promotion->discountRules->first();
-
-        if (! $rule) {
+        if ($promotion->discountRules->isEmpty()) {
             return $promotion->name;
         }
 
+        return $promotion->discountRules->map(fn (PromotionDiscountRule $rule) => $this->ruleLabel($rule))->unique()->implode(' + ');
+    }
+
+    protected function ruleLabel(PromotionDiscountRule $rule): string
+    {
         $value = $rule->value !== null ? (float) $rule->value : 0.0;
         $number = fn (float $n) => rtrim(rtrim(number_format($n, 2, '.', ''), '0'), '.');
 
@@ -205,6 +247,25 @@ class OfferService
         };
     }
 
+    /** @return array{name: string, label: string} */
+    protected function badge(Promotion $promotion): array
+    {
+        return [
+            'name'  => $promotion->name,
+            'label' => $this->label($promotion) . $this->conditionHint($promotion),
+        ];
+    }
+
+    /** Product/variant/category/brand conditions narrow which lines an offer covers; the rest are cart-level. */
+    protected function isLineCondition(PromotionCondition $condition): bool
+    {
+        return in_array(
+            $condition->type,
+            [ConditionType::PRODUCT, ConditionType::VARIANT, ConditionType::CATEGORY, ConditionType::BRAND],
+            true
+        );
+    }
+
     /**
      * Badge suffix for cart-level conditions a product page can't check, so
      * a conditional offer isn't advertised as unconditional: a minimum
@@ -212,11 +273,7 @@ class OfferService
      */
     protected function conditionHint(Promotion $promotion): string
     {
-        $cartLevel = $promotion->conditions->reject(fn (PromotionCondition $c) => in_array(
-            $c->type,
-            [ConditionType::PRODUCT, ConditionType::VARIANT, ConditionType::CATEGORY, ConditionType::BRAND],
-            true
-        ));
+        $cartLevel = $promotion->conditions->reject(fn (PromotionCondition $c) => $this->isLineCondition($c));
 
         if ($cartLevel->isEmpty()) {
             return '';

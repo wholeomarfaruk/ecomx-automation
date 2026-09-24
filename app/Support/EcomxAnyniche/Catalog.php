@@ -43,7 +43,9 @@ class Catalog
 
     public static function products(): array
     {
-        return [
+        // 'demo' => true: placeholder ids that can collide with real product ids,
+        // so cards must not look them up (e.g. OfferService offer badges).
+        return array_map(fn (array $p) => $p + ['demo' => true], [
             ['id'=>1,'slug'=>'wireless-headphones','name'=>'Wireless Headphones','price'=>4900,'sale'=>null,'tag'=>'New','cat'=>'Electronics','img'=>'photo-1505740420928-5e560c06d30e','colors'=>['#111111','#C8B49A','#6B6F63'],'stock'=>6],
             ['id'=>2,'slug'=>'stainless-water-bottle','name'=>'Stainless Water Bottle','price'=>1200,'sale'=>840,'tag'=>'Flash Sale','cat'=>'Home & Living','img'=>'photo-1602143407151-7111542de6e8','colors'=>['#3E4A3D','#111111'],'stock'=>4],
             ['id'=>3,'slug'=>'canvas-backpack','name'=>'Canvas Backpack','price'=>2950,'sale'=>2210,'tag'=>'Flash Sale','cat'=>'Bags','img'=>'photo-1553062407-98eeb64c6a62','colors'=>['#F1EDE4','#9DB0C4'],'stock'=>9],
@@ -56,7 +58,7 @@ class Catalog
             ['id'=>10,'slug'=>'running-shoes','name'=>'Running Shoes','price'=>4200,'sale'=>null,'tag'=>'Bestseller','cat'=>'Sports & Fitness','img'=>'photo-1542291026-7eec264c27ff','colors'=>['#B08968','#111111'],'stock'=>5],
             ['id'=>11,'slug'=>'phone-stand','name'=>'Phone Stand','price'=>650,'sale'=>490,'tag'=>'Flash Sale','cat'=>'Electronics','img'=>'photo-1512499617640-c74ae3a79d37','colors'=>['#FFFFFF','#9DB0C4','#111111'],'stock'=>10],
             ['id'=>12,'slug'=>'travel-duffel-bag','name'=>'Travel Duffel Bag','price'=>3600,'sale'=>null,'tag'=>'','cat'=>'Bags','img'=>'photo-1553062407-98eeb64c6a62','colors'=>['#111111','#C8B49A'],'stock'=>12],
-        ];
+        ]);
     }
 
     /** products() demo data, mapped to the jtc-product-card shape (used when a category-row/browse-all section has no real products yet). */
@@ -69,6 +71,7 @@ class Catalog
                 'id' => $p['id'],
                 'name' => $p['name'],
                 'url' => '#',
+                'demo' => true,
                 'image' => config('ecomx-anyniche.unsplash') . $p['img'] . '?q=80&w=700&auto=format&fit=crop',
                 'showNew' => $p['tag'] === 'New',
                 'showDealPct' => $isCompare,
