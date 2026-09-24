@@ -16,12 +16,22 @@ class OfferCreate extends Component
 
     /** @var array<int, array{product_id: string, label: string}> */
     public array $items = [];
-    public string $productSearch = '';
+    /** Bound to the Target Products searchable-select; picking a product adds it to $items and resets. */
+    public string $productPickerId = '';
 
     public function mount(): void
     {
         $this->addCondition();
         $this->addDiscountRule();
+    }
+
+    public function updatedProductPickerId(string $value): void
+    {
+        if ($value !== '') {
+            $this->addItem((int) $value);
+        }
+
+        $this->productPickerId = '';
     }
 
     public function addItem(int $productId): void
@@ -33,7 +43,6 @@ class OfferCreate extends Component
         }
 
         if (collect($this->items)->contains('product_id', (string) $product->id)) {
-            $this->productSearch = '';
             return;
         }
 
@@ -41,8 +50,6 @@ class OfferCreate extends Component
             'product_id' => (string) $product->id,
             'label'      => $product->name,
         ];
-
-        $this->productSearch = '';
     }
 
     public function removeItem(int $index): void
@@ -98,17 +105,12 @@ class OfferCreate extends Component
 
     public function render(): mixed
     {
-        $productOptions = collect();
-        if ($this->productSearch !== '') {
-            $productOptions = Product::active()
-                ->where(fn ($q) => $q->where('name', 'like', "%{$this->productSearch}%")
-                    ->orWhere('code', 'like', "%{$this->productSearch}%"))
-                ->limit(10)
-                ->get();
-        }
+        $products = Product::active()
+            ->whereNotIn('id', array_column($this->items, 'product_id'))
+            ->get(['id', 'name', 'code']);
 
         return view('livewire.admin.sales.offer-create', [
-            'productOptions' => $productOptions,
+            'productOptions' => $products->mapWithKeys(fn ($p) => [$p->id => $p->code ? "{$p->name} ({$p->code})" : $p->name]),
         ])->layout('layouts.admin.admin');
     }
 }
