@@ -89,7 +89,7 @@ class OrderCreate extends Component
             'is_gift'        => false,
             'label'          => $product->name,
             'quantity'       => '1',
-            'unit_price'     => (string) ($product->sale_price ?? $product->price ?? 0),
+            'unit_price'     => (string) $product->sellingPrice(), // Product::sellingPrice(): min of regular/sale
             'purchase_price' => (string) ($product->purchase_price ?? ''),
         ];
 
@@ -114,7 +114,7 @@ class OrderCreate extends Component
         }
 
         $this->items[$index]['variant_id']     = (string) $variant->id;
-        $this->items[$index]['unit_price']     = (string) ($variant->sale_price ?? $variant->price ?? $this->items[$index]['unit_price']);
+        $this->items[$index]['unit_price']     = (string) $variant->product->sellingPrice($variant);
         $this->items[$index]['purchase_price'] = (string) ($variant->purchase_price ?? $this->items[$index]['purchase_price']);
     }
 

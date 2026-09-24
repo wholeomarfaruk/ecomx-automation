@@ -85,7 +85,7 @@ class Product extends Component
             contentId: $product->id,
             contentName: $product->name,
             contentType: 'product',
-            value: (float) ($product->sale_price ?? $product->price),
+            value: $product->discounted_price,
             currency: 'BDT',
         );
 

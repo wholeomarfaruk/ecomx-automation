@@ -41,7 +41,7 @@ class CategoryRow extends Component
         $this->category = $categoryId !== '' ? Category::where('status', 'active')->find((int) $categoryId) : null;
 
         $this->products = $this->category
-            ? $this->category->products()->where('status', 'active')->take(12)->get()
+            ? $this->category->products()->where('status', 'active')->with('variants')->take(12)->get()
                 ->map(fn ($p) => Catalog::decorateProduct($p))->all()
             : Catalog::jtcProducts();
     }

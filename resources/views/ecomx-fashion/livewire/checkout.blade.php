@@ -159,7 +159,7 @@
                             $product = $item->product;
                             $variant = $item->variant;
                             $options = $variant?->options_map ?? [];
-                            $comparePrice = $variant ? $variant->price : $product?->price;
+                            $comparePrice = $product?->regularPrice($variant) ?? 0;
                             $lineSavings = (((float) $comparePrice) - (float) $item->price) * $item->quantity;
                             $summaryRegularTotal += ((float) $comparePrice) * $item->quantity;
                             $summarySavings += max(0, $lineSavings);

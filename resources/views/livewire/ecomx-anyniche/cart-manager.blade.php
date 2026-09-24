@@ -14,7 +14,7 @@
     <aside class="jtc-cart" :class="$store.ui.cartOpen && 'is-open'" aria-label="Shopping cart" @keydown.escape.window="$store.ui.cartOpen=false">
         @php
             $cartRegularTotal = $cart->items->sum(function ($item) {
-                $comparePrice = $item->variant ? $item->variant->price : $item->product?->price;
+                $comparePrice = $item->product?->regularPrice($item->variant) ?? 0;
 
                 return ((float) $comparePrice) * $item->quantity;
             });
@@ -42,7 +42,7 @@
                     $product = $item->product;
                     $variant = $item->variant;
                     $options = $variant?->options_map ?? [];
-                    $comparePrice = $variant ? $variant->price : $product?->price;
+                    $comparePrice = $product?->regularPrice($variant) ?? 0;
                     $hasSale = ((float) $comparePrice) > (float) $item->price;
                     $productHasVariants = $product && $product->variants()->where('status', 'active')->exists();
                 @endphp

@@ -20,9 +20,9 @@ class Catalog
      */
     public static function decorateProduct(Product $product): array
     {
-        $price = (float) $product->price;
-        $salePrice = $product->sale_price !== null ? (float) $product->sale_price : null;
-        $isCompare = $salePrice !== null && $salePrice < $price;
+        // Cheapest option after sale price + per-unit offers (Product::cardPricing()).
+        ['price' => $price, 'sale' => $salePrice] = $product->cardPricing();
+        $isCompare = $salePrice !== null && $price > 0;
         $pct = $isCompare ? (int) round((1 - $salePrice / $price) * 100) : 0;
         $money = fn (float $n) => '৳' . number_format($n);
 

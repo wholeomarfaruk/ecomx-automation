@@ -62,13 +62,17 @@ class ProductGalleryBuyBox extends Component
 
         $p = ProductModel::findOrFail($productId);
 
-        $this->flashSale = (bool) $p->sale_price;
+        // Prices from Product::unitPricing(): 'sale' is the discounted price
+        // (sale price + per-unit offers) when it's below regular, else 0.
+        // flashSale stays tied to a real sale price (drives the flash UI).
+        $pricing = $p->unitPricing();
+        $this->flashSale = $p->sellingPrice() < $pricing['regular'];
         $this->offers = app(OfferService::class)->offersForProduct($p);
         $this->product = [
             'name' => $p->name,
             'cat' => $p->categories->first()->name ?? '',
-            'price' => (float) $p->price,
-            'sale' => $p->sale_price ? (float) $p->sale_price : 0,
+            'price' => $pricing['regular'],
+            'sale' => $pricing['discounted'] < $pricing['regular'] ? $pricing['discounted'] : 0,
             'desc' => $p->description ?: '',
         ];
 
@@ -176,31 +180,32 @@ class ProductGalleryBuyBox extends Component
     }
 
     /**
-     * Price to actually display/charge for the current colour+size pick —
-     * the selected variant's own price/salePrice when it has one (set from
-     * the admin's per-variant price field), falling back to the product's
-     * base price/sale otherwise.
+     * Price to display for the current colour+size pick — the selected
+     * variant's discounted price (Product::unitPricing(): sale price +
+     * per-unit offers; a variant without its own price inherits the
+     * product's), else the product's. The cart charges the pre-offer selling
+     * price and applies offers at checkout, which lands on the same total.
      */
     public function getCurrentPriceProperty(): float
     {
         $variant = $this->selectedVariant;
 
-        if ($variant && $variant['price'] !== null) {
+        if ($variant) {
             return $variant['salePrice'] ?? $variant['price'];
         }
 
-        return $this->flashSale ? $this->product['sale'] : $this->product['price'];
+        return $this->product['sale'] ?: $this->product['price'];
     }
 
     public function getCurrentComparePriceProperty(): ?float
     {
         $variant = $this->selectedVariant;
 
-        if ($variant && $variant['price'] !== null) {
+        if ($variant) {
             return $variant['salePrice'] !== null ? $variant['price'] : null;
         }
 
-        return $this->flashSale ? $this->product['price'] : null;
+        return $this->product['sale'] ? $this->product['price'] : null;
     }
 
     public function addToCart(): void
@@ -346,10 +351,13 @@ class ProductGalleryBuyBox extends Component
             }
 
             $key = ($colorName ?? '*') . '|' . ($sizeName ?? '*');
+            // Regular price (inherits the product's when the variant has
+            // none) and discounted price — see Product::unitPricing().
+            $variantPricing = $p->unitPricing($variant);
             $this->variantMatrix[$key] = [
                 'variantId' => $variant->id,
-                'price' => (float) $variant->price,
-                'salePrice' => $variant->sale_price !== null ? (float) $variant->sale_price : null,
+                'price' => $variantPricing['regular'],
+                'salePrice' => $variantPricing['discounted'] < $variantPricing['regular'] ? $variantPricing['discounted'] : null,
                 'stock' => $variant->stock_quantity,
             ];
         }

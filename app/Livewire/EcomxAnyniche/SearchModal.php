@@ -33,15 +33,14 @@ class SearchModal extends Component
                 'categories',
                 fn ($q) => $q->where('name', $this->category)
             ))
-            ->with('categories')
+            ->with('categories', 'variants')
             ->limit(8)
             ->get()
             ->map(fn (Product $p) => [
                 'id' => $p->id,
                 'name' => $p->name,
                 'cat' => $p->categories->first()->name ?? '',
-                'price' => (float) $p->price,
-                'sale' => $p->sale_price !== null ? (float) $p->sale_price : null,
+                ...$p->cardPricing(),
                 'inStock' => $p->stock_status === 'in_stock',
                 'img' => $p->featured_image,
                 'url' => $p->url,

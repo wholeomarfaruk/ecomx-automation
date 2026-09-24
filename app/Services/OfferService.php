@@ -49,6 +49,18 @@ class OfferService
     /** @var array<int, list<array{name: string, label: string}>> product id => badges, memoized per request */
     protected array $productBadges = [];
 
+    /** @var array<string, float> "product|variant|selling" => unit price after offers, memoized per request */
+    protected array $unitPrices = [];
+
+    /**
+     * Rule types whose effect on a single unit is fixed regardless of
+     * quantity — the only ones folded into a displayed per-unit price
+     * (Product::unitPricing()). Fixed order-amount, buy-x-get-y, free item
+     * and free shipping depend on the whole cart, so they stay checkout-only
+     * (still advertised via badges).
+     */
+    protected const PER_UNIT_RULES = [DiscountRuleType::PERCENTAGE, DiscountRuleType::FIXED_PRICE];
+
     /** Active offers with everything evaluation needs, highest priority first (memoized per request). */
     public function activeOffers(): Collection
     {
@@ -93,6 +105,54 @@ class OfferService
             return $result;
         }
 
+        return $this->applyOffers($lines, $context);
+    }
+
+    /**
+     * Price of one unit after offers, for display (product cards, product
+     * page) — exactly what OfferService::evaluate() would take off a cart
+     * holding just this one unit with no checkout context, counting only
+     * per-unit rules (PER_UNIT_RULES). Offers with cart-level conditions
+     * (minimum spend, customer, payment, …) therefore don't lower it.
+     */
+    public function unitPrice(Product $product, float $selling, ?int $variantId = null): float
+    {
+        if ($selling <= 0 || $this->activeOffers()->isEmpty()) {
+            return $selling;
+        }
+
+        $key = $product->id . '|' . ($variantId ?? '') . '|' . $selling;
+
+        if (array_key_exists($key, $this->unitPrices)) {
+            return $this->unitPrices[$key];
+        }
+
+        $line = [
+            'id'         => 0,
+            'product_id' => (int) $product->id,
+            'variant_id' => $variantId,
+            'qty'        => 1.0,
+            'total'      => $selling,
+            'product'    => $product,
+        ];
+
+        $result = $this->applyOffers(collect([$line]), [], self::PER_UNIT_RULES);
+
+        return $this->unitPrices[$key] = max(0.0, round($selling - ($result['lines'][0] ?? 0.0), 2));
+    }
+
+    /**
+     * The offer loop shared by evaluate() and unitPrice() — see the class
+     * docblock for priority/stacking. $ruleTypes limits which discount rule
+     * types are applied (null = all).
+     *
+     * @param Collection<int, array{id: int, product_id: int, variant_id: ?int, qty: float, total: float, product: Product}> $lines
+     * @param list<DiscountRuleType>|null $ruleTypes
+     */
+    protected function applyOffers(Collection $lines, array $context, ?array $ruleTypes = null): array
+    {
+        $result = ['discount' => 0.0, 'shipping_discount' => 0.0, 'lines' => [], 'applied' => []];
+
         $cartSubtotal = (float) $lines->sum('total');
         $remaining = $lines->pluck('total', 'id')->all();
         $shippingLeft = max(0.0, (float) ($context['shipping_amount'] ?? 0));
@@ -113,6 +173,10 @@ class OfferService
             $shippingDiscount = 0.0;
 
             foreach ($promotion->discountRules as $rule) {
+                if ($ruleTypes !== null && ! in_array($rule->type, $ruleTypes, true)) {
+                    continue;
+                }
+
                 if ($rule->type === DiscountRuleType::FREE_SHIPPING) {
                     $amount = $this->cap($shippingLeft - $shippingDiscount, $rule);
                     $shippingDiscount += max(0.0, $amount);

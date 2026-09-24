@@ -32,6 +32,7 @@ class FlashSale extends Component
 
         $discounted = Product::where('status', 'active')
             ->whereNotNull('sale_price')
+            ->with('variants')
             ->inRandomOrder()
             ->limit(8)
             ->get();
@@ -43,6 +44,8 @@ class FlashSale extends Component
 
     protected function mapProduct(Product $p): array
     {
+        $pricing = $p->cardPricing();
+
         $colorValues = $p->variants()
             ->where('status', 'active')
             ->with('values.productAttributeValue.attributeValue.attribute')
@@ -56,9 +59,11 @@ class FlashSale extends Component
             'id' => $p->id,
             'name' => $p->name,
             'url' => $p->url,
-            'off' => $p->price > 0 ? (int) round((1 - $p->sale_price / $p->price) * 100) : 0,
-            'price' => (float) $p->price,
-            'sale' => (float) $p->sale_price,
+            // Cheapest option after sale price + per-unit offers (Product::cardPricing());
+            // sale falls back to price if the sale price turned out not to be lower.
+            'off' => $pricing['price'] > 0 && $pricing['sale'] !== null ? (int) round((1 - $pricing['sale'] / $pricing['price']) * 100) : 0,
+            'price' => $pricing['price'],
+            'sale' => $pricing['sale'] ?? $pricing['price'],
             'img' => $p->featured_image,
             'colors' => $colorValues->pluck('swatch_value')->filter()->values()->all(),
             'is_wished' => $p->isWishedBy(request()->attributes->get('device')),

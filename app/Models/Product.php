@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\Product\ProductType;
 use App\Http\Middleware\DeviceTracker;
+use App\Services\OfferService;
 use App\Services\StockService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -120,6 +121,129 @@ class Product extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', 'active')->orderBy('sort_order')->orderBy('name');
+    }
+
+    /**
+     * Single source of truth for what one unit (of $variant, or of the
+     * product itself) costs on the storefront:
+     *  - regular:    the variant's own price, falling back to the product's
+     *                (a variant's price is optional in the admin);
+     *  - selling:    the minimum of regular and sale price — a sale price only
+     *                counts when it's set, above 0 and below regular. Variant
+     *                sale prices pair with the variant's own price; a variant
+     *                without its own price inherits the product's sale too.
+     *                This is what the cart stores (CartManager).
+     *  - discounted: selling further reduced by active offers that lower a
+     *                single unit with no cart-level conditions
+     *                (OfferService::unitPrice()). Display-only — at checkout
+     *                OfferService::evaluate() applies offers as their own
+     *                lines on top of the stored selling price, which lands on
+     *                the same number, so it's never deducted twice.
+     *
+     * @return array{regular: float, selling: float, discounted: float}
+     */
+    public function unitPricing(?ProductVariant $variant = null): array
+    {
+        $regular = $this->regularPrice($variant);
+        $selling = $this->sellingPrice($variant);
+
+        return [
+            'regular'    => $regular,
+            'selling'    => $selling,
+            'discounted' => app(OfferService::class)->unitPrice($this, $selling, $variant?->id),
+        ];
+    }
+
+    public function regularPrice(?ProductVariant $variant = null): float
+    {
+        return (float) ($variant?->price ?? $this->price ?? 0);
+    }
+
+    public function sellingPrice(?ProductVariant $variant = null): float
+    {
+        $regular = $this->regularPrice($variant);
+
+        $sale = $variant && $variant->price !== null
+            ? $variant->sale_price
+            : ($variant?->sale_price ?? $this->sale_price);
+
+        $sale = $sale !== null ? (float) $sale : null;
+
+        return $sale !== null && $sale > 0 && $sale < $regular ? $sale : $regular;
+    }
+
+    /** discounted_price: one unit of the product itself after sale price and per-unit offers — see unitPricing(). */
+    protected function discountedPrice(): Attribute
+    {
+        return Attribute::get(fn () => $this->unitPricing()['discounted']);
+    }
+
+    /** min_price: the lowest price this product can be bought for — see cardPricing(). */
+    protected function minPrice(): Attribute
+    {
+        return Attribute::get(fn () => $this->cardPricing()['sale'] ?? $this->cardPricing()['price']);
+    }
+
+    /**
+     * SQL twin of cardPricing()'s pre-offer price — the lowest selling price
+     * (sellingPrice() rules: a sale price only counts when > 0 and below
+     * regular; a variant without its own price inherits the product's price
+     * and sale) across active variants, in-stock ones first, falling back to
+     * the product's own selling price. For storefront price filters/sorts on
+     * a query over `products` (unaliased). Offers aren't included — they're
+     * evaluated in PHP (OfferService) and can't be expressed in SQL.
+     */
+    public static function minSellingPriceSql(): string
+    {
+        $productSelling = '(CASE WHEN products.sale_price > 0 AND products.sale_price < COALESCE(products.price, 0)'
+            . ' THEN products.sale_price ELSE COALESCE(products.price, 0) END)';
+
+        $variantRegular = 'COALESCE(pv.price, products.price, 0)';
+        $variantSale = '(CASE WHEN pv.price IS NOT NULL THEN pv.sale_price ELSE COALESCE(pv.sale_price, products.sale_price) END)';
+        $variantSelling = "(CASE WHEN {$variantSale} > 0 AND {$variantSale} < {$variantRegular} THEN {$variantSale} ELSE {$variantRegular} END)";
+
+        $variantMin = fn (string $extra) => "(SELECT MIN({$variantSelling}) FROM product_variants pv"
+            . " WHERE pv.product_id = products.id AND pv.status = 'active' AND pv.deleted_at IS NULL{$extra})";
+
+        return 'COALESCE(' . $variantMin(' AND pv.stock_quantity > 0') . ', ' . $variantMin('') . ', ' . $productSelling . ')';
+    }
+
+    /** @var array{price: float, sale: ?float}|null memoized cardPricing() */
+    protected ?array $cardPricingCache = null;
+
+    /**
+     * Price shape for product cards/search results: the cheapest option
+     * (lowest discounted price) across the product's active variants — in
+     * stock ones first, so a sold-out cheap variant doesn't set the headline
+     * price — or the product itself when it has no active variants.
+     * 'price' is that option's regular price, 'sale' its discounted price
+     * when that's actually lower (null otherwise, i.e. nothing to strike).
+     *
+     * Eager-load 'variants' before calling this in a list to avoid N+1s.
+     *
+     * @return array{price: float, sale: ?float}
+     */
+    public function cardPricing(): array
+    {
+        if ($this->cardPricingCache !== null) {
+            return $this->cardPricingCache;
+        }
+
+        $variants = $this->variants->where('status', 'active');
+        $inStock = $variants->filter(fn (ProductVariant $v) => (float) $v->stock_quantity > 0);
+        $options = ($inStock->isNotEmpty() ? $inStock : $variants)
+            ->map(fn (ProductVariant $v) => $this->unitPricing($v));
+
+        if ($options->isEmpty()) {
+            $options = collect([$this->unitPricing()]);
+        }
+
+        $cheapest = $options->sortBy('discounted')->first();
+
+        return $this->cardPricingCache = [
+            'price' => $cheapest['regular'],
+            'sale'  => $cheapest['discounted'] < $cheapest['regular'] ? $cheapest['discounted'] : null,
+        ];
     }
 
     /**

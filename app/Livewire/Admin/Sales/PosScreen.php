@@ -67,7 +67,7 @@ class PosScreen extends Component
             'label'          => $product->name,
             'image_url'      => $product->featured_image_id ? file_path($product->featured_image_id) : null,
             'quantity'       => '1',
-            'unit_price'     => (string) ($product->sale_price ?? $product->price ?? 0),
+            'unit_price'     => (string) $product->sellingPrice(), // Product::sellingPrice(): min of regular/sale
             'purchase_price' => (string) ($product->purchase_price ?? ''),
         ];
 
@@ -97,7 +97,7 @@ class PosScreen extends Component
         $variantImage = $variant->media->first();
 
         $this->items[$index]['variant_id']     = (string) $variant->id;
-        $this->items[$index]['unit_price']     = (string) ($variant->sale_price ?? $variant->price ?? $this->items[$index]['unit_price']);
+        $this->items[$index]['unit_price']     = (string) $variant->product->sellingPrice($variant);
         $this->items[$index]['purchase_price'] = (string) ($variant->purchase_price ?? $this->items[$index]['purchase_price']);
         $this->items[$index]['image_url']      = $variantImage
             ? file_path($variantImage->media_id)

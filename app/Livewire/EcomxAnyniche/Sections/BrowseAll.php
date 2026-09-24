@@ -25,6 +25,7 @@ class BrowseAll extends Component
     public function mount(): void
     {
         $products = Product::where('status', 'active')
+            ->with('variants')
             ->orderBy('sort_order')
             ->orderByDesc('id')
             ->take($this->limit)

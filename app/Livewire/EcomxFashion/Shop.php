@@ -105,11 +105,11 @@ class Shop extends Component
             ))
             ->when(! empty($this->offers), fn ($q) => $q->whereNotNull('sale_price'))
             ->when($this->q !== '', fn ($q) => $q->where('name', 'like', '%' . $this->q . '%'))
-            ->where('price', '<=', $this->maxPrice);
+            ->whereRaw('(' . Product::minSellingPriceSql() . ') <= ?', [$this->maxPrice]);
 
         return match ($this->sort) {
-            'Price: low to high' => $query->orderBy('price'),
-            'Price: high to low' => $query->orderByDesc('price'),
+            'Price: low to high' => $query->orderByRaw(Product::minSellingPriceSql()),
+            'Price: high to low' => $query->orderByRaw(Product::minSellingPriceSql() . ' DESC'),
             'Newest' => $query->orderByDesc('created_at'),
             default => $query->orderByDesc('id'),
         };
@@ -142,9 +142,9 @@ class Shop extends Component
             'slug' => $p->slug,
             'name' => $p->name,
             'url' => $p->url,
-            'price' => (float) $p->price,
-            'sale' => $p->sale_price !== null ? (float) $p->sale_price : null,
-            'tag' => $p->sale_price !== null ? 'Sale' : '',
+            // Cheapest option after sale price + per-unit offers (Product::cardPricing()).
+            ...$p->cardPricing(),
+            'tag' => $p->cardPricing()['sale'] !== null ? 'Sale' : '',
             'cat' => $p->categories->first()->name ?? '',
             'img' => $p->featured_image,
             'colors' => $colorValues->pluck('swatch_value')->filter()->values()->all(),

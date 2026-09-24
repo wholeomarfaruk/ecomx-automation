@@ -29,8 +29,10 @@
                         $product = $item->product;
                         $variant = $item->variant;
                         $options = $variant?->options_map ?? [];
-                        $comparePrice = $variant ? $variant->price : $product?->price;
-                        $salePrice = $variant ? ($variant->sale_price ?? $variant->price) : ($product?->sale_price ?? $product?->price);
+                        // Product::unitPricing(): regular vs discounted (sale price + per-unit offers).
+                        $pricing = $product?->unitPricing($variant);
+                        $comparePrice = $pricing['regular'] ?? null;
+                        $salePrice = $pricing['discounted'] ?? null;
                         $hasSale = $comparePrice !== null && $salePrice !== null && (float) $salePrice < (float) $comparePrice;
                     @endphp
                     <div class="jtc-cart__line" wire:key="wish-item-{{ $item->id }}">

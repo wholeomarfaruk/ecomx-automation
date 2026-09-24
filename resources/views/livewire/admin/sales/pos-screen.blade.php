@@ -41,7 +41,7 @@
                                 @endif
                             </div>
                             <p class="text-xs font-medium text-gray-800 truncate group-hover:text-indigo-600">{{ $product->name }}</p>
-                            <p class="text-sm font-semibold text-gray-900 mt-0.5">{{ number_format($product->sale_price ?? $product->price ?? 0, 2) }}</p>
+                            <p class="text-sm font-semibold text-gray-900 mt-0.5">{{ number_format($product->sellingPrice(), 2) }}</p>
                         </button>
                     @empty
                         <div class="col-span-full text-center py-16">

@@ -91,7 +91,9 @@ class CartManager extends Component
         $qty = max(1, (int) $qty);
         $cart = $this->getCart();
         $stockLimit = $variant ? $variant->stock_quantity : null;
-        $price = $variant ? ($variant->sale_price ?? $variant->price) : ($product->sale_price ?? $product->price);
+        // Pre-offer selling price (Product::sellingPrice()); offers are
+        // applied on top at checkout by OfferService, never baked in here.
+        $price = $product->sellingPrice($variant);
 
         $item = CartItem::where('cart_id', $cart->id)
             ->where('product_id', $productId)
@@ -264,7 +266,9 @@ class CartManager extends Component
             return;
         }
 
-        $price = $variant ? ($variant->sale_price ?? $variant->price) : ($product->sale_price ?? $product->price);
+        // Pre-offer selling price (Product::sellingPrice()); offers are
+        // applied on top at checkout by OfferService, never baked in here.
+        $price = $product->sellingPrice($variant);
 
         $duplicate = CartItem::where('cart_id', $item->cart_id)
             ->where('product_id', $item->product_id)

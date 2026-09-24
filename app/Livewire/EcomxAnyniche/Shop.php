@@ -138,12 +138,12 @@ class Shop extends Component
             ))
             ->when(! empty($this->offers), fn ($q) => $q->whereNotNull('sale_price'))
             ->when($this->q !== '', fn ($q) => $q->where('name', 'like', '%' . $this->q . '%'))
-            ->where('price', '>=', $this->minPrice)
-            ->where('price', '<=', $this->maxPrice);
+            ->whereRaw('(' . Product::minSellingPriceSql() . ') >= ?', [$this->minPrice])
+            ->whereRaw('(' . Product::minSellingPriceSql() . ') <= ?', [$this->maxPrice]);
 
         return match ($this->sort) {
-            'Price: low to high' => $query->orderBy('price'),
-            'Price: high to low' => $query->orderByDesc('price'),
+            'Price: low to high' => $query->orderByRaw(Product::minSellingPriceSql()),
+            'Price: high to low' => $query->orderByRaw(Product::minSellingPriceSql() . ' DESC'),
             'Newest' => $query->orderByDesc('created_at'),
             default => $query->orderByDesc('id'),
         };

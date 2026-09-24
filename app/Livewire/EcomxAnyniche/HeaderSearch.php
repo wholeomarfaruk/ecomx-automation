@@ -33,14 +33,13 @@ class HeaderSearch extends Component
                 'categories',
                 fn ($c) => $c->where('name', $this->category)
             ))
-            ->with('categories')
+            ->with('categories', 'variants')
             ->limit(6)
             ->get()
             ->map(fn (Product $p) => [
                 'id' => $p->id,
                 'name' => $p->name,
-                'price' => (float) $p->price,
-                'sale' => $p->sale_price !== null ? (float) $p->sale_price : null,
+                ...$p->cardPricing(),
                 'img' => $p->featured_image,
                 'url' => $p->url,
             ])

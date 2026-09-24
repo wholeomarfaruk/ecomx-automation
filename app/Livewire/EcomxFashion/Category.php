@@ -121,7 +121,7 @@ class Category extends Component
             ))
             ->when(! empty($this->offers), fn ($q) => $q->whereNotNull('sale_price'))
             ->when($this->q !== '', fn ($q) => $q->where('name', 'like', '%' . $this->q . '%'))
-            ->where('price', '<=', $this->maxPrice)
+            ->whereRaw('(' . Product::minSellingPriceSql() . ') <= ?', [$this->maxPrice])
             ->orderByDesc('id');
     }
 
@@ -152,9 +152,9 @@ class Category extends Component
             'slug' => $p->slug,
             'name' => $p->name,
             'url' => $p->url,
-            'price' => (float) $p->price,
-            'sale' => $p->sale_price !== null ? (float) $p->sale_price : null,
-            'tag' => $p->sale_price !== null ? 'Sale' : '',
+            // Cheapest option after sale price + per-unit offers (Product::cardPricing()).
+            ...$p->cardPricing(),
+            'tag' => $p->cardPricing()['sale'] !== null ? 'Sale' : '',
             'cat' => $p->categories->first()->name ?? '',
             'img' => $p->featured_image,
             'colors' => $colorValues->pluck('swatch_value')->filter()->values()->all(),

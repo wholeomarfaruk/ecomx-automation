@@ -41,6 +41,7 @@ class Trending extends Component
     {
         return $category->products()
             ->where('status', 'active')
+            ->with('variants')
             ->inRandomOrder()
             ->limit(12)
             ->get();
@@ -62,9 +63,9 @@ class Trending extends Component
             'slug' => $p->slug,
             'name' => $p->name,
             'url' => $p->url,
-            'price' => (float) $p->price,
-            'sale' => $p->sale_price !== null ? (float) $p->sale_price : null,
-            'tag' => $p->sale_price !== null ? 'Sale' : '',
+            // Cheapest option after sale price + per-unit offers (Product::cardPricing()).
+            ...$p->cardPricing(),
+            'tag' => $p->cardPricing()['sale'] !== null ? 'Sale' : '',
             'cat' => $categoryName,
             'img' => $p->featured_image,
             'colors' => $colorValues->pluck('swatch_value')->filter()->values()->all(),
