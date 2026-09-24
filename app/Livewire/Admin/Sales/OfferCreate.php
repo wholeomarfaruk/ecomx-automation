@@ -107,10 +107,19 @@ class OfferCreate extends Component
     {
         $products = Product::active()
             ->whereNotIn('id', array_column($this->items, 'product_id'))
-            ->get(['id', 'name', 'code']);
+            ->with('featuredImage.items')
+            ->get(['id', 'name', 'code', 'featured_image_id']);
 
         return view('livewire.admin.sales.offer-create', [
             'productOptions' => $products->mapWithKeys(fn ($p) => [$p->id => $p->code ? "{$p->name} ({$p->code})" : $p->name]),
+            // Eager-loaded thumbnail (falls back to original) — same resolution as
+            // file_path($id, 'thumbnail') without a query per product.
+            'productImages'  => $products->mapWithKeys(function ($p) {
+                $items = $p->featuredImage?->items;
+                $item = $items?->firstWhere('type', 'thumbnail') ?? $items?->firstWhere('type', 'original');
+
+                return [$p->id => $item ? asset('storage/' . $item->path) : null];
+            }),
         ])->layout('layouts.admin.admin');
     }
 }

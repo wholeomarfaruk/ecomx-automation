@@ -68,7 +68,7 @@
                 <div class="mb-4">
                     <x-searchable-select wire:key="offer-product-picker-{{ count($items) }}"
                         field="productPickerId" :value="$productPickerId"
-                        :options="$productOptions"
+                        :options="$productOptions" :images="$productImages"
                         placeholder="— Select a product to add —" search-placeholder="Search by name or code…" />
                 </div>
 
