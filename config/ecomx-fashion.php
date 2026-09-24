@@ -51,7 +51,6 @@ return [
                 'shop-by-style',
                 'product-grid',
                 'reviews',
-                'instagram',
                 'why-faq',
             ],
         ],

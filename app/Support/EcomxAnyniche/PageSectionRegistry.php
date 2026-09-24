@@ -105,6 +105,10 @@ class PageSectionRegistry
             return static::defaultsFromConfig($page);
         }
 
+        // Config is the schema: hide saved sections no longer declared for this page.
+        $configuredKeys = PageRegistry::sectionKeysForPage($page);
+        $sections = array_values(array_filter($sections, fn ($s) => in_array($s['key'], $configuredKeys, true)));
+
         usort($sections, fn ($a, $b) => ($a['order'] ?? 0) <=> ($b['order'] ?? 0));
 
         return $sections;
@@ -130,11 +134,12 @@ class PageSectionRegistry
      * the file — so a fresh page (declared in config('{theme}.pages') but
      * never visited/toggled in the admin section editor yet) shows up
      * immediately instead of silently having "no sections registered" until
-     * someone opens it once. For a page that's already saved, only appends
-     * the config section keys it's missing — existing toggles/order are
-     * real admin-edited state and must not be clobbered.
+     * someone opens it once. For a page that's already saved, appends the
+     * config section keys it's missing and drops keys no longer declared in
+     * config — the remaining toggles/order are real admin-edited state and
+     * must not be clobbered.
      *
-     * @return string[] Page keys that were newly seeded or gained new sections.
+     * @return string[] Page keys that were newly seeded or had sections added/removed.
      */
     public static function syncAllPages(): array
     {
@@ -149,20 +154,23 @@ class PageSectionRegistry
                 continue;
             }
 
-            // Already-saved page: only append config sections it's missing
-            // (active, at the end) — never touch existing toggles/order.
-            $existingKeys = array_column($data[$page], 'key');
-            $missingKeys = array_values(array_diff(PageRegistry::sectionKeysForPage($page), $existingKeys));
+            // Already-saved page: drop sections no longer declared in config,
+            // and append config sections it's missing (active, at the end) —
+            // never touch the remaining toggles/order.
+            $configuredKeys = PageRegistry::sectionKeysForPage($page);
+            $kept = array_values(array_filter($data[$page], fn ($s) => in_array($s['key'], $configuredKeys, true)));
+            $missingKeys = array_values(array_diff($configuredKeys, array_column($kept, 'key')));
 
-            if ($missingKeys === []) {
+            if ($missingKeys === [] && count($kept) === count($data[$page])) {
                 continue;
             }
 
-            $nextOrder = $data[$page] === [] ? 0 : max(array_column($data[$page], 'order')) + 1;
+            $nextOrder = $kept === [] ? 0 : max(array_column($kept, 'order')) + 1;
 
             foreach ($missingKeys as $key) {
-                $data[$page][] = ['key' => $key, 'active' => true, 'order' => $nextOrder++];
+                $kept[] = ['key' => $key, 'active' => true, 'order' => $nextOrder++];
             }
+            $data[$page] = $kept;
             $seeded[] = $page;
         }
 
