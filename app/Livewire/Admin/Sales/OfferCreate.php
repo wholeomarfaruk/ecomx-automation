@@ -115,7 +115,8 @@ class OfferCreate extends Component
             // Eager-loaded thumbnail (falls back to original) — same resolution as
             // file_path($id, 'thumbnail') without a query per product.
             'productImages'  => $products->mapWithKeys(function ($p) {
-                $items = $p->featuredImage?->items;
+                // getRelation(): $p->featuredImage resolves to the getFeaturedImageAttribute() URL string, not the relation.
+                $items = $p->getRelation('featuredImage')?->items;
                 $item = $items?->firstWhere('type', 'thumbnail') ?? $items?->firstWhere('type', 'original');
 
                 return [$p->id => $item ? asset('storage/' . $item->path) : null];
