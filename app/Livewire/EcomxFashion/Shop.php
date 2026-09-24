@@ -29,10 +29,14 @@ class Shop extends Component
 
     public array $allCats = [];
     public array $allSizes = [];
-    public array $allOffers = ['flash_sale' => 'Flash Sale', 'discount' => 'Discount'];
+    public array $allOffers = ['flash_sale' => 'Flash Sale'];
 
     public function mount(): void
     {
+        // ?offer[]= comes straight from the URL — keep only known filter keys
+        // (e.g. drops the retired 'discount' option from old links).
+        $this->offers = array_values(array_intersect($this->offers, array_keys($this->allOffers)));
+
         $this->allCats = Category::active()
             ->pluck('name')
             ->all();
@@ -64,6 +68,10 @@ class Shop extends Component
 
     public function toggleOffer(string $o): void
     {
+        if (! array_key_exists($o, $this->allOffers)) {
+            return;
+        }
+
         $this->offers = in_array($o, $this->offers) ? array_values(array_diff($this->offers, [$o])) : [...$this->offers, $o];
         $this->perPage = static::PER_PAGE;
     }
