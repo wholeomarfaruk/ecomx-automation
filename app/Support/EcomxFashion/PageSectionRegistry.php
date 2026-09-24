@@ -86,6 +86,57 @@ class PageSectionRegistry
         return array_keys(static::read());
     }
 
+    /**
+     * Registers every config-declared page and section into page-sections.json
+     * in one pass: a page missing from the file is seeded with all its config
+     * sections (active, config order); a page already saved only gets the
+     * config section keys it's missing appended at the end (active), so a new
+     * section added to config('{theme}.pages') shows up without clobbering
+     * the admin's existing toggles/order.
+     *
+     * @return string[] Page keys that were seeded or gained new sections.
+     */
+    public static function syncAllPages(): array
+    {
+        $data = static::read();
+        $seeded = [];
+
+        foreach (PageRegistry::all() as $page => $meta) {
+            $configuredKeys = PageRegistry::sectionKeysForPage($page);
+
+            if (! array_key_exists($page, $data)) {
+                $data[$page] = array_map(fn (int $order, string $key) => [
+                    'key' => $key,
+                    'active' => true,
+                    'order' => $order,
+                ], array_keys($configuredKeys), $configuredKeys);
+                $seeded[] = $page;
+
+                continue;
+            }
+
+            $existingKeys = array_column($data[$page], 'key');
+            $missingKeys = array_values(array_diff($configuredKeys, $existingKeys));
+
+            if ($missingKeys === []) {
+                continue;
+            }
+
+            $nextOrder = $data[$page] === [] ? 0 : max(array_column($data[$page], 'order')) + 1;
+
+            foreach ($missingKeys as $key) {
+                $data[$page][] = ['key' => $key, 'active' => true, 'order' => $nextOrder++];
+            }
+            $seeded[] = $page;
+        }
+
+        if ($seeded !== []) {
+            static::write($data);
+        }
+
+        return $seeded;
+    }
+
     public static function setActive(string $page, string $key, bool $active): void
     {
         $data = static::read();

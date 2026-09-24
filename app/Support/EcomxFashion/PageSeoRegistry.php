@@ -64,6 +64,37 @@ class PageSeoRegistry
         ], static::read()[$page] ?? []);
     }
 
+    /**
+     * Seeds empty SEO fields for every config-declared page not already in
+     * page-seo.json. Never touches a page that's already saved.
+     *
+     * @return string[] Page keys that were newly seeded by this call.
+     */
+    public static function syncAllPages(): array
+    {
+        $data = static::read();
+        $seeded = [];
+
+        foreach (PageRegistry::all() as $page => $meta) {
+            if (array_key_exists($page, $data)) {
+                continue;
+            }
+
+            $data[$page] = [
+                'meta_title' => '',
+                'meta_description' => '',
+                'og_image' => '',
+            ];
+            $seeded[] = $page;
+        }
+
+        if ($seeded !== []) {
+            static::write($data);
+        }
+
+        return $seeded;
+    }
+
     public static function save(string $page, array $fields): void
     {
         $data = static::read();

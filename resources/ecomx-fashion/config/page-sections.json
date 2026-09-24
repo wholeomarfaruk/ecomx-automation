@@ -36,19 +36,24 @@
             "order": 6
         },
         {
-            "key": "reviews",
+            "key": "product-grid",
             "active": true,
             "order": 7
         },
         {
-            "key": "instagram",
+            "key": "reviews",
             "active": true,
             "order": 8
         },
         {
-            "key": "why-faq",
+            "key": "instagram",
             "active": true,
             "order": 9
+        },
+        {
+            "key": "why-faq",
+            "active": true,
+            "order": 10
         }
     ]
 }

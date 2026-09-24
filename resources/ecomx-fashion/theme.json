@@ -218,6 +218,7 @@
             "App\\Livewire\\EcomxFashion\\Sections\\PromoStrip",
             "App\\Livewire\\EcomxFashion\\Sections\\Trending",
             "App\\Livewire\\EcomxFashion\\Sections\\ShopByStyle",
+            "App\\Livewire\\EcomxFashion\\Sections\\ProductGrid",
             "App\\Livewire\\EcomxFashion\\Sections\\Reviews",
             "App\\Livewire\\EcomxFashion\\Sections\\Instagram",
             "App\\Livewire\\EcomxFashion\\Sections\\WhyFaq"

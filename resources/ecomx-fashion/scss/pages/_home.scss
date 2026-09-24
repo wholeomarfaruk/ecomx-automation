@@ -218,3 +218,16 @@
     font-weight: 600;
     text-align: left;
 }
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 24px 18px;
+}
+
+@include mobile {
+    .product-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px 12px;
+    }
+}

@@ -66,6 +66,12 @@ class SectionSchema
             'shop-by-style' => [
                 ['key' => 'categoryIds', 'label' => 'Style Categories (max 6)', 'type' => 'category_multi_select', 'max' => 6],
             ],
+            'product-grid' => [
+                ['key' => 'kicker', 'label' => 'Kicker text', 'type' => 'text', 'placeholder' => 'Trending now'],
+                ['key' => 'heading', 'label' => 'Heading', 'type' => 'text', 'placeholder' => 'The Trending Collection'],
+                ['key' => 'categoryId', 'label' => 'Source category (empty = all products)', 'type' => 'category_select'],
+                ['key' => 'buttonLabel', 'label' => 'Button label', 'type' => 'text', 'placeholder' => 'Browse All Products'],
+            ],
             'reviews' => [
                 ['key' => 'heading', 'label' => 'Heading', 'type' => 'text', 'placeholder' => 'Loved by our customers'],
                 ['key' => 'linkLabel', 'label' => 'Link label', 'type' => 'text', 'placeholder' => 'Read all reviews →'],
