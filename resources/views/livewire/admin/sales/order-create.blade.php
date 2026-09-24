@@ -38,30 +38,16 @@
                         <button type="button" wire:click="clearCustomer" class="text-xs text-gray-400 hover:text-red-500 transition">Change</button>
                     </div>
                 @else
-                    <div class="relative">
-                        <div class="flex items-center gap-2">
-                            <input wire:model.live.debounce.300ms="customerSearch" type="text" placeholder="Search customer by name or phone… (leave empty for guest order)"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                            <button type="button" wire:click="openNewCustomerModal" title="Add new customer"
-                                class="w-10 h-10 shrink-0 flex items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-                                </svg>
-                            </button>
-                        </div>
-                        @if($customerSearch !== '')
-                            <div class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                                @forelse($customerOptions as $option)
-                                    <button type="button" wire:click="selectCustomer({{ $option->id }})"
-                                        class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center justify-between">
-                                        <span>{{ $option->full_name }}</span>
-                                        <span class="text-xs text-gray-400">{{ $option->phone }}</span>
-                                    </button>
-                                @empty
-                                    <p class="px-3 py-2 text-xs text-gray-400">No matching customers found.</p>
-                                @endforelse
-                            </div>
-                        @endif
+                    <div class="flex items-center gap-2">
+                        <x-searchable-select wire:key="order-customer-picker" class="flex-1"
+                            field="customerId" :value="$customerId" :options="$customerOptions"
+                            placeholder="Guest order (no customer)" search-placeholder="Search by name or phone…" />
+                        <button type="button" wire:click="openNewCustomerModal" title="Add new customer"
+                            class="w-10 h-10 shrink-0 flex items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                            </svg>
+                        </button>
                     </div>
                 @endif
 

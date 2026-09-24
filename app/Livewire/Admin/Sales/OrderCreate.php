@@ -29,7 +29,6 @@ class OrderCreate extends Component
     use CreatesMasterProfile;
 
     public string $customerId  = '';
-    public string $customerSearch = '';
 
     public string $billingAddressId  = '';
     public string $shippingAddressId = '';
@@ -72,7 +71,6 @@ class OrderCreate extends Component
     public function selectCustomer(int $id): void
     {
         $this->customerId     = (string) $id;
-        $this->customerSearch = '';
         $this->billingAddressId  = '';
         $this->shippingAddressId = '';
     }
@@ -88,14 +86,6 @@ class OrderCreate extends Component
     {
         $this->reset(['newCustomerName', 'newCustomerPhone', 'newCustomerAddress']);
         $this->resetValidation();
-
-        // Carry over whatever was typed in the search box: digits → phone, otherwise → name.
-        $typed = trim($this->customerSearch);
-        if ($typed !== '' && preg_match('/^[+\d\s-]+$/', $typed)) {
-            $this->newCustomerPhone = $typed;
-        } elseif ($typed !== '') {
-            $this->newCustomerName = $typed;
-        }
 
         $this->newCustomerModal = true;
     }
@@ -441,14 +431,13 @@ class OrderCreate extends Component
 
     public function render(): mixed
     {
-        $customerOptions = collect();
-        if ($this->customerSearch !== '') {
-            $customerOptions = Customer::where(fn ($q) => $q
-                ->where('full_name', 'like', "%{$this->customerSearch}%")
-                ->orWhere('phone', 'like', "%{$this->customerSearch}%"))
-                ->limit(10)
-                ->get();
-        }
+        // Searchable-select filters on the label client-side, so the phone is
+        // part of it — search works by name or phone.
+        $customerOptions = $this->customerId
+            ? collect()
+            : Customer::orderBy('full_name')
+                ->get(['id', 'full_name', 'phone'])
+                ->mapWithKeys(fn ($c) => [$c->id => $c->phone ? "{$c->full_name} — {$c->phone}" : $c->full_name]);
 
         $selectedCustomer = $this->customerId ? Customer::find($this->customerId) : null;
 
