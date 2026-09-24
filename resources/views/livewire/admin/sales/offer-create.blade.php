@@ -20,6 +20,17 @@
         </button>
     </div>
 
+    @if($errors->any())
+        <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+            <p class="text-sm font-medium text-red-700 mb-1">Please fix the following before saving:</p>
+            <ul class="list-disc list-inside text-xs text-red-600 space-y-0.5">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="grid grid-cols-12 gap-6">
 
         <div class="col-span-12 lg:col-span-8 space-y-6">

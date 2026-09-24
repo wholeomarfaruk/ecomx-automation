@@ -12,6 +12,7 @@
 
     <div class="space-y-3">
         @forelse($conditions as $i => $condition)
+            <div>
             <div class="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2.5">
                 <select wire:model="conditions.{{ $i }}.type"
                     class="flex-1 rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
@@ -33,6 +34,10 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
+            </div>
+            @error("conditions.{$i}.type") <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+            @error("conditions.{$i}.operator") <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+            @error("conditions.{$i}.value") <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
             </div>
         @empty
             <p class="text-sm text-gray-400">No conditions added. Without conditions this promotion applies unconditionally.</p>

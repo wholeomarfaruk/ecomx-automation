@@ -21,7 +21,8 @@ class OfferCreate extends Component
 
     public function mount(): void
     {
-        $this->addCondition();
+        // No blank condition row by default: conditions are optional, and an
+        // untouched empty row would fail conditions.*.value validation.
         $this->addDiscountRule();
     }
 
@@ -56,6 +57,17 @@ class OfferCreate extends Component
     {
         unset($this->items[$index]);
         $this->items = array_values($this->items);
+    }
+
+    protected function validationAttributes(): array
+    {
+        return [
+            'conditions.*.type'     => 'condition type',
+            'conditions.*.operator' => 'condition operator',
+            'conditions.*.value'    => 'condition value',
+            'discountRules.*.type'  => 'discount rule type',
+            'offerType'             => 'offer type',
+        ];
     }
 
     protected function rules(): array
