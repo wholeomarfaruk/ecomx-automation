@@ -34,6 +34,7 @@
         @foreach ([
             ['key' => 'orders', 'label' => 'Orders'],
             ['key' => 'products', 'label' => 'Ordered Products'],
+            ['key' => 'packed', 'label' => 'Packed'],
             ['key' => 'autosaved', 'label' => 'Autosaved Orders'],
         ] as $tabItem)
             <button type="button" wire:click="$set('view', '{{ $tabItem['key'] }}')"
@@ -91,8 +92,13 @@
                                 <span class="block text-sm text-gray-600">{{ $order->customer?->full_name ?? 'Guest' }}</span>
                                 <span class="block text-xs text-gray-400">{{ $order->customer?->phone ?? '' }}</span>
                             </td>
-                            <td class="px-5 py-3 cursor-pointer" onclick="window.location.href='{{ route('admin.sales.orders.show', $order->id) }}'">
-                                <span class="text-xs text-gray-500">{{ $order->source->label() }}</span>
+                            <td class="px-5 py-3" @click.stop>
+                                <select wire:change="updateOrderSource({{ $order->id }}, $event.target.value)" title="Change source"
+                                    class="cursor-pointer text-xs text-gray-600 bg-transparent rounded-md border-0 py-1 pl-1 pr-6 hover:bg-gray-100 focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                                    @foreach($sources as $src)
+                                        <option value="{{ $src->value }}" @selected($order->source === $src)>{{ $src->label() }}</option>
+                                    @endforeach
+                                </select>
                             </td>
                             <td class="px-5 py-3 text-center cursor-pointer" onclick="window.location.href='{{ route('admin.sales.orders.show', $order->id) }}'">
                                 <span class="text-sm text-gray-600">{{ $order->items_count }}</span>
@@ -300,6 +306,93 @@
                 </div>
             @endif
         </div>
+    @endif
+
+    @if ($view === 'packed')
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="flex flex-wrap items-center gap-3 px-5 py-4 border-b border-gray-100">
+            <div class="relative flex-1 min-w-[200px]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/>
+                </svg>
+                <input wire:model.live.debounce.300ms="search" type="text" placeholder="Search by order #, customer name or phone…"
+                    class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+            </div>
+            <select wire:model.live="packState" class="text-sm rounded-lg border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                <option value="">All packed</option>
+                <option value="full">Fully packed (ready to ship)</option>
+                <option value="partial">Partially packed</option>
+            </select>
+            <select wire:model.live="filterSource" class="text-sm rounded-lg border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                <option value="">All sources</option>
+                @foreach($sources as $src)
+                    <option value="{{ $src->value }}">{{ $src->label() }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b border-gray-100 bg-gray-50/40">
+                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Order</th>
+                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Customer</th>
+                        <th class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Packed</th>
+                        <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Total</th>
+                        <th class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                        <th class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Courier</th>
+                        <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @forelse($packedOrders as $packed)
+                        @php($isFull = (float) $packed->packed_qty + 0.001 >= (float) $packed->packable_qty)
+                        <tr class="hover:bg-gray-50/50 transition">
+                            <td class="px-5 py-3">
+                                <a href="{{ route('admin.sales.orders.show', $packed->id) }}" wire:navigate class="text-sm font-medium text-gray-800 hover:text-indigo-600">#{{ $packed->id }}</a>
+                                <span class="block text-xs text-gray-400">{{ $packed->created_at->format('d M, Y') }} · {{ $packed->source->label() }}</span>
+                            </td>
+                            <td class="px-5 py-3">
+                                <span class="block text-sm text-gray-600">{{ $packed->customer?->full_name ?? 'Guest' }}</span>
+                                <span class="block text-xs text-gray-400">{{ $packed->customer?->phone ?? '' }}</span>
+                            </td>
+                            <td class="px-5 py-3 text-center">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{ $isFull ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600' }}">
+                                    {{ $isFull ? 'Fully packed' : 'Partially packed' }}
+                                </span>
+                                <span class="block text-xs text-gray-400 mt-1">{{ rtrim(rtrim(number_format((float) $packed->packed_qty, 3), '0'), '.') }} / {{ rtrim(rtrim(number_format((float) $packed->packable_qty, 3), '0'), '.') }} units</span>
+                            </td>
+                            <td class="px-5 py-3 text-right">
+                                <span class="text-sm font-medium text-gray-800">{{ number_format($packed->total_amount, 2) }}</span>
+                            </td>
+                            <td class="px-5 py-3 text-center">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{ $packed->status->badgeClass() }}">{{ $packed->status->label() }}</span>
+                            </td>
+                            <td class="px-5 py-3 text-center">
+                                @if($packed->courier_status)
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{ $packed->courier_status->badgeClass() }}">{{ $packed->courier_status->label() }}</span>
+                                @else
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-400">Not booked</span>
+                                @endif
+                            </td>
+                            <td class="px-5 py-3 text-right whitespace-nowrap">
+                                <a href="{{ route('admin.sales.orders.print', [$packed->id, 'packing-slip']) }}" target="_blank" class="text-xs font-medium text-gray-500 hover:text-gray-700">Packing slip</a>
+                                <a href="{{ route('admin.sales.orders.show', $packed->id) }}" wire:navigate class="ml-3 text-xs font-medium text-indigo-600 hover:text-indigo-700">Open</a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-5 py-10 text-center text-sm text-gray-400">No packed orders{{ $packState === 'full' ? ' ready to ship' : '' }}.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        @if($packedOrders->hasPages())
+            <div class="px-5 py-3 border-t border-gray-100">{{ $packedOrders->links() }}</div>
+        @endif
+    </div>
     @endif
 
     @if ($view === 'autosaved')

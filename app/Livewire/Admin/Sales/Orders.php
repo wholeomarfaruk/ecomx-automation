@@ -27,9 +27,13 @@ class Orders extends Component
     public bool $viewModal = false;
     public ?int $viewOrderId = null;
 
-    /** orders | products | autosaved */
+    /** orders | products | packed | autosaved */
     #[Url]
     public string $view = 'orders';
+
+    /** Packed tab: '' (all packed) | full (every packable unit packed — ready to ship) | partial */
+    #[Url]
+    public string $packState = '';
 
     #[Url]
     public string $search              = '';
@@ -50,6 +54,7 @@ class Orders extends Component
     public function updatingDateFrom(): void            { $this->resetPage(); $this->resetPage('productsPage'); }
     public function updatingDateTo(): void              { $this->resetPage(); $this->resetPage('productsPage'); }
     public function updatingProductSearch(): void       { $this->resetPage('productsPage'); }
+    public function updatingPackState(): void           { $this->resetPage('packedPage'); }
 
     public function resetFilters(): void
     {
@@ -113,6 +118,29 @@ class Orders extends Component
             ->log("Order #{$order->id} status updated");
 
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Order status updated']);
+    }
+
+    /** Inline Source dropdown in the orders table — informational only, no stock/accounting impact. */
+    public function updateOrderSource(int $orderId, string $source): void
+    {
+        $newSource = OrderSource::tryFrom($source);
+
+        if (! $newSource) {
+            return;
+        }
+
+        $order = Order::findOrFail($orderId);
+        $oldSource = $order->source;
+        $order->update(['source' => $newSource]);
+
+        activity('sales')
+            ->causedBy(auth()->user())
+            ->performedOn($order)
+            ->event('updated')
+            ->withProperties(['changes' => ['before' => ['source' => $oldSource->value], 'after' => ['source' => $newSource->value]]])
+            ->log("Order #{$order->id} source changed to {$newSource->label()}");
+
+        $this->dispatch('toast', ['type' => 'success', 'message' => 'Order source updated']);
     }
 
     public function updatePaymentStatus(int $orderId, string $paymentStatus): void
@@ -184,6 +212,41 @@ class Orders extends Component
                 ->paginate(20, pageName: 'productsPage')
             : null;
 
+        // Packed tab: orders with packing started (units packed from a batch)
+        // that are still in the fulfilment pipeline. "Packable" units follow
+        // PostOrderCompletion::assertFullyPacked(): non-gift lines with a product.
+        $packedOrders = null;
+
+        if ($this->view === 'packed') {
+            $packedSql = '(SELECT COALESCE(SUM(oib.quantity), 0) FROM order_item_batches oib'
+                . ' JOIN order_items oi ON oi.id = oib.order_item_id'
+                . ' WHERE oi.order_id = orders.id AND oi.product_id IS NOT NULL AND oi.is_gift = 0)';
+            $packableSql = '(SELECT COALESCE(SUM(oi.quantity), 0) FROM order_items oi'
+                . ' WHERE oi.order_id = orders.id AND oi.product_id IS NOT NULL AND oi.is_gift = 0)';
+
+            $packedOrders = Order::query()
+                ->select('orders.*')
+                ->selectRaw("{$packedSql} as packed_qty")
+                ->selectRaw("{$packableSql} as packable_qty")
+                ->with('customer')
+                ->whereIn('status', [
+                    OrderStatus::PENDING, OrderStatus::CONFIRMED, OrderStatus::PROCESSING,
+                    OrderStatus::SHIPPED, OrderStatus::PARTIALLY_DELIVERED, OrderStatus::DELIVERED,
+                ])
+                ->whereRaw("{$packedSql} > 0")
+                ->when($this->packState === 'full', fn ($q) => $q->whereRaw("{$packedSql} + 0.001 >= {$packableSql}"))
+                ->when($this->packState === 'partial', fn ($q) => $q->whereRaw("{$packedSql} + 0.001 < {$packableSql}"))
+                ->when($this->search, fn ($q) => $q->where(fn ($w) => $w
+                    ->where('orders.id', 'like', "%{$this->search}%")
+                    ->orWhereHas('customer', fn ($c) => $c
+                        ->where('full_name', 'like', "%{$this->search}%")
+                        ->orWhere('phone', 'like', "%{$this->search}%"))
+                ))
+                ->when($this->filterSource !== '', fn ($q) => $q->where('source', $this->filterSource))
+                ->orderByDesc('orders.id')
+                ->paginate(20, pageName: 'packedPage');
+        }
+
         $viewingOrder = $this->viewOrderId
             ? Order::with([
                 'customer',
@@ -201,6 +264,7 @@ class Orders extends Component
         return view('livewire.admin.sales.orders', [
             'orders'          => $orders,
             'orderedProducts' => $orderedProducts,
+            'packedOrders'    => $packedOrders,
             'statuses'        => OrderStatus::cases(),
             'paymentStatuses' => PaymentStatus::cases(),
             'courierStatuses' => CourierStatus::cases(),

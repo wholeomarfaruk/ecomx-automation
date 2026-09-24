@@ -275,6 +275,7 @@ class OrderDetail extends Component
     public function updateCourier(): void
     {
         $order = Order::findOrFail($this->orderId);
+        $hadTracking = (bool) $order->courier_tracking_number;
 
         $order->update([
             'courier_provider'          => $this->courierProvider ?: null,
@@ -290,7 +291,14 @@ class OrderDetail extends Component
             ->event('updated')
             ->log("Order #{$order->id} courier details updated");
 
-        $this->dispatch('toast', ['type' => 'success', 'message' => 'Courier details updated']);
+        // A manual courier entry (tracking number entered for the first time)
+        // counts as booked — same Pending/Confirmed → Processing step as an
+        // API booking (BooksCourierShipments::advanceToProcessingAfterBooking()).
+        $statusNote = ! $hadTracking && $this->courierTrackingNumber !== ''
+            ? $this->advanceToProcessingAfterBooking($order)
+            : '';
+
+        $this->dispatch('toast', ['type' => 'success', 'message' => 'Courier details updated' . $statusNote]);
     }
 
     public function openPaymentModal(): void

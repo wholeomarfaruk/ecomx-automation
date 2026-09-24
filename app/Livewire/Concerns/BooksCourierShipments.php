@@ -7,11 +7,16 @@ use App\Courier\DTO\ShipmentRequest;
 use App\Courier\Enums\CourierCapability;
 use App\Courier\Enums\ShipmentType;
 use App\Courier\Exceptions\CourierException;
+use App\Enums\Sales\OrderStatus;
+use App\Exceptions\Inventory\InsufficientStockException;
 use App\Models\Courier;
 use App\Models\CourierAccount;
 use App\Models\CourierShipment;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Setting;
+use App\Services\StockService;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 
 /**
@@ -155,18 +160,22 @@ trait BooksCourierShipments
             return;
         }
 
+        $statusNote = '';
+
         if ($response->success) {
             activity('sales')
                 ->causedBy(auth()->user())
                 ->performedOn($order)
                 ->event('updated')
                 ->log("Courier shipment booked with {$account->courier->name} for Order #{$order->id} (tracking: {$response->trackingNumber})");
+
+            $statusNote = $this->advanceToProcessingAfterBooking($order);
         }
 
         $this->dispatch('toast', [
             'type' => $response->success ? 'success' : 'error',
             'message' => $response->success
-                ? "Shipment booked — tracking #{$response->trackingNumber}"
+                ? "Shipment booked — tracking #{$response->trackingNumber}{$statusNote}"
                 : ($response->errorMessage ?? 'Failed to book shipment.'),
         ]);
 
@@ -174,6 +183,52 @@ trait BooksCourierShipments
             $this->bookingModal = false;
             $this->bookingOrderId = null;
         }
+    }
+
+    /**
+     * A successfully booked courier shipment means the order is being
+     * processed — move a Pending/Confirmed order to Processing (never
+     * backwards: Shipped/Delivered/etc. are left alone). Pending → Processing
+     * books stock exactly like the status dropdown does (book_on_order_confirm);
+     * if that fails for lack of stock, the status is left unchanged and the
+     * returned note says so — the shipment itself stays booked.
+     *
+     * @return string suffix for the booking toast ('' when nothing changed)
+     */
+    protected function advanceToProcessingAfterBooking(Order $order): string
+    {
+        $order->refresh();
+        $oldStatus = $order->status;
+
+        if (! in_array($oldStatus, [OrderStatus::PENDING, OrderStatus::CONFIRMED], true)) {
+            return '';
+        }
+
+        try {
+            DB::transaction(function () use ($order, $oldStatus) {
+                $order->update(['status' => OrderStatus::PROCESSING]);
+
+                if ((bool) Setting::get('book_on_order_confirm', true, 'inventory') && ! $oldStatus->isBookable()) {
+                    app(StockService::class)->bookOrder($order->load('items'));
+                }
+            });
+        } catch (InsufficientStockException $e) {
+            return " — status not changed to Processing: {$e->getMessage()}";
+        }
+
+        activity('sales')
+            ->causedBy(auth()->user())
+            ->performedOn($order)
+            ->event('updated')
+            ->withProperties(['changes' => ['before' => ['status' => $oldStatus->value], 'after' => ['status' => OrderStatus::PROCESSING->value]]])
+            ->log("Order #{$order->id} moved to Processing after courier booking");
+
+        // OrderDetail keeps its own status dropdown value — keep it in sync.
+        if (property_exists($this, 'orderId') && property_exists($this, 'status') && $this->orderId === $order->id) {
+            $this->status = OrderStatus::PROCESSING->value;
+        }
+
+        return ' — order moved to Processing';
     }
 
     public function syncCourierShipment(int $shipmentId): void
