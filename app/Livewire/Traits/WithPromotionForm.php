@@ -108,6 +108,21 @@ trait WithPromotionForm
         }
     }
 
+    /**
+     * The datetime-local inputs are in the site timezone (Settings →
+     * localization, e.g. Asia/Dhaka) but starts_at/ends_at are stored and
+     * compared (Promotion::active()) in the app timezone (UTC).
+     */
+    protected function siteInputToUtc(string $value): ?\Illuminate\Support\Carbon
+    {
+        return $value !== '' ? \Illuminate\Support\Carbon::parse($value, site_timezone())->utc() : null;
+    }
+
+    protected function utcToSiteInput(?\DateTimeInterface $value): string
+    {
+        return $value ? local_time($value)->format('Y-m-d\TH:i') : '';
+    }
+
     protected function promotionRules(): array
     {
         return [

@@ -101,6 +101,18 @@
                         ৳{{ number_format($cart->subtotal) }}
                     </span>
                 </div>
+                @if ($offers['applied'] !== [])
+                    @foreach ($offers['applied'] as $applied)
+                        <div class="cart-drawer__subtotal" style="font-weight:500;color:var(--ac2)" wire:key="cart-offer-{{ $applied['promotion_id'] }}">
+                            <span>🎁 {{ $applied['name'] }}</span>
+                            <span>−৳{{ number_format($applied['discount']) }}</span>
+                        </div>
+                    @endforeach
+                    <div class="cart-drawer__subtotal">
+                        <span>Total</span>
+                        <span>৳{{ number_format(max(0, (float) $cart->subtotal - $offers['discount'])) }}</span>
+                    </div>
+                @endif
                 <p class="cart-drawer__note">Shipping and taxes calculated at checkout.</p>
                 <a href="{{ route('ecomx-fashion.checkout') }}" class="btn btn--primary btn--block cart-checkout-btn"><x-icon name="cart" /> Checkout <x-icon name="arrow-right" /></a>
                 <button type="button" class="btn btn--outline btn--block" @click="$store.ui.cartOpen=false"><x-icon name="arrow-left" /> Continue shopping</button>

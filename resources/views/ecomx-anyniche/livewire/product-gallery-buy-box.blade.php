@@ -52,6 +52,14 @@
             @endif
         </div>
 
+        @if($offers !== [])
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin:-4px 0 12px">
+                @foreach($offers as $offer)
+                    <span class="jtc-pd-info__save">🎁 {{ $offer['label'] }} · {{ $offer['name'] }}</span>
+                @endforeach
+            </div>
+        @endif
+
         @if($product['desc'])
             <div class="jtc-pd-info__short">{!! $product['desc'] !!}</div>
         @endif

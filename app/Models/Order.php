@@ -80,6 +80,12 @@ class Order extends Model
         return $this->hasMany(OrderPayment::class);
     }
 
+    /** Offers this order was placed with (see App\Services\OfferService). */
+    public function offers(): HasMany
+    {
+        return $this->hasMany(OrderOffer::class);
+    }
+
     public function coupon(): BelongsTo
     {
         return $this->belongsTo(Coupon::class);

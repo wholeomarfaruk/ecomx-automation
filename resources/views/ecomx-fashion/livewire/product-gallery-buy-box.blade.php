@@ -51,6 +51,16 @@
             @endif
         </div>
 
+        @if($offers !== [])
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+                @foreach($offers as $offer)
+                    <span style="display:inline-flex;align-items:center;gap:6px;background:var(--ac-soft);color:var(--ac2);font-size:12.5px;font-weight:600;padding:7px 12px;border-radius:999px">
+                        🎁 {{ $offer['label'] }} <span style="font-weight:400;opacity:.8">· {{ $offer['name'] }}</span>
+                    </span>
+                @endforeach
+            </div>
+        @endif
+
         <p style="font-size:13.5px;line-height:1.7;color:rgba(var(--pri-rgb),.7)">{{ $product['desc'] }}</p>
 
         @if($hasColors)

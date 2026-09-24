@@ -5,6 +5,7 @@ namespace App\Livewire\EcomxAnyniche;
 use App\Livewire\Concerns\TogglesWishlist;
 use App\Models\Product as ProductModel;
 use App\Models\ProductVariant;
+use App\Services\OfferService;
 use Livewire\Attributes\Lazy;
 use Livewire\Component;
 
@@ -48,6 +49,9 @@ class ProductGalleryBuyBox extends Component
     public bool $hasRealVariants = false;
     public array $variantMatrix = [];
 
+    /** Active offers covering this product (OfferService::offersForProduct()), shown as badges. */
+    public array $offers = [];
+
     public bool $showSizeGuide = false;
     public bool $addedToCart = false;
 
@@ -58,6 +62,7 @@ class ProductGalleryBuyBox extends Component
         $p = ProductModel::findOrFail($productId);
 
         $this->flashSale = (bool) $p->sale_price;
+        $this->offers = app(OfferService::class)->offersForProduct($p);
         $this->product = [
             'name' => $p->name,
             'cat' => $p->categories->first()->name ?? '',

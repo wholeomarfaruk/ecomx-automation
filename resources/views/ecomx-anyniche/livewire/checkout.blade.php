@@ -109,14 +109,14 @@
                                 <strong>Cash on Delivery</strong>
                                 <small>Pay when the order is delivered to you.</small>
                             </span>
-                            <input type="radio" wire:model="payment_method" value="cod" x-model="payment">
+                            <input type="radio" wire:model.live="payment_method" value="cod" x-model="payment">
                         </label>
                         <label class="pay-option" :class="payment==='bkash' && 'is-on'">
                             <span>
                                 <strong>bKash</strong>
                                 <small>Send money first, then submit the transaction ID.</small>
                             </span>
-                            <input type="radio" wire:model="payment_method" value="bkash" x-model="payment">
+                            <input type="radio" wire:model.live="payment_method" value="bkash" x-model="payment">
                         </label>
                     </div>
                     @error('payment_method') <span class="field__error">{{ $message }}</span> @enderror
@@ -172,6 +172,9 @@
                                 <span class="checkout__item-name">{{ $product?->name ?? 'Deleted product' }}</span>
                                 <span class="muted" style="font-size:11.5px">{{ implode(' · ', $options) }}{{ ! empty($options) ? ' · ' : '' }}Qty: {{ $item->quantity }}</span>
                                 <span class="checkout__item-total">৳{{ number_format($item->price * $item->quantity) }}</span>
+                                @if (($offers['lines'][$item->id] ?? 0) > 0)
+                                    <span style="font-size:11.5px;color:var(--ac2);font-weight:600">🎁 Offer −৳{{ number_format($offers['lines'][$item->id]) }}</span>
+                                @endif
                             </div>
                         </div>
                     @endforeach
@@ -186,6 +189,12 @@
                         <span>Delivery charge</span>
                         <strong x-text="'৳' + (charge['{{ $delivery_area }}'] ?? 0)"></strong>
                     </div>
+                    @foreach ($offers['applied'] as $applied)
+                        <div class="checkout__totals-row checkout__totals-row--save" wire:key="checkout-offer-{{ $applied['promotion_id'] }}">
+                            <span>🎁 {{ $applied['name'] }}</span>
+                            <strong>−৳{{ number_format($applied['discount'] + $applied['shipping_discount']) }}</strong>
+                        </div>
+                    @endforeach
                     @if ($summarySavings > 0)
                         <button type="button" class="checkout__totals-row checkout__totals-row--save checkout__totals-row--save-toggle" @click="savingsOpen=!savingsOpen" @click.outside="savingsOpen=false">
                             <span>💰 You're saving</span>
@@ -199,7 +208,7 @@
                     @endif
                     <div class="checkout__totals-row checkout__totals-row--grand">
                         <span>Total</span>
-                        <strong x-text="'৳' + ({{ (float) $cart->subtotal }} + (charge['{{ $delivery_area }}'] ?? 0)).toLocaleString()"></strong>
+                        <strong>৳{{ number_format(max(0, (float) $cart->subtotal - $offers['discount']) + max(0, $deliveryCharge - $offers['shipping_discount'])) }}</strong>
                     </div>
                 </div>
         </div>

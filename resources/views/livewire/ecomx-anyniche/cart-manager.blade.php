@@ -93,7 +93,10 @@
                     </span>
                 </div>
                 <div class="jtc-cart__row"><span>Delivery</span><span>Calculated at checkout</span></div>
-                <div class="jtc-cart__total"><span>Total</span><span>৳{{ number_format($cart->subtotal) }}</span></div>
+                @foreach ($offers['applied'] as $applied)
+                    <div class="jtc-cart__row" wire:key="cart-offer-{{ $applied['promotion_id'] }}"><span>🎁 {{ $applied['name'] }}</span><span>−৳{{ number_format($applied['discount']) }}</span></div>
+                @endforeach
+                <div class="jtc-cart__total"><span>Total</span><span>৳{{ number_format(max(0, (float) $cart->subtotal - $offers['discount'])) }}</span></div>
                 <a href="{{ route('ecomx-anyniche.checkout') }}" class="jtc-btn jtc-btn--primary jtc-btn--block" style="padding:14px">Proceed to checkout</a>
                 <p class="jtc-cart__note">Taxes &amp; delivery calculated at checkout</p>
             </div>

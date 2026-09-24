@@ -20,6 +20,7 @@ use App\Models\Device;
 use App\Models\Order;
 use App\Models\User;
 use App\Services\BlockGuard;
+use App\Services\OfferService;
 use App\Support\PhoneNumber;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -295,6 +296,10 @@ class Checkout extends Component
                 $customer = $this->findOrCreateCustomer();
                 $address = $this->createDeliveryProfile($customer, $selectedAddress);
 
+                // Re-evaluated here (not trusted from the summary) against the
+                // resolved customer, so the saved discount is authoritative.
+                $offers = app(OfferService::class)->evaluate($cart, $this->offerContext($customer, $deliveryCharge));
+
                 $order = Order::create([
                     'customer_id' => $customer->id,
                     'source' => OrderSource::WEBSITE,
@@ -302,6 +307,7 @@ class Checkout extends Component
                     'payment_status' => 'pending',
                     'fulfillment_status' => 'unfulfilled',
                     'shipping_amount' => $deliveryCharge,
+                    'shipping_discount' => $offers['shipping_discount'],
                     'billing_address_id' => $address->id,
                     'shipping_address_id' => $address->id,
                     'customer_note' => $this->note ?: null,
@@ -309,6 +315,12 @@ class Checkout extends Component
                 ]);
 
                 foreach ($cart->items as $item) {
+                    // Offer discounts are booked per line (total_amount is net
+                    // of it, discount_amount records it) rather than as an
+                    // order-level discount_amount: sale posting, partial
+                    // completion and returns all value lines from total_amount.
+                    $lineDiscount = $item->is_gift ? 0.0 : (float) ($offers['lines'][$item->id] ?? 0);
+
                     $order->items()->create([
                         'product_id' => $item->product_id,
                         'variant_id' => $item->variant_id,
@@ -320,7 +332,18 @@ class Checkout extends Component
                         'quantity' => $item->quantity,
                         'unit_price' => $item->price,
                         'purchase_price' => $item->variant?->purchase_price ?? $item->product?->purchase_price,
-                        'total_amount' => $item->is_gift ? 0 : (float) $item->price * (float) $item->quantity,
+                        'discount_amount' => $lineDiscount,
+                        'total_amount' => $item->is_gift ? 0 : max(0.0, (float) $item->price * (float) $item->quantity - $lineDiscount),
+                    ]);
+                }
+
+                foreach ($offers['applied'] as $applied) {
+                    $order->offers()->create([
+                        'promotion_id' => $applied['promotion_id'],
+                        'offer_id' => $applied['offer_id'],
+                        'name' => $applied['name'],
+                        'discount_amount' => $applied['discount'],
+                        'shipping_discount' => $applied['shipping_discount'],
                     ]);
                 }
 
@@ -615,6 +638,17 @@ class Checkout extends Component
         $this->marketingEvents[] = $result['browserPayload'];
     }
 
+    /** Inputs OfferService needs for cart-level conditions and free-delivery offers. */
+    private function offerContext(?Customer $customer, float $deliveryCharge): array
+    {
+        return [
+            'customer' => $customer,
+            'payment_method' => $this->payment_method,
+            'shipping_method' => $this->delivery_area,
+            'shipping_amount' => $deliveryCharge,
+        ];
+    }
+
     public function getCartProperty(): Cart
     {
         $device = request()->attributes->get('device');
@@ -631,8 +665,16 @@ class Checkout extends Component
 
     public function render()
     {
+        $cart = $this->cart;
+        $deliveryCharge = (float) (collect($this->deliveryAreas)->firstWhere('id', $this->delivery_area)['charge'] ?? 0);
+
         return view('ecomx-fashion.livewire.checkout', [
-            'cart' => $this->cart,
+            'cart' => $cart,
+            'deliveryCharge' => $deliveryCharge,
+            'offers' => app(OfferService::class)->evaluate(
+                $cart,
+                $this->offerContext(auth()->check() ? auth()->user()->customer : null, $deliveryCharge)
+            ),
         ]);
     }
 }

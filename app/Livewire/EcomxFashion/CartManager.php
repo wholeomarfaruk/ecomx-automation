@@ -9,6 +9,7 @@ use App\Models\CartItem;
 use App\Models\Device;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Services\OfferService;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -328,6 +329,12 @@ class CartManager extends Component
 
     public function render()
     {
-        return view('livewire.ecomx-fashion.cart-manager');
+        // Offers whose conditions need checkout inputs (payment/delivery
+        // method, free delivery) only show up at checkout.
+        return view('livewire.ecomx-fashion.cart-manager', [
+            'offers' => app(OfferService::class)->evaluate($this->cart, [
+                'customer' => auth()->check() ? auth()->user()->customer : null,
+            ]),
+        ]);
     }
 }

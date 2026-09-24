@@ -37,6 +37,9 @@ class AppServiceProvider extends ServiceProvider
             MarketingContextBuilder::class,
             fn ($app) => new MarketingContextBuilder($app['request'])
         );
+
+        // Scoped so the active-offer list is loaded once per request/job.
+        $this->app->scoped(\App\Services\OfferService::class);
     }
 
     public function boot(): void

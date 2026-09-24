@@ -87,8 +87,8 @@ class OfferCreate extends Component
             'description' => $this->description ?: null,
             'status'      => $this->status,
             'priority'    => $this->priority ?: 0,
-            'starts_at'   => $this->startsAt ?: null,
-            'ends_at'     => $this->endsAt ?: null,
+            'starts_at'   => $this->siteInputToUtc($this->startsAt),
+            'ends_at'     => $this->siteInputToUtc($this->endsAt),
             'stackable'   => $this->stackable,
         ]);
 

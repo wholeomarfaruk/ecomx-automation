@@ -60,6 +60,9 @@
                                 <div class="text-right shrink-0">
                                     <p class="text-sm font-medium text-gray-800">{{ number_format($item->unit_price, 2) }} × {{ rtrim(rtrim(number_format($item->quantity, 3), '0'), '.') }}</p>
                                     <p class="text-xs text-gray-400">{{ number_format($item->total_amount, 2) }}</p>
+                                    @if($item->discount_amount > 0)
+                                        <p class="text-xs text-emerald-600">Offer −{{ number_format($item->discount_amount, 2) }}</p>
+                                    @endif
                                 </div>
                             </div>
 
@@ -156,6 +159,12 @@
                         <span class="text-gray-500">Discount</span>
                         <span class="text-gray-700">−{{ number_format($order->discount_amount, 2) }}</span>
                     </div>
+                    @foreach($order->offers as $appliedOffer)
+                        <div class="flex items-center gap-8 text-xs">
+                            <span class="text-gray-400" title="Already deducted in the item totals / shipping discount">Offer applied: {{ $appliedOffer->name }}</span>
+                            <span class="text-emerald-600">−{{ number_format($appliedOffer->discount_amount + $appliedOffer->shipping_discount, 2) }}</span>
+                        </div>
+                    @endforeach
                     <div class="flex items-center gap-8 text-sm">
                         <span class="text-gray-500">Shipping</span>
                         <span class="text-gray-700">+{{ number_format($order->shipping_amount, 2) }}</span>

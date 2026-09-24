@@ -31,8 +31,8 @@ class OfferDetail extends Component
         $this->description = $promotion->description ?? '';
         $this->status       = $promotion->status->value;
         $this->priority     = (string) $promotion->priority;
-        $this->startsAt     = $promotion->starts_at?->format('Y-m-d\TH:i') ?? '';
-        $this->endsAt       = $promotion->ends_at?->format('Y-m-d\TH:i') ?? '';
+        $this->startsAt     = $this->utcToSiteInput($promotion->starts_at);
+        $this->endsAt       = $this->utcToSiteInput($promotion->ends_at);
         $this->stackable    = $promotion->stackable;
 
         $this->offerType = $offer->offer_type->value;
@@ -109,8 +109,8 @@ class OfferDetail extends Component
             'description' => $this->description ?: null,
             'status'      => $this->status,
             'priority'    => $this->priority ?: 0,
-            'starts_at'   => $this->startsAt ?: null,
-            'ends_at'     => $this->endsAt ?: null,
+            'starts_at'   => $this->siteInputToUtc($this->startsAt),
+            'ends_at'     => $this->siteInputToUtc($this->endsAt),
             'stackable'   => $this->stackable,
         ]);
 

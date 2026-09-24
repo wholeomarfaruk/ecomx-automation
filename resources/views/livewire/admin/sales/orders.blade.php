@@ -381,6 +381,9 @@
                                     <div class="text-right">
                                         <p class="text-gray-600">{{ $item->quantity }} × {{ number_format($item->unit_price, 2) }}</p>
                                         <p class="text-xs font-medium text-gray-800">{{ number_format($item->total_amount, 2) }}</p>
+                                        @if($item->discount_amount > 0)
+                                            <p class="text-xs text-emerald-600">Offer −{{ number_format($item->discount_amount, 2) }}</p>
+                                        @endif
                                     </div>
                                 </div>
                             @endforeach
