@@ -59,7 +59,8 @@ class OrderCreate extends Component
     /** @var array<int, array{kind: string, product_id: string, variant_id: string, combo_id: string, is_gift: bool, label: string, quantity: string, unit_price: string, purchase_price: string}> */
     public array $items = [];
 
-    public string $productSearch = '';
+    /** Bound to the Order Items product searchable-select; picking a product adds a line and resets. */
+    public string $productPickerId = '';
     public string $comboSearch   = '';
 
     public function updatedCustomerId(): void
@@ -173,6 +174,15 @@ class OrderCreate extends Component
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Customer added and selected']);
     }
 
+    public function updatedProductPickerId(string $value): void
+    {
+        if ($value !== '') {
+            $this->addProductItem((int) $value);
+        }
+
+        $this->productPickerId = '';
+    }
+
     public function addProductItem(int $productId): void
     {
         $product = Product::active()->find($productId);
@@ -192,8 +202,6 @@ class OrderCreate extends Component
             'unit_price'     => (string) $product->sellingPrice(), // Product::sellingPrice(): min of regular/sale
             'purchase_price' => (string) ($product->purchase_price ?? ''),
         ];
-
-        $this->productSearch = '';
     }
 
     public function selectVariantForItem(int $index, ?int $variantId): void
@@ -448,15 +456,21 @@ class OrderCreate extends Component
             ? DeliveryAddress::where('customer_id', $selectedCustomer->id)->get()
             : collect();
 
-        $productOptions = collect();
-        if ($this->productSearch !== '') {
-            $productOptions = Product::active()
-                ->where('product_type', '!=', 'combo')
-                ->where(fn ($q) => $q->where('name', 'like', "%{$this->productSearch}%")
-                    ->orWhere('code', 'like', "%{$this->productSearch}%"))
-                ->limit(10)
-                ->get();
-        }
+        $products = Product::active()
+            ->where('product_type', '!=', 'combo')
+            ->with('featuredImage.items')
+            ->get(['id', 'name', 'code', 'featured_image_id']);
+
+        $productOptions = $products->mapWithKeys(fn ($p) => [$p->id => $p->code ? "{$p->name} ({$p->code})" : $p->name]);
+        // Eager-loaded thumbnail (falls back to original) — same resolution as
+        // file_path($id, 'thumbnail') without a query per product.
+        $productImages = $products->mapWithKeys(function ($p) {
+            // getRelation(): $p->featuredImage resolves to the getFeaturedImageAttribute() URL string, not the relation.
+            $items = $p->getRelation('featuredImage')?->items;
+            $item = $items?->firstWhere('type', 'thumbnail') ?? $items?->firstWhere('type', 'original');
+
+            return [$p->id => $item ? asset('storage/' . $item->path) : null];
+        });
 
         $comboOptions = collect();
         if ($this->comboSearch !== '') {
@@ -478,6 +492,7 @@ class OrderCreate extends Component
             'selectedCustomer'   => $selectedCustomer,
             'customerAddresses'  => $customerAddresses,
             'productOptions'     => $productOptions,
+            'productImages'      => $productImages,
             'comboOptions'       => $comboOptions,
             'variantOptions'     => $variantOptions,
             'statuses'           => OrderStatus::cases(),

@@ -94,23 +94,10 @@
                 <h2 class="text-sm font-semibold text-gray-800 mb-4">Order Items</h2>
 
                 <div class="grid grid-cols-2 gap-3 mb-4">
-                    <div class="relative">
-                        <input wire:model.live.debounce.300ms="productSearch" type="text" placeholder="Search products to add…"
-                            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                        @if($productSearch !== '')
-                            <div class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                                @forelse($productOptions as $option)
-                                    <button type="button" wire:click="addProductItem({{ $option->id }})"
-                                        class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center justify-between">
-                                        <span>{{ $option->name }}</span>
-                                        <span class="text-xs text-gray-400 font-mono">{{ $option->code }}</span>
-                                    </button>
-                                @empty
-                                    <p class="px-3 py-2 text-xs text-gray-400">No matching products found.</p>
-                                @endforelse
-                            </div>
-                        @endif
-                    </div>
+                    <x-searchable-select wire:key="order-product-picker-{{ count($items) }}"
+                        field="productPickerId" :value="$productPickerId"
+                        :options="$productOptions" :images="$productImages"
+                        placeholder="— Select a product to add —" search-placeholder="Search by name or code…" />
                     <div class="relative">
                         <input wire:model.live.debounce.300ms="comboSearch" type="text" placeholder="Search customer combos to add…"
                             class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
