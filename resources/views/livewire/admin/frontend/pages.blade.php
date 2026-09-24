@@ -14,6 +14,18 @@
             </button>
         </div>
 
+        @if ($needsSync)
+            <div class="flex items-center justify-between gap-4 mb-6 p-4 rounded-lg border border-amber-200 bg-amber-50">
+                <p class="text-sm text-amber-800">
+                    Page sections and SEO haven't been generated for this theme yet. The site is using the theme's default sections until you generate them.
+                </p>
+                <button type="button" wire:click="syncAllPages"
+                    class="shrink-0 px-3 py-2 text-xs font-semibold text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition whitespace-nowrap">
+                    Generate now
+                </button>
+            </div>
+        @endif
+
         @if (empty($pages))
             <x-empty-state title="No pages registered" description="The active theme has no pages configured." />
         @else

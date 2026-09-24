@@ -26,6 +26,16 @@ class ActiveTheme
         return resource_path(static::slug() . ($relative !== '' ? '/' . ltrim($relative, '/') : ''));
     }
 
+    /**
+     * Absolute path to storage/app/private/themes/{theme}/... — for admin-edited
+     * runtime state (git-ignored, never web-served), so a deploy's git pull
+     * never conflicts with or overwrites what the admin changed on the server.
+     */
+    public static function storagePath(string $relative = ''): string
+    {
+        return storage_path('app/private/themes/' . static::slug() . ($relative !== '' ? '/' . ltrim($relative, '/') : ''));
+    }
+
     /** Livewire tag namespace prefix, e.g. 'ecomx-anyniche.sections'. */
     public static function livewireNamespace(string $suffix = 'sections'): string
     {

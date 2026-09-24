@@ -29,11 +29,11 @@ class Pages extends Component
     }
 
     /**
-     * Seeds page-sections.json and page-seo.json for every config-declared
-     * page that hasn't been visited/edited in the admin yet, so a new page
-     * (e.g. one just added to config('{theme}.pages')) shows its sections
-     * and SEO fields immediately instead of only after someone opens it
-     * once. Never touches a page that already has saved state in either file.
+     * Generates/updates the active theme's page-sections.json and
+     * page-seo.json (under storage/, see ActiveTheme::storagePath()) from the
+     * theme's config schema: seeds every config-declared page not saved yet,
+     * and appends config sections missing from already-saved pages. Never
+     * overwrites existing admin-edited toggles/order/SEO.
      */
     public function syncAllPages(): void
     {
@@ -53,6 +53,7 @@ class Pages extends Component
     {
         return view('livewire.admin.frontend.pages', [
             'pages' => static::pageRegistry()::all(),
+            'needsSync' => ! static::pageSectionRegistry()::isGenerated() || ! static::pageSeoRegistry()::isGenerated(),
         ])->layout('layouts.admin.admin');
     }
 }

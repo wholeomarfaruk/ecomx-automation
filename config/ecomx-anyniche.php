@@ -1,7 +1,7 @@
 <?php
 
 return [
-    // Active theme slug — matches public/{theme}/config/page-sections.json
+    // Active theme slug — matches storage/app/private/themes/{theme}/page-sections.json
     // and the theme's identity in resources/{theme}/theme.json.
     'active_theme' => 'ecomx-anyniche',
 
