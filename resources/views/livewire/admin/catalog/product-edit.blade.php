@@ -125,6 +125,14 @@
                                 <option value="backorder">Backorder</option>
                             </select>
                         </div>
+                        @if($productType === 'simple' && ! $inventoryEnabled)
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1.5">Stock Quantity</label>
+                                <input wire:model="stockQuantity" type="number" step="any" min="0" placeholder="0"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                @error('stockQuantity') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            </div>
+                        @endif
                         <div>
                             <label class="block text-xs font-medium text-gray-600 mb-1.5">Product Type</label>
                             <select wire:model.live="productType"

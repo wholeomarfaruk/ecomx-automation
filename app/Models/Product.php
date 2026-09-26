@@ -23,7 +23,7 @@ class Product extends Model
         'code', 'name', 'slug', 'short_description', 'description',
         'brand_id', 'status', 'featured', 'stock_status',
         'product_type', 'combo_allowed', 'gift_allowed',
-        'price', 'sale_price', 'purchase_price', 'combo_price',
+        'price', 'sale_price', 'purchase_price', 'combo_price', 'stock_quantity',
         'featured_image_id', 'image_ids', 'video_ids',
         'weight', 'length', 'width', 'height',
         'meta_image_id', 'meta_title', 'meta_description', 'meta_keywords',
@@ -43,7 +43,8 @@ class Product extends Model
             'sale_price'     => 'decimal:2',
             'purchase_price' => 'decimal:2',
             'combo_price'    => 'decimal:2',
-            'weight'         => 'decimal:3',
+            'stock_quantity' => 'decimal:3',
+            'weight'        => 'decimal:3',
             'length'         => 'decimal:3',
             'width'          => 'decimal:3',
             'height'         => 'decimal:3',
@@ -247,10 +248,25 @@ class Product extends Model
     }
 
     /**
+     * Most a cart may hold of this product when no variant is involved: its
+     * own stock_quantity for a simple product while the Inventory module is
+     * off (that column is the balance then — see StockService::usesOwnStock()),
+     * otherwise null (not capped at the cart).
+     */
+    public function ownStockLimit(): ?float
+    {
+        return $this->product_type === ProductType::SIMPLE && app(StockService::class)->usesOwnStock()
+            ? (float) $this->stock_quantity
+            : null;
+    }
+
+    /**
      * Displayable stock figure for the admin product list, computed per
      * product_type since only variants and simple products carry real stock:
      * - simple: the default warehouse's inventory_stocks balance (variant_id
      *   null), via StockService — mirrors app/Livewire/Admin/Inventory/StockList.php.
+     *   With the Inventory module off, StockService falls back to the
+     *   product's own stock_quantity column instead.
      * - variable: sum of stock_quantity across variants (that column is a
      *   synced read cache — see StockService::syncVariantCache()), plus how
      *   many variants make up the total.
@@ -264,8 +280,8 @@ class Product extends Model
      *
      * Eager-load 'variants' (variable) or 'comboItems.product.variants' +
      * 'comboItems.variant' (combo) before calling this in a list to avoid
-     * N+1s; simple products always hit inventory_stocks directly since they
-     * have no stock_quantity column of their own.
+     * N+1s; simple products hit inventory_stocks directly while the Inventory
+     * module is on.
      */
     protected function stockInfo(): Attribute
     {

@@ -95,7 +95,7 @@ class CartManager extends Component
 
         $qty = max(1, (int) $qty);
         $cart = $this->getCart();
-        $stockLimit = $variant ? $variant->stock_quantity : null;
+        $stockLimit = $variant ? $variant->stock_quantity : $product->ownStockLimit();
         // Pre-offer selling price (Product::sellingPrice()); offers are
         // applied on top at checkout by OfferService, never baked in here.
         $price = $product->sellingPrice($variant);
@@ -200,7 +200,7 @@ class CartManager extends Component
 
         $stockLimit = $item->variant_id
             ? $item->variant?->stock_quantity
-            : null;
+            : $item->product?->ownStockLimit();
 
         if ($stockLimit !== null && $item->quantity + 1 > $stockLimit) {
             $this->dispatch('notify', type: 'error', message: 'No more stock available for this product.');
@@ -270,7 +270,7 @@ class CartManager extends Component
         }
 
         $qty = max(1, (int) $qty);
-        $stockLimit = $variant ? $variant->stock_quantity : null;
+        $stockLimit = $variant ? $variant->stock_quantity : $product->ownStockLimit();
 
         if ($stockLimit !== null && $qty > $stockLimit) {
             $this->dispatch('notify', type: 'error', message: 'No more stock available for this product.');

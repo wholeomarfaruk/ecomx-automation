@@ -27,9 +27,34 @@ use Illuminate\Support\Facades\DB;
  * directly outside this service — every balance change must be locked
  * (SELECT ... FOR UPDATE) inside a transaction and paired with a movement
  * row, or the balance and the ledger will drift apart.
+ *
+ * Inventory module off: there's no warehouse ledger to keep a balance in, so
+ * each item's own stock_quantity is the balance instead — products.stock_quantity
+ * for a simple product, product_variants.stock_quantity for a variant (see
+ * usesOwnStock()). Movements are still written to the ledger so the
+ * idempotency checks below (sale / sale_cancelled / return) and the audit
+ * trail keep working; bookings (soft reservations) are skipped — booking only
+ * checks availability, and the physical deduction happens on completion.
  */
 class StockService
 {
+    /**
+     * Whether balances live on the items' own stock_quantity columns rather
+     * than inventory_stocks — i.e. the Inventory module is off.
+     */
+    public function usesOwnStock(): bool
+    {
+        return ! Setting::get('inventory_enabled', true, 'modules');
+    }
+
+    /** The item's own stock_quantity (variant's if given, else the product's). */
+    protected function ownStock(Product $product, ?ProductVariant $variant): float
+    {
+        return $variant
+            ? (float) ProductVariant::query()->whereKey($variant->id)->value('stock_quantity')
+            : (float) Product::withTrashed()->whereKey($product->id)->value('stock_quantity');
+    }
+
     /**
      * Increase stock (purchase, import, admin restock, order cancellation/return).
      */
@@ -76,6 +101,10 @@ class StockService
         ?string $note = null,
     ): InventoryStockMovement {
         $warehouse ??= Warehouse::default();
+
+        if ($this->usesOwnStock()) {
+            return $this->writeOwnStock($product, $variant, fn (float $before) => $newQuantity, 'adjustment', $warehouse, $reference, $note);
+        }
 
         return DB::transaction(function () use ($product, $variant, $newQuantity, $warehouse, $reference, $note) {
             $stock = $this->lockOrCreateStock($product, $variant, $warehouse);
@@ -177,6 +206,10 @@ class StockService
      */
     protected function consumeBooking(OrderItem $item, float $quantity, Warehouse $warehouse): void
     {
+        if ($this->usesOwnStock()) {
+            return;
+        }
+
         $stock = $this->lockOrCreateStock($item->product, $item->variant, $warehouse);
         $before = (float) $stock->booked_quantity;
         $toConsume = min($before, $quantity);
@@ -247,7 +280,7 @@ class StockService
 
         DB::transaction(function () use ($order, $type, $warehouse) {
             foreach ($order->items as $item) {
-                if (! $item->product_id) {
+                if (! $item->product_id || $this->usesOwnStock()) {
                     continue;
                 }
 
@@ -270,6 +303,19 @@ class StockService
      */
     protected function adjustBooking(OrderItem $item, float $signedQuantity, string $type, Warehouse $warehouse, ?string $note = null): void
     {
+        if ($this->usesOwnStock()) {
+            // Nothing is reserved on the item's own stock_quantity — just
+            // refuse a booking it can't cover right now.
+            $onHand = $this->ownStock($item->product, $item->variant);
+            $allowNegative = (bool) Setting::get('allow_negative_stock', false, 'inventory');
+
+            if ($signedQuantity > 0 && $signedQuantity > $onHand && ! $allowNegative) {
+                throw InsufficientStockException::forProduct($item->product->name, $signedQuantity, max(0, $onHand));
+            }
+
+            return;
+        }
+
         $stock = $this->lockOrCreateStock($item->product, $item->variant, $warehouse);
         $before = (float) $stock->booked_quantity;
         $after = $before + $signedQuantity;
@@ -703,9 +749,17 @@ class StockService
      * warehouse) for a product/variant — physical quantity minus whatever is
      * currently booked (soft-reserved) against other orders, clamped at 0.
      * Returns 0 if no stock row exists yet.
+     *
+     * With the Inventory module off there's no warehouse ledger to read, so
+     * the item's own stock_quantity (product editor for simple products,
+     * variant editor for variants) is the source of truth instead.
      */
     public function available(Product $product, ?ProductVariant $variant, ?Warehouse $warehouse = null): float
     {
+        if ($this->usesOwnStock()) {
+            return max(0.0, (float) ($variant ?? $product)->stock_quantity);
+        }
+
         $warehouse ??= Warehouse::default();
 
         $stock = InventoryStock::query()
@@ -728,16 +782,21 @@ class StockService
     ): InventoryStockMovement {
         $warehouse ??= Warehouse::default();
 
+        if ($this->usesOwnStock()) {
+            return $this->writeOwnStock($product, $variant, function (float $before) use ($product, $signedQuantity) {
+                $after = $before + $signedQuantity;
+                $this->guardNegative($product, $signedQuantity, $before, $after);
+
+                return $after;
+            }, $type, $warehouse, $reference, $note);
+        }
+
         return DB::transaction(function () use ($product, $variant, $signedQuantity, $type, $warehouse, $reference, $note) {
             $stock = $this->lockOrCreateStock($product, $variant, $warehouse);
             $before = (float) $stock->quantity;
             $after = $before + $signedQuantity;
 
-            $allowNegative = (bool) Setting::get('allow_negative_stock', false, 'inventory');
-
-            if ($after < 0 && ! $allowNegative) {
-                throw InsufficientStockException::forProduct($product->name, abs($signedQuantity), $before);
-            }
+            $this->guardNegative($product, $signedQuantity, $before, $after);
 
             $stock->update(['quantity' => $after]);
             $this->syncVariantCache($variant, $warehouse, $after, (float) $stock->booked_quantity);
@@ -759,10 +818,124 @@ class StockService
         });
     }
 
+    /** @throws InsufficientStockException */
+    protected function guardNegative(Product $product, float $signedQuantity, float $before, float $after): void
+    {
+        $allowNegative = (bool) Setting::get('allow_negative_stock', false, 'inventory');
+
+        if ($after < 0 && ! $allowNegative) {
+            throw InsufficientStockException::forProduct($product->name, abs($signedQuantity), $before);
+        }
+    }
+
+    /**
+     * The usesOwnStock() counterpart of applyDelta()/setAbsolute(): locks the
+     * item's row (variant if given, else product), moves its stock_quantity
+     * to whatever $resolveAfter returns for the current balance, and logs the
+     * same movement row the warehouse path would. For a simple product,
+     * stock_status follows the balance across zero (out_of_stock <-> in_stock;
+     * backorder/low_stock are left to the admin) since that's what the
+     * storefront reads for simple products.
+     *
+     * @param  \Closure(float): float  $resolveAfter
+     */
+    protected function writeOwnStock(
+        Product $product,
+        ?ProductVariant $variant,
+        \Closure $resolveAfter,
+        string $type,
+        Warehouse $warehouse,
+        ?Model $reference,
+        ?string $note,
+    ): InventoryStockMovement {
+        return DB::transaction(function () use ($product, $variant, $resolveAfter, $type, $warehouse, $reference, $note) {
+            $locked = $variant
+                ? ProductVariant::query()->whereKey($variant->id)->lockForUpdate()->firstOrFail()
+                : Product::withTrashed()->whereKey($product->id)->lockForUpdate()->firstOrFail();
+            $before = (float) $locked->stock_quantity;
+            $after = $resolveAfter($before);
+
+            $changes = ['stock_quantity' => $after];
+
+            if (! $variant) {
+                $status = $locked->stock_status;
+                if ($after <= 0 && $status === 'in_stock') {
+                    $status = 'out_of_stock';
+                } elseif ($after > 0 && $status === 'out_of_stock') {
+                    $status = 'in_stock';
+                }
+                $changes['stock_status'] = $status;
+            }
+
+            $locked->update($changes);
+            ($variant ?? $product)->forceFill($changes)->syncOriginal();
+
+            return InventoryStockMovement::create([
+                'warehouse_id' => $warehouse->id,
+                'product_id' => $product->id,
+                'variant_id' => $variant?->id,
+                'type' => $type,
+                'quantity' => $after - $before,
+                'before_quantity' => $before,
+                'after_quantity' => $after,
+                'reference_type' => $reference ? $reference::class : null,
+                'reference_id' => $reference?->id,
+                'note' => $note,
+                'created_by' => auth()->id(),
+                'created_at' => now(),
+            ]);
+        });
+    }
+
+    /**
+     * Run once right after the Inventory module is switched on or off, so the
+     * balance a simple product had on one side carries over to the other:
+     * turning it off copies each simple product's default-warehouse
+     * inventory_stocks quantity into products.stock_quantity; turning it on
+     * pushes products.stock_quantity back into inventory_stocks (as an
+     * adjustment movement). Reads the already-saved setting, so call it after
+     * the toggle is persisted.
+     */
+    public function syncSimpleProductStockForModuleToggle(): void
+    {
+        $inventoryOn = ! $this->usesOwnStock();
+        $warehouse = Warehouse::default();
+
+        Product::query()
+            ->where('product_type', 'simple')
+            ->chunkById(200, function ($products) use ($inventoryOn, $warehouse) {
+                $ledger = InventoryStock::query()
+                    ->where('warehouse_id', $warehouse->id)
+                    ->whereIn('product_id', $products->pluck('id'))
+                    ->whereNull('variant_id')
+                    ->pluck('quantity', 'product_id');
+
+                foreach ($products as $product) {
+                    $ledgerQty = (float) ($ledger[$product->id] ?? 0);
+                    $productQty = (float) $product->stock_quantity;
+
+                    if (abs($ledgerQty - $productQty) < 0.0005) {
+                        continue;
+                    }
+
+                    $this->setAbsolute(
+                        $product,
+                        null,
+                        $inventoryOn ? $productQty : $ledgerQty,
+                        $warehouse,
+                        note: $inventoryOn
+                            ? 'Synced from product stock — Inventory module enabled'
+                            : 'Synced to product stock — Inventory module disabled',
+                    );
+                }
+            });
+    }
+
     /**
      * product_variants.stock_quantity is admin-managed only (set via the
      * variant editor) — Stock In and every other StockService write path
-     * must not touch it.
+     * must not touch it while the Inventory module is on. (With it off,
+     * there's no warehouse balance and writeOwnStock() moves it directly.)
      */
     protected function syncVariantCache(?ProductVariant $variant, Warehouse $warehouse, float $newQuantity, float $newBookedQuantity = 0.0): void
     {

@@ -7,6 +7,8 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Setting;
+use App\Services\StockService;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
@@ -28,6 +30,7 @@ class ProductEdit extends Component
     public string $status            = 'draft';
     public bool   $featured          = false;
     public string $stockStatus       = 'in_stock';
+    public string $stockQuantity     = '0';
     public string $productType       = 'simple';
     public bool   $comboAllowed      = false;
     public bool   $giftAllowed       = false;
@@ -80,6 +83,7 @@ class ProductEdit extends Component
         $this->status               = $product->status;
         $this->featured            = $product->featured;
         $this->stockStatus         = $product->stock_status;
+        $this->stockQuantity       = (string) (float) $product->stock_quantity;
         $this->productType         = $product->product_type->value;
         $this->comboAllowed        = $product->combo_allowed;
         $this->giftAllowed         = $product->gift_allowed;
@@ -135,6 +139,7 @@ class ProductEdit extends Component
             'categoryIds.*'     => 'integer|exists:categories,id',
             'status'            => 'required|in:draft,active,inactive,archived',
             'stockStatus'       => 'required|in:in_stock,out_of_stock,low_stock,backorder',
+            'stockQuantity'     => 'required|numeric|min:0',
             'productType'       => 'required|in:simple,variable,combo',
             'comboAllowed'      => 'boolean',
             'giftAllowed'       => 'boolean',
@@ -312,6 +317,18 @@ class ProductEdit extends Component
             'meta_keywords'     => $this->metaKeywords ?: null,
         ]);
 
+        // Inventory module is off — a simple product's own stock_quantity is
+        // the source of truth. Routed through StockService so the change is
+        // logged as an adjustment movement like any other stock edit.
+        $stockService = app(StockService::class);
+        if (
+            $this->productType === 'simple'
+            && $stockService->usesOwnStock()
+            && (float) $this->stockQuantity !== (float) $product->stock_quantity
+        ) {
+            $stockService->setAbsolute($product, null, (float) $this->stockQuantity, reference: $product, note: 'Set via product editor');
+        }
+
         $product->categories()->sync($this->categoryIds);
 
         if ($this->productType !== 'variable') {
@@ -388,6 +405,7 @@ class ProductEdit extends Component
             'comboProductOptions'  => $comboProductOptions,
             'comboVariantOptions'  => $comboVariantOptions,
             'giftProductOptions'   => $giftProductOptions,
+            'inventoryEnabled'     => Setting::get('inventory_enabled', true, 'modules'),
         ])->layout('layouts.admin.admin');
     }
 }

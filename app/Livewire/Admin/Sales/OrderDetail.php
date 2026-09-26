@@ -192,13 +192,21 @@ class OrderDetail extends Component
                 } elseif ($bookOnConfirm && $oldStatus->isBookable() && ! $newStatus->isBookable() && $newStatus !== OrderStatus::COMPLETED) {
                     $stockService->releaseBooking($order, $this->releaseTypeFor($newStatus));
                 }
+
+                // Inventory module off: there are no batches to pack from and
+                // no Accounts to post to (Accounts requires Inventory), so
+                // completion just deducts each item's own stock_quantity —
+                // inside this transaction so a shortfall rolls the status back.
+                if ($stockService->usesOwnStock() && $newStatus === OrderStatus::COMPLETED && $oldStatus !== OrderStatus::COMPLETED) {
+                    $stockService->commitOrder($order->load('items'));
+                }
             });
         } catch (InsufficientStockException $e) {
             $this->dispatch('toast', ['type' => 'error', 'message' => $e->getMessage()]);
             return;
         }
 
-        if ($newStatus === OrderStatus::COMPLETED && $oldStatus !== OrderStatus::COMPLETED) {
+        if (! $stockService->usesOwnStock() && $newStatus === OrderStatus::COMPLETED && $oldStatus !== OrderStatus::COMPLETED) {
             app(PostOrderCompletion::class)->handle($order->fresh(['items']), now()->toDateString());
         }
 
@@ -224,6 +232,10 @@ class OrderDetail extends Component
 
                 app(PostOrderReturn::class)->handle($order->fresh(['items']), now()->toDateString());
                 app(StockService::class)->releaseOrder($order->fresh(['items']));
+            } elseif ($stockService->usesOwnStock()) {
+                // Inventory off — no sale journal to key off; releaseOrder()
+                // is itself a no-op unless this order's stock was deducted.
+                $stockService->releaseOrder($order->fresh(['items']));
             }
 
             // Converts any still-paid amount into Customer Credit — the only

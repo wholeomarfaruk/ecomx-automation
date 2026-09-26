@@ -8,6 +8,7 @@ use App\Models\Country;
 use App\Models\Currency;
 use App\Models\Language;
 use App\Models\Setting;
+use App\Services\StockService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -531,6 +532,13 @@ class SiteSettings extends Component
             Setting::set('inventory_enabled', $this->inventory_enabled ? '1' : '0', 'modules');
             Setting::set('accounts_enabled',  $this->accounts_enabled  ? '1' : '0', 'modules');
             Setting::forgetGroup('modules');
+
+            // Carry each simple product's balance across to whichever side
+            // (inventory_stocks vs. products.stock_quantity) is now the
+            // source of truth.
+            if ($old['inventory_enabled'] !== $this->inventory_enabled) {
+                app(StockService::class)->syncSimpleProductStockForModuleToggle();
+            }
 
             $this->logSettingsChange('Module settings were updated', $old, [
                 'purchase_enabled'  => $this->purchase_enabled,
