@@ -112,7 +112,7 @@ class MenuRegistry
             return [
                 static::newItem('Track Order', route('ecomx-fashion.track')),
                 static::newItem('About Us', route('ecomx-fashion.home')),
-                static::newItem('Contact', 'tel:' . config('ecomx-fashion.phone')),
+                static::newItem('Contact', \App\Support\ContactInfo::telHref() ?? '#'),
             ];
         }
 

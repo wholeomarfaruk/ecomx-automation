@@ -115,7 +115,9 @@
             </div>
             <div style="display:flex;gap:10px">
                 <button type="button" class="btn btn--outline" style="flex:1;border-color:var(--ac);color:var(--ac2)" wire:click="addToCart">Buy Now — 1 qty</button>
-                <a href="https://wa.me/8801700000000" target="_blank" rel="noopener" class="icon-btn" style="width:54px;height:auto;border-radius:12px;border:1.5px solid #25D366;background:rgba(37,211,102,.08);color:#128C4A" aria-label="Order via WhatsApp"><x-icon name="whatsapp" /></a>
+                @if($orderWhatsapp = \App\Support\ContactInfo::whatsappUrl('Hi, I want to order: ' . $product['name']))
+                <a href="{{ $orderWhatsapp }}" target="_blank" rel="noopener" class="icon-btn" style="width:54px;height:auto;border-radius:12px;border:1.5px solid #25D366;background:rgba(37,211,102,.08);color:#128C4A" aria-label="Order via WhatsApp"><x-icon name="whatsapp" /></a>
+                @endif
             </div>
         </div>
 

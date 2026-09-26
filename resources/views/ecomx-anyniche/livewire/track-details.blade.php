@@ -127,7 +127,9 @@
                         <div style="padding:14px;background:rgba(0,0,0,.03);border-radius:10px;margin-bottom:16px">
                             <p style="font-size:13px;font-weight:600;margin:0 0 6px">Our SMS gateway is temporarily unavailable</p>
                             <p class="muted" style="font-size:12.5px;margin:0 0 10px">Please call us to confirm or cancel your order.</p>
-                            <a href="tel:{{ $companyPhone }}" class="jtc-btn jtc-btn--primary jtc-btn--block">Call {{ $companyPhone }}</a>
+                            @if(\App\Support\ContactInfo::telHref())
+                                <a href="{{ \App\Support\ContactInfo::telHref() }}" class="jtc-btn jtc-btn--primary jtc-btn--block">Call {{ $companyPhone }}</a>
+                            @endif
                         </div>
                         <button type="button" wire:click="cancelOrder" wire:confirm="Are you sure you want to cancel this order?" class="jtc-btn jtc-btn--outline jtc-btn--block">
                             Cancel Order

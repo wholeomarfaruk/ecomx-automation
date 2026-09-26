@@ -81,6 +81,12 @@ class SiteSettings extends Component
     public string $linkedin       = '';
     public string $tiktok         = '';
 
+    // Contacts (storefront support channels — see App\Support\ContactInfo)
+    public string $support_phone     = '';
+    public string $support_whatsapp  = '';
+    public string $support_messenger = '';
+    public string $support_hours     = '';
+
     // Registration
     public bool $allow_registration    = true;
     public bool $restrict_by_country   = false;
@@ -377,6 +383,27 @@ class SiteSettings extends Component
             ]);
         }
 
+        if ($this->activeGroup === 'contact') {
+            $this->validate([
+                'support_phone'     => 'nullable|string|max:30',
+                'support_whatsapp'  => 'nullable|string|max:30',
+                'support_messenger' => 'nullable|string|max:255',
+                'support_hours'     => 'nullable|string|max:100',
+            ]);
+
+            $keys = ['support_phone', 'support_whatsapp', 'support_messenger', 'support_hours'];
+            $old  = [];
+            $new  = [];
+
+            foreach ($keys as $key) {
+                $old[$key] = (string) Setting::get($key, '', 'contact');
+                $new[$key] = trim((string) $this->{$key});
+                Setting::set($key, $new[$key], 'contact');
+            }
+
+            $this->logSettingsChange('Contact settings were updated', $old, $new);
+        }
+
         if ($this->activeGroup === 'registration') {
             $old = [
                 'allow_registration'   => (bool) Setting::get('allow_registration',   '1', 'registration'),
@@ -618,6 +645,11 @@ class SiteSettings extends Component
         $this->instagram      = Setting::get('instagram',      '', 'social');
         $this->linkedin       = Setting::get('linkedin',       '', 'social');
         $this->tiktok         = Setting::get('tiktok',         '', 'social');
+
+        $this->support_phone     = (string) Setting::get('support_phone',     '', 'contact');
+        $this->support_whatsapp  = (string) Setting::get('support_whatsapp',  '', 'contact');
+        $this->support_messenger = (string) Setting::get('support_messenger', '', 'contact');
+        $this->support_hours     = (string) Setting::get('support_hours',     '', 'contact');
 
         $this->allow_registration   = (bool) Setting::get('allow_registration',   '1', 'registration');
         $this->restrict_by_country  = (bool) Setting::get('restrict_by_country',  '0', 'registration');

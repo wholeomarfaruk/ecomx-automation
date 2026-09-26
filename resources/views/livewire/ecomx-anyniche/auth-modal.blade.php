@@ -57,7 +57,9 @@
                         <div style="padding:14px;background:#f2f5f4;border-radius:8px">
                             <p style="font-size:13px;font-weight:600;margin:0 0 6px">Our SMS gateway is temporarily unavailable</p>
                             <p style="font-size:12.5px;margin:0 0 10px;color:#6b7a73">Please use password sign-in, or call us for help.</p>
-                            <a href="tel:{{ config('ecomx-anyniche.phone') }}" class="jtc-btn jtc-btn--outline jtc-btn--block">Call {{ config('ecomx-anyniche.phone') }}</a>
+                            @if(\App\Support\ContactInfo::telHref())
+                                <a href="{{ \App\Support\ContactInfo::telHref() }}" class="jtc-btn jtc-btn--outline jtc-btn--block">Call {{ \App\Support\ContactInfo::phone() }}</a>
+                            @endif
                         </div>
                         <p class="jtc-form__switch">
                             <a href="#" @click.prevent="$wire.switchLoginTab('password')">Back to password sign in</a>
@@ -104,7 +106,9 @@
                         <div style="padding:14px;background:#f2f5f4;border-radius:8px">
                             <p style="font-size:13px;font-weight:600;margin:0 0 6px">We couldn't send a code right now</p>
                             <p style="font-size:12.5px;margin:0 0 10px;color:#6b7a73">Please try again shortly, or call us for help.</p>
-                            <a href="tel:{{ config('ecomx-anyniche.phone') }}" class="jtc-btn jtc-btn--outline jtc-btn--block">Call {{ config('ecomx-anyniche.phone') }}</a>
+                            @if(\App\Support\ContactInfo::telHref())
+                                <a href="{{ \App\Support\ContactInfo::telHref() }}" class="jtc-btn jtc-btn--outline jtc-btn--block">Call {{ \App\Support\ContactInfo::phone() }}</a>
+                            @endif
                         </div>
                     @endif
                     <form wire:submit.prevent="sendForgotOtp" class="jtc-form" style="padding:0">

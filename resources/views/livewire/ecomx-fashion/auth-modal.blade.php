@@ -45,7 +45,9 @@
                         <div style="padding:14px;background:rgba(var(--pri-rgb),.03);border-radius:10px;margin-bottom:10px">
                             <p style="font-size:13px;font-weight:600;margin:0 0 6px">Our SMS gateway is temporarily unavailable</p>
                             <p class="muted" style="font-size:12.5px;margin:0 0 10px">Please use password sign-in, or call us for help.</p>
-                            <a href="tel:{{ config('ecomx-fashion.phone') }}" class="btn btn--outline btn--pill btn--block">Call {{ config('ecomx-fashion.phone') }}</a>
+                            @if(\App\Support\ContactInfo::telHref())
+                                <a href="{{ \App\Support\ContactInfo::telHref() }}" class="btn btn--outline btn--pill btn--block">Call {{ \App\Support\ContactInfo::phone() }}</a>
+                            @endif
                         </div>
                     @elseif(! $otpSent)
                         <form wire:submit.prevent="sendLoginOtp">
@@ -84,7 +86,9 @@
                         <div style="padding:14px;background:rgba(var(--pri-rgb),.03);border-radius:10px;margin-bottom:10px">
                             <p style="font-size:13px;font-weight:600;margin:0 0 6px">We couldn't send a code right now</p>
                             <p class="muted" style="font-size:12.5px;margin:0 0 10px">Please try again shortly, or call us for help.</p>
-                            <a href="tel:{{ config('ecomx-fashion.phone') }}" class="btn btn--outline btn--pill btn--block">Call {{ config('ecomx-fashion.phone') }}</a>
+                            @if(\App\Support\ContactInfo::telHref())
+                                <a href="{{ \App\Support\ContactInfo::telHref() }}" class="btn btn--outline btn--pill btn--block">Call {{ \App\Support\ContactInfo::phone() }}</a>
+                            @endif
                         </div>
                     @endif
                     <form wire:submit.prevent="sendForgotOtp">

@@ -49,7 +49,7 @@
     "src": "node_modules/boxicons/fonts/boxicons.woff2"
   },
   "resources/css/admin.css": {
-    "file": "assets/app-Dw81KHm-.css",
+    "file": "assets/app-CXk6RBJX.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "admin",
@@ -59,7 +59,7 @@
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-Dw81KHm-.css",
+    "file": "assets/app-CXk6RBJX.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "admin",
@@ -81,7 +81,7 @@
     ]
   },
   "resources/ecomx-anyniche/scss/app.scss": {
-    "file": "assets/app-COdRSLOm.css",
+    "file": "assets/app-CcHvGXHQ.css",
     "src": "resources/ecomx-anyniche/scss/app.scss",
     "isEntry": true,
     "name": "app",

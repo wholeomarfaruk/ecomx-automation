@@ -13,6 +13,7 @@
                         'localization' => ['label' => 'Localization',  'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418"/>'],
                         'mail'         => ['label' => 'Email',          'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/>'],
                         'social'       => ['label' => 'Social Links',  'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"/>'],
+                        'contact'      => ['label' => 'Contacts',      'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z"/>'],
                         'registration' => ['label' => 'Registration',  'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"/>'],
                         'pricing'      => ['label' => 'Pricing',       'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182.553-.44 1.278-.659 2.003-.659.725 0 1.45.22 2.003.659l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>'],
                         'marketing'    => ['label' => 'Marketing',     'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 1 1 0-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 0 1-1.44-4.282m3.102.069a18.03 18.03 0 0 1-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 0 1 8.835 2.535M10.34 6.66a23.847 23.847 0 0 0 8.835-2.535m0 0A23.74 23.74 0 0 0 18.795 3m.38 1.125a23.91 23.91 0 0 1 1.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 0 0 1.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 0 1 0 3.46"/>'],
@@ -564,6 +565,45 @@
                                         <span class="w-28 shrink-0 text-sm font-medium text-gray-700">{{ $meta['label'] }}</span>
                                         <input wire:model="{{ $field }}" type="url" placeholder="{{ $meta['placeholder'] }}"
                                             class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- ══════════════════ CONTACTS ══════════════════ --}}
+                    @if ($activeGroup === 'contact')
+                        <div class="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-sm font-semibold text-gray-900">Contacts</h2>
+                                <p class="text-xs text-gray-400">Support channels shown on the storefront — support popup, product page order buttons, call-us fallbacks</p>
+                            </div>
+                        </div>
+
+                        <div class="px-6 py-5">
+                            @php
+                                $contactFields = [
+                                    'support_phone'     => ['label' => 'Support Phone', 'placeholder' => '+8801XXXXXXXXX',                     'hint' => 'Used for "Call us" / "Call for order". Empty = Company phone is used.'],
+                                    'support_whatsapp'  => ['label' => 'WhatsApp',      'placeholder' => '+8801XXXXXXXXX',                     'hint' => 'Number with country code. Empty = Support phone is used.'],
+                                    'support_messenger' => ['label' => 'Messenger',     'placeholder' => 'yourpage  or  https://m.me/yourpage', 'hint' => 'Facebook page username or full m.me link. Empty = hidden.'],
+                                    'support_hours'     => ['label' => 'Support Hours', 'placeholder' => '9am–11pm, 7 days a week',            'hint' => 'Optional, shown in the support popup.'],
+                                ];
+                            @endphp
+                            <div class="divide-y divide-gray-100">
+                                @foreach ($contactFields as $field => $meta)
+                                    <div class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4 py-3.5 first:pt-0 last:pb-0">
+                                        <span class="sm:w-28 shrink-0 text-sm font-medium text-gray-700 sm:pt-2">{{ $meta['label'] }}</span>
+                                        <div class="flex-1">
+                                            <input wire:model="{{ $field }}" type="text" placeholder="{{ $meta['placeholder'] }}"
+                                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                            <p class="text-xs text-gray-400 mt-1">{{ $meta['hint'] }}</p>
+                                            @error($field) <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                        </div>
                                     </div>
                                 @endforeach
                             </div>

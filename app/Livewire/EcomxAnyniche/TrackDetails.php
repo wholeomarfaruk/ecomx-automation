@@ -81,7 +81,7 @@ class TrackDetails extends Component
         $this->otpSent = false;
         $this->otpCode = '';
         $this->otpError = '';
-        $this->companyPhone = config('ecomx-anyniche.phone', '');
+        $this->companyPhone = \App\Support\ContactInfo::phone() ?? '';
     }
 
     public function closeConfirmModal(): void
