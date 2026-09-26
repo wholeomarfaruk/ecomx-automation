@@ -114,7 +114,7 @@
                 <button class="icon-btn {{ $this->isWished ? 'is-on' : '' }}" style="width:54px;height:auto;border-radius:12px;background:#fff;{{ $this->isWished ? 'color:var(--ac)' : '' }}" wire:click="toggleWishlist({{ $productId }}, {{ $this->selectedVariantId ?? 'null' }})" wire:loading.attr="disabled" wire:target="toggleWishlist({{ $productId }})" aria-label="Wishlist"><x-icon name="heart" /></button>
             </div>
             <div style="display:flex;gap:10px">
-                <button type="button" class="btn btn--outline" style="flex:1;border-color:var(--ac);color:var(--ac2)" wire:click="addToCart">Buy Now — 1 qty</button>
+                <button type="button" class="btn btn--outline" style="flex:1;border-color:var(--ac);color:var(--ac2)" wire:click="buyNow" wire:loading.attr="disabled" wire:target="buyNow">Buy Now — 1 qty</button>
                 @if($orderWhatsapp = \App\Support\ContactInfo::whatsappUrl('Hi, I want to order: ' . $product['name']))
                 <a href="{{ $orderWhatsapp }}" target="_blank" rel="noopener" class="icon-btn" style="width:54px;height:auto;border-radius:12px;border:1.5px solid #25D366;background:rgba(37,211,102,.08);color:#128C4A" aria-label="Order via WhatsApp"><x-icon name="whatsapp" /></a>
                 @endif

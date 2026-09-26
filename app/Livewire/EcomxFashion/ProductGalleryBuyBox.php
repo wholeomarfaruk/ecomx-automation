@@ -210,15 +210,21 @@ class ProductGalleryBuyBox extends Component
         return $this->product['sale'] ? $this->product['price'] : null;
     }
 
-    public function addToCart(): void
+    public function addToCart(bool $checkout = false): void
     {
         if ($this->hasSizes && ! $this->selectedSize) {
             $this->showSizePrompt = true;
             return;
         }
 
-        $this->dispatch('add-to-cart', productId: $this->productId, variantId: $this->selectedVariantId);
-        $this->addedToCart = true;
+        $this->dispatch('add-to-cart', productId: $this->productId, variantId: $this->selectedVariantId, checkout: $checkout);
+        $this->addedToCart = ! $checkout;
+    }
+
+    /** Add to cart, then CartManager redirects straight to checkout. */
+    public function buyNow(): void
+    {
+        $this->addToCart(true);
     }
 
     /**

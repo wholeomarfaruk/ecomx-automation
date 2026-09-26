@@ -180,6 +180,26 @@
 .jtc-pd-sizes__head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
 .jtc-pd-sizes__guide { border: none; background: none; font-size: 0.82rem; color: $blue; text-decoration: underline; cursor: pointer; padding: 0; }
 .jtc-pd-sizes__grid { display: flex; flex-wrap: wrap; gap: 8px; }
+
+// "Choose your size first" — shown when Add to cart / Buy now is hit with no size picked
+.jtc-pd-sizes.is-prompt {
+  padding: 12px; margin-left: -12px; margin-right: -12px;
+  border: 1.5px dashed $blue; border-radius: $radius; background: $blue-light;
+  .jtc-pd-sizes__grid { animation: jtcSizeNudge .45s ease-in-out 2; }
+}
+.jtc-pd-sizes__prompt {
+  display: inline-block; margin-bottom: 10px; padding: 7px 14px;
+  border-radius: $radius-pill; background: $blue; color: #fff;
+  font-size: 0.8rem; font-weight: 600;
+}
+@keyframes jtcSizeNudge {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+@media (max-width: 575px) {
+  .jtc-pd-sizes.is-prompt { margin-left: 0; margin-right: 0; }
+}
 .jtc-pd-size {
   position: relative;
   min-width: 46px;

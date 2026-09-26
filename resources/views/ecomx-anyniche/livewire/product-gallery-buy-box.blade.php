@@ -87,7 +87,10 @@
 
         @if($hasSizes)
             {{-- Sizes --}}
-            <div class="jtc-pd-sizes">
+            <div class="jtc-pd-sizes {{ $showSizePrompt ? 'is-prompt' : '' }}">
+                @if($showSizePrompt)
+                    <div class="jtc-pd-sizes__prompt" x-init="$el.closest('.jtc-pd-sizes').scrollIntoView({ behavior: 'smooth', block: 'center' })">👇 Choose your size first</div>
+                @endif
                 <div class="jtc-pd-sizes__head">
                     <span class="jtc-pd-info__brand" style="color:#14201c">Size @if($selectedSize) — {{ $selectedSize }} @endif</span>
                     <button type="button" class="jtc-pd-sizes__guide" wire:click="toggleSizeGuide">Size guide</button>
@@ -109,12 +112,12 @@
         </div>
 
         <div class="jtc-pd-info__buyrow" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <button type="button" class="jtc-pd-actions__buy" wire:click="addToCart">
+            <button type="button" class="jtc-pd-actions__buy" @click="$wire.buyNow(qty)" wire:loading.attr="disabled" wire:target="buyNow">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M13 2 3 14h7v8l10-12h-7z"></path></svg>
                 Buy now
             </button>
 
-            <button type="button" class="jtc-pd-actions__cart" wire:click="addToCart">
+            <button type="button" class="jtc-pd-actions__cart" @click="$wire.addToCart(qty)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M6 6h15l-1.5 9h-12z"></path><circle cx="9" cy="20" r="1.4"></circle><circle cx="18" cy="20" r="1.4"></circle></svg>
                 {{ $addedToCart ? 'Added ✓' : 'Add to cart' }}
             </button>

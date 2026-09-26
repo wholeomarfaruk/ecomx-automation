@@ -53,6 +53,7 @@ class ProductGalleryBuyBox extends Component
     /** Active offers covering this product (OfferService::offersForProduct()), shown as badges. */
     public array $offers = [];
 
+    public bool $showSizePrompt = false;
     public bool $showSizeGuide = false;
     public bool $addedToCart = false;
 
@@ -138,6 +139,7 @@ class ProductGalleryBuyBox extends Component
     public function selectSize(string $size): void
     {
         $this->selectedSize = $size;
+        $this->showSizePrompt = false;
     }
 
     public function toggleSizeGuide(): void
@@ -209,46 +211,26 @@ class ProductGalleryBuyBox extends Component
     }
 
     /**
-     * No size picked yet (2+ sizes, customer hasn't chosen one)? Don't block
-     * checkout on it — resolve a default variant instead of leaving the item
-     * variant-less. If a colour is already selected (colour always defaults
-     * to index 0, so this is the common case), the default is the first
-     * in-stock *size within that colour* — never a different colour than
-     * what's on screen. Only falls through to CartManager's own generic
-     * "first in-stock variant overall" fallback (variantId: null) when this
-     * product has no size dimension to pick a default from at all.
+     * 2+ sizes and none picked → show the "choose your size" prompt and stop
+     * (single-size products are pre-selected in mount()). Products with no
+     * size dimension pass variantId as resolved for the selected colour, or
+     * null so CartManager falls back to the first in-stock variant.
      */
-    public function addToCart(): void
+    public function addToCart(int $qty = 1, bool $checkout = false): void
     {
-        $variantId = $this->selectedVariantId ?? $this->defaultVariantIdForSelectedColor();
+        if ($this->hasSizes && ! $this->selectedSize) {
+            $this->showSizePrompt = true;
+            return;
+        }
 
-        $this->dispatch('add-to-cart', productId: $this->productId, variantId: $variantId);
-        $this->addedToCart = true;
+        $this->dispatch('add-to-cart', productId: $this->productId, variantId: $this->selectedVariantId, qty: max(1, $qty), checkout: $checkout);
+        $this->addedToCart = ! $checkout;
     }
 
-    /**
-     * First in-stock size within the currently selected colour (or overall,
-     * if this product has no colour dimension), by the same display order
-     * as the size buttons. Null if this product has no sizes to fall back
-     * through, or every size in this colour is out of stock.
-     */
-    private function defaultVariantIdForSelectedColor(): ?int
+    /** Add to cart, then CartManager redirects straight to checkout. */
+    public function buyNow(int $qty = 1): void
     {
-        if (! $this->hasSizes) {
-            return null;
-        }
-
-        $colorKey = $this->hasColors ? ($this->colors[$this->selectedColorIndex]['name'] ?? '*') : '*';
-
-        foreach ($this->sizes as $size) {
-            $variant = $this->variantMatrix[$colorKey . '|' . $size] ?? null;
-
-            if ($variant && $variant['stock'] > 0) {
-                return $variant['variantId'];
-            }
-        }
-
-        return null;
+        $this->addToCart($qty, true);
     }
 
     /**

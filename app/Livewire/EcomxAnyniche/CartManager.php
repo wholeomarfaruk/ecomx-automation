@@ -46,8 +46,13 @@ class CartManager extends Component
         );
     }
 
+    /**
+     * $checkout = true is the product page "Buy now": same add (and AddToCart
+     * tracking), then straight to checkout instead of opening the drawer.
+     * Any failure above returns early with a toast, so no redirect happens.
+     */
     #[On('add-to-cart')]
-    public function addToCart($productId, $variantId = null, $qty = 1)
+    public function addToCart($productId, $variantId = null, $qty = 1, $checkout = false)
     {
         $product = Product::find($productId);
 
@@ -122,9 +127,15 @@ class CartManager extends Component
         }
 
         $this->updateCartTotals($cart);
-        $this->refreshBadgeAndOpenDrawer();
 
         $this->recordAddToCart($product, $item);
+
+        if ($checkout) {
+            $this->redirectRoute('ecomx-anyniche.checkout');
+            return;
+        }
+
+        $this->refreshBadgeAndOpenDrawer();
 
         $this->dispatch('notify', type: 'success', message: 'Added to cart successfully.');
     }
