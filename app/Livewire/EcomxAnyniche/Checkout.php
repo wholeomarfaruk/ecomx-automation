@@ -36,7 +36,6 @@ class Checkout extends Component
     public string $phone = '';
     public string $address = '';
     public string $address_type = '';
-    public string $note = '';
     public string $delivery_area = 'dhaka';
     public string $payment_method = 'cod';
     public string $transaction_id = '';
@@ -310,7 +309,7 @@ class Checkout extends Component
                     'shipping_discount' => $offers['shipping_discount'],
                     'billing_address_id' => $address->id,
                     'shipping_address_id' => $address->id,
-                    'customer_note' => $this->note ?: null,
+                    'customer_note' => null,
                     'placed_at' => now(),
                 ]);
 
@@ -495,9 +494,9 @@ class Checkout extends Component
 
         $state = $city?->state;
 
-        // address_type is a free-text label ("Home", "Office", ...) the
-        // customer types in the form — defaults to "Home" for their very
-        // first address if left blank. A brand-new address becomes the
+        // address_type is a free-text label ("Home", "Office", ...). The
+        // checkout form doesn't ask for it, so it defaults to "Home"; the
+        // customer can set it in the add-address modal or edit it later. A brand-new address becomes the
         // default whenever it's the customer's first one, or when they
         // explicitly checked "set as default" in the add-address form.
         $isFirstAddress = ! DeliveryAddress::where('customer_id', $customer->id)->exists();
@@ -510,7 +509,7 @@ class Checkout extends Component
 
         return DeliveryAddress::create([
             'customer_id' => $customer->id,
-            'address_type' => trim($this->address_type) ?: ($isFirstAddress ? 'Home' : null),
+            'address_type' => trim($this->address_type) ?: 'Home',
             'name' => $this->name,
             'phone' => $this->phone,
             'country_id' => $country?->id,

@@ -75,21 +75,7 @@
                         <textarea wire:model="address" rows="3" placeholder="House, road, area, city" required></textarea>
                         @error('address') <span class="field__error">{{ $message }}</span> @enderror
                     </div>
-
-                    @auth
-                        <div class="field-grid">
-                            <div class="field">
-                                <label>Address label <span class="muted">(optional)</span></label>
-                                <input type="text" wire:model="address_type" placeholder="Home, Office, etc.">
-                            </div>
-                        </div>
-                    @endauth
                 @endif
-
-                <div class="field">
-                    <label>Order note <span class="muted">(optional)</span></label>
-                    <textarea wire:model="note" rows="2" placeholder="Delivery instructions, gift note, etc."></textarea>
-                </div>
 
                 <div class="field">
                     <label>Delivery area</label>
