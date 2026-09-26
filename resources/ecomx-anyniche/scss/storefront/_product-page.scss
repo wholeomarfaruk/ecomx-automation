@@ -99,6 +99,32 @@
   &__reassure-item { display: flex; align-items: center; gap: 9px; font-size: 0.82rem; color: $muted; }
 }
 
+// share row
+.jtc-pd-share {
+  position: relative; display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px;
+  margin-top: 16px; padding-top: 16px; border-top: 1px solid $line-soft;
+  &__label { font-size: 0.82rem; font-weight: 600; color: $ink-soft; }
+  &__list { display: flex; flex-wrap: wrap; gap: 8px; }
+  &__btn {
+    width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center;
+    border: 1.5px solid $line; background: #fff; color: $ink-soft; cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s, transform .15s;
+    &:hover { transform: translateY(-1px); color: #fff; }
+    &--fb:hover { background: #1877F2; border-color: #1877F2; }
+    &--wa:hover { background: #25D366; border-color: #25D366; }
+    &--x:hover { background: #000; border-color: #000; }
+    &--tg:hover { background: #229ED9; border-color: #229ED9; }
+    &--copy:hover, &--more:hover { background: $blue; border-color: $blue; }
+    &.is-copied { background: $blue-light; border-color: $blue; color: $blue; }
+  }
+  &__toast { font-size: 0.78rem; font-weight: 600; color: $blue; }
+
+  @media (max-width: 575px) {
+    &__list { gap: 10px; }
+    &__btn { width: 42px; height: 42px; } // bigger tap targets on phones
+  }
+}
+
 .jtc-qty {
   display: inline-flex; align-items: center; gap: 2px; margin-bottom: 12px; margin-top: 12px;
   border: 1.5px solid $line; border-radius: $radius; padding: 3px; background: #fff;

@@ -60,13 +60,14 @@ class Product extends Component
     {
         $siteName = \App\Models\Setting::get('site_name', 'AnyNiche') ?: 'AnyNiche';
 
-        $this->pageTitle = $p->meta_title ?: "{$p->name} — {$siteName}";
-        $this->pageMetaDescription = $p->meta_description ?: ($p->short_description ?: null);
+        $this->pageTitle = trim((string) $p->meta_title) ?: "{$p->name} — {$siteName}";
+        $this->pageMetaDescription = trim((string) $p->meta_description)
+            ?: (\Illuminate\Support\Str::limit(trim(strip_tags((string) ($p->short_description ?: $p->description))), 160) ?: null);
 
+        // A deleted meta image file must still fall through to the featured image.
         try {
-            $this->pageMetaImage = $p->meta_image_id
-                ? file_path($p->meta_image_id)
-                : ($p->featured_image_id ? file_path($p->featured_image_id) : null);
+            $this->pageMetaImage = ($p->meta_image_id ? file_path($p->meta_image_id) : null)
+                ?: ($p->featured_image_id ? file_path($p->featured_image_id) : null);
         } catch (\Throwable $e) {
             $this->pageMetaImage = null;
         }
