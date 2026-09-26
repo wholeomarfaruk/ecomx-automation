@@ -10,7 +10,7 @@
             <p class="muted" style="font-size:13.5px;margin-bottom:20px">
                 Order #{{ $orderId }} has been placed. We'll contact you at {{ $phone ?: 'your phone' }} to confirm delivery.
             </p>
-            <a href="{{ route('ecomx-anyniche.home') }}" class="btn btn--primary btn--pill">Continue shopping</a>
+            <a href="{{ route('ecomx-anyniche.home') }}" class="jtc-btn jtc-btn--primary">Continue shopping</a>
         </div>
     @else
     <div class="checkout__grid">
@@ -123,7 +123,7 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn--primary btn--block" style="margin-top:20px">Place Order</button>
+                <button type="submit" class="jtc-btn jtc-btn--primary jtc-btn--block" style="margin-top:20px;padding:15px;font-size:1rem" wire:loading.attr="disabled" wire:target="placeOrder">Place Order</button>
             </form>
         </div>
 
@@ -239,7 +239,7 @@
                             <span>Set as my default address</span>
                         </label>
 
-                        <button type="submit" class="btn btn--primary btn--block" wire:loading.attr="disabled" wire:target="saveNewAddress">{{ $editingAddressId ? 'Save Changes' : 'Save Address' }}</button>
+                        <button type="submit" class="jtc-btn jtc-btn--primary jtc-btn--block" wire:loading.attr="disabled" wire:target="saveNewAddress">{{ $editingAddressId ? 'Save Changes' : 'Save Address' }}</button>
                     </form>
                 </div>
             </div>

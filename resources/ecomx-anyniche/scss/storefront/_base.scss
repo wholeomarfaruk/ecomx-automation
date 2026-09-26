@@ -114,6 +114,7 @@ button { font-family: inherit; }
     &:hover { background: $blue-light; }
   }
   &--block { width: 100%; }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
 }
 
 .jtc-icon-btn {
