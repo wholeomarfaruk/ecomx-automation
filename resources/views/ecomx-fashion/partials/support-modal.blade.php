@@ -15,8 +15,9 @@
             $socials = array_filter([
                 'facebook' => \App\Models\Setting::get('facebook', '', 'social'),
                 'instagram' => \App\Models\Setting::get('instagram', '', 'social'),
+                'youtube' => \App\Models\Setting::get('youtube', '', 'social'),
                 'tiktok' => \App\Models\Setting::get('tiktok', '', 'social'),
-            ]);
+            ], fn ($v) => is_string($v) && trim($v) !== '');
         @endphp
         @if($contact::hours())<p class="muted" style="font-size:12.5px;margin:0 0 20px">{{ $contact::hours() }}</p>@else<div style="margin-bottom:16px"></div>@endif
         <div style="display:flex;flex-direction:column;gap:10px">

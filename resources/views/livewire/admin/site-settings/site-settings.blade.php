@@ -557,6 +557,7 @@
                                     'instagram'      => ['label' => 'Instagram',      'placeholder' => 'https://instagram.com/yourhandle',    'color' => 'text-pink-600'],
                                     'linkedin'       => ['label' => 'LinkedIn',       'placeholder' => 'https://linkedin.com/company/...' ,    'color' => 'text-blue-700'],
                                     'tiktok'         => ['label' => 'TikTok',         'placeholder' => 'https://tiktok.com/@yourhandle',       'color' => 'text-gray-900'],
+                                    'youtube'        => ['label' => 'YouTube',        'placeholder' => 'https://youtube.com/@yourchannel',     'color' => 'text-red-600'],
                                 ];
                             @endphp
                             <div class="divide-y divide-gray-100">

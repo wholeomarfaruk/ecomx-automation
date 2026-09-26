@@ -579,7 +579,7 @@
 
   &__social-wrap { padding: 8px 22px 24px; }
   &__social-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: $muted-2; margin: 8px 0 12px; }
-  &__socials { display: flex; gap: 10px; }
+  &__socials { display: flex; flex-wrap: wrap; gap: 10px; }
   &__social {
     width: 44px; height: 44px;
     border-radius: 50%;
@@ -591,6 +591,7 @@
     &--ig { color: #E4405F; }
     &--yt { color: #FF0000; }
     &--li { color: #0A66C2; }
+    &--tt, &--x { color: $ink; }
   }
 }
 

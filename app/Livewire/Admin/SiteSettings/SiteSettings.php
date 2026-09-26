@@ -80,6 +80,7 @@ class SiteSettings extends Component
     public string $instagram      = '';
     public string $linkedin       = '';
     public string $tiktok         = '';
+    public string $youtube        = '';
 
     // Contacts (storefront support channels — see App\Support\ContactInfo)
     public string $support_phone     = '';
@@ -364,6 +365,7 @@ class SiteSettings extends Component
                 'instagram'      => Setting::get('instagram',      '', 'social'),
                 'linkedin'       => Setting::get('linkedin',       '', 'social'),
                 'tiktok'         => Setting::get('tiktok',         '', 'social'),
+                'youtube'        => Setting::get('youtube',        '', 'social'),
             ];
 
             Setting::set('facebook',       $this->facebook,       'social');
@@ -372,6 +374,7 @@ class SiteSettings extends Component
             Setting::set('instagram',      $this->instagram,      'social');
             Setting::set('linkedin',       $this->linkedin,       'social');
             Setting::set('tiktok',         $this->tiktok,         'social');
+            Setting::set('youtube',        $this->youtube,        'social');
 
             $this->logSettingsChange('Social settings were updated', $old, [
                 'facebook'       => $this->facebook,
@@ -380,6 +383,7 @@ class SiteSettings extends Component
                 'instagram'      => $this->instagram,
                 'linkedin'       => $this->linkedin,
                 'tiktok'         => $this->tiktok,
+                'youtube'        => $this->youtube,
             ]);
         }
 
@@ -639,12 +643,13 @@ class SiteSettings extends Component
         $this->mail_from_name    = Setting::get('from_name',    'Laravel Starter Kit', 'mail');
         $this->mail_from_address = Setting::get('from_address', '', 'mail');
 
-        $this->facebook       = Setting::get('facebook',       '', 'social');
-        $this->facebook_group = Setting::get('facebook_group', '', 'social');
-        $this->twitter        = Setting::get('twitter',        '', 'social');
-        $this->instagram      = Setting::get('instagram',      '', 'social');
-        $this->linkedin       = Setting::get('linkedin',       '', 'social');
-        $this->tiktok         = Setting::get('tiktok',         '', 'social');
+        $this->facebook       = (string) Setting::get('facebook',       '', 'social');
+        $this->facebook_group = (string) Setting::get('facebook_group', '', 'social');
+        $this->twitter        = (string) Setting::get('twitter',        '', 'social');
+        $this->instagram      = (string) Setting::get('instagram',      '', 'social');
+        $this->linkedin       = (string) Setting::get('linkedin',       '', 'social');
+        $this->tiktok         = (string) Setting::get('tiktok',         '', 'social');
+        $this->youtube        = (string) Setting::get('youtube', '', 'social');
 
         $this->support_phone     = (string) Setting::get('support_phone',     '', 'contact');
         $this->support_whatsapp  = (string) Setting::get('support_whatsapp',  '', 'contact');

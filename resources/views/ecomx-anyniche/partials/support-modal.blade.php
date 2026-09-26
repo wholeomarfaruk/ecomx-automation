@@ -4,6 +4,13 @@
     $supportWhatsapp = \App\Support\ContactInfo::whatsappUrl();
     $supportMessenger = \App\Support\ContactInfo::messengerUrl();
     $supportHours = \App\Support\ContactInfo::hours();
+    // Admin > Site Settings > Social Links; blank/non-string values are dropped.
+    $supportSocials = array_filter(
+        collect(['facebook', 'facebook_group', 'instagram', 'youtube', 'tiktok', 'twitter', 'linkedin'])
+            ->mapWithKeys(fn ($k) => [$k => \App\Models\Setting::get($k, '', 'social')])
+            ->map(fn ($v) => is_string($v) ? trim($v) : '')
+            ->all()
+    );
 @endphp
 <button class="jtc-fab" aria-label="Call support" @click="$store.ui.supportOpen = true">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13 1 .37 1.94.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.87.35 1.81.59 2.81.72A2 2 0 0 1 22 16.92z"></path></svg>
@@ -51,5 +58,48 @@
             </a>
             @endif
         </div>
+
+        @if($supportSocials)
+            <div class="jtc-support__social-wrap">
+                <div class="jtc-support__social-label">Follow us</div>
+                <div class="jtc-support__socials">
+                    @if(!empty($supportSocials['facebook']))
+                        <a href="{{ $supportSocials['facebook'] }}" target="_blank" rel="noopener" class="jtc-support__social jtc-support__social--fb" aria-label="Facebook">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7.1V12h3V9.4c0-3 1.8-4.6 4.5-4.6 1.3 0 2.7.2 2.7.2v2.9h-1.5c-1.5 0-2 .9-2 1.9V12h3.3l-.5 3.5h-2.8v8.4A12 12 0 0 0 24 12z"></path></svg>
+                        </a>
+                    @endif
+                    @if(!empty($supportSocials['facebook_group']))
+                        <a href="{{ $supportSocials['facebook_group'] }}" target="_blank" rel="noopener" class="jtc-support__social jtc-support__social--fb" aria-label="Facebook Group" title="Facebook Group">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        </a>
+                    @endif
+                    @if(!empty($supportSocials['instagram']))
+                        <a href="{{ $supportSocials['instagram'] }}" target="_blank" rel="noopener" class="jtc-support__social jtc-support__social--ig" aria-label="Instagram">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="2" y="2" width="20" height="20" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><line x1="17.5" y1="6.5" x2="17.5" y2="6.5"></line></svg>
+                        </a>
+                    @endif
+                    @if(!empty($supportSocials['youtube']))
+                        <a href="{{ $supportSocials['youtube'] }}" target="_blank" rel="noopener" class="jtc-support__social jtc-support__social--yt" aria-label="YouTube">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M23 12s0-3.5-.46-5.17a2.78 2.78 0 0 0-1.94-1.96C18.88 4.4 12 4.4 12 4.4s-6.88 0-8.6.47A2.78 2.78 0 0 0 1.46 6.83C1 8.5 1 12 1 12s0 3.5.46 5.17a2.78 2.78 0 0 0 1.94 1.96c1.72.47 8.6.47 8.6.47s6.88 0 8.6-.47a2.78 2.78 0 0 0 1.94-1.96C23 15.5 23 12 23 12zM9.8 15.3V8.7l5.7 3.3-5.7 3.3z"></path></svg>
+                        </a>
+                    @endif
+                    @if(!empty($supportSocials['tiktok']))
+                        <a href="{{ $supportSocials['tiktok'] }}" target="_blank" rel="noopener" class="jtc-support__social jtc-support__social--tt" aria-label="TikTok">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M16.6 5.82c-.9-.8-1.47-1.94-1.6-3.2h-3.14v13.3c0 1.55-1.26 2.8-2.8 2.8a2.8 2.8 0 0 1 0-5.6c.28 0 .55.04.8.12V9.98a6.06 6.06 0 0 0-.8-.05A6.06 6.06 0 1 0 15.86 16V9.34a9.14 9.14 0 0 0 5.14 1.58V7.78a5.7 5.7 0 0 1-4.4-1.96z"></path></svg>
+                        </a>
+                    @endif
+                    @if(!empty($supportSocials['twitter']))
+                        <a href="{{ $supportSocials['twitter'] }}" target="_blank" rel="noopener" class="jtc-support__social jtc-support__social--x" aria-label="X">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.2L2 3h6.33l4.37 5.77zm-1.08 16.18h1.7L7.4 4.73H5.58z"></path></svg>
+                        </a>
+                    @endif
+                    @if(!empty($supportSocials['linkedin']))
+                        <a href="{{ $supportSocials['linkedin'] }}" target="_blank" rel="noopener" class="jtc-support__social jtc-support__social--li" aria-label="LinkedIn">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="19" height="19"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"></path></svg>
+                        </a>
+                    @endif
+                </div>
+            </div>
+        @endif
     </div>
 </div>
