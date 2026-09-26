@@ -61,7 +61,9 @@
             </div>
         @endif
 
-        <p style="font-size:13.5px;line-height:1.7;color:rgba(var(--pri-rgb),.7)">{{ $product['desc'] }}</p>
+        @if($product['shortDesc'])
+            <p style="font-size:13.5px;line-height:1.7;color:rgba(var(--pri-rgb),.7);white-space:pre-line">{{ $product['shortDesc'] }}</p>
+        @endif
 
         @if($hasColors)
         {{-- Colours --}}

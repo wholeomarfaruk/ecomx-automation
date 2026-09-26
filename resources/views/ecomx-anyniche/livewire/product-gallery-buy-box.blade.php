@@ -60,8 +60,8 @@
             </div>
         @endif
 
-        @if($product['desc'])
-            <div class="jtc-pd-info__short">{!! $product['desc'] !!}</div>
+        @if($product['shortDesc'])
+            <p class="jtc-pd-info__short" style="white-space:pre-line">{{ $product['shortDesc'] }}</p>
         @endif
 
         @if($hasColors)
