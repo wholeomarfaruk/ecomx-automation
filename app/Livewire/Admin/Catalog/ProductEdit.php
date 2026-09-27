@@ -8,7 +8,6 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Setting;
-use App\Services\StockService;
 use Illuminate\Support\Str;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -129,7 +128,7 @@ class ProductEdit extends Component
     }
 
     /**
-     * The Stocks tab adjusted stock directly through StockService — pull the
+     * The Stocks tab changed stock outside this form — pull the
      * fresh stock_quantity/stock_status back in so "Save Changes" doesn't
      * write this form's stale copies over the adjustment.
      */
@@ -336,15 +335,9 @@ class ProductEdit extends Component
         ]);
 
         // Inventory module is off — a simple product's own stock_quantity is
-        // the source of truth. Routed through StockService so the change is
-        // logged as an adjustment movement like any other stock edit.
-        $stockService = app(StockService::class);
-        if (
-            $this->productType === 'simple'
-            && $stockService->usesOwnStock()
-            && (float) $this->stockQuantity !== (float) $product->stock_quantity
-        ) {
-            $stockService->setAbsolute($product, null, (float) $this->stockQuantity, reference: $product, note: 'Set via product editor');
+        // the balance, managed directly (no inventory service or ledger).
+        if ($this->productType === 'simple' && ! Setting::get('inventory_enabled', true, 'modules')) {
+            $product->update(['stock_quantity' => $this->stockQuantity]);
         }
 
         $product->categories()->sync($this->categoryIds);

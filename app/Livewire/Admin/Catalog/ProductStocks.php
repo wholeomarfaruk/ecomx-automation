@@ -12,6 +12,7 @@ use App\Models\Setting;
 use App\Models\Warehouse;
 use App\Services\StockService;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 
@@ -38,6 +39,16 @@ class ProductStocks extends Component
     public string $adjustLabel = '';
     public string $adjustQuantity = '';
     public string $adjustNote = '';
+
+    // stock-in modal
+    public bool $stockInModal = false;
+    public ?int $stockInVariantId = null;
+    public string $stockInLabel = '';
+    public string $stockInQuantity = '';
+    public string $stockInBatchNo = '';
+    public string $stockInExpiryDate = '';
+    public string $stockInPurchasePrice = '';
+    public string $stockInNote = '';
 
     public function mount(int $productId, string $pendingType): void
     {
@@ -68,17 +79,21 @@ class ProductStocks extends Component
         $product = Product::findOrFail($this->productId);
         $variant = $this->adjustingVariantId ? $product->variants()->findOrFail($this->adjustingVariantId) : null;
 
-        try {
-            app(StockService::class)->setAbsolute(
-                $product,
-                $variant,
-                (float) $this->adjustQuantity,
-                reference: $variant ?? $product,
-                note: $this->adjustNote !== '' ? $this->adjustNote : 'Set via product editor (Stocks tab)',
-            );
-        } catch (InsufficientStockException $e) {
-            $this->addError('adjustQuantity', $e->getMessage());
-            return;
+        if ($this->inventoryEnabled()) {
+            try {
+                app(StockService::class)->setAbsolute(
+                    $product,
+                    $variant,
+                    (float) $this->adjustQuantity,
+                    reference: $variant ?? $product,
+                    note: $this->adjustNote !== '' ? $this->adjustNote : 'Set via product editor (Stocks tab)',
+                );
+            } catch (InsufficientStockException $e) {
+                $this->addError('adjustQuantity', $e->getMessage());
+                return;
+            }
+        } else {
+            $this->writeOwnStock($product, $variant, fn (float $before) => (float) $this->adjustQuantity);
         }
 
         $this->adjustModal = false;
@@ -90,9 +105,113 @@ class ProductStocks extends Component
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Stock updated']);
     }
 
+    public function openStockInModal(?int $variantId = null): void
+    {
+        $product = Product::findOrFail($this->productId);
+        $variant = $variantId ? $product->variants()->findOrFail($variantId) : null;
+
+        $this->stockInVariantId = $variant?->id;
+        $this->stockInLabel = $variant ? $this->variantLabel($variant) : $product->name;
+        $this->stockInQuantity = '';
+        $this->stockInBatchNo = '';
+        $this->stockInExpiryDate = '';
+        $this->stockInPurchasePrice = '';
+        $this->stockInNote = '';
+        $this->resetValidation();
+        $this->stockInModal = true;
+    }
+
+    /**
+     * Receives new stock on top of the current balance. Inventory module on:
+     * logged as a "purchase" movement like the Inventory → Stock In page, via
+     * stockInBatch() when a batch number is given (expiry/cost tracked for
+     * FEFO), else a plain batch-less increase. Inventory module off: just
+     * bumps the item's own stock_quantity — no inventory service or ledger.
+     */
+    public function saveStockIn(): void
+    {
+        $inventoryEnabled = $this->inventoryEnabled();
+
+        $this->validate($inventoryEnabled ? [
+            'stockInQuantity'      => 'required|numeric|min:0.001',
+            'stockInBatchNo'       => 'nullable|string|max:100|required_with:stockInExpiryDate',
+            'stockInExpiryDate'    => 'nullable|date',
+            'stockInPurchasePrice' => 'nullable|numeric|min:0',
+            'stockInNote'          => 'nullable|string|max:255',
+        ] : [
+            'stockInQuantity'      => 'required|numeric|min:0.001',
+        ], [
+            'stockInBatchNo.required_with' => 'A batch number is needed to track an expiry date.',
+        ]);
+
+        $product = Product::findOrFail($this->productId);
+        $variant = $this->stockInVariantId ? $product->variants()->findOrFail($this->stockInVariantId) : null;
+
+        if (! $inventoryEnabled) {
+            $this->writeOwnStock($product, $variant, fn (float $before) => $before + (float) $this->stockInQuantity);
+        } elseif ($this->stockInBatchNo !== '') {
+            app(StockService::class)->stockInBatch(
+                $product,
+                $variant,
+                $this->stockInBatchNo,
+                (float) $this->stockInQuantity,
+                expiryDate: $this->stockInExpiryDate ?: null,
+                purchasePrice: $this->stockInPurchasePrice !== '' ? (float) $this->stockInPurchasePrice : null,
+                reference: $variant ?? $product,
+                note: $this->stockInNote !== '' ? $this->stockInNote : 'Stock in via product editor',
+            );
+        } else {
+            app(StockService::class)->increase(
+                $product,
+                $variant,
+                (float) $this->stockInQuantity,
+                'purchase',
+                reference: $variant ?? $product,
+                note: $this->stockInNote !== '' ? $this->stockInNote : 'Stock in via product editor',
+            );
+        }
+
+        $this->stockInModal = false;
+
+        $this->dispatch('product-stock-updated');
+        $this->dispatch('toast', ['type' => 'success', 'message' => 'Stock added']);
+    }
+
     protected function inventoryEnabled(): bool
     {
-        return ! app(StockService::class)->usesOwnStock();
+        return (bool) Setting::get('inventory_enabled', true, 'modules');
+    }
+
+    /**
+     * Inventory module off: plain stock management on the item's own
+     * stock_quantity (variant's if given, else the product's) — no
+     * StockService, no movement ledger. A simple product's stock_status
+     * follows the balance across zero (out_of_stock <-> in_stock;
+     * low_stock/backorder are left to the admin), since that's what the
+     * storefront reads for simple products.
+     *
+     * @param  \Closure(float): float  $resolveAfter
+     */
+    protected function writeOwnStock(Product $product, ?ProductVariant $variant, \Closure $resolveAfter): void
+    {
+        DB::transaction(function () use ($product, $variant, $resolveAfter) {
+            $locked = $variant
+                ? ProductVariant::query()->whereKey($variant->id)->lockForUpdate()->firstOrFail()
+                : Product::query()->whereKey($product->id)->lockForUpdate()->firstOrFail();
+
+            $after = max(0.0, $resolveAfter((float) $locked->stock_quantity));
+            $changes = ['stock_quantity' => $after];
+
+            if (! $variant) {
+                if ($after <= 0 && $locked->stock_status === 'in_stock') {
+                    $changes['stock_status'] = 'out_of_stock';
+                } elseif ($after > 0 && $locked->stock_status === 'out_of_stock') {
+                    $changes['stock_status'] = 'in_stock';
+                }
+            }
+
+            $locked->update($changes);
+        });
     }
 
     /** Physical quantity for one item — what the adjust modal sets absolutely. */
@@ -175,12 +294,16 @@ class ProductStocks extends Component
             ? collect()
             : $this->buildRows($product, $lowStockThreshold);
 
-        $movements = InventoryStockMovement::query()
-            ->with('variant', 'createdBy')
-            ->where('product_id', $product->id)
-            ->orderByDesc('id')
-            ->limit(10)
-            ->get();
+        // The movement ledger belongs to the Inventory module — not shown
+        // (or read) while it's off.
+        $movements = $inventoryEnabled
+            ? InventoryStockMovement::query()
+                ->with('variant', 'createdBy')
+                ->where('product_id', $product->id)
+                ->orderByDesc('id')
+                ->limit(10)
+                ->get()
+            : collect();
 
         return view('livewire.admin.catalog.product-stocks', [
             'product'          => $product,

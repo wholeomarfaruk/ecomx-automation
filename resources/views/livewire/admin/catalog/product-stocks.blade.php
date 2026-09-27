@@ -31,17 +31,19 @@
         {{-- Summary --}}
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
             <div class="rounded-xl border border-gray-200 px-4 py-3">
-                <p class="text-xs text-gray-400">On Hand</p>
+                <p class="text-xs text-gray-400">{{ $inventoryEnabled ? 'On Hand' : 'Stock' }}</p>
                 <p class="text-xl font-semibold text-gray-800 mt-0.5">{{ $fmt($totalOnHand) }}</p>
             </div>
-            <div class="rounded-xl border border-gray-200 px-4 py-3">
-                <p class="text-xs text-gray-400">Booked</p>
-                <p class="text-xl font-semibold text-gray-800 mt-0.5">{{ $fmt($totalBooked) }}</p>
-            </div>
-            <div class="rounded-xl border border-gray-200 px-4 py-3">
-                <p class="text-xs text-gray-400">Available</p>
-                <p class="text-xl font-semibold text-emerald-600 mt-0.5">{{ $fmt($totalAvailable) }}</p>
-            </div>
+            @if($inventoryEnabled)
+                <div class="rounded-xl border border-gray-200 px-4 py-3">
+                    <p class="text-xs text-gray-400">Booked</p>
+                    <p class="text-xl font-semibold text-gray-800 mt-0.5">{{ $fmt($totalBooked) }}</p>
+                </div>
+                <div class="rounded-xl border border-gray-200 px-4 py-3">
+                    <p class="text-xs text-gray-400">Available</p>
+                    <p class="text-xl font-semibold text-emerald-600 mt-0.5">{{ $fmt($totalAvailable) }}</p>
+                </div>
+            @endif
             @if($savedType === 'variable')
                 <div class="rounded-xl border border-gray-200 px-4 py-3">
                     <p class="text-xs text-gray-400">Low / Out</p>
@@ -69,13 +71,15 @@
                 <table class="min-w-full">
                     <thead>
                         <tr class="border-b border-gray-100 bg-gray-50/40">
-                            <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ $savedType === 'variable' ? 'Variant' : 'Product' }}</th>
-                            <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">SKU</th>
-                            <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">On Hand</th>
-                            <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Booked</th>
-                            <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Available</th>
-                            <th class="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
-                            <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{{ $savedType === 'variable' ? 'Variant' : 'Product' }}</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">SKU</th>
+                            <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{{ $inventoryEnabled ? 'On Hand' : 'Stock' }}</th>
+                            @if($inventoryEnabled)
+                                <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Booked</th>
+                                <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Available</th>
+                            @endif
+                            <th class="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Status</th>
+                            <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -93,11 +97,13 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-3">
-                                    <span class="text-sm font-mono text-gray-500">{{ $row->sku }}</span>
+                                    <span class="text-sm font-mono text-gray-500 whitespace-nowrap">{{ $row->sku }}</span>
                                 </td>
                                 <td class="px-4 py-3 text-right text-sm text-gray-700">{{ $fmt($row->on_hand) }}</td>
-                                <td class="px-4 py-3 text-right text-sm text-gray-500">{{ $fmt($row->booked) }}</td>
-                                <td class="px-4 py-3 text-right text-sm font-semibold text-gray-800">{{ $fmt($row->available) }}</td>
+                                @if($inventoryEnabled)
+                                    <td class="px-4 py-3 text-right text-sm text-gray-500">{{ $fmt($row->booked) }}</td>
+                                    <td class="px-4 py-3 text-right text-sm font-semibold text-gray-800">{{ $fmt($row->available) }}</td>
+                                @endif
                                 <td class="px-4 py-3 text-center">
                                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap {{ $badge }}">{{ $label }}</span>
                                 </td>
@@ -109,6 +115,10 @@
                                                 Details
                                             </a>
                                         @endif
+                                        <button wire:click="openStockInModal({{ $row->variant_id ?? 'null' }})" type="button"
+                                            class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition whitespace-nowrap">
+                                            Stock In
+                                        </button>
                                         <button wire:click="openAdjustModal({{ $row->variant_id ?? 'null' }})" type="button"
                                             class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
                                             Adjust
@@ -123,12 +133,11 @@
         @endif
     @endif
 
-    {{-- Recent movements --}}
+    {{-- Recent movements (Inventory module ledger — hidden while it's off) --}}
+    @if($inventoryEnabled)
     <div class="flex items-center justify-between mb-2">
         <h3 class="text-sm font-semibold text-gray-800">Recent Movements</h3>
-        @if($inventoryEnabled)
-            <a href="{{ route('admin.inventory.movements') }}" wire:navigate class="text-xs font-medium text-indigo-600 hover:text-indigo-700">View all</a>
-        @endif
+        <a href="{{ route('admin.inventory.movements') }}" wire:navigate class="text-xs font-medium text-indigo-600 hover:text-indigo-700">View all</a>
     </div>
     @if($movements->isEmpty())
         <p class="text-sm text-gray-400">No stock movements recorded for this product yet.</p>
@@ -137,14 +146,14 @@
             <table class="min-w-full">
                 <thead>
                     <tr class="border-b border-gray-100 bg-gray-50/40">
-                        <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
+                        <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Date</th>
                         @if($savedType === 'variable')
-                            <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Variant</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Variant</th>
                         @endif
-                        <th class="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</th>
-                        <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Qty</th>
-                        <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Balance</th>
-                        <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">By</th>
+                        <th class="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Type</th>
+                        <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Qty</th>
+                        <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Balance</th>
+                        <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">By</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -155,6 +164,7 @@
                             'sale' => 'bg-red-50 text-red-500',
                             'sale_cancelled' => 'bg-emerald-50 text-emerald-600',
                             'adjustment' => 'bg-indigo-50 text-indigo-600',
+                            'purchase' => 'bg-emerald-50 text-emerald-600',
                         ];
                     @endphp
                     @foreach($movements as $movement)
@@ -188,6 +198,66 @@
             </table>
         </div>
     @endif
+    @endif
+
+    {{-- Stock In Modal --}}
+    <div x-cloak x-data="{ open: @entangle('stockInModal') }" x-show="open" x-transition
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden" @click.outside="open = false">
+            <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
+                <div class="flex-1">
+                    <h2 class="text-base font-semibold text-gray-900">Stock In</h2>
+                    <p class="text-xs text-gray-400">{{ $stockInLabel }} — adds the quantity on top of the current stock.</p>
+                </div>
+                <button @click="open = false" type="button" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <form wire:submit.prevent="saveStockIn" class="px-6 py-5 space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Quantity to Add <span class="text-red-500">*</span></label>
+                    <input wire:model="stockInQuantity" type="number" step="0.001" min="0.001" placeholder="0"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                    @error('stockInQuantity') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                </div>
+                @if($inventoryEnabled)
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Batch No (optional)</label>
+                            <input wire:model="stockInBatchNo" type="text" placeholder="e.g. B-2026-09"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            @error('stockInBatchNo') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Expiry Date</label>
+                            <input wire:model="stockInExpiryDate" type="date"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            @error('stockInExpiryDate') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Purchase Price / Unit</label>
+                            <input wire:model="stockInPurchasePrice" type="number" step="0.01" min="0" placeholder="0.00"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            <p class="text-xs text-gray-400 mt-1">Batch number, expiry and cost are only recorded when a batch number is given.</p>
+                            @error('stockInPurchasePrice') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Note (optional)</label>
+                        <textarea wire:model="stockInNote" rows="2" placeholder="e.g. Received from supplier"
+                            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"></textarea>
+                        @error('stockInNote') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                @endif
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+                    <button @click="open = false" type="button" class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
+                    <button type="submit" class="px-5 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition">Add Stock</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     {{-- Adjust Stock Modal --}}
     <div x-cloak x-data="{ open: @entangle('adjustModal') }" x-show="open" x-transition
@@ -196,7 +266,7 @@
             <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
                 <div class="flex-1">
                     <h2 class="text-base font-semibold text-gray-900">Adjust Stock</h2>
-                    <p class="text-xs text-gray-400">{{ $adjustLabel }} — sets the absolute on-hand quantity; the difference is logged as a movement.</p>
+                    <p class="text-xs text-gray-400">{{ $adjustLabel }} — sets the absolute stock quantity{{ $inventoryEnabled ? '; the difference is logged as a movement' : '' }}.</p>
                 </div>
                 <button @click="open = false" type="button" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 transition">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -211,12 +281,14 @@
                         class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
                     @error('adjustQuantity') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Reason (optional)</label>
-                    <textarea wire:model="adjustNote" rows="2" placeholder="e.g. Physical recount"
-                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"></textarea>
-                    @error('adjustNote') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                </div>
+                @if($inventoryEnabled)
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Reason (optional)</label>
+                        <textarea wire:model="adjustNote" rows="2" placeholder="e.g. Physical recount"
+                            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"></textarea>
+                        @error('adjustNote') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                @endif
                 <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
                     <button @click="open = false" type="button" class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
                     <button type="submit" class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">Save</button>
