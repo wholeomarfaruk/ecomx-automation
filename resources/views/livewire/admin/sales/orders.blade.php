@@ -77,6 +77,7 @@
                         <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Due</th>
                         <th class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Payment</th>
                         <th class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                        <th class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Fulfillment</th>
                         <th class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Courier</th>
                         <th class="sticky right-0 bg-gray-50/40 px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Action</th>
                     </tr>
@@ -124,6 +125,11 @@
                                         <option value="{{ $s->value }}" @selected($order->status === $s)>{{ $s->label() }}</option>
                                     @endforeach
                                 </select>
+                            </td>
+                            <td class="px-5 py-3 text-center">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{ $order->fulfillment_status->badgeClass() }}">
+                                    {{ $order->fulfillment_status->label() }}
+                                </span>
                             </td>
                             <td class="px-5 py-3 text-center">
                                 @if($order->courier_status)
@@ -211,7 +217,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="px-5 py-16 text-center">
+                            <td colspan="11" class="px-5 py-16 text-center">
                                 <div class="flex flex-col items-center gap-3">
                                     <div class="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

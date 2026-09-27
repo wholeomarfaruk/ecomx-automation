@@ -142,6 +142,11 @@ class Order extends Model
         $this->save();
     }
 
+    /**
+     * A delivered order with some items coming back is the leftover of a
+     * partial delivery — it stays DELIVERED with a partial fulfillment
+     * rather than becoming PARTIALLY_RETURNED.
+     */
     public function syncReturnStatus(): void
     {
         $items = $this->items()->get();
@@ -155,6 +160,9 @@ class Order extends Model
 
         if ($allReturned) {
             $this->status = OrderStatus::RETURNED;
+            $this->fulfillment_status = FulfillmentStatus::UNFULFILLED;
+        } elseif ($anyReturned && $this->status === OrderStatus::DELIVERED) {
+            $this->fulfillment_status = FulfillmentStatus::PARTIAL;
         } elseif ($anyReturned) {
             $this->status = OrderStatus::PARTIALLY_RETURNED;
         }
@@ -163,12 +171,11 @@ class Order extends Model
     }
 
     /**
-     * Flips status to DELIVERED/PARTIALLY_DELIVERED based on item-level
-     * delivered_quantity — pure shipping-status tracking, mirrors
-     * syncReturnStatus(). Never changes stock or posts accounting; that only
-     * happens when the order is separately marked COMPLETED. A no-op once
-     * the order is already closed (completed/cancelled/returned/refunded),
-     * so a late delivery-tracking edit after close doesn't reopen it.
+     * Flips status to DELIVERED (fulfillment fulfilled or partial) based on
+     * item-level delivered_quantity — pure shipping-status tracking, mirrors
+     * syncReturnStatus(). Never changes stock or posts accounting. A no-op
+     * once the order is already closed (cancelled/returned/refunded), so a
+     * late delivery-tracking edit after close doesn't reopen it.
      */
     public function syncDeliveryStatus(): void
     {
@@ -185,10 +192,9 @@ class Order extends Model
         $anyDelivered = $items->contains(fn (OrderItem $item) => (float) $item->delivered_quantity > 0);
         $allDelivered = $items->every(fn (OrderItem $item) => (float) $item->delivered_quantity >= (float) $item->quantity);
 
-        if ($allDelivered) {
+        if ($anyDelivered) {
             $this->status = OrderStatus::DELIVERED;
-        } elseif ($anyDelivered) {
-            $this->status = OrderStatus::PARTIALLY_DELIVERED;
+            $this->fulfillment_status = $allDelivered ? FulfillmentStatus::FULFILLED : FulfillmentStatus::PARTIAL;
         }
 
         $this->save();

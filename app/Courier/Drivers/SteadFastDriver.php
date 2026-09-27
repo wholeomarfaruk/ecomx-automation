@@ -308,14 +308,16 @@ class SteadFastDriver implements CourierDriverInterface
     protected function normalizeStatus(string $rawStatus): CourierStatus
     {
         return CourierStatusNormalizer::normalize($rawStatus, [
-            'pending' => CourierStatus::PENDING,
+            // SteadFast's 'in_review' is "booked, not collected yet"; its
+            // 'pending' only starts once the rider has the parcel.
+            'pending' => CourierStatus::PICKED_UP,
             'in_review' => CourierStatus::PENDING,
             'delivered_approval_pending' => CourierStatus::OUT_FOR_DELIVERY,
             'partial_delivered_approval_pending' => CourierStatus::OUT_FOR_DELIVERY,
             'cancelled_approval_pending' => CourierStatus::PENDING,
             'unknown_approval_pending' => CourierStatus::PENDING,
             'delivered' => CourierStatus::DELIVERED,
-            'partial_delivered' => CourierStatus::DELIVERED,
+            'partial_delivered' => CourierStatus::PARTIAL_DELIVERED,
             'cancelled' => CourierStatus::CANCELLED,
             'hold' => CourierStatus::IN_TRANSIT,
             'in_transit' => CourierStatus::IN_TRANSIT,

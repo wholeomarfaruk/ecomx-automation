@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Actions\Accounts\PostCourierCodCollected;
+use App\Actions\Sales\ApplyCourierStatus;
 use App\Courier\CourierManager;
 use App\Enums\Sales\CourierStatus;
 use App\Http\Controllers\Controller;
@@ -120,15 +121,7 @@ class CourierWebhookController extends Controller
             'raw_data' => $event->rawData,
         ]);
 
-        $shipment->update([
-            'previous_status' => $shipment->status,
-            'status' => $event->status->value,
-        ]);
-
-        $shipment->order->forceFill([
-            'courier_status' => $event->status,
-            'courier_status_updated_at' => now(),
-        ])->save();
+        app(ApplyCourierStatus::class)->handle($shipment, $event->status);
 
         // The courier's rider physically collected cash from the customer
         // on delivery — that money is now sitting with the courier, not in

@@ -4,7 +4,6 @@ namespace App\Livewire\Admin\Sales;
 
 use App\Actions\Accounts\PostCustomerAdvance;
 use App\Actions\Accounts\PostCustomerPayment;
-use App\Actions\Accounts\PostOrderCompletion;
 use App\Actions\Accounts\PostOrderReturn;
 use App\Actions\Accounts\PostRtoFee;
 use App\Actions\Accounts\RefundCustomerAdvance;
@@ -153,14 +152,11 @@ class OrderDetail extends Component
     public bool $reverseAcknowledged = false;
 
     /**
-     * The status dropdown drives everything: booking/releasing stock
-     * (OrderStatus::isBookable()) and, for COMPLETED specifically, the full
-     * Sale+COGS+shipping posting and physical stock deduction
-     * (PostOrderCompletion, item-level partial-delivery aware). A cancel or
-     * post-completion return that still has a paid amount on it shows a
-     * confirm gate first — force-completing that gate converts whatever was
-     * paid into Customer Credit automatically (ReverseOrder), same as
-     * before.
+     * The status dropdown drives booking/releasing stock
+     * (OrderStatus::isBookable()). A cancel or return that still has a paid
+     * amount on it shows a confirm gate first — force-completing that gate
+     * converts whatever was paid into Customer Credit automatically
+     * (ReverseOrder), same as before.
      */
     public function updateStatus(): void
     {
@@ -168,7 +164,7 @@ class OrderDetail extends Component
         $oldStatus = $order->status;
         $newStatus = OrderStatus::from($this->status);
 
-        $isUnwinding = ! $newStatus->isBookable() && $newStatus !== OrderStatus::COMPLETED && $oldStatus !== $newStatus;
+        $isUnwinding = ! $newStatus->isBookable() && $oldStatus !== $newStatus;
 
         if ($isUnwinding && (float) $order->paid_amount > 0 && ! $this->reverseAcknowledged) {
             $this->confirmReverseModal = true;
@@ -189,25 +185,13 @@ class OrderDetail extends Component
 
                 if ($bookOnConfirm && ! $oldStatus->isBookable() && $newStatus->isBookable()) {
                     $stockService->bookOrder($order);
-                } elseif ($bookOnConfirm && $oldStatus->isBookable() && ! $newStatus->isBookable() && $newStatus !== OrderStatus::COMPLETED) {
-                    $stockService->releaseBooking($order, $this->releaseTypeFor($newStatus));
-                }
-
-                // Inventory module off: there are no batches to pack from and
-                // no Accounts to post to (Accounts requires Inventory), so
-                // completion just deducts each item's own stock_quantity —
-                // inside this transaction so a shortfall rolls the status back.
-                if ($stockService->usesOwnStock() && $newStatus === OrderStatus::COMPLETED && $oldStatus !== OrderStatus::COMPLETED) {
-                    $stockService->commitOrder($order->load('items'));
+                } elseif ($bookOnConfirm && $oldStatus->isBookable() && ! $newStatus->isBookable()) {
+                    $stockService->releaseBooking($order, $newStatus->bookingReleaseType());
                 }
             });
         } catch (InsufficientStockException $e) {
             $this->dispatch('toast', ['type' => 'error', 'message' => $e->getMessage()]);
             return;
-        }
-
-        if (! $stockService->usesOwnStock() && $newStatus === OrderStatus::COMPLETED && $oldStatus !== OrderStatus::COMPLETED) {
-            app(PostOrderCompletion::class)->handle($order->fresh(['items']), now()->toDateString());
         }
 
         if ($isUnwinding) {
@@ -255,15 +239,6 @@ class OrderDetail extends Component
             ->log("Order #{$order->id} status updated");
 
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Order status updated']);
-    }
-
-    protected function releaseTypeFor(OrderStatus $status): string
-    {
-        return match ($status) {
-            OrderStatus::CANCELLED => 'unbooked_cancelled',
-            OrderStatus::RETURNING, OrderStatus::RETURNED, OrderStatus::PARTIALLY_RETURNED => 'unbooked_returned',
-            default => 'unbooked_cancelled',
-        };
     }
 
     public function confirmReverseAndUpdateStatus(): void
@@ -565,9 +540,8 @@ class OrderDetail extends Component
 
     /**
      * Item-level delivered-quantity tracking — pure shipping-status
-     * bookkeeping (syncDeliveryStatus() only flips DELIVERED/
-     * PARTIALLY_DELIVERED), no stock or accounting effect here. Those only
-     * happen when the order is separately marked COMPLETED. Items with a
+     * bookkeeping (syncDeliveryStatus() only flips DELIVERED and the
+     * fulfillment status), no stock or accounting effect here. Items with a
      * batch allocation (packed via the Pack Items modal) are skipped here —
      * packing is now the source of truth for their delivered_quantity, and
      * this manual input stays only for items nobody has packed yet.

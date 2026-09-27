@@ -87,11 +87,6 @@ class Orders extends Component
         $oldStatus = $order->status;
         $newStatus = OrderStatus::from($status);
 
-        if ($newStatus === OrderStatus::COMPLETED) {
-            $this->dispatch('toast', ['type' => 'error', 'message' => 'Mark as Completed from the order detail page — it needs the delivery/return details there.']);
-            return;
-        }
-
         $stockService = app(StockService::class);
 
         try {
@@ -103,7 +98,7 @@ class Orders extends Component
                 if ($bookOnConfirm && ! $oldStatus->isBookable() && $newStatus->isBookable()) {
                     $stockService->bookOrder($order);
                 } elseif ($bookOnConfirm && $oldStatus->isBookable() && ! $newStatus->isBookable()) {
-                    $stockService->releaseBooking($order, 'unbooked_cancelled');
+                    $stockService->releaseBooking($order, $newStatus->bookingReleaseType());
                 }
             });
         } catch (InsufficientStockException $e) {
@@ -231,7 +226,7 @@ class Orders extends Component
                 ->with('customer')
                 ->whereIn('status', [
                     OrderStatus::PENDING, OrderStatus::CONFIRMED, OrderStatus::PROCESSING,
-                    OrderStatus::SHIPPED, OrderStatus::PARTIALLY_DELIVERED, OrderStatus::DELIVERED,
+                    OrderStatus::SHIPPED, OrderStatus::DELIVERED,
                 ])
                 ->whereRaw("{$packedSql} > 0")
                 ->when($this->packState === 'full', fn ($q) => $q->whereRaw("{$packedSql} + 0.001 >= {$packableSql}"))

@@ -72,9 +72,9 @@ class PackOrderItem
             }
 
             $totalPacked = $item->batchAllocations()->sum('quantity');
+            // Packing only records quantities — the order's status moves with
+            // its courier shipment (ApplyCourierStatus), not with packing.
             $item->update(['delivered_quantity' => $totalPacked]);
-
-            $item->order?->syncDeliveryStatus();
         });
     }
 

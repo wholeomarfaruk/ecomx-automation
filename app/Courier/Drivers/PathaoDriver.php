@@ -512,7 +512,7 @@ class PathaoDriver implements CourierDriverInterface
 
             // Delivered
             'delivered' => CourierStatus::DELIVERED,
-            'partial_delivery' => CourierStatus::DELIVERED,
+            'partial_delivery' => CourierStatus::PARTIAL_DELIVERED,
 
             // Delivery failure
             'delivery_failed' => CourierStatus::FAILED,
@@ -520,9 +520,10 @@ class PathaoDriver implements CourierDriverInterface
             'not_delivered' => CourierStatus::FAILED,
 
             // Return
-            'return' => CourierStatus::RETURNED,
+            'return' => CourierStatus::RETURNING,
+            'assigned_for_return' => CourierStatus::RETURNING,
+            'paid_return' => CourierStatus::RETURNING,
             'returned' => CourierStatus::RETURNED,
-            'assigned_for_return' => CourierStatus::RETURNED,
             'return_verified' => CourierStatus::RETURNED,
             'partial_return' => CourierStatus::RETURNED,
             'exchange' => CourierStatus::RETURNED,

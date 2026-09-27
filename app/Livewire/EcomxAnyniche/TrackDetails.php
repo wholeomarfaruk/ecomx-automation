@@ -221,9 +221,7 @@ class TrackDetails extends Component
             OrderStatus::DELIVERED,
         ];
 
-        // partially_delivered counts as having reached "Shipped" but not fully "Delivered".
-        $effectiveStatus = $status === OrderStatus::PARTIALLY_DELIVERED ? OrderStatus::SHIPPED : $status;
-        $currentIndex = array_search($effectiveStatus, $progression, true);
+        $currentIndex = array_search($status, $progression, true);
         $currentIndex = $currentIndex === false ? 0 : $currentIndex;
 
         $subLabels = [

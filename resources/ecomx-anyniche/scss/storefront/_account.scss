@@ -214,12 +214,10 @@
   background: $surface-2;
   color: $ink-soft;
 
-  &--delivered,
-  &--completed { background: $green-light; color: #1f7a34; }
+  &--delivered { background: $green-light; color: #1f7a34; }
   &--processing,
   &--confirmed,
   &--shipped,
-  &--partially_delivered,
   &--in_transit { background: $blue-light; color: $blue-dark; }
   &--pending,
   &--on_hold { background: #fff6e0; color: #96700c; }

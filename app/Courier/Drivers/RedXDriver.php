@@ -245,9 +245,11 @@ class RedXDriver implements CourierDriverInterface
         $message = strtolower($message);
 
         return match (true) {
+            str_contains($message, 'partial') => CourierStatus::PARTIAL_DELIVERED,
             str_contains($message, 'delivered') => CourierStatus::DELIVERED,
             str_contains($message, 'picked up') => CourierStatus::PICKED_UP,
             str_contains($message, 'returned') => CourierStatus::RETURNED,
+            str_contains($message, 'return') => CourierStatus::RETURNING,
             str_contains($message, 'cancel') => CourierStatus::CANCELLED,
             str_contains($message, 'out for delivery') || str_contains($message, 'dispatch') => CourierStatus::OUT_FOR_DELIVERY,
             str_contains($message, 'transit') || str_contains($message, 'hub') => CourierStatus::IN_TRANSIT,
@@ -297,7 +299,7 @@ class RedXDriver implements CourierDriverInterface
             'delivery-in-progress' => CourierStatus::OUT_FOR_DELIVERY,
             'delivered' => CourierStatus::DELIVERED,
             'agent-hold' => CourierStatus::IN_TRANSIT,
-            'agent-returning' => CourierStatus::IN_TRANSIT,
+            'agent-returning' => CourierStatus::RETURNING,
             'returned' => CourierStatus::RETURNED,
             'agent-area-change' => CourierStatus::IN_TRANSIT,
             'paid' => CourierStatus::DELIVERED,

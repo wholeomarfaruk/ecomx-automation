@@ -2,6 +2,7 @@
 
 namespace App\Courier;
 
+use App\Actions\Sales\ApplyCourierStatus;
 use App\Courier\Contracts\CourierDriverInterface;
 use App\Courier\DTO\CourierResponse;
 use App\Courier\DTO\RateRequest;
@@ -224,6 +225,8 @@ class CourierManager extends Manager
                 ]),
                 'courier_status_updated_at' => now(),
             ])->save();
+
+            app(ApplyCourierStatus::class)->shipmentCreated($order);
         }
 
         return $response;
@@ -293,15 +296,7 @@ class CourierManager extends Manager
                 ]);
             }
 
-            $shipment->update([
-                'previous_status' => $shipment->status,
-                'status' => $response->status->value,
-            ]);
-
-            $shipment->order->forceFill([
-                'courier_status' => $response->status,
-                'courier_status_updated_at' => now(),
-            ])->save();
+            app(ApplyCourierStatus::class)->handle($shipment, $response->status);
         }
 
         return $response;

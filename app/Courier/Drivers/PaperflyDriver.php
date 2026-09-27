@@ -216,7 +216,7 @@ class PaperflyDriver implements CourierDriverInterface
             'receivedatpoint' => CourierStatus::IN_TRANSIT,
             'pickedfordelivery' => CourierStatus::OUT_FOR_DELIVERY,
             'delivered' => CourierStatus::DELIVERED,
-            'partial' => CourierStatus::DELIVERED,
+            'partial' => CourierStatus::PARTIAL_DELIVERED,
             'returned' => CourierStatus::RETURNED,
             'close' => CourierStatus::DELIVERED,
         ]);
