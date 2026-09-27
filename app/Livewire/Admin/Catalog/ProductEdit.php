@@ -10,6 +10,7 @@ use App\Models\ProductVariant;
 use App\Models\Setting;
 use App\Services\StockService;
 use Illuminate\Support\Str;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class ProductEdit extends Component
@@ -127,6 +128,20 @@ class ProductEdit extends Component
         $this->activeTab = $tab;
     }
 
+    /**
+     * The Stocks tab adjusted stock directly through StockService — pull the
+     * fresh stock_quantity/stock_status back in so "Save Changes" doesn't
+     * write this form's stale copies over the adjustment.
+     */
+    #[On('product-stock-updated')]
+    public function refreshStock(): void
+    {
+        $product = Product::findOrFail($this->productId);
+
+        $this->stockQuantity = (string) (float) $product->stock_quantity;
+        $this->stockStatus   = $product->stock_status;
+    }
+
     protected function rules(): array
     {
         return [
@@ -176,6 +191,9 @@ class ProductEdit extends Component
             $this->comboAllowed  = false;
             $this->comboPrice    = '';
             $this->purchasePrice = '';
+            if ($this->activeTab === 'stocks') {
+                $this->activeTab = 'general';
+            }
         } elseif ($this->activeTab === 'combo') {
             $this->activeTab = 'general';
         }
