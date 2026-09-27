@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Catalog;
 use App\Models\Brand;
 use App\Models\Product;
 use Illuminate\Support\Str;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -30,6 +31,10 @@ class Products extends Component
     public string $newBrandId  = '';
     public string $newPrice    = '';
     public bool   $slugLocked  = false;
+
+    // stock modal (Stock column cell → the product editor's Stocks panel)
+    public bool $stockModal = false;
+    public ?int $stockProductId = null;
 
     public function updatingSearch(): void            { $this->resetPage(); }
     public function updatingFilterStatus(): void      { $this->resetPage(); }
@@ -92,6 +97,18 @@ class Products extends Component
         $this->redirect(route('admin.catalog.products.edit', $product->id), navigate: true);
     }
 
+    public function openStockModal(int $id): void
+    {
+        $this->stockProductId = Product::findOrFail($id)->id;
+        $this->stockModal = true;
+    }
+
+    /** Stock In / Adjust inside the stock modal — re-render so the Stock column shows the new figures. */
+    #[On('product-stock-updated')]
+    public function refreshStock(): void
+    {
+    }
+
     public function toggleStatus(int $id): void
     {
         $product   = Product::findOrFail($id);
@@ -142,6 +159,7 @@ class Products extends Component
 
         return view('livewire.admin.catalog.products', [
             'products'      => $products,
+            'stockProduct'  => $this->stockProductId ? Product::find($this->stockProductId, ['id', 'name', 'code', 'product_type']) : null,
             'brands'        => Brand::orderBy('name')->get(['id', 'name']),
             'totalCount'    => Product::count(),
             'activeCount'   => Product::where('status', 'active')->count(),

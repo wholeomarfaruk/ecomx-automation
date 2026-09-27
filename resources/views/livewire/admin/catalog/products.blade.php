@@ -150,7 +150,12 @@
                                         'backorder'    => 'Backorder',
                                     ];
                                     $stockInfo = $product->stock_info;
+                                    $stockClickable = $product->product_type !== \App\Enums\Product\ProductType::COMBO;
                                 @endphp
+                                @if($stockClickable)
+                                    <button type="button" wire:click="openStockModal({{ $product->id }})" title="View & manage stock"
+                                        class="inline-flex flex-col items-center rounded-lg px-2 py-1 -mx-2 -my-1 hover:bg-indigo-50/60 transition cursor-pointer">
+                                @endif
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{ $stockStyles[$product->stock_status] ?? 'bg-gray-100 text-gray-500' }}">
                                     {{ $stockLabels[$product->stock_status] ?? $product->stock_status }}
                                 </span>
@@ -166,6 +171,9 @@
                                         {{ rtrim(rtrim(number_format($stockInfo['quantity'], 3), '0'), '.') ?: '0' }}
                                     @endif
                                 </div>
+                                @if($stockClickable)
+                                    </button>
+                                @endif
                             </td>
                             <td class="px-5 py-3 text-center">
                                 @php
@@ -235,6 +243,37 @@
                 {{ $products->links() }}
             </div>
         @endif
+    </div>
+
+    {{-- Stock Modal (Stock column cell) --}}
+    <div x-cloak x-data="{ open: @entangle('stockModal') }" x-show="open" x-transition
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog">
+        <div class="w-full max-w-4xl max-h-[90vh] flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden" @click.outside="open = false">
+            <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100 shrink-0">
+                <div class="flex-1 min-w-0">
+                    <h2 class="text-base font-semibold text-gray-900 truncate">{{ $stockProduct?->name ?? 'Stock' }}</h2>
+                    @if($stockProduct)
+                        <p class="text-xs text-gray-400 font-mono">{{ $stockProduct->code }}</p>
+                    @endif
+                </div>
+                @if($stockProduct)
+                    <a href="{{ route('admin.catalog.products.edit', $stockProduct->id) }}" wire:navigate
+                        class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition shrink-0">
+                        Edit Product
+                    </a>
+                @endif
+                <button @click="open = false" type="button" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 transition shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="px-6 py-5 overflow-y-auto">
+                @if($stockProduct)
+                    @livewire('admin.catalog.product-stocks', ['productId' => $stockProduct->id, 'pendingType' => $stockProduct->product_type->value], key('stock-modal-' . $stockProduct->id))
+                @endif
+            </div>
+        </div>
     </div>
 
     {{-- Quick-add Modal --}}
