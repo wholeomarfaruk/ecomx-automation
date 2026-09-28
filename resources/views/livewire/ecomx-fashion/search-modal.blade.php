@@ -15,7 +15,7 @@
         @if (count($this->results) > 0)
             <div class="search-modal__results">
                 @foreach ($this->results as $p)
-                    <a href="{{ $p['url'] }}" class="search-modal__item {{ ! $p['inStock'] ? 'is-oos' : '' }}" @if(! $p['inStock']) @click.prevent @endif>
+                    <a href="{{ $p['url'] }}" class="search-modal__item {{ ! $p['inStock'] ? 'is-oos' : '' }}">
                         <div class="search-modal__item-media">
                             <x-ux-img :id="$p['img']" :w="160" :alt="$p['name']" />
                             @if (! $p['inStock'])
