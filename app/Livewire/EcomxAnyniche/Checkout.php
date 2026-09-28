@@ -20,6 +20,7 @@ use App\Models\Device;
 use App\Models\Order;
 use App\Models\User;
 use App\Services\BlockGuard;
+use App\Livewire\Concerns\ChoosesShipping;
 use App\Services\OfferService;
 use App\Support\PhoneNumber;
 use Illuminate\Support\Facades\DB;
@@ -30,13 +31,13 @@ use Livewire\Attributes\Layout;
 #[Layout('ecomx-anyniche.layouts.ecomx_anyniche')]
 class Checkout extends Component
 {
+    use ChoosesShipping;
     use CreatesMasterProfile;
 
     public string $name = '';
     public string $phone = '';
     public string $address = '';
     public string $address_type = '';
-    public string $delivery_area = 'dhaka';
     public string $payment_method = 'cod';
     public string $transaction_id = '';
 
@@ -61,11 +62,6 @@ class Checkout extends Component
 
     public bool $placed = false;
 
-    public array $deliveryAreas = [
-        ['id' => 'dhaka', 'name' => 'Inside Dhaka', 'charge' => 70],
-        ['id' => 'outside', 'name' => 'Outside Dhaka', 'charge' => 130],
-    ];
-
     public string $bkashNumber = '01682963493';
 
     public array $marketingEvents = [];
@@ -73,6 +69,7 @@ class Checkout extends Component
     public function mount(): void
     {
         $this->recordInitiateCheckout();
+        $this->initShipping();
         $this->initAddressSelection();
     }
 
@@ -234,8 +231,7 @@ class Checkout extends Component
                 'address_type' => 'nullable|string|max:50',
             ];
 
-        return $addressRules + [
-            'delivery_area' => 'required|in:dhaka,outside',
+        return $addressRules + $this->shippingRules() + [
             'payment_method' => 'required|in:cod,bkash',
             'transaction_id' => 'required_if:payment_method,bkash|nullable|string|max:100',
         ];
@@ -288,10 +284,12 @@ class Checkout extends Component
             return;
         }
 
-        $deliveryCharge = collect($this->deliveryAreas)->firstWhere('id', $this->delivery_area)['charge'] ?? 0;
+        $shippingMethod = $this->selectedShippingMethod();
+        $shippingQuote = $this->shippingQuote($cart, $shippingMethod);
+        $deliveryCharge = $shippingQuote?->amount ?? 0.0;
 
         try {
-            $order = DB::transaction(function () use ($cart, $deliveryCharge, $selectedAddress) {
+            $order = DB::transaction(function () use ($cart, $deliveryCharge, $selectedAddress, $shippingMethod, $shippingQuote) {
                 $customer = $this->findOrCreateCustomer();
                 $address = $this->createDeliveryProfile($customer, $selectedAddress);
 
@@ -307,6 +305,9 @@ class Checkout extends Component
                     'fulfillment_status' => 'unfulfilled',
                     'shipping_amount' => $deliveryCharge,
                     'shipping_discount' => $offers['shipping_discount'],
+                    'shipping_zone_id' => $shippingMethod?->shipping_zone_id,
+                    'shipping_method_id' => $shippingMethod?->id,
+                    'shipping_meta' => $shippingMethod ? $shippingQuote->toMeta($shippingMethod) : null,
                     'billing_address_id' => $address->id,
                     'shipping_address_id' => $address->id,
                     'customer_note' => null,
@@ -665,11 +666,15 @@ class Checkout extends Component
     public function render()
     {
         $cart = $this->cart;
-        $deliveryCharge = (float) (collect($this->deliveryAreas)->firstWhere('id', $this->delivery_area)['charge'] ?? 0);
+        $shippingQuote = $this->shippingQuote($cart);
+        $deliveryCharge = $shippingQuote?->amount ?? 0.0;
 
         return view('ecomx-anyniche.livewire.checkout', [
             'cart' => $cart,
             'deliveryCharge' => $deliveryCharge,
+            'shippingQuote' => $shippingQuote,
+            'zoneCharges' => $this->zoneCharges($cart),
+            'methodOptions' => $this->methodOptions($cart),
             'offers' => app(OfferService::class)->evaluate(
                 $cart,
                 $this->offerContext(auth()->check() ? auth()->user()->customer : null, $deliveryCharge)

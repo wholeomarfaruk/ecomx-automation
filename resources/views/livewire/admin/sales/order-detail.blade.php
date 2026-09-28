@@ -172,7 +172,12 @@
                         </div>
                     @endforeach
                     <div class="flex items-center gap-8 text-sm">
-                        <span class="text-gray-500">Shipping</span>
+                        <span class="text-gray-500">
+                            Shipping
+                            @if(! empty($order->shipping_meta['zone']))
+                                <span class="text-gray-400">({{ $order->shipping_meta['zone'] }} · {{ $order->shipping_meta['method'] }})</span>
+                            @endif
+                        </span>
                         <span class="text-gray-700">+{{ number_format($order->shipping_amount, 2) }}</span>
                     </div>
                     @if($order->shipping_discount > 0)

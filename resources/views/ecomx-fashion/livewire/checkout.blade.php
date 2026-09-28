@@ -80,12 +80,33 @@
                 <div class="field">
                     <label>Delivery area</label>
                     <select wire:model.live="delivery_area">
-                        @foreach($deliveryAreas as $area)
-                            <option value="{{ $area['id'] }}">{{ $area['name'] }} — ৳{{ $area['charge'] }}</option>
+                        @foreach($this->shippingZones as $zone)
+                            @php $zoneCharge = $zoneCharges[$zone->code] ?? 0; @endphp
+                            <option value="{{ $zone->code }}">{{ $zone->name }} — {{ $zoneCharge > 0 ? '৳' . number_format($zoneCharge) : 'Free' }}</option>
                         @endforeach
                     </select>
                     @error('delivery_area') <span class="field__error">{{ $message }}</span> @enderror
                 </div>
+
+                @if (count($methodOptions) > 1)
+                    <div class="field">
+                        <label>Delivery option</label>
+                        <div class="pay-options">
+                            @foreach ($methodOptions as $option)
+                                <label class="pay-option {{ $shipping_method_id === $option['id'] ? 'is-on' : '' }}" wire:key="ship-method-{{ $option['id'] }}">
+                                    <span>
+                                        <strong>{{ $option['name'] }} — {{ $option['charge'] > 0 ? '৳' . number_format($option['charge']) : 'Free' }}</strong>
+                                        @if ($option['delivery_time'])
+                                            <small>{{ $option['delivery_time'] }}</small>
+                                        @endif
+                                    </span>
+                                    <input type="radio" wire:model.live="shipping_method_id" value="{{ $option['id'] }}">
+                                </label>
+                            @endforeach
+                        </div>
+                        @error('shipping_method_id') <span class="field__error">{{ $message }}</span> @enderror
+                    </div>
+                @endif
 
                 <div class="field">
                     <label>Payment method</label>
@@ -166,15 +187,18 @@
                     @endforeach
                 </div>
 
-                <div class="checkout__totals" x-data="{ charge: {{ Illuminate\Support\Js::from(collect($deliveryAreas)->pluck('charge', 'id')) }}, savingsOpen: false }">
+                <div class="checkout__totals" x-data="{ savingsOpen: false }">
                     <div class="checkout__totals-row">
                         <span>Subtotal</span>
                         <strong>৳{{ number_format($cart->subtotal) }}</strong>
                     </div>
                     <div class="checkout__totals-row">
                         <span>Delivery charge</span>
-                        <strong x-text="'৳' + (charge['{{ $delivery_area }}'] ?? 0)"></strong>
+                        <strong>{{ $deliveryCharge > 0 ? '৳' . number_format($deliveryCharge) : 'Free' }}</strong>
                     </div>
+                    @if ($shippingQuote && $shippingQuote->remainingForFree > 0)
+                        <p class="muted" style="font-size:12px;margin:-2px 0 6px">Add ৳{{ number_format($shippingQuote->remainingForFree) }} more for free delivery.</p>
+                    @endif
                     @foreach ($offers['applied'] as $applied)
                         <div class="checkout__totals-row checkout__totals-row--save" wire:key="checkout-offer-{{ $applied['promotion_id'] }}">
                             <span>🎁 {{ $applied['name'] }}</span>

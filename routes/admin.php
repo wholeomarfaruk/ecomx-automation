@@ -161,6 +161,8 @@ Route::prefix('sales')->name('sales.')->group(function () {
     Route::get('/offers/create', App\Livewire\Admin\Sales\OfferCreate::class)->name('offers.create');
     Route::get('/offers/{id}', App\Livewire\Admin\Sales\OfferDetail::class)->name('offers.show');
 
+    Route::get('/shipping', App\Livewire\Admin\Sales\Shipping::class)->name('shipping');
+
     Route::prefix('pos')->name('pos.')->group(function () {
         Route::get('/registers', App\Livewire\Admin\Sales\PosRegisters::class)->name('registers');
         Route::get('/sessions', App\Livewire\Admin\Sales\PosSessions::class)->name('sessions');

@@ -587,6 +587,10 @@
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.offers') ? 'text-gray-200' : '' }}">
                             Offers
                         </a>
+                        <a href="{{ route('admin.sales.shipping') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.shipping') ? 'text-gray-200' : '' }}">
+                            Shipping
+                        </a>
                         <a href="{{ route('admin.sales.pos.screen') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.pos.screen') ? 'text-gray-200' : '' }}">
                             POS Screen

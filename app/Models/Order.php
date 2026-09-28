@@ -21,6 +21,7 @@ class Order extends Model
         'status', 'payment_status', 'fulfillment_status',
         'currency',
         'subtotal', 'discount_amount', 'shipping_amount', 'shipping_discount', 'tax_amount', 'charges_amount',
+        'shipping_zone_id', 'shipping_method_id', 'shipping_meta',
         'total_amount', 'paid_amount', 'due_amount',
         'customer_note', 'admin_note',
         'billing_address_id', 'shipping_address_id', 'coupon_id', 'coupon_code',
@@ -38,7 +39,8 @@ class Order extends Model
             'fulfillment_status' => FulfillmentStatus::class,
             'courier_status'     => CourierStatus::class,
             'courier_meta'       => 'array',
-            'subtotal'           => 'decimal:2',
+            'shipping_meta'      => 'array',
+            'subtotal'         => 'decimal:2',
             'discount_amount'    => 'decimal:2',
             'shipping_amount'    => 'decimal:2',
             'shipping_discount'  => 'decimal:2',
@@ -69,6 +71,16 @@ class Order extends Model
     public function shippingAddress(): BelongsTo
     {
         return $this->belongsTo(DeliveryAddress::class, 'shipping_address_id');
+    }
+
+    public function shippingZone(): BelongsTo
+    {
+        return $this->belongsTo(ShippingZone::class);
+    }
+
+    public function shippingMethod(): BelongsTo
+    {
+        return $this->belongsTo(ShippingMethod::class);
     }
 
     public function items(): HasMany
