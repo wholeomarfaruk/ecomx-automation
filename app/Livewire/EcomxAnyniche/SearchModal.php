@@ -43,7 +43,7 @@ class SearchModal extends Component
                 ...$p->cardPricing(),
                 'inStock' => $p->stock_status === 'in_stock',
                 'img' => $p->featured_image,
-                'url' => $p->url,
+                'url' => route('ecomx-anyniche.product', $p->slug),
             ])
             ->all();
     }

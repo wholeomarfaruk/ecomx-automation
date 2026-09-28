@@ -67,7 +67,8 @@
                                     <a href="{{ $p['url'] }}" class="jtc-btn jtc-btn--primary jtc-searchresult__add"
                                        wire:navigate>View</a>
                                 @else
-                                    <span class="jtc-btn jtc-btn--primary jtc-searchresult__add" style="opacity:.5;pointer-events:none">Out of Stock</span>
+                                    <a href="{{ $p['url'] }}" class="jtc-btn jtc-btn--primary jtc-searchresult__add" style="opacity:.5"
+                                       wire:navigate>Out of Stock</a>
                                 @endif
                             </li>
                         @endforeach

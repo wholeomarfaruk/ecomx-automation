@@ -41,7 +41,7 @@ class HeaderSearch extends Component
                 'name' => $p->name,
                 ...$p->cardPricing(),
                 'img' => $p->featured_image,
-                'url' => $p->url,
+                'url' => route('ecomx-anyniche.product', $p->slug),
             ])
             ->all();
     }
