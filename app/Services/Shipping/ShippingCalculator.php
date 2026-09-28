@@ -11,7 +11,7 @@ use Illuminate\Support\Collection;
 
 /**
  * Prices delivery for every storefront checkout from the zones and methods
- * managed under Sales → Shipping. Free-delivery coupons and campaigns are
+ * managed under Settings → Shipping. Free-delivery coupons and campaigns are
  * not applied here — OfferService discounts the amount this returns.
  */
 class ShippingCalculator
@@ -59,7 +59,9 @@ class ShippingCalculator
     public function quote(ShippingMethod $method, array $lines, float $subtotal): ShippingQuote
     {
         $type = $method->rate_type;
-        $weight = $this->weight($lines, $type->usesWeight() && ! empty($method->rate_config['volumetric']), $this->divisor($method));
+        // Rounded to grams so float sums (0.1 × 3 = 0.30000000000000004)
+        // can't tip a cart into the next kg or band.
+        $weight = round($this->weight($lines, $type->usesWeight() && ! empty($method->rate_config['volumetric']), $this->divisor($method)), 3);
         $quantity = (int) ceil(collect($lines)->reject(fn ($l) => $l['is_gift'])->sum('quantity'));
 
         $base = round(max(0.0, $this->baseCharge($method, $weight, $quantity, $subtotal)), 2);
@@ -74,7 +76,7 @@ class ShippingCalculator
             freeByThreshold: $freeByThreshold,
             freeOver: $freeOver,
             remainingForFree: $freeOver !== null && $amount > 0 ? round(max(0.0, $freeOver - $subtotal), 2) : 0.0,
-            weight: round($weight, 3),
+            weight: $weight,
             quantity: $quantity,
         );
     }
@@ -87,7 +89,7 @@ class ShippingCalculator
             // Base charge covers the first base_weight kg; every started kg
             // above it adds per_kg.
             ShippingRateType::WEIGHT => $method->config('base_charge')
-                + ceil(max(0.0, $weight - $method->config('base_weight', 1.0))) * $method->config('per_kg'),
+                + $this->startedUnits($weight - $method->config('base_weight', 1.0)) * $method->config('per_kg'),
 
             ShippingRateType::WEIGHT_BANDS => $this->bandCharge($method, $weight, $method->config('extra_per_kg')),
 
@@ -124,7 +126,17 @@ class ShippingCalculator
 
         $last = end($bands);
 
-        return $last['charge'] + ceil($value - $last['up_to']) * $extraPerUnit;
+        return $last['charge'] + $this->startedUnits($value - $last['up_to']) * $extraPerUnit;
+    }
+
+    /**
+     * Whole units needed to cover $excess (1.2 → 2), 0 when none. The
+     * difference is rounded first: 1.1 − 0.1 is 1.0000000000000002 in
+     * floats, which a bare ceil() would bill as 2.
+     */
+    private function startedUnits(float $excess): float
+    {
+        return ceil(max(0.0, round($excess, 3)));
     }
 
     /**

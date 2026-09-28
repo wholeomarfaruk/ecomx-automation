@@ -58,6 +58,9 @@ Route::get('/users/master-profile', App\Livewire\Admin\Users\MasterProfile::clas
 Route::get('/profile', App\Livewire\Admin\Profile\Profile::class)->name('profile');
 Route::get('/settings', App\Livewire\Admin\Settings\Settings::class)->name('settings');
 
+// Shipping zones & methods — sidebar link sits right after Icons.
+Route::get('/settings/shipping', App\Livewire\Admin\Settings\Shipping::class)->name('settings.shipping');
+
 //permissions
 Route::get('/permissions/roles', App\Livewire\Admin\Permissions\RoleList::class)->name('roles.list');
 Route::get('/permissions/role/create', App\Livewire\Admin\Permissions\RoleCreate::class)->name('roles.create');
@@ -160,8 +163,6 @@ Route::prefix('sales')->name('sales.')->group(function () {
     Route::get('/offers', App\Livewire\Admin\Sales\Offers::class)->name('offers');
     Route::get('/offers/create', App\Livewire\Admin\Sales\OfferCreate::class)->name('offers.create');
     Route::get('/offers/{id}', App\Livewire\Admin\Sales\OfferDetail::class)->name('offers.show');
-
-    Route::get('/shipping', App\Livewire\Admin\Sales\Shipping::class)->name('shipping');
 
     Route::prefix('pos')->name('pos.')->group(function () {
         Route::get('/registers', App\Livewire\Admin\Sales\PosRegisters::class)->name('registers');

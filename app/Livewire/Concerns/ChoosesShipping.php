@@ -13,7 +13,7 @@ use Livewire\Attributes\Computed;
 
 /**
  * Delivery-area / delivery-method state for the storefront checkouts, priced
- * by ShippingCalculator from the zones managed under Sales → Shipping.
+ * by ShippingCalculator from the zones managed under Settings → Shipping.
  *
  * $delivery_area holds the zone *code* (dhaka, outside, …) — it's what the
  * Offer module's "Shipping Method" condition matches, and what the address
@@ -33,12 +33,30 @@ trait ChoosesShipping
         return app(ShippingCalculator::class)->zones();
     }
 
+    /**
+     * Points delivery_area / shipping_method_id at a zone and method that
+     * are still active — the admin's default zone (else the first) when
+     * nothing is picked yet, or when an admin disabled the picked one while
+     * this checkout was open.
+     */
     protected function initShipping(): void
     {
-        $zone = $this->selectedShippingZone() ?? $this->shippingZones->first();
+        $zone = $this->selectedShippingZone()
+            ?? $this->shippingZones->firstWhere('is_default', true)
+            ?? $this->shippingZones->first();
 
         $this->delivery_area = $zone?->code ?? '';
-        $this->shipping_method_id = $zone?->methods->first()?->id;
+        $this->shipping_method_id = $this->selectedShippingMethod()?->id;
+    }
+
+    /**
+     * Livewire trait hook — runs at the start of every request after mount,
+     * before property updates and actions, so placeOrder() and render()
+     * always see a zone/method that still exists.
+     */
+    public function hydrateChoosesShipping(): void
+    {
+        $this->initShipping();
     }
 
     public function updatedDeliveryArea(): void

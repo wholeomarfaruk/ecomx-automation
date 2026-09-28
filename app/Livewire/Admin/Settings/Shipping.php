@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Admin\Sales;
+namespace App\Livewire\Admin\Settings;
 
 use App\Enums\Sales\ShippingRateType;
 use App\Models\ShippingMethod;
@@ -11,7 +11,7 @@ use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 /**
- * Sales → Shipping: delivery zones (the areas customers pick at checkout)
+ * Settings → Shipping: delivery zones (the areas customers pick at checkout)
  * and each zone's methods with their rate. Priced at checkout by
  * ShippingCalculator.
  */
@@ -52,6 +52,7 @@ class Shipping extends Component
             'name'       => $zone->name,
             'code'       => $zone->code,
             'is_active'  => $zone->is_active,
+            'is_default' => $zone->is_default,
             'sort_order' => $zone->sort_order,
         ];
         $this->zoneModal = true;
@@ -67,6 +68,7 @@ class Shipping extends Component
             'zone.name'       => 'required|string|max:100',
             'zone.code'       => ['required', 'string', 'max:50', 'alpha_dash', Rule::unique('shipping_zones', 'code')->ignore($this->editingZoneId)],
             'zone.is_active'  => 'boolean',
+            'zone.is_default' => 'boolean',
             'zone.sort_order' => 'required|integer|min:0',
         ], [], [
             'zone.name' => 'name', 'zone.code' => 'code', 'zone.sort_order' => 'order',
@@ -76,8 +78,13 @@ class Shipping extends Component
             'name'       => trim($this->zone['name']),
             'code'       => $this->zone['code'],
             'is_active'  => (bool) $this->zone['is_active'],
+            'is_default' => (bool) $this->zone['is_default'],
             'sort_order' => (int) $this->zone['sort_order'],
         ]);
+
+        if ($zone->is_default) {
+            ShippingZone::whereKeyNot($zone->id)->update(['is_default' => false]);
+        }
 
         $this->log($zone, $this->editingZoneId ? 'updated' : 'created', "Shipping zone \"{$zone->name}\"");
 
@@ -91,6 +98,16 @@ class Shipping extends Component
         $zone->update(['is_active' => ! $zone->is_active]);
 
         $this->dispatch('toast', ['type' => 'success', 'message' => $zone->name . ' ' . ($zone->is_active ? 'enabled' : 'disabled')]);
+    }
+
+    public function makeDefaultZone(int $id): void
+    {
+        $zone = ShippingZone::findOrFail($id);
+
+        ShippingZone::whereKeyNot($zone->id)->update(['is_default' => false]);
+        $zone->update(['is_default' => true]);
+
+        $this->dispatch('toast', ['type' => 'success', 'message' => "{$zone->name} is now selected by default at checkout"]);
     }
 
     public function deleteZone(int $id): void
@@ -293,7 +310,7 @@ class Shipping extends Component
 
     private function blankZone(): array
     {
-        return ['name' => '', 'code' => '', 'is_active' => true, 'sort_order' => 0];
+        return ['name' => '', 'code' => '', 'is_active' => true, 'is_default' => false, 'sort_order' => 0];
     }
 
     private function blankMethod(): array
@@ -323,7 +340,7 @@ class Shipping extends Component
 
     public function render(): mixed
     {
-        return view('livewire.admin.sales.shipping', [
+        return view('livewire.admin.settings.shipping', [
             'zones'     => ShippingZone::with('methods')->orderBy('sort_order')->orderBy('id')->get(),
             'rateTypes' => ShippingRateType::cases(),
         ])->layout('layouts.admin.admin');

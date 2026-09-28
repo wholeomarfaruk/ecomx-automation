@@ -587,10 +587,6 @@
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.offers') ? 'text-gray-200' : '' }}">
                             Offers
                         </a>
-                        <a href="{{ route('admin.sales.shipping') }}"
-                            class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.shipping') ? 'text-gray-200' : '' }}">
-                            Shipping
-                        </a>
                         <a href="{{ route('admin.sales.pos.screen') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.pos.screen') ? 'text-gray-200' : '' }}">
                             POS Screen
@@ -833,6 +829,17 @@
                     </svg>
                     <h1 x-cloak x-bind:class="!$store.sidebar.full && show ? visibleClass : '' || !$store.sidebar.full ? 'sm:hidden' : ''">
                         Icons</h1>
+                </a>
+
+                <a href="{{ route('admin.settings.shipping') }}" x-data="tooltip" x-on:mouseover="show = true"
+                    x-on:mouseleave="show = false"
+                    class="relative flex items-center hover:text-gray-200 hover:bg-gray-800 space-x-2 rounded-md p-2 cursor-pointer justify-start text-gray-400
+                    {{ Route::currentRouteName() == 'admin.settings.shipping' ? 'text-gray-200 bg-gray-800' : '' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.25h5.909c.526 0 .982.36 1.108.873l1.055 4.226M15 18.75V5.625c0-.621-.504-1.125-1.125-1.125h-9.75c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125H4.5" />
+                    </svg>
+                    <h1 x-cloak x-bind:class="!$store.sidebar.full && show ? visibleClass : '' || !$store.sidebar.full ? 'sm:hidden' : ''">
+                        Shipping</h1>
                 </a>
 
                 <a href="{{ route('admin.site-settings') }}" x-data="tooltip" x-on:mouseover="show = true"

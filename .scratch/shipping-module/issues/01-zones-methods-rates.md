@@ -5,7 +5,7 @@ Status: done
 - `shipping_zones`, `shipping_methods` tables; seeded with Inside Dhaka (dhaka, flat 70)
   and Outside Dhaka (outside, flat 130) so behaviour is unchanged on deploy.
 - `orders.shipping_zone_id`, `orders.shipping_method_id`, `orders.shipping_meta` snapshot.
-- Admin: Sales → Shipping page to manage zones and methods (all rate types).
+- Admin: Settings → Shipping page to manage zones and methods (all rate types).
 - `ShippingCalculator` used by both theme checkouts; hard-coded list removed.
 - Checkout shows the charge, "Free" when zero, and "add ৳X more for free delivery".
 

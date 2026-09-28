@@ -1,4 +1,4 @@
-<div x-data x-init="$store.pageName = { name: 'Shipping', slug: 'sales-shipping' }">
+<div x-data x-init="$store.pageName = { name: 'Shipping', slug: 'settings-shipping' }">
 
     @php
         $input = 'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500';
@@ -10,8 +10,9 @@
     {{-- Header --}}
     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
         <p class="text-sm text-gray-500 max-w-2xl">
-            Zones are the delivery areas customers pick at checkout. Each zone needs at least one active method —
-            when a zone has more than one, the customer chooses between them.
+            Zones are the delivery areas customers pick at checkout; the Default one is pre-selected (the first zone
+            if none is). Each zone needs at least one active method — when a zone has more than one, the customer
+            chooses between them.
         </p>
         <button wire:click="createZone" type="button"
             class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition shadow-sm">
@@ -31,6 +32,9 @@
                         <div class="flex items-center gap-2">
                             <h2 class="text-sm font-semibold text-gray-800">{{ $z->name }}</h2>
                             <span class="px-2 py-0.5 text-[11px] font-mono text-gray-500 bg-gray-100 rounded">{{ $z->code }}</span>
+                            @if ($z->is_default)
+                                <span class="px-2 py-0.5 text-[11px] font-medium text-indigo-700 bg-indigo-50 rounded">Default</span>
+                            @endif
                             @unless ($z->is_active)
                                 <span class="px-2 py-0.5 text-[11px] font-medium text-amber-700 bg-amber-50 rounded">Hidden at checkout</span>
                             @endunless
@@ -38,6 +42,10 @@
                     </div>
                     <button wire:click="createMethod({{ $z->id }})" type="button"
                         class="px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">+ Method</button>
+                    @unless ($z->is_default)
+                        <button wire:click="makeDefaultZone({{ $z->id }})" type="button"
+                            class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition">Make default</button>
+                    @endunless
                     <button wire:click="toggleZone({{ $z->id }})" type="button"
                         class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition">{{ $z->is_active ? 'Disable' : 'Enable' }}</button>
                     <button wire:click="editZone({{ $z->id }})" type="button"
@@ -131,6 +139,10 @@
                         Show at checkout
                     </label>
                 </div>
+                <label class="flex items-center gap-2 text-sm text-gray-700">
+                    <input wire:model="zone.is_default" type="checkbox" class="rounded border-gray-300 text-indigo-600">
+                    Selected by default at checkout
+                </label>
             </div>
             <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 shrink-0">
                 <button type="button" @click="open = false" class="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">Cancel</button>
