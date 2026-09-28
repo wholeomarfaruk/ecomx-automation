@@ -218,6 +218,9 @@ class ProductVariants extends Component
         }, null);
 
         $existingKeys = ProductVariant::where('product_id', $product->id)->pluck('combination_key')->all();
+        // Soft-deleted variants still hold their SKU in the unique index, so a
+        // regenerated combination brings its old row back instead of colliding.
+        $trashedByKey = ProductVariant::onlyTrashed()->where('product_id', $product->id)->get()->keyBy('combination_key');
         $maxOrder = ProductVariant::where('product_id', $product->id)->max('sort_order') ?? 0;
         $created = 0;
 
@@ -229,11 +232,29 @@ class ProductVariants extends Component
                 continue;
             }
 
-            $labels = collect($combo)->pluck('label')->implode('-');
-            $sku = strtoupper($product->code . '-' . Str::slug($labels, '-'));
-            $sku = Str::limit($sku, 190, '');
-
             $maxOrder++;
+
+            if ($trashed = $trashedByKey->get($key)) {
+                $trashed->restore();
+                $trashed->update(['sort_order' => $maxOrder]);
+
+                if (! $trashed->values()->exists()) {
+                    foreach ($combo as $item) {
+                        ProductVariantValue::create([
+                            'product_variant_id'          => $trashed->id,
+                            'product_attribute_value_id'  => $item['product_attribute_value_id'],
+                        ]);
+                    }
+                }
+
+                $existingKeys[] = $key;
+                $created++;
+                continue;
+            }
+
+            $labels = collect($combo)->pluck('label')->implode('-');
+            $sku = $this->uniqueVariantSku(strtoupper($product->code . '-' . Str::slug($labels, '-')));
+
             $variant = ProductVariant::create([
                 'product_id'       => $product->id,
                 'sku'              => $sku,
@@ -257,6 +278,23 @@ class ProductVariants extends Component
             'type'    => 'success',
             'message' => $created > 0 ? "{$created} variant(s) generated" : 'All combinations already exist',
         ]);
+    }
+
+    /**
+     * The generated SKU, or it with a -2, -3… suffix when another variant
+     * (including a soft-deleted one) already holds it.
+     */
+    private function uniqueVariantSku(string $base): string
+    {
+        $base = Str::limit($base, 180, '');
+        $sku = $base;
+        $n = 1;
+
+        while (ProductVariant::withTrashed()->where('sku', $sku)->exists()) {
+            $sku = $base . '-' . (++$n);
+        }
+
+        return $sku;
     }
 
     public function reorderVariants(array $orderedIds): void
