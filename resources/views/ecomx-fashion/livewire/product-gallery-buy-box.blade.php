@@ -122,7 +122,6 @@
         </div>
 
         <div style="display:flex;gap:18px;flex-wrap:wrap" class="muted">
-            <span style="font-size:12px">◈ Free delivery over ৳5,000</span>
             <span style="font-size:12px">↺ 30-day returns · COD available</span>
             <span style="font-size:12px">✦ Made in Bangladesh</span>
         </div>
@@ -189,7 +188,7 @@
             </div>
             <div style="border-bottom:1px solid rgba(var(--pri-rgb),.08)">
                 <button class="accordion__head" @click="open = open===0 ? -1 : 0">Shipping &amp; returns <span x-text="open===0?'−':'+'" style="color:rgba(var(--pri-rgb),.45)"></span></button>
-                <p x-show="open===0" x-collapse style="margin:0;padding:0 2px 18px;font-size:13px;line-height:1.75;color:rgba(var(--pri-rgb),.65)">Free delivery on orders over ৳5,000 — inside Dhaka in 24–48 hours, nationwide in 3–5 days. bKash, Nagad, card and cash on delivery accepted. 30-day returns, free of charge.</p>
+                <p x-show="open===0" x-collapse style="margin:0;padding:0 2px 18px;font-size:13px;line-height:1.75;color:rgba(var(--pri-rgb),.65)">Inside Dhaka in 24–48 hours, nationwide in 3–5 days. bKash, Nagad, card and cash on delivery accepted. 30-day returns, free of charge.</p>
             </div>
         </div>
     </div>

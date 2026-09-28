@@ -70,7 +70,7 @@
 <div x-data="{ mega:null, drawer:false }" @keydown.escape.window="drawer=false;mega=null">
     <div class="topbar">
         <div class="topbar__inner">
-            <span>Free delivery across Bangladesh on orders over ৳5,000 · bKash, Nagad &amp; COD accepted</span>
+            <span>bKash, Nagad &amp; COD accepted</span>
             <div class="topbar__links">
                 @foreach ($topbarLinks as $link)
                     <a href="{{ $link['url'] }}"{!! $link['new_tab'] ? ' target="_blank" rel="noopener"' : '' !!}>{{ $link['label'] }}</a>

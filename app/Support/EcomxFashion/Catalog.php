@@ -92,7 +92,7 @@ class Catalog
     public static function faqs(): array
     {
         return [
-            ['q'=>'How long does delivery take in Bangladesh?','a'=>'Inside Dhaka we deliver in 24–48 hours. Nationwide delivery takes 3–5 working days. Orders over ৳5,000 ship free.'],
+            ['q'=>'How long does delivery take in Bangladesh?','a'=>'Inside Dhaka we deliver in 24–48 hours. Nationwide delivery takes 3–5 working days.'],
             ['q'=>'Which payment methods do you accept?','a'=>'bKash, Nagad, Visa, Mastercard and Cash on Delivery. COD is available everywhere in Bangladesh with no extra charge.'],
             ['q'=>'What is your return & exchange policy?','a'=>'30 days, free of charge. Items must be unworn with tags attached. Request a return from your account or call us.'],
             ['q'=>'How do I find my size?','a'=>'Every product page has a detailed size guide with measurements in cm. Our fits run true — size down for a closer fit.'],

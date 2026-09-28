@@ -9,7 +9,6 @@ use Livewire\Component;
 class Marquee extends Component
 {
     protected const DEFAULT_ITEMS = [
-        'Free delivery over ৳5,000',
         '⚡ Flash Sale live now',
         'New drops every week',
         'bKash · Nagad · COD',

@@ -3,10 +3,7 @@
 @endphp
 <div class="jtc-topbar">
     <div class="jtc-topbar__inner">
-        <div class="jtc-topbar__promo">
-            <span class="jtc-topbar__dot"></span>
-            <span>Free doorstep delivery on orders over ৳2,000 · nationwide</span>
-        </div>
+        <div class="jtc-topbar__promo"></div>
         @if ($topbarMenuItems)
             <nav class="jtc-topbar__nav">
                 @foreach ($topbarMenuItems as $item)
