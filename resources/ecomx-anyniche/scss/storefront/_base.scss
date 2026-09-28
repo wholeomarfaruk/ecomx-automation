@@ -100,12 +100,15 @@ button { font-family: inherit; }
   cursor: pointer;
   font-weight: 600;
   border-radius: $radius;
+  text-decoration: none;
   transition: background 0.15s ease, color 0.15s ease;
 
+  // &:hover repeats the colour so the global a:hover (blue-dark) can't win on
+  // <a class="jtc-btn"> and blend the text into the hover background.
   &--primary {
     background: $blue;
     color: #fff;
-    &:hover { background: $blue-dark; }
+    &:hover { background: $blue-dark; color: #fff; }
   }
   &--outline {
     background: #fff;
