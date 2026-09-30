@@ -17,3 +17,13 @@
 .pcard__swatch{width:12px;height:12px;border-radius:999px;border:1px solid rgba(var(--pri-rgb),.15);}
 .pcard__add{margin-top:8px;width:100%;padding:12px 0;border:1px solid var(--pri);border-radius:$radius-sm;background:transparent;color:var(--pri);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;transition:all .2s;}
 .pcard__add:hover,.pcard__add.is-added{background:var(--pri);color:var(--sec);}
+
+// Stock badges — products.stock_status (set in the admin).
+// Shared by the product and flash cards.
+.pcard__stock{position:absolute;z-index:1;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:6px 11px;border-radius:999px;white-space:nowrap;pointer-events:none;}
+.pcard__stock--low{top:12px;left:12px;background:#FFF1DC;color:#9A4A00;box-shadow:0 4px 14px rgba(154,74,0,.15);}
+.pcard__stock--below{top:48px;}
+.pcard__stock--out{top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(var(--pri-rgb),.88);color:var(--sec);padding:9px 18px;letter-spacing:.14em;}
+.pcard.is-soldout .pcard__img,.fcard.is-soldout .fcard__img{opacity:.55;filter:grayscale(.35);}
+.pcard.is-soldout:hover .pcard__img{transform:none;}
+.pcard__add:disabled{opacity:.45;cursor:not-allowed;pointer-events:none;}

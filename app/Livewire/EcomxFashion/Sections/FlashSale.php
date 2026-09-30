@@ -67,6 +67,7 @@ class FlashSale extends Component
             'img' => $p->featured_image,
             'colors' => $colorValues->pluck('swatch_value')->filter()->values()->all(),
             'is_wished' => $p->isWishedBy(request()->attributes->get('device')),
+            'stock_status' => $p->stock_status,
         ];
     }
 

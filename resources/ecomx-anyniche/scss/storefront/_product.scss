@@ -279,3 +279,8 @@
   text-decoration: none;
   &:hover { border-color: $blue; color: $blue; }
 }
+
+// Stock badges — products.stock_status (set in the admin).
+.jtc-badge--low { background: #F08C00; }
+.jtc-badge--soldout { background: #343A40; }
+.jtc-card.is-soldout .jtc-card__media img { opacity: 0.55; filter: grayscale(0.35); }

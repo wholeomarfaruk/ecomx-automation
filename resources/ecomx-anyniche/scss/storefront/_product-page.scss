@@ -274,3 +274,18 @@
   .jtc-pd-actions__cart { min-width: 0; flex: 1 1 100%; }
   .jtc-pd-actions__order { grid-template-columns: 1fr; }
 }
+
+// Stock line above the quantity/buy buttons (set in the admin).
+.jtc-stock-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  &__dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  &--in-stock { color: #2B8A3E; }
+  &--low-stock { color: #E67700; }
+  &--out-of-stock { color: #C92A2A; }
+}
+.jtc-stock-line--backorder { color: #1971C2; }

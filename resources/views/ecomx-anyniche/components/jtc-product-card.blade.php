@@ -4,13 +4,18 @@
     $productId = $p['id'] ?? null;
     $isWished = $p['is_wished'] ?? false;
     $offerBadges = $productId && empty($p['demo']) ? app(\App\Services\OfferService::class)->badgesForProductId((int) $productId) : [];
+    // products.stock_status as set in the admin — absent on demo items.
+    $stockState = $p['stock_status'] ?? null;
+    $soldOut = $stockState === 'out_of_stock';
 @endphp
-<article {{ $attributes->merge(['class' => 'jtc-card ' . ($rail ? 'jtc-card--rail' : '')]) }} x-data="{ wished: @js($isWished) }">
+<article {{ $attributes->merge(['class' => 'jtc-card ' . ($rail ? 'jtc-card--rail' : '') . ($soldOut ? ' is-soldout' : '')]) }} x-data="{ wished: @js($isWished) }">
     <div class="jtc-card__media">
         <div class="jtc-card__badges">
+            @if($soldOut)<span class="jtc-badge jtc-badge--soldout">Sold out</span>@endif
+            @if($stockState === 'low_stock')<span class="jtc-badge jtc-badge--low">Low stock</span>@endif
             @if(!empty($p['showNew']))<span class="jtc-badge jtc-badge--new">New</span>@endif
             @if(!empty($p['showDealPct']))<span class="jtc-badge jtc-badge--deal">{{ $p['pctText'] }}</span>@endif
-            @foreach(array_slice($offerBadges, 0, 2) as $offerBadge)
+            @foreach($soldOut ? [] : array_slice($offerBadges, 0, 2) as $offerBadge)
                 <span class="jtc-badge jtc-badge--offer" title="{{ $offerBadge['name'] }}">🎁 {{ $offerBadge['label'] }}</span>
             @endforeach
         </div>
@@ -35,7 +40,9 @@
                 <span class="jtc-card__price">{{ $p['priceText'] }}</span>
             @endif
         </div>
-        @if($productId)
+        @if($soldOut)
+            <button type="button" class="jtc-btn jtc-btn--primary jtc-card__add" disabled>Sold out</button>
+        @elseif($productId)
             <button type="button" class="jtc-btn jtc-btn--primary jtc-card__add"
                 @click="$dispatch('add-to-cart', { productId: {{ $productId }} })">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M6 6h15l-1.5 9h-12z"></path><circle cx="9" cy="20" r="1.4"></circle><circle cx="18" cy="20" r="1.4"></circle></svg>

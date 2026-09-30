@@ -57,6 +57,9 @@ class ProductGalleryBuyBox extends Component
     public bool $showSizeGuide = false;
     public bool $addedToCart = false;
 
+    /** The product's stock status as set in the admin. */
+    public string $stockStatus = 'in_stock';
+
     public function mount(int $productId): void
     {
         $this->productId = $productId;
@@ -69,6 +72,7 @@ class ProductGalleryBuyBox extends Component
         $pricing = $p->unitPricing();
         $this->flashSale = $p->sellingPrice() < $pricing['regular'];
         $this->offers = app(OfferService::class)->offersForProduct($p);
+        $this->stockStatus = (string) $p->stock_status;
         $this->product = [
             'name' => $p->name,
             'cat' => $p->categories->first()->name ?? '',
@@ -375,6 +379,20 @@ class ProductGalleryBuyBox extends Component
                 'stock' => $variant->stock_quantity,
             ];
         }
+    }
+
+    /**
+     * The admin-set product stock status, except that a picked variant with
+     * no stock is out of stock regardless — the cart refuses it
+     * (CartManager::addToCart()).
+     */
+    public function getCurrentStockStatusProperty(): string
+    {
+        $variant = $this->selectedVariant;
+
+        return $variant !== null && $this->stockStatus !== 'out_of_stock' && (float) $variant['stock'] <= 0
+            ? 'out_of_stock'
+            : $this->stockStatus;
     }
 
     public function getIsWishedProperty(): bool

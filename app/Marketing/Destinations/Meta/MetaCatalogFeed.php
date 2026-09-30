@@ -7,7 +7,6 @@ use App\Marketing\Catalog\CatalogItemId;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\OfferService;
-use App\Services\StockService;
 use Generator;
 use Illuminate\Support\Str;
 use XMLWriter;
@@ -42,7 +41,6 @@ final class MetaCatalogFeed
     private array $imageUrls = [];
 
     public function __construct(
-        private readonly StockService $stock,
         private readonly OfferService $offers,
     ) {}
 
@@ -166,10 +164,12 @@ final class MetaCatalogFeed
     }
 
     /**
-     * Mirrors what the storefront lets through to a completed order:
-     * CartManager rejects a product marked out_of_stock outright, a variant
-     * needs its own stock, and a simple product needs stock per StockService
-     * (which checkout's stock commit enforces).
+     * Mirrors what the cart accepts (CartManager::addToCart()): the
+     * admin-set stock_status rules — out_of_stock is refused outright — and
+     * the only quantities enforced are a variant's own stock and, while the
+     * Inventory module is off, a simple product's own stock_quantity
+     * (Product::ownStockLimit()). Stock quantities aren't tracked for every
+     * product, so nothing else is inferred from them.
      */
     private function inStock(Product $product, ?ProductVariant $variant): bool
     {
@@ -177,11 +177,13 @@ final class MetaCatalogFeed
             return false;
         }
 
-        return match (true) {
-            $variant !== null => (float) $variant->stock_quantity > 0,
-            $product->product_type === ProductType::COMBO => ($product->comboAvailableQuantity() ?? 0) > 0,
-            default => $this->stock->available($product, null) > 0,
-        };
+        if ($variant !== null) {
+            return (float) $variant->stock_quantity > 0;
+        }
+
+        $limit = $product->ownStockLimit();
+
+        return $limit === null || $limit > 0;
     }
 
     /**

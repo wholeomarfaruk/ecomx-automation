@@ -54,3 +54,12 @@
 .pdp-share__toast{font-size:12px;font-weight:600;color:var(--ac2);}
 @include mobile{.pdp-share__list{gap:10px;}.pdp-share__btn{width:42px;height:42px;}}
 .accordion__head{width:100%;display:flex;justify-content:space-between;align-items:center;padding:17px 2px;border:none;background:none;font-size:13.5px;font-weight:600;color:var(--pri);}
+
+// Stock line above the buy buttons (set in the admin).
+.stock-line{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:13px;font-weight:600;}
+.stock-line__dot{width:8px;height:8px;border-radius:999px;background:currentColor;}
+.stock-line--in-stock{color:#1E7A46;}
+.stock-line--low-stock{color:#B35C00;}
+.stock-line--out-of-stock{color:#C0392B;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.stock-line--backorder{color:#1D6FA5;}

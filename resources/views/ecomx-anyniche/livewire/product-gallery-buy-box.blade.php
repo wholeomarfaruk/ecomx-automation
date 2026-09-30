@@ -105,6 +105,16 @@
             </div>
         @endif
 
+        {{-- Stock: the admin-set status; a picked variant with no stock shows out of stock --}}
+        @php
+            $stockState = $this->currentStockStatus;
+            $soldOut = $stockState === 'out_of_stock';
+        @endphp
+        <p class="jtc-stock-line jtc-stock-line--{{ str_replace('_', '-', $stockState) }}">
+            <span class="jtc-stock-line__dot"></span>
+            {{ ['low_stock' => 'Low stock', 'out_of_stock' => 'Out of stock', 'backorder' => 'Available on backorder'][$stockState] ?? 'In stock' }}
+        </p>
+
         <div class="jtc-qty">
             <button type="button" @click="dec()" aria-label="Decrease">−</button>
             <span x-text="qty"></span>
@@ -112,14 +122,14 @@
         </div>
 
         <div class="jtc-pd-info__buyrow" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <button type="button" class="jtc-pd-actions__buy" @click="$wire.buyNow(qty)" wire:loading.attr="disabled" wire:target="buyNow">
+            <button type="button" class="jtc-pd-actions__buy" @click="$wire.buyNow(qty)" wire:loading.attr="disabled" wire:target="buyNow" @disabled($soldOut)>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M13 2 3 14h7v8l10-12h-7z"></path></svg>
                 Buy now
             </button>
 
-            <button type="button" class="jtc-pd-actions__cart" @click="$wire.addToCart(qty)">
+            <button type="button" class="jtc-pd-actions__cart" @click="$wire.addToCart(qty)" @disabled($soldOut)>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M6 6h15l-1.5 9h-12z"></path><circle cx="9" cy="20" r="1.4"></circle><circle cx="18" cy="20" r="1.4"></circle></svg>
-                {{ $addedToCart ? 'Added ✓' : 'Add to cart' }}
+                {{ $soldOut ? 'Sold out' : ($addedToCart ? 'Added ✓' : 'Add to cart') }}
             </button>
         </div>
 

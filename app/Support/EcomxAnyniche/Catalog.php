@@ -38,6 +38,7 @@ class Catalog
             'priceText' => $money($isCompare ? $salePrice : $price),
             'compareText' => $isCompare ? $money($price) : '',
             'is_wished' => $product->isWishedBy(request()->attributes->get('device')),
+            'stock_status' => $product->stock_status,
         ];
     }
 

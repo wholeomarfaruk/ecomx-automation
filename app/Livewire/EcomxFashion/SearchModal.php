@@ -29,7 +29,8 @@ class SearchModal extends Component
                 'name' => $p->name,
                 'cat' => $p->categories->first()->name ?? '',
                 ...$p->cardPricing(),
-                'inStock' => $p->stock_status === 'in_stock',
+                // low_stock still sells — only out_of_stock doesn't.
+                'inStock' => $p->stock_status !== 'out_of_stock',
                 'img' => $p->featured_image,
                 'url' => route('ecomx-fashion.product', $p->slug),
             ])

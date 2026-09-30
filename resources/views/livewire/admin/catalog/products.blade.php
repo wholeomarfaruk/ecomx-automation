@@ -169,8 +169,12 @@
                                     @elseif($product->product_type === \App\Enums\Product\ProductType::COMBO)
                                         {{ (int) $stockInfo['quantity'] }} bundle{{ (int) $stockInfo['quantity'] === 1 ? '' : 's' }}
                                     @elseif($product->product_type === \App\Enums\Product\ProductType::VARIABLE)
+                                        @php
+                                            $activeVariants = $product->variants->where('status', 'active');
+                                            $stockedVariants = $activeVariants->filter(fn ($v) => (float) $v->stock_quantity > 0)->count();
+                                        @endphp
                                         {{ rtrim(rtrim(number_format($stockInfo['quantity'], 3), '0'), '.') ?: '0' }}
-                                        <span class="text-gray-300">({{ $stockInfo['variant_count'] }} variant{{ $stockInfo['variant_count'] === 1 ? '' : 's' }})</span>
+                                        <span class="text-gray-300" title="Active variants with stock">({{ $stockedVariants }}/{{ $activeVariants->count() }} in stock)</span>
                                     @else
                                         {{ rtrim(rtrim(number_format($stockInfo['quantity'], 3), '0'), '.') ?: '0' }}
                                     @endif

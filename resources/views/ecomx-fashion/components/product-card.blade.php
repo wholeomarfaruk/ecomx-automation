@@ -5,12 +5,20 @@
     $isWished = $product['is_wished'] ?? false;
     $hasSale = !empty($product['sale']);
     $offerBadges = $productId && empty($product['demo']) ? app(\App\Services\OfferService::class)->badgesForProductId((int) $productId) : [];
+    // products.stock_status as set in the admin — absent on demo items.
+    $stockState = $product['stock_status'] ?? null;
+    $soldOut = $stockState === 'out_of_stock';
 @endphp
-<div class="pcard" x-data="{ added:false, wished: @js($isWished) }">
+<div class="pcard {{ $soldOut ? 'is-soldout' : '' }}" x-data="{ added:false, wished: @js($isWished) }">
     <a href="{{ $productUrl }}" class="pcard__media">
         <x-ux-img :id="$product['img']" :w="700" :alt="$product['name']" class="pcard__img" />
         @if(!empty($product['tag']))<span class="pcard__tag">{{ $product['tag'] }}</span>@endif
-        @if($offerBadges !== [])
+        @if($soldOut)
+            <span class="pcard__stock pcard__stock--out">Sold out</span>
+        @elseif($stockState === 'low_stock')
+            <span class="pcard__stock pcard__stock--low {{ !empty($product['tag']) ? 'pcard__stock--below' : '' }}">Low stock</span>
+        @endif
+        @if($offerBadges !== [] && ! $soldOut)
             <span class="pcard__offer" title="{{ $offerBadges[0]['name'] }}">🎁 {{ $offerBadges[0]['label'] }}@if(count($offerBadges) > 1) +{{ count($offerBadges) - 1 }}@endif</span>
         @endif
         @if ($productId)
@@ -34,7 +42,9 @@
                 @foreach($product['colors'] as $col)<span class="pcard__swatch" style="background:{{ $col }}"></span>@endforeach
             </div>
         </div>
-        @if ($productId)
+        @if ($soldOut)
+            <button type="button" class="pcard__add" disabled>Sold out</button>
+        @elseif ($productId)
             <button type="button" class="pcard__add" :class="added && 'is-added'" @click="added=true; $dispatch('add-to-cart', { productId: {{ $productId }} }); setTimeout(()=>added=false,1600)" x-text="added ? 'Added ✓' : 'Add to Cart'"></button>
         @else
             <button type="button" class="pcard__add" disabled>Add to Cart</button>
