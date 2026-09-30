@@ -7,6 +7,7 @@ use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\PaymentStatus;
 use App\Enums\User\Status;
 use App\Exceptions\Inventory\InsufficientStockException;
+use App\Marketing\Catalog\CatalogItemId;
 use App\Marketing\Events\InitiateCheckout;
 use App\Marketing\Events\Purchase as PurchaseEvent;
 use App\Marketing\Services\MarketingEventService;
@@ -188,7 +189,7 @@ class Checkout extends Component
         }
 
         $items = $cart->items->map(fn ($item) => [
-            'item_id' => (string) $item->product_id,
+            'item_id' => CatalogItemId::line($item->product, $item->product_id, $item->variant_id),
             'product_id' => $item->product_id,
             'variant_id' => $item->variant_id,
             'item_name' => $item->product?->name,
@@ -613,7 +614,7 @@ class Checkout extends Component
         $order->load('items');
 
         $items = $order->items->map(fn ($item) => [
-            'item_id' => (string) $item->product_id,
+            'item_id' => CatalogItemId::line($item->product, $item->product_id, $item->variant_id),
             'product_id' => $item->product_id,
             'variant_id' => $item->variant_id,
             'item_name' => $item->product_name,

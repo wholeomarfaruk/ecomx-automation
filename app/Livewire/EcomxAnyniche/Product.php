@@ -2,6 +2,8 @@
 
 namespace App\Livewire\EcomxAnyniche;
 
+use App\Enums\Product\ProductType;
+use App\Marketing\Catalog\CatalogItemId;
 use App\Marketing\Events\ViewContent;
 use App\Marketing\Services\MarketingEventService;
 use App\Models\Device;
@@ -82,11 +84,15 @@ class Product extends Component
             return;
         }
 
+        // No variant is picked yet on page load, so a variable product is
+        // reported as its catalog item group; anything else is one item.
+        $isVariable = $product->product_type === ProductType::VARIABLE;
+
         $event = ViewContent::create(
-            contentId: $product->id,
+            contentId: $isVariable ? CatalogItemId::group($product->id) : CatalogItemId::item($product->id),
             contentName: $product->name,
-            contentType: 'product',
-            value: $product->discounted_price,
+            contentType: $isVariable ? 'product_group' : 'product',
+            value: (float) $product->min_price,
             currency: 'BDT',
         );
 

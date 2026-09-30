@@ -2,6 +2,8 @@
 
 namespace App\Livewire\EcomxAnyniche;
 
+use App\Enums\Product\ProductType;
+use App\Marketing\Catalog\CatalogItemId;
 use App\Marketing\Events\AddToCart as AddToCartEvent;
 use App\Marketing\Services\MarketingEventService;
 use App\Models\Cart;
@@ -89,6 +91,14 @@ class CartManager extends Component
                 ->where('stock_quantity', '>', 0)
                 ->orderBy('sort_order')
                 ->first();
+
+            // A variable product is only ever sold as one of its variants —
+            // with none in stock there is nothing to add (and a variant-less
+            // line would match no catalog item and no stock).
+            if (! $variant && $product->product_type === ProductType::VARIABLE) {
+                $this->dispatch('notify', type: 'error', message: 'This product is out of stock.');
+                return;
+            }
         }
 
         $variantId = $variant?->id;
@@ -128,7 +138,7 @@ class CartManager extends Component
 
         $this->updateCartTotals($cart);
 
-        $this->recordAddToCart($product, $item);
+        $this->recordAddToCart($product, $item, $qty);
 
         if ($checkout) {
             $this->redirectRoute('ecomx-anyniche.checkout');
@@ -140,7 +150,12 @@ class CartManager extends Component
         $this->dispatch('notify', type: 'success', message: 'Added to cart successfully.');
     }
 
-    private function recordAddToCart(Product $product, CartItem $item): void
+    /**
+     * $addedQty is what THIS click added — re-adding the same product/variant
+     * bumps the existing cart line's quantity, and reporting the line's new
+     * total would count earlier adds again.
+     */
+    private function recordAddToCart(Product $product, CartItem $item, int $addedQty): void
     {
         /** @var Device|null $device */
         $device = request()->attributes->get('device');
@@ -149,11 +164,16 @@ class CartManager extends Component
             return;
         }
 
+        // The unit price the shopper saw when adding (sale price + per-unit
+        // offers) — the same figure the product page and the catalog feed
+        // show, so Meta sees one price per item.
+        $unitPrice = $product->unitPricing($item->variant)['discounted'];
+
         $event = AddToCartEvent::create(
-            contentId: $item->product_id,
+            contentId: CatalogItemId::line($product, $item->product_id, $item->variant_id),
             contentName: $product->name,
-            quantity: $item->quantity,
-            value: (float) ($item->quantity * $item->price),
+            quantity: $addedQty,
+            value: round($addedQty * $unitPrice, 2),
             currency: 'BDT',
         );
 

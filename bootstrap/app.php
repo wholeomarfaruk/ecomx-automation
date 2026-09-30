@@ -26,6 +26,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->name('admin.')
                 ->group(base_path('routes/admin.php'));
 
+            // Meta catalog feed — deliberately without the `web` group: a
+            // feed fetcher must not get a session or be tracked as a
+            // visitor (DeviceTracker / MarketingTracker live in `web`).
+            // Throttled since each uncached host rebuilds the whole catalog.
+            Route::get('/feeds/meta-catalog.xml', \App\Http\Controllers\MetaCatalogFeedController::class)
+                ->middleware('throttle:30,1')
+                ->name('feeds.meta-catalog');
         }
     )
     ->withMiddleware(function (Middleware $middleware): void {

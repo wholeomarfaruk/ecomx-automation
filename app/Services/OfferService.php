@@ -12,6 +12,7 @@ use App\Models\Product;
 use App\Models\Promotion;
 use App\Models\PromotionCondition;
 use App\Models\PromotionDiscountRule;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 
 /**
@@ -127,7 +128,38 @@ class OfferService
             return $this->unitPrices[$key];
         }
 
-        $line = [
+        $result = $this->applyOffers(collect([$this->unitLine($product, $selling, $variantId)]), [], self::PER_UNIT_RULES);
+
+        return $this->unitPrices[$key] = max(0.0, round($selling - ($result['lines'][0] ?? 0.0), 2));
+    }
+
+    /**
+     * When the discount unitPrice() gives stops being true: the earliest end
+     * among the dated offers applied to that one unit. Null when no offer
+     * applies or none of the applied ones has an end date. For feeds that
+     * must state how long a sale price lasts (Meta's sale_price_effective_date).
+     */
+    public function unitPriceEndsAt(Product $product, float $selling, ?int $variantId = null): ?CarbonInterface
+    {
+        if ($selling <= 0 || $this->activeOffers()->isEmpty()) {
+            return null;
+        }
+
+        $result = $this->applyOffers(collect([$this->unitLine($product, $selling, $variantId)]), [], self::PER_UNIT_RULES);
+        $appliedIds = array_column($result['applied'], 'promotion_id');
+
+        return $this->activeOffers()
+            ->whereIn('id', $appliedIds)
+            ->pluck('ends_at')
+            ->filter()
+            ->sortBy(fn (CarbonInterface $endsAt) => $endsAt->getTimestamp())
+            ->first();
+    }
+
+    /** A one-unit cart line for unitPrice()/unitPriceEndsAt(). */
+    protected function unitLine(Product $product, float $selling, ?int $variantId): array
+    {
+        return [
             'id'         => 0,
             'product_id' => (int) $product->id,
             'variant_id' => $variantId,
@@ -135,10 +167,6 @@ class OfferService
             'total'      => $selling,
             'product'    => $product,
         ];
-
-        $result = $this->applyOffers(collect([$line]), [], self::PER_UNIT_RULES);
-
-        return $this->unitPrices[$key] = max(0.0, round($selling - ($result['lines'][0] ?? 0.0), 2));
     }
 
     /**

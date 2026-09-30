@@ -4,6 +4,7 @@ namespace App\Marketing\Services;
 
 use App\Marketing\Attribution\AttributionService;
 use App\Marketing\Browser\BrowserEventPayloadBuilder;
+use App\Marketing\Catalog\CatalogItemId;
 use App\Marketing\Context\MarketingContext;
 use App\Marketing\Context\MarketingContextBuilder;
 use App\Marketing\Contracts\EventContract;
@@ -283,7 +284,7 @@ final class MarketingEventService
         $order->loadMissing('items');
 
         $items = $order->items->map(fn ($item) => [
-            'item_id' => $item->sku ?? (string) $item->product_id,
+            'item_id' => CatalogItemId::line($item->product, $item->product_id, $item->variant_id),
             'product_id' => $item->product_id,
             'variant_id' => $item->variant_id,
             'item_name' => $item->product_name,

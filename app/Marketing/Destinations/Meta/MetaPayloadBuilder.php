@@ -160,53 +160,83 @@ final class MetaPayloadBuilder
     private function buildPurchaseData(
         Purchase $event,
     ): array {
-        return array_filter([
+        return $this->withoutEmpty([
             'value' => $event->value,
             'currency' => $event->currency,
             'order_id' => $event->orderId,
-
-            'contents' => array_map(
-                fn (array $item) => array_filter([
-                    'id' => $item['item_id'] ?? null,
-                    'quantity' => $item['quantity'] ?? null,
-                    'item_price' => $item['price'] ?? null,
-                ], fn ($value) => $value !== null),
-                $event->items
-            ),
-
-            'content_ids' => array_values(array_filter(
-                array_column($event->items, 'item_id')
-            )),
-
+            'contents' => $this->contents($event->items),
+            'content_ids' => $this->contentIds($event->items),
             'content_type' => 'product',
         ]);
     }
 
+    /**
+     * content_ids / content_type must match the catalog (see
+     * CatalogItemId): ViewContent of a variable product carries its item
+     * group id as product_group; everything else is a single item. Advantage+
+     * catalog ads require contents on AddToCart.
+     */
     private function buildContentData(
         ViewContent|AddToCart $event,
     ): array {
-        return array_filter([
+        $id = $event->contentId !== null ? (string) $event->contentId : null;
+
+        $contents = $event instanceof AddToCart && $id !== null
+            ? [$this->withoutEmpty([
+                'id' => $id,
+                'quantity' => $event->quantity,
+                'item_price' => $event->value !== null && $event->quantity > 0 ? round($event->value / $event->quantity, 2) : null,
+            ])]
+            : null;
+
+        return $this->withoutEmpty([
             'value' => $event->value,
             'currency' => $event->currency,
-            'content_ids' => $event->contentId ? [(string) $event->contentId] : null,
+            'content_ids' => $id !== null ? [$id] : null,
             'content_name' => $event->contentName,
-            'content_type' => $event->contentType ?? 'product',
+            'content_type' => $event instanceof ViewContent ? ($event->contentType ?? 'product') : 'product',
+            'contents' => $contents,
         ]);
     }
 
     private function buildCheckoutData(
         InitiateCheckout $event,
     ): array {
-        return array_filter([
+        return $this->withoutEmpty([
             'value' => $event->value,
             'currency' => $event->currency,
-            'contents' => $event->items,
-            'content_ids' => array_values(array_filter(
-                array_column($event->items, 'item_id')
-            )),
+            'contents' => $this->contents($event->items),
+            'content_ids' => $this->contentIds($event->items),
             'content_type' => 'product',
             'num_items' => $event->itemCount ?? count($event->items),
         ]);
+    }
+
+    /**
+     * Meta's contents shape — only id, integer quantity and item_price.
+     * Cart/order quantities are decimal columns ("1.000"), so they're cast.
+     */
+    private function contents(array $items): array
+    {
+        return array_map(
+            fn (array $item) => $this->withoutEmpty([
+                'id' => $item['item_id'] ?? null,
+                'quantity' => isset($item['quantity']) ? (int) round((float) $item['quantity']) : null,
+                'item_price' => isset($item['price']) ? (float) $item['price'] : null,
+            ]),
+            $items,
+        );
+    }
+
+    private function contentIds(array $items): array
+    {
+        return array_values(array_filter(array_column($items, 'item_id')));
+    }
+
+    /** Drops null and [] only — a legitimate 0 (value of a fully discounted order) stays. */
+    private function withoutEmpty(array $data): array
+    {
+        return array_filter($data, fn ($value) => $value !== null && $value !== []);
     }
 
     private function buildGenericData(

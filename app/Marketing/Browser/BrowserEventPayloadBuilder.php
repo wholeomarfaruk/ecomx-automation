@@ -7,6 +7,8 @@ use App\Marketing\Attribution\MarketingAttribution;
 use App\Marketing\Contracts\EventContract;
 use App\Marketing\Data\MarketingEventData;
 use App\Marketing\Events\AddToCart;
+use App\Marketing\Events\InitiateCheckout;
+use App\Marketing\Events\Purchase;
 use App\Marketing\Events\ViewContent;
 
 /**
@@ -25,13 +27,16 @@ final class BrowserEventPayloadBuilder
         return array_filter([
             'event' => $this->gtmEventName($event),
 
-            'marketing' => [
+            'marketing' => array_filter([
                 'event_id' => $event->eventId(),
                 'event_name' => $event->eventName(),
                 'occurred_at' => $event->occurredAt()->toISOString(),
                 'source' => 'website',
                 'channel' => 'browser',
-            ],
+                // For a GTM Meta Pixel tag: whether ecommerce.items[].item_id
+                // are catalog items or item groups (see CatalogItemId).
+                'content_type' => $this->contentType($event),
+            ], fn ($value) => $value !== null),
 
             'ecommerce' => $this->buildEcommerce($event, $eventData),
 
@@ -42,6 +47,15 @@ final class BrowserEventPayloadBuilder
 
             'attribution' => $this->buildAttribution($data->attribution),
         ], fn ($value) => $value !== null && $value !== []);
+    }
+
+    private function contentType(EventContract $event): ?string
+    {
+        return match (true) {
+            $event instanceof ViewContent => $event->contentType ?? 'product',
+            $event instanceof AddToCart, $event instanceof InitiateCheckout, $event instanceof Purchase => 'product',
+            default => null,
+        };
     }
 
     private function gtmEventName(EventContract $event): string
@@ -94,11 +108,18 @@ final class BrowserEventPayloadBuilder
         }
 
         if ($event instanceof AddToCart || $event instanceof ViewContent) {
+            $value = $data['value'] ?? null;
+            $quantity = $event instanceof AddToCart ? $event->quantity : null;
+
+            // GA4 reads price as the UNIT price (revenue = price × quantity),
+            // while an AddToCart's value is already the whole add.
+            $price = $value !== null && $quantity > 0 ? round($value / $quantity, 2) : $value;
+
             $item = array_filter([
                 'item_id' => $event->contentId !== null ? (string) $event->contentId : null,
                 'item_name' => $event->contentName,
-                'price' => $data['value'] ?? null,
-                'quantity' => $event instanceof AddToCart ? $event->quantity : null,
+                'price' => $price,
+                'quantity' => $quantity,
             ], fn ($value) => $value !== null);
 
             return $item !== [] ? [$item] : [];
