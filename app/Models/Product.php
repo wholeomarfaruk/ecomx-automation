@@ -173,6 +173,18 @@ class Product extends Model
         return $sale !== null && $sale > 0 && $sale < $regular ? $sale : $regular;
     }
 
+    /**
+     * url: the storefront product page. Every storefront theme serves it at
+     * /product/{slug} (routes/frontend/*.php), and only the active theme's
+     * routes are registered — so it's built from that shared path rather
+     * than a theme-specific route name. The slug is admin-editable free
+     * text, hence encoded.
+     */
+    protected function url(): Attribute
+    {
+        return Attribute::get(fn () => filled($this->slug) ? url('product/'.rawurlencode($this->slug)) : null);
+    }
+
     /** discounted_price: one unit of the product itself after sale price and per-unit offers — see unitPricing(). */
     protected function discountedPrice(): Attribute
     {

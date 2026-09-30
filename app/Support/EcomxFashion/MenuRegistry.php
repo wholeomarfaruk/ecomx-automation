@@ -147,7 +147,7 @@ class MenuRegistry
         if ($menu === 'footer-help') {
             return [
                 static::newItem('Track Order', route('ecomx-fashion.track')),
-                static::newItem('Size Guide', route('ecomx-fashion.product')),
+                static::newItem('Size Guide', route('ecomx-fashion.home')),
                 static::newItem('Care Guide', route('ecomx-fashion.home')),
                 static::newItem('Contact', route('ecomx-fashion.home')),
             ];

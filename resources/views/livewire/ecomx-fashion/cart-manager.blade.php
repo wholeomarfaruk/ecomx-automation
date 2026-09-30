@@ -51,12 +51,12 @@
                     $productHasVariants = $product && $product->variants()->where('status', 'active')->exists();
                 @endphp
                 <div class="cart-item" wire:key="cart-item-{{ $item->id }}">
-                    <div class="cart-item__media">
+                    <a href="{{ $product?->url ?? '#' }}" class="cart-item__media">
                         <x-ux-img :id="$item->display_image" :w="200" :alt="$product?->name ?? ''" />
-                    </div>
+                    </a>
                     <div class="cart-item__body">
                         <div class="cart-item__row">
-                            <span class="cart-item__name">{{ $product?->name ?? 'Deleted product' }}</span>
+                            <a href="{{ $product?->url ?? '#' }}" class="cart-item__name">{{ $product?->name ?? 'Deleted product' }}</a>
                             <span>
                                 @if ($hasSale)
                                     <span class="cart-item__price--old">৳{{ number_format($comparePrice) }}</span>

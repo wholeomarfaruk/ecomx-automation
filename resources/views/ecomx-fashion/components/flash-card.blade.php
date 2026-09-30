@@ -4,9 +4,11 @@
     $productId = $item['id'] ?? null;
     $isWished = $item['is_wished'] ?? false;
     $offerBadges = $productId && empty($item['demo']) ? app(\App\Services\OfferService::class)->badgesForProductId((int) $productId) : [];
+    // Demo items (no real product) have no page to open.
+    $productUrl = $item['url'] ?? (! empty($item['slug']) ? route('ecomx-fashion.product', $item['slug']) : '#');
 @endphp
 <div class="fcard" x-data="{ added:false, wished: @js($isWished) }">
-    <a href="{{ $item['url'] ?? route('ecomx-fashion.product') }}" class="fcard__media">
+    <a href="{{ $productUrl }}" class="fcard__media">
         <x-ux-img :id="$item['img']" :w="500" :alt="$item['name']" class="fcard__img" />
         <span class="fcard__save">Save <span class="sym">৳</span>{{ number_format($save) }}</span>
         @if($offerBadges !== [])
@@ -19,7 +21,7 @@
         @endif
     </a>
     <div style="display:flex;flex-direction:column;gap:4px;padding:0 4px">
-        <span class="fcard__name">{{ $item['name'] }}</span>
+        <a href="{{ $productUrl }}" class="fcard__name" style="color:inherit;text-decoration:none">{{ $item['name'] }}</a>
         <div style="display:flex;justify-content:space-between;align-items:baseline">
             <span style="display:flex;gap:8px;align-items:baseline">
                 <span class="fcard__price"><span class="sym">৳</span>{{ number_format($item['sale']) }}</span>

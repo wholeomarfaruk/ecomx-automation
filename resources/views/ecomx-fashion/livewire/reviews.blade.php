@@ -54,7 +54,12 @@
                         <span class="muted" style="font-size:11.5px">{{ $r['date'] }}</span>
                     </div>
                     <p style="margin:0;font-size:13.5px;line-height:1.65;color:rgba(var(--pri-rgb),.78)">“{{ $r['text'] }}”</p>
-                    <a href="{{ route('ecomx-fashion.product') }}" style="font-size:12px;color:var(--ac2);font-weight:500">On: {{ $r['product'] }} →</a>
+                    {{-- Linked only when the review carries a real product URL — these sample reviews name no catalog product. --}}
+                    @if(! empty($r['url']))
+                        <a href="{{ $r['url'] }}" style="font-size:12px;color:var(--ac2);font-weight:500">On: {{ $r['product'] }} →</a>
+                    @else
+                        <span style="font-size:12px;color:var(--ac2);font-weight:500">On: {{ $r['product'] }}</span>
+                    @endif
                     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:auto;padding-top:8px;border-top:1px solid rgba(var(--pri-rgb),.06)">
                         <div style="display:flex;align-items:center;gap:9px;min-width:0">
                             <x-ux-img :id="$r['avatar']" :w="100" alt="" style="width:30px;height:30px;border-radius:999px;object-fit:cover;flex:none" />

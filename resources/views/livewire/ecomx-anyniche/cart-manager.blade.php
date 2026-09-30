@@ -47,9 +47,11 @@
                     $productHasVariants = $product && $product->variants()->where('status', 'active')->exists();
                 @endphp
                 <div class="jtc-cart__line" wire:key="cart-item-{{ $item->id }}">
-                    <x-anyniche::ux-img class="jtc-cart__thumb" :id="$item->display_image" :w="200" :alt="$product?->name ?? ''" />
+                    <a href="{{ $product?->url ?? '#' }}">
+                        <x-anyniche::ux-img class="jtc-cart__thumb" :id="$item->display_image" :w="200" :alt="$product?->name ?? ''" />
+                    </a>
                     <div>
-                        <div class="jtc-cart__name">{{ $product?->name ?? 'Deleted product' }}</div>
+                        <a href="{{ $product?->url ?? '#' }}" class="jtc-cart__name" style="display:block;color:inherit;text-decoration:none">{{ $product?->name ?? 'Deleted product' }}</a>
                         <div class="jtc-cart__meta">
                             @if ($hasSale)
                                 <span style="text-decoration:line-through;opacity:.6">৳{{ number_format($comparePrice) }}</span>

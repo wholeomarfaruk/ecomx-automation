@@ -95,7 +95,11 @@
                             <img src="{{ $item->product?->featured_image ?? '' }}" alt="">
                         </div>
                         <div class="jtc-order-item__name">
-                            {{ $item->product_name }}
+                            @if($item->product?->url)
+                                <a href="{{ $item->product->url }}" style="color:inherit;text-decoration:underline">{{ $item->product_name }}</a>
+                            @else
+                                {{ $item->product_name }}
+                            @endif
                             @if($item->variant_name)
                                 <span class="muted"> · {{ $item->variant_name }}</span>
                             @endif

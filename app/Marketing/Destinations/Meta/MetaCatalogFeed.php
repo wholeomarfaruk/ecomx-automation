@@ -133,7 +133,8 @@ final class MetaCatalogFeed
 
         [$image, $additionalImages] = $this->images($product, $variant);
 
-        if (! $image) {
+        // No image or no product page (empty slug) — Meta rejects the item anyway.
+        if (! $image || ! $product->url) {
             return null;
         }
 
@@ -145,9 +146,7 @@ final class MetaCatalogFeed
             'item_group_id' => $variant ? CatalogItemId::group($product->id) : null,
             'title' => Str::limit($this->clean($product->name), 150, ''),
             'description' => $this->description($product),
-            // Both storefront themes serve products at /product/{slug}. The
-            // slug is admin-editable free text, so it's encoded.
-            'link' => url('product/'.rawurlencode((string) $product->slug)),
+            'link' => $product->url,
             'image_link' => $image,
             'additional_image_link' => $additionalImages,
             'brand' => $this->clean($product->brand?->name) ?: (string) config('app.name'),
