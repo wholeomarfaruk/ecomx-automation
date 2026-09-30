@@ -26,6 +26,7 @@ class BrowseAll extends Component
     {
         $products = Product::where('status', 'active')
             ->with('variants')
+            ->orderByRaw("products.stock_status = 'out_of_stock'") // sold out last
             ->orderBy('sort_order')
             ->orderByDesc('id')
             ->take($this->limit)

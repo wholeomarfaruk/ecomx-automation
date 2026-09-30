@@ -43,6 +43,7 @@ class ProductGrid extends Component
         $query = $category ? $category->products() : Product::query();
         $products = $query->where('products.status', 'active')
             ->with('categories', 'variants')
+            ->orderByRaw("products.stock_status = 'out_of_stock'") // sold out last
             ->latest('products.id')
             ->limit(static::LIMIT)
             ->get();

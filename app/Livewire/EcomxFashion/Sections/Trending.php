@@ -42,6 +42,7 @@ class Trending extends Component
         return $category->products()
             ->where('status', 'active')
             ->with('variants')
+            ->orderByRaw("products.stock_status = 'out_of_stock'") // sold out last
             ->inRandomOrder()
             ->limit(12)
             ->get();

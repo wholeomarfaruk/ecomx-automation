@@ -33,6 +33,7 @@ class FlashSale extends Component
         $discounted = Product::where('status', 'active')
             ->whereNotNull('sale_price')
             ->with('variants')
+            ->orderByRaw("products.stock_status = 'out_of_stock'") // sold out last
             ->inRandomOrder()
             ->limit(8)
             ->get();
