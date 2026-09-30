@@ -338,7 +338,7 @@ final class MarketingEventService
         return new MarketingEventData(
             event: $event,
             context: $contextWithAttribution,
-            identity: $this->identityResolver->resolve($contextWithAttribution),
+            identity: $this->identityResolver->resolve($contextWithAttribution, $event),
             attribution: $attribution,
         );
     }

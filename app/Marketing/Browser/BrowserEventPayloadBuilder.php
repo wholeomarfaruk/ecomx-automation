@@ -6,6 +6,7 @@ use App\Marketing\Attribution\AttributionTouch;
 use App\Marketing\Attribution\MarketingAttribution;
 use App\Marketing\Contracts\EventContract;
 use App\Marketing\Data\MarketingEventData;
+use App\Marketing\Destinations\Meta\MetaBrowserData;
 use App\Marketing\Events\AddToCart;
 use App\Marketing\Events\InitiateCheckout;
 use App\Marketing\Events\Purchase;
@@ -13,12 +14,18 @@ use App\Marketing\Events\ViewContent;
 
 /**
  * Builds the universal dataLayer payload for a canonical marketing event.
- * Destination-agnostic by design — no Meta/GA4/TikTok-specific field names
- * or transforms here. GTM tags do that mapping on the browser side, from
- * this same payload.
+ * Destination-agnostic (GA4-style ecommerce) — GTM tags map it on the
+ * browser side. The one exception is the `meta` block: Meta's hashed
+ * advanced matching and custom_data can't be derived in GTM, so it's built
+ * server-side by the same code as the Conversions API payload (see
+ * MetaBrowserData).
  */
 final class BrowserEventPayloadBuilder
 {
+    public function __construct(
+        private readonly MetaBrowserData $metaBrowserData,
+    ) {}
+
     public function build(MarketingEventData $data): array
     {
         $event = $data->event;
@@ -46,6 +53,8 @@ final class BrowserEventPayloadBuilder
             ], fn ($value) => $value !== null) ?: null,
 
             'attribution' => $this->buildAttribution($data->attribution),
+
+            'meta' => $this->metaBrowserData->for($data),
         ], fn ($value) => $value !== null && $value !== []);
     }
 

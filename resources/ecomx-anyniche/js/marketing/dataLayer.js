@@ -5,12 +5,12 @@ export function pushMarketingEvent(payload) {
 
     window.dataLayer = window.dataLayer || [];
 
-    // GTM merges every push into one data model, arrays index by index — a
-    // purchase with 1 item right after a begin_checkout with 2 would still
-    // read as 2 items. Clearing ecommerce first is Google's documented fix.
-    if (payload.ecommerce) {
-        window.dataLayer.push({ ecommerce: null });
-    }
+    // GTM merges every push into one data model — objects key by key, arrays
+    // index by index — so the previous event's leftovers (a second checkout
+    // item, a purchase's order_id in meta.custom_data) would leak into this
+    // one. Clearing the blocks first is Google's documented fix for
+    // ecommerce, applied to every block these payloads carry.
+    window.dataLayer.push({ ecommerce: null, marketing: null, meta: null, page: null, attribution: null });
 
     window.dataLayer.push(payload);
 }

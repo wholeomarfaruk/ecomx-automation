@@ -10,7 +10,7 @@ use App\Marketing\Context\MarketingContextBuilder;
 use App\Marketing\Data\MarketingEventData;
 use App\Marketing\Destinations\Meta\MetaBrowserCookies;
 use App\Marketing\Events\PageView;
-use App\Marketing\Identity\MarketingIdentity;
+use App\Marketing\Identity\IdentityResolver;
 use App\Marketing\Services\MarketingEventService;
 use App\Marketing\Services\MarketingSessionResolver;
 use App\Models\Customer;
@@ -99,8 +99,8 @@ class MarketingTracker
             new MarketingEventData(
                 event: $pageView,
                 context: $context,
-                // The browser payload never carries identity — no need to resolve it.
-                identity: new MarketingIdentity(),
+                // For the payload's hashed Meta advanced-matching block.
+                identity: app(IdentityResolver::class)->resolve($context, $pageView),
                 attribution: $attribution,
             ),
         ));

@@ -38,7 +38,7 @@ final class MetaPayloadBuilder
                     'event_source_url' => $context->pageUrl,
                     'action_source' => 'website',
                     'user_data' => $this->buildUserData($event, $context),
-                    'custom_data' => $this->buildCustomData($event),
+                    'custom_data' => $this->customData($event),
                 ], fn ($value) => $value !== null && $value !== []),
             ],
         ];
@@ -56,7 +56,17 @@ final class MetaPayloadBuilder
             'client_user_agent' => $context->userAgent,
             'fbp' => $context->trackingCookies[MetaBrowserCookies::FBP] ?? null,
             'fbc' => $context->trackingCookies[MetaBrowserCookies::FBC] ?? null,
+        ], fn ($value) => $value !== null) + $this->matchKeys($identity);
+    }
 
+    /**
+     * The hashed customer-information keys (em, ph, fn, …, external_id) —
+     * shared with the browser Pixel's dataLayer block (MetaBrowserData) so
+     * both channels match on exactly the same values.
+     */
+    public function matchKeys(MarketingIdentity $identity): array
+    {
+        return array_filter([
             'external_id' => array_map($this->hash(...), $identity->externalIds) ?: null,
 
             'em' => $this->hash($this->normalizeEmail($identity->email)),
@@ -146,7 +156,8 @@ final class MetaPayloadBuilder
         return preg_match('/^[a-z]{2}$/', $country) ? $country : null;
     }
 
-    private function buildCustomData(
+    /** custom_data — also reused as the browser Pixel's event parameters (MetaBrowserData). */
+    public function customData(
         EventContract $event,
     ): array {
         return match (true) {
