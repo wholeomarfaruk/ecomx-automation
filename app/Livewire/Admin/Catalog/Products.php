@@ -2,8 +2,14 @@
 
 namespace App\Livewire\Admin\Catalog;
 
+use App\Enums\Product\ProductType;
 use App\Models\Brand;
+use App\Models\InventoryStock;
 use App\Models\Product;
+use App\Models\ProductVariant;
+use App\Models\Warehouse;
+use App\Services\StockService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
@@ -165,6 +171,32 @@ class Products extends Component
             'activeCount'   => Product::where('status', 'active')->count(),
             'draftCount'    => Product::where('status', 'draft')->count(),
             'archivedCount' => Product::where('status', 'archived')->count(),
+            'totalStock'    => $this->totalStock(),
         ])->layout('layouts.admin.admin');
+    }
+
+    /**
+     * Units in stock across the catalog, counted the way the Stock column
+     * counts each product (Product::stockInfo): simple products' own balance
+     * (StockService — stock_quantity while the Inventory module is off, else
+     * the default warehouse's available quantity) plus every variable
+     * product's variant stock. Combos are left out: their stock is derived
+     * from component products that are already counted.
+     */
+    private function totalStock(): float
+    {
+        $simple = app(StockService::class)->usesOwnStock()
+            ? Product::where('product_type', ProductType::SIMPLE)->sum(DB::raw('GREATEST(stock_quantity, 0)'))
+            : InventoryStock::query()
+                ->where('warehouse_id', Warehouse::default()->id)
+                ->whereNull('variant_id')
+                ->whereHas('product', fn ($q) => $q->where('product_type', ProductType::SIMPLE))
+                ->sum(DB::raw('GREATEST(quantity - booked_quantity, 0)'));
+
+        $variants = ProductVariant::query()
+            ->whereHas('product', fn ($q) => $q->where('product_type', ProductType::VARIABLE))
+            ->sum('stock_quantity');
+
+        return (float) $simple + (float) $variants;
     }
 }

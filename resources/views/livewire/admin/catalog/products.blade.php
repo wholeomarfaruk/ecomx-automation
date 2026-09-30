@@ -2,7 +2,7 @@
 
     {{-- Header --}}
     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div class="grid grid-cols-4 gap-3 flex-1 max-w-2xl">
+        <div class="grid grid-cols-5 gap-3 flex-1 max-w-3xl">
             <div class="bg-white rounded-xl border border-gray-200 px-4 py-3">
                 <p class="text-xs text-gray-400">Total Products</p>
                 <p class="text-xl font-semibold text-gray-800 mt-0.5">{{ $totalCount }}</p>
@@ -18,6 +18,10 @@
             <div class="bg-white rounded-xl border border-gray-200 px-4 py-3">
                 <p class="text-xs text-gray-400">Archived</p>
                 <p class="text-xl font-semibold text-gray-400 mt-0.5">{{ $archivedCount }}</p>
+            </div>
+            <div class="bg-white rounded-xl border border-gray-200 px-4 py-3" title="Units in stock: simple products + variants (combos are built from these)">
+                <p class="text-xs text-gray-400">Total Stock</p>
+                <p class="text-xl font-semibold text-indigo-600 mt-0.5">{{ number_format($totalStock, floor($totalStock) == $totalStock ? 0 : 2) }}</p>
             </div>
         </div>
         <button wire:click="openCreateModal" type="button"
