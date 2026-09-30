@@ -73,6 +73,16 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // Server-side marketing delivery (Meta CAPI, etc.) — kept apart from
+        // laravel.log so a failed/rejected event is easy to find.
+        'marketing' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/marketing.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_DAILY_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),
