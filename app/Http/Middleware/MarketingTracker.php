@@ -4,10 +4,13 @@ namespace App\Http\Middleware;
 
 use App\Marketing\Attribution\AttributionService;
 use App\Marketing\Attribution\MarketingAttribution;
+use App\Marketing\Browser\BrowserEventPayloadBuilder;
 use App\Marketing\Context\MarketingContext;
 use App\Marketing\Context\MarketingContextBuilder;
+use App\Marketing\Data\MarketingEventData;
 use App\Marketing\Destinations\Meta\MetaBrowserCookies;
 use App\Marketing\Events\PageView;
+use App\Marketing\Identity\MarketingIdentity;
 use App\Marketing\Services\MarketingEventService;
 use App\Marketing\Services\MarketingSessionResolver;
 use App\Models\Customer;
@@ -45,30 +48,62 @@ class MarketingTracker
         $metaCookies = app(MetaBrowserCookies::class);
         $newMetaCookies = $metaCookies->prepare($request);
 
+        /** @var Device|null $device */
+        $device = $request->attributes->get('device');
+
+        if ($device) {
+            $this->prepareTracking($request, $device);
+        }
+
         $response = $next($request);
 
         $metaCookies->attach($response, $newMetaCookies);
 
-        /** @var Device|null $device */
-        $device = $request->attributes->get('device');
+        /** @var MarketingContext|null $context */
+        $context = $request->attributes->get('marketing_context');
 
-        if (! $device) {
-            return $response;
+        if ($context?->attribution) {
+            $this->attachAttributionCookies($response, app(AttributionService::class), $context->attribution);
         }
 
+        return $response;
+    }
+
+    /**
+     * Context and the PageView are built BEFORE the page renders so the
+     * layout can push this PageView into the dataLayer
+     * (<x-marketing.page-view />) with the same event_id terminate() sends
+     * to Conversions API — a browser Pixel tag and the server event then
+     * deduplicate instead of counting the view twice.
+     */
+    private function prepareTracking(Request $request, Device $device): void
+    {
         $context = app(MarketingContextBuilder::class)->build(
             deviceFingerprint: $device->fingerprint,
             customer: $this->resolveCustomer(),
         );
 
-        $attributionService = app(AttributionService::class);
-        $attribution = $attributionService->resolve($context);
+        $attribution = app(AttributionService::class)->resolve($context);
+        $context = $context->withAttribution($attribution);
 
-        $this->attachAttributionCookies($response, $attributionService, $attribution);
+        $request->attributes->set('marketing_context', $context);
 
-        $request->attributes->set('marketing_context', $context->withAttribution($attribution));
+        if (! config('marketing.tracking.page_views', true)) {
+            return;
+        }
 
-        return $response;
+        $pageView = PageView::create();
+
+        $request->attributes->set('marketing_page_view', $pageView);
+        $request->attributes->set('marketing_page_view_payload', app(BrowserEventPayloadBuilder::class)->build(
+            new MarketingEventData(
+                event: $pageView,
+                context: $context,
+                // The browser payload never carries identity — no need to resolve it.
+                identity: new MarketingIdentity(),
+                attribution: $attribution,
+            ),
+        ));
     }
 
     public function terminate(Request $request, Response $response): void
@@ -87,8 +122,11 @@ class MarketingTracker
 
         $session = app(MarketingSessionResolver::class)->resolve($device, $customer, $context);
 
-        if (config('marketing.tracking.page_views', true)) {
-            $this->recordPageView($device, $customer, $session, $context);
+        /** @var PageView|null $pageView */
+        $pageView = $request->attributes->get('marketing_page_view');
+
+        if ($pageView) {
+            $this->recordPageView($pageView, $device, $customer, $session, $context);
         }
     }
 
@@ -123,13 +161,12 @@ class MarketingTracker
     }
 
     private function recordPageView(
+        PageView $event,
         Device $device,
         ?Customer $customer,
         MarketingSession $session,
         MarketingContext $context,
     ): void {
-        $event = PageView::create();
-
         $service = app(MarketingEventService::class);
 
         $service->record(
