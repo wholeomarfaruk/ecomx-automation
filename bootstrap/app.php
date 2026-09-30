@@ -52,7 +52,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // frontend_locale must stay plaintext so client-side JS can read/write it directly.
-        $middleware->encryptCookies(except: ['frontend_locale']);
+        // _fbp/_fbc are Meta's own cookie format — a Meta Pixel writes them in
+        // plaintext, and they're read back verbatim for Conversions API
+        // (see App\Marketing\Destinations\Meta\MetaBrowserCookies).
+        $middleware->encryptCookies(except: ['frontend_locale', '_fbp', '_fbc']);
 
         // /admin/* redirects unauthenticated visitors to the admin-branded login
         // page (admin.login) instead of Fortify's generic /login.

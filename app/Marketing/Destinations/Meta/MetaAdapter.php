@@ -65,13 +65,15 @@ final class MetaAdapter implements MarketingDestinationContract
 
         if ($response->successful()) {
             // Only while testing — logging every live event would flood the
-            // log, but with a test code set this confirms Meta accepted it.
+            // log, but with a test code set this confirms Meta accepted it,
+            // and the payload can be pasted into Meta's Payload Helper.
             if ($testEventCode) {
                 Log::channel('marketing')->info('Meta CAPI test event accepted', [
                     'event' => $event->eventName(),
                     'event_id' => $event->eventId(),
                     'test_event_code' => $testEventCode,
                     'response' => $response->json(),
+                    'payload' => $payload,
                 ]);
             }
 

@@ -30,13 +30,20 @@ final readonly class MarketingContext
         mixed $customer = null,
         mixed $user = null,
     ): self {
+        // Livewire actions (AddToCart, placing an order) arrive as a
+        // background POST to the Livewire update endpoint, so fullUrl() is
+        // that endpoint, not the page. The browser's Referer on that request
+        // IS the page; the page's own referrer isn't known from here.
+        $isLivewire = $request->hasHeader('X-Livewire');
+        $referer = $request->headers->get('referer');
+
         return new self(
             ipAddress: $request->ip(),
             userAgent: $request->userAgent(),
             acceptLanguage: $request->header('Accept-Language'),
             host: $request->getHost(),
-            pageUrl: $request->fullUrl(),
-            referrer: $request->headers->get('referer'),
+            pageUrl: $isLivewire ? ($referer ?: $request->fullUrl()) : $request->fullUrl(),
+            referrer: $isLivewire ? null : $referer,
             deviceFingerprint: $deviceFingerprint,
             sessionId: $request->hasSession() ? $request->session()->getId() : null,
             trackingCookies: [

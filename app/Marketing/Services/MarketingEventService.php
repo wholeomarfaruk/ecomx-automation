@@ -75,17 +75,16 @@ final class MarketingEventService
 
     /**
      * Queues server-side destination delivery (Meta CAPI, etc.) for an
-     * already-persisted event. Split out from record() because record() is
-     * also called directly in places that don't want delivery queued yet
-     * (none currently, but keeps the persistence and delivery concerns
-     * separable) — every real call site above calls both.
+     * already-persisted event. Split out from record() so persistence and
+     * delivery stay separable — every real call site (including
+     * MarketingTracker's PageView) calls both.
      *
      * Queued after the current DB transaction commits: DispatchMarketingEventJob
      * looks the event up by event_id, so a worker must never be able to pick
      * this job up before the marketing_events row it depends on is actually
      * committed.
      */
-    private function dispatchDestinations(
+    public function dispatchDestinations(
         EventContract $event,
         MarketingContext $context,
     ): void {

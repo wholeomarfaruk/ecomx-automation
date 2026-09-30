@@ -6,6 +6,7 @@ use App\Marketing\Attribution\AttributionService;
 use App\Marketing\Attribution\MarketingAttribution;
 use App\Marketing\Context\MarketingContext;
 use App\Marketing\Context\MarketingContextBuilder;
+use App\Marketing\Destinations\Meta\MetaBrowserCookies;
 use App\Marketing\Events\PageView;
 use App\Marketing\Services\MarketingEventService;
 use App\Marketing\Services\MarketingSessionResolver;
@@ -35,11 +36,18 @@ class MarketingTracker
 {
     public function handle(Request $request, Closure $next): Response
     {
+        if (! config('marketing.tracking.anonymous', true) || ! $this->shouldTrack($request)) {
+            return $next($request);
+        }
+
+        // Before $next: events recorded while the page renders (ViewContent
+        // in a Livewire mount) must already see a fresh _fbc from ?fbclid.
+        $metaCookies = app(MetaBrowserCookies::class);
+        $newMetaCookies = $metaCookies->prepare($request);
+
         $response = $next($request);
 
-        if (! config('marketing.tracking.anonymous', true) || ! $this->shouldTrack($request)) {
-            return $response;
-        }
+        $metaCookies->attach($response, $newMetaCookies);
 
         /** @var Device|null $device */
         $device = $request->attributes->get('device');
@@ -122,13 +130,17 @@ class MarketingTracker
     ): void {
         $event = PageView::create();
 
-        app(MarketingEventService::class)->record(
+        $service = app(MarketingEventService::class);
+
+        $service->record(
             event: $event,
             context: $context,
             deviceId: $device->id,
             customerId: $customer?->id,
             sessionId: $session->id,
         );
+
+        $service->dispatchDestinations($event, $context);
     }
 
     private function attachAttributionCookies(

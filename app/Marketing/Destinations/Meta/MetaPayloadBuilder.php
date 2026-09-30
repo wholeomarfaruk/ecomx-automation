@@ -8,89 +8,142 @@ use App\Marketing\Events\AddToCart;
 use App\Marketing\Events\InitiateCheckout;
 use App\Marketing\Events\Purchase;
 use App\Marketing\Events\ViewContent;
-use App\Support\PhoneNumber;
+use App\Marketing\Identity\IdentityResolver;
+use App\Marketing\Identity\MarketingIdentity;
 
+/**
+ * Normalization + hashing rules follow Meta's customer information
+ * parameters doc:
+ * https://developers.facebook.com/docs/marketing-api/conversions-api/parameters/customer-information-parameters
+ */
 final class MetaPayloadBuilder
 {
+    public function __construct(
+        private readonly IdentityResolver $identityResolver,
+    ) {}
+
     public function build(
         EventContract $event,
         MarketingContext $context,
     ): array {
         return [
             'data' => [
+                // [] is dropped too: an event with no custom data (PageView)
+                // would otherwise encode custom_data as a JSON array, not an
+                // object.
                 array_filter([
                     'event_name' => $event->eventName(),
                     'event_time' => $event->occurredAt()->timestamp,
                     'event_id' => $event->eventId(),
                     'event_source_url' => $context->pageUrl,
                     'action_source' => 'website',
-                    'user_data' => $this->buildUserData($context),
+                    'user_data' => $this->buildUserData($event, $context),
                     'custom_data' => $this->buildCustomData($event),
-                ], fn ($value) => $value !== null),
+                ], fn ($value) => $value !== null && $value !== []),
             ],
         ];
     }
 
     private function buildUserData(
+        EventContract $event,
         MarketingContext $context,
     ): array {
+        $identity = $this->identityResolver->resolve($context, $event);
+
         return array_filter([
+            // Never hashed, per Meta.
             'client_ip_address' => $context->ipAddress,
             'client_user_agent' => $context->userAgent,
-            'external_id' => $this->resolveExternalId($context),
-            'fbp' => $context->trackingCookies['_fbp'] ?? null,
-            'fbc' => $context->trackingCookies['_fbc'] ?? null,
-            'em' => $this->hashedEmail($context),
-            'ph' => $this->hashedPhone($context),
+            'fbp' => $context->trackingCookies[MetaBrowserCookies::FBP] ?? null,
+            'fbc' => $context->trackingCookies[MetaBrowserCookies::FBC] ?? null,
+
+            'external_id' => array_map($this->hash(...), $identity->externalIds) ?: null,
+
+            'em' => $this->hash($this->normalizeEmail($identity->email)),
+            'ph' => $this->hash($this->normalizePhone($identity->phone)),
+            'fn' => $this->hash($this->normalizeText($identity->firstName)),
+            'ln' => $this->hash($this->normalizeText($identity->lastName)),
+            'ge' => $this->hash($this->normalizeGender($identity->gender)),
+            'db' => $this->hash($this->normalizeDateOfBirth($identity)),
+            'ct' => $this->hash($this->normalizeCity($identity->city)),
+            'st' => $this->hash($this->normalizeText($identity->state)),
+            'zp' => $this->hash($this->normalizeZip($identity->zip)),
+            'country' => $this->hash($this->normalizeCountry($identity->country)),
         ], fn ($value) => $value !== null);
     }
 
+    private function hash(?string $value): ?string
+    {
+        return $value === null || $value === '' ? null : hash('sha256', $value);
+    }
+
     /**
-     * Meta's Advanced Matching wants email lowercased/trimmed, then
-     * SHA-256 hashed (hex), per
-     * https://developers.facebook.com/docs/marketing-api/conversions-api/parameters/customer-information-parameters
-     *
      * Phone-only registrations and guest checkouts get an auto-generated
      * placeholder address (user+xxxx@<app-host>, guest+<phone>@<host>) since
      * this storefront doesn't require a real email — those aren't the
      * customer's actual email and must never be sent to Meta as if they were.
      */
-    private function hashedEmail(MarketingContext $context): ?string
+    private function normalizeEmail(?string $email): ?string
     {
-        $email = $context->customer->email ?? $context->user->email ?? null;
+        $email = strtolower(trim((string) $email));
 
-        if (! $email || str_starts_with($email, 'user+') || str_starts_with($email, 'guest+')) {
+        if ($email === '' || str_starts_with($email, 'user+') || str_starts_with($email, 'guest+')) {
             return null;
         }
 
-        return hash('sha256', strtolower(trim($email)));
+        return $email;
+    }
+
+    /** Digits only, country code first, no leading zeros: 8801761234567. */
+    private function normalizePhone(?string $phone): ?string
+    {
+        return ltrim(preg_replace('/\D/', '', (string) $phone), '0') ?: null;
     }
 
     /**
-     * Meta requires phone as digits only, country code first, no leading 0
-     * and no symbols (e.g. 8801761234567), then SHA-256 hashed (hex) — see
-     * the customer-information-parameters doc linked above. PhoneNumber
-     * already resolves country_code + national number from whatever format
-     * was stored, so this just concatenates and strips the "+".
+     * fn/ln/st: lowercase, no punctuation, no spaces. Non-Latin letters
+     * (e.g. a name typed in Bangla) are kept — Meta accepts UTF-8.
      */
-    private function hashedPhone(MarketingContext $context): ?string
+    private function normalizeText(?string $value): ?string
     {
-        $phone = $context->customer->phone ?? $context->user->phone ?? null;
+        return preg_replace('/[^\p{L}\p{M}\p{N}]+/u', '', mb_strtolower(trim((string) $value))) ?: null;
+    }
 
-        if (! $phone) {
-            return null;
-        }
+    /**
+     * Seeded Bangladeshi cities are upazila names ("Dhaka Metropolitan",
+     * "Narsingdi Sadar"); the administrative suffix isn't part of the city
+     * name people (and Meta profiles) actually use.
+     */
+    private function normalizeCity(?string $city): ?string
+    {
+        return $this->normalizeText(preg_replace('/\s+(metropolitan|sadar)$/iu', '', trim((string) $city)));
+    }
 
-        // Customer has no country_code column of its own — only User does —
-        // so fall back through the linked account when context only carries a Customer.
-        $countryCode = $context->customer->country_code
-            ?? $context->customer->user->country_code
-            ?? $context->user->country_code
-            ?? null;
+    /** Only f/m — anything else is omitted rather than guessed. */
+    private function normalizeGender(?string $gender): ?string
+    {
+        $initial = strtolower(substr(trim((string) $gender), 0, 1));
 
-        $e164 = ltrim(PhoneNumber::display($phone, $countryCode), '+');
+        return in_array($initial, ['f', 'm'], true) ? $initial : null;
+    }
 
-        return hash('sha256', $e164);
+    /** YYYYMMDD */
+    private function normalizeDateOfBirth(MarketingIdentity $identity): ?string
+    {
+        return $identity->dateOfBirth ? str_replace('-', '', $identity->dateOfBirth) : null;
+    }
+
+    private function normalizeZip(?string $zip): ?string
+    {
+        return preg_replace('/[\s-]+/', '', strtolower(trim((string) $zip))) ?: null;
+    }
+
+    /** ISO 3166-1 alpha-2, lowercase. */
+    private function normalizeCountry(?string $country): ?string
+    {
+        $country = strtolower(trim((string) $country));
+
+        return preg_match('/^[a-z]{2}$/', $country) ? $country : null;
     }
 
     private function buildCustomData(
@@ -166,15 +219,5 @@ final class MetaPayloadBuilder
             array_merge($data, $parameters),
             fn ($value) => $value !== null,
         );
-    }
-
-    private function resolveExternalId(
-        MarketingContext $context,
-    ): ?string {
-        return match (true) {
-            $context->customer !== null => (string) $context->customer->id,
-            $context->user !== null => (string) $context->user->id,
-            default => null,
-        };
     }
 }
