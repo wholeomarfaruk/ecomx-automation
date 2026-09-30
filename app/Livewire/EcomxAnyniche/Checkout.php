@@ -636,7 +636,11 @@ class Checkout extends Component
             customer: $order->customer,
         );
 
-        $this->marketingEvents[] = $result['browserPayload'];
+        // placeOrder() is a Livewire action, not a page load: a <script>
+        // morphed into the updated component never runs, so the pending-events
+        // component can't deliver this. Pushed via the same browser event
+        // CartManager's AddToCart uses (Livewire.on('marketing-event') in app.js).
+        $this->dispatch('marketing-event', payload: $result['browserPayload']);
     }
 
     /** Inputs OfferService needs for cart-level conditions and free-delivery offers. */

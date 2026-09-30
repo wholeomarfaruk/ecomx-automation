@@ -58,11 +58,16 @@ final class BrowserEventPayloadBuilder
         };
     }
 
+    /**
+     * GA4's recommended ecommerce event names — the names GTM's GA4 tags
+     * and Meta Pixel tag templates (event name inherited from the
+     * dataLayer) recognise and map to ViewContent/AddToCart/….
+     */
     private function gtmEventName(EventContract $event): string
     {
         return match ($event->eventName()) {
             'PageView' => 'page_view',
-            'ViewContent' => 'view_content',
+            'ViewContent' => 'view_item',
             'AddToCart' => 'add_to_cart',
             'InitiateCheckout' => 'begin_checkout',
             'Purchase' => 'purchase',
