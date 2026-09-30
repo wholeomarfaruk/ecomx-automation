@@ -17,6 +17,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 final class DispatchMarketingEventJob implements ShouldQueue
 {
@@ -71,6 +73,18 @@ final class DispatchMarketingEventJob implements ShouldQueue
         $result = $destination->send(event: $event, context: $context);
         $durationMs = (int) round((microtime(true) - $startedAt) * 1000);
 
+        if (! $result->success) {
+            Log::channel('marketing')->warning("Marketing delivery to [{$destinationKey}] failed", [
+                'event' => $event->eventName(),
+                'event_id' => $event->eventId(),
+                'attempt' => $this->attempts(),
+                'http_status' => $result->httpStatus,
+                'error_code' => $result->errorCode,
+                'error_message' => $result->errorMessage,
+                'retryable' => $result->retryable,
+            ]);
+        }
+
         if (! $record) {
             return; // no marketing_events row to attach delivery history to
         }
@@ -100,6 +114,16 @@ final class DispatchMarketingEventJob implements ShouldQueue
                 "Marketing destination [{$destinationKey}] failed retryably: {$result->errorMessage}"
             );
         }
+    }
+
+    /** Runs once retries are exhausted, or on an uncaught exception. */
+    public function failed(Throwable $e): void
+    {
+        Log::channel('marketing')->error('Marketing event job failed', [
+            'event' => $this->event,
+            'destinations' => $this->destinations,
+            'exception' => $e->getMessage(),
+        ]);
     }
 
     private function resolveDeliveryRecord(
