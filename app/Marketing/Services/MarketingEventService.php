@@ -299,6 +299,8 @@ final class MarketingEventService
             currency: $order->currency,
             orderId: $order->id,
             items: $items,
+            // Net of any shipping discount — what the customer actually paid.
+            shipping: max(0, (float) $order->shipping_amount - (float) $order->shipping_discount),
         );
 
         $model = $this->record(

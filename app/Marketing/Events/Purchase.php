@@ -17,6 +17,8 @@ final class Purchase extends MarketingEvent
 
         public readonly array $items = [],
 
+        public readonly ?float $shipping = null,
+
         array $parameters = [],
     ) {
         parent::__construct(
@@ -31,6 +33,7 @@ final class Purchase extends MarketingEvent
         string $currency,
         string|int|null $orderId = null,
         array $items = [],
+        ?float $shipping = null,
         array $parameters = [],
     ): self {
         return new self(
@@ -40,6 +43,7 @@ final class Purchase extends MarketingEvent
             currency: $currency,
             orderId: $orderId,
             items: $items,
+            shipping: $shipping,
             parameters: $parameters,
         );
     }
@@ -56,6 +60,7 @@ final class Purchase extends MarketingEvent
             'currency' => $this->currency,
             'order_id' => $this->orderId,
             'items' => $this->items,
+            'shipping' => $this->shipping,
         ];
     }
 }

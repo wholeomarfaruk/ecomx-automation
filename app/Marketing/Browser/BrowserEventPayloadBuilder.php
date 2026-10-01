@@ -13,12 +13,15 @@ use App\Marketing\Events\Purchase;
 use App\Marketing\Events\ViewContent;
 
 /**
- * Builds the universal dataLayer payload for a canonical marketing event.
- * Destination-agnostic (GA4-style ecommerce) — GTM tags map it on the
- * browser side. The one exception is the `meta` block: Meta's hashed
- * advanced matching and custom_data can't be derived in GTM, so it's built
- * server-side by the same code as the Conversions API payload (see
- * MetaBrowserData).
+ * Builds the dataLayer payload for a canonical marketing event:
+ *
+ *   event       → GA4 event name (page_view, view_item, …)
+ *   custom_data → Pixel event parameters, same as Conversions API custom_data
+ *   user_data   → advanced matching, already hashed (see MetaBrowserData)
+ *   ecommerce   → GA4-style ecommerce
+ *   marketing   → event_id (dedup), event_name, occurred_at, …
+ *   page        → url, path
+ *   attribution → last (else first) touch source/medium/campaign
  */
 final class BrowserEventPayloadBuilder
 {
@@ -31,13 +34,24 @@ final class BrowserEventPayloadBuilder
         $event = $data->event;
         $eventData = method_exists($event, 'data') ? $event->data() : [];
 
+        $meta = $this->metaBrowserData->for($data);
+
         return array_filter([
             'event' => $this->gtmEventName($event),
+            'event_time' => $event->occurredAt()->getTimestamp(),
+
+            'custom_data' => $meta['custom_data'] ?? null,
+            'user_data' => $meta['user_data'] ?? null,
+
+            'ecommerce' => $this->buildEcommerce($event, $eventData),
 
             'marketing' => array_filter([
                 'event_id' => $event->eventId(),
                 'event_name' => $event->eventName(),
                 'occurred_at' => $event->occurredAt()->toISOString(),
+                'event_time_unix' => $event->occurredAt()->getTimestamp(),
+                // 'U' + 'u' = seconds then 6-digit microseconds, i.e. µs since epoch.
+                'event_time_micros' => (int) $event->occurredAt()->format('Uu'),
                 'source' => 'website',
                 'channel' => 'browser',
                 // For a GTM Meta Pixel tag: whether ecommerce.items[].item_id
@@ -45,16 +59,12 @@ final class BrowserEventPayloadBuilder
                 'content_type' => $this->contentType($event),
             ], fn ($value) => $value !== null),
 
-            'ecommerce' => $this->buildEcommerce($event, $eventData),
-
             'page' => array_filter([
                 'url' => $data->context->pageUrl,
                 'path' => $data->context->pageUrl ? (parse_url($data->context->pageUrl, PHP_URL_PATH) ?: null) : null,
             ], fn ($value) => $value !== null) ?: null,
 
             'attribution' => $this->buildAttribution($data->attribution),
-
-            'meta' => $this->metaBrowserData->for($data),
         ], fn ($value) => $value !== null && $value !== []);
     }
 
@@ -95,6 +105,7 @@ final class BrowserEventPayloadBuilder
             'transaction_id' => $data['order_id'] ?? null,
             'value' => $data['value'] ?? null,
             'currency' => $data['currency'] ?? null,
+            'shipping' => $data['shipping'] ?? null,
         ], fn ($value) => $value !== null);
 
         $items = $this->buildItems($event, $data);

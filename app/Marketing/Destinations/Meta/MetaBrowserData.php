@@ -5,14 +5,14 @@ namespace App\Marketing\Destinations\Meta;
 use App\Marketing\Data\MarketingEventData;
 
 /**
- * The `meta` block of a dataLayer push: everything a GTM Meta Pixel tag
+ * The Meta parts of a dataLayer push: everything a GTM Meta Pixel tag
  * needs, built by the same code that builds the Conversions API payload,
  * so the browser event and its server twin carry identical data:
  *
- *   meta.event_name  → the Pixel's event name (PageView, ViewContent, …)
- *   meta.custom_data → object properties (value, currency, content_ids, contents, …)
- *   meta.user_data   → advanced matching, already normalized + SHA-256 hashed
- *   marketing.event_id (outside this block) → the Pixel's Event ID, for deduplication
+ *   custom_data → object properties (value, currency, content_ids, contents, …)
+ *   user_data   → advanced matching, already normalized + SHA-256 hashed
+ *   marketing.event_name / marketing.event_id (outside this class) → the Pixel's
+ *   event name and Event ID, for deduplication
  *
  * Hashed on the server, so no raw email/phone/name ever enters the
  * dataLayer (which every GTM tag can read). IP and user agent are left out —
@@ -24,7 +24,7 @@ final class MetaBrowserData
         private readonly MetaPayloadBuilder $payloadBuilder,
     ) {}
 
-    /** @return array{event_name: string, custom_data?: array, user_data?: array} */
+    /** @return array{custom_data?: array, user_data?: array} */
     public function for(MarketingEventData $data): array
     {
         $userData = $this->payloadBuilder->matchKeys($data->identity);
@@ -43,7 +43,6 @@ final class MetaBrowserData
         ]);
 
         return array_filter([
-            'event_name' => $data->event->eventName(),
             'custom_data' => $this->payloadBuilder->customData($data->event),
             'user_data' => $userData,
         ], fn ($value) => $value !== []);

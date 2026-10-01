@@ -175,6 +175,7 @@ final class MetaPayloadBuilder
             'value' => $event->value,
             'currency' => $event->currency,
             'order_id' => $event->orderId,
+            'shipping' => $event->shipping,
             'contents' => $this->contents($event->items),
             'content_ids' => $this->contentIds($event->items),
             'content_type' => 'product',

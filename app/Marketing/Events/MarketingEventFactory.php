@@ -111,6 +111,7 @@ final class MarketingEventFactory
             currency: (string) ($data['currency'] ?? 'BDT'),
             orderId: $data['order_id'] ?? null,
             items: $data['items'] ?? [],
+            shipping: isset($data['shipping']) ? (float) $data['shipping'] : null,
 
             parameters: $payload['parameters'] ?? [],
         );
