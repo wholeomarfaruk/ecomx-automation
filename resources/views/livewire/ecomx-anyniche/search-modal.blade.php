@@ -30,7 +30,7 @@
 
                 <input type="search" class="jtc-search__input" placeholder="Search products, categories…"
                        aria-label="Search products" x-ref="searchInput"
-                       wire:model.live.debounce.300ms="q">
+                       wire:model.live.debounce.300ms="q" x-on:input.debounce.1500ms="$wire.trackSearch()">
                 <span class="jtc-search__go">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 </span>

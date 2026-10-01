@@ -630,6 +630,11 @@ class Checkout extends Component
             currency: 'BDT',
             orderId: $order->id,
             items: $items,
+            // Net of any shipping discount — what the customer actually paid.
+            shipping: max(0, (float) $order->shipping_amount - (float) $order->shipping_discount),
+            // The order id doubles as the event id, so the browser Pixel and
+            // Conversions API deduplicate on a value both sides already know.
+            eventId: (string) $order->id,
         );
 
         $result = app(MarketingEventService::class)->recordForCurrentRequest(

@@ -17,7 +17,7 @@
 
     <input type="search" class="jtc-search__input" placeholder="Search products, categories…"
            aria-label="Search products"
-           wire:model.live.debounce.400ms="query"
+           wire:model.live.debounce.400ms="query" x-on:input.debounce.1500ms="$wire.trackSearch()"
            @focus="focused = true"
            @keydown.escape="focused = false; $event.target.blur()"
            @keydown.enter.prevent="if ($wire.query.trim()) window.location = '{{ route('ecomx-anyniche.shop') }}?q=' + encodeURIComponent($wire.query)">

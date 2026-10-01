@@ -2,12 +2,16 @@
 
 namespace App\Livewire\EcomxAnyniche;
 
+use App\Livewire\Concerns\TracksSearch;
 use App\Models\Product;
 use App\Support\EcomxAnyniche\MenuRegistry;
+use Illuminate\Database\Eloquent\Collection;
 use Livewire\Component;
 
 class HeaderSearch extends Component
 {
+    use TracksSearch;
+
     public string $query = '';
     public ?string $category = null;
 
@@ -18,10 +22,28 @@ class HeaderSearch extends Component
 
     public function getResultsProperty(): array
     {
+        return $this->search()
+            ->map(fn (Product $p) => [
+                'id' => $p->id,
+                'name' => $p->name,
+                ...$p->cardPricing(),
+                'img' => $p->featured_image,
+                'url' => route('ecomx-anyniche.product', $p->slug),
+            ])
+            ->all();
+    }
+
+    public function trackSearch(): void
+    {
+        $this->recordSearch($this->query, $this->search());
+    }
+
+    private function search(): Collection
+    {
         $term = trim($this->query);
 
         if ($term === '') {
-            return [];
+            return new Collection;
         }
 
         return Product::where('status', 'active')
@@ -35,15 +57,7 @@ class HeaderSearch extends Component
             ))
             ->with('categories', 'variants')
             ->limit(6)
-            ->get()
-            ->map(fn (Product $p) => [
-                'id' => $p->id,
-                'name' => $p->name,
-                ...$p->cardPricing(),
-                'img' => $p->featured_image,
-                'url' => route('ecomx-anyniche.product', $p->slug),
-            ])
-            ->all();
+            ->get();
     }
 
     public function render()
