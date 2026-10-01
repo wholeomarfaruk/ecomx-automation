@@ -55,6 +55,7 @@ final class MarketingEventFactory
             contentType: $data['content_type'] ?? null,
             value: $data['value'] ?? null,
             currency: $data['currency'] ?? null,
+            contentCategory: $data['content_category'] ?? null,
 
             parameters: $payload['parameters'] ?? [],
         );

@@ -15,6 +15,7 @@ final class ViewContent extends MarketingEvent
         public readonly ?string $contentType = null,
         public readonly ?float $value = null,
         public readonly ?string $currency = null,
+        public readonly ?string $contentCategory = null,
 
         array $parameters = [],
     ) {
@@ -31,6 +32,7 @@ final class ViewContent extends MarketingEvent
         ?string $contentType = null,
         ?float $value = null,
         ?string $currency = null,
+        ?string $contentCategory = null,
         array $parameters = [],
     ): self {
         return new self(
@@ -41,6 +43,7 @@ final class ViewContent extends MarketingEvent
             contentType: $contentType,
             value: $value,
             currency: $currency,
+            contentCategory: $contentCategory,
             parameters: $parameters,
         );
     }
@@ -56,6 +59,7 @@ final class ViewContent extends MarketingEvent
             'content_id' => $this->contentId,
             'content_name' => $this->contentName,
             'content_type' => $this->contentType,
+            'content_category' => $this->contentCategory,
             'value' => $this->value,
             'currency' => $this->currency,
         ];

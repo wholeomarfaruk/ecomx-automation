@@ -205,6 +205,7 @@ final class MetaPayloadBuilder
             'currency' => $event->currency,
             'content_ids' => $id !== null ? [$id] : null,
             'content_name' => $event->contentName,
+            'content_category' => $event instanceof ViewContent ? $event->contentCategory : null,
             'content_type' => $event instanceof ViewContent ? ($event->contentType ?? 'product') : 'product',
             'contents' => $contents,
         ]);

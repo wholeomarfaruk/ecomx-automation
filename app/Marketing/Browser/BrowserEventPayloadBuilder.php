@@ -132,6 +132,7 @@ final class BrowserEventPayloadBuilder
             $item = array_filter([
                 'item_id' => $event->contentId !== null ? (string) $event->contentId : null,
                 'item_name' => $event->contentName,
+                'item_category' => $event instanceof ViewContent ? $event->contentCategory : null,
                 'price' => $price,
                 'quantity' => $quantity,
             ], fn ($value) => $value !== null);

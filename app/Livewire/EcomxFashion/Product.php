@@ -90,6 +90,7 @@ class Product extends Component
             contentType: $isVariable ? 'product_group' : 'product',
             value: (float) $product->min_price,
             currency: 'BDT',
+            contentCategory: $product->categories()->orderBy('product_category_pivot.sort_order')->first()?->name,
         );
 
         $result = app(MarketingEventService::class)->recordForCurrentRequest(
