@@ -405,6 +405,9 @@ class Checkout extends Component
             return;
         }
 
+        // Lets the "Track order" button open it without asking for the phone.
+        session(['track_order_verified_' . $order->id => true]);
+
         // Who it's shipping to — the delivery address, else the customer.
         $this->orderId = $order->id;
         $this->name = (string) ($order->shippingAddress?->name ?: $order->customer?->full_name);

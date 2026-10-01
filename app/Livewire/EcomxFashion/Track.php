@@ -31,6 +31,29 @@ class Track extends Component
     public string $companyPhone = '';
 
     /** Guest lookup: order # + phone must both match, so a stranger can't view someone else's order by guessing the ID. */
+    /**
+     * ?order=… from the order-received page's "Track order" button: opens
+     * straight onto that order for the session that placed it, or for its
+     * logged-in customer (viewOrder() checks that).
+     */
+    public function mount(): void
+    {
+        $orderId = (int) request()->query('order');
+
+        if (! $orderId) {
+            return;
+        }
+
+        if (in_array($orderId, session('placed_order_ids', []), true)) {
+            $this->trackedOrderId = $orderId;
+            $this->tracked = true;
+
+            return;
+        }
+
+        $this->viewOrder($orderId);
+    }
+
     public function track(): void
     {
         $this->trackError = '';

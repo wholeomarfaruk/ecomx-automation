@@ -11,7 +11,10 @@
                 Order #{{ $orderId }} has been placed.<br>
                 Dear {{ $name ?: 'customer' }}@if($phone) ({{ $phone }})@endif, your order has been confirmed. You will get your parcel within 2/4 days.
             </p>
-            <a href="{{ route('ecomx-fashion.home') }}" class="btn btn--primary btn--pill">Continue shopping</a>
+            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+                <a href="{{ route('ecomx-fashion.track', ['order' => $orderId]) }}" class="btn btn--outline btn--pill">Track order</a>
+                <a href="{{ route('ecomx-fashion.home') }}" class="btn btn--primary btn--pill">Continue shopping</a>
+            </div>
         </div>
     @else
     <div class="checkout__grid">

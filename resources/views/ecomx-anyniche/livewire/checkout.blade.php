@@ -11,7 +11,10 @@
                 Order #{{ $orderId }} has been placed.<br>
                 Dear {{ $name ?: 'customer' }}@if($phone) ({{ $phone }})@endif, your order has been confirmed. You will get your parcel within 2/4 days.
             </p>
-            <a href="{{ route('ecomx-anyniche.home') }}" class="jtc-btn jtc-btn--primary">Continue shopping</a>
+            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+                <a href="{{ route('ecomx-anyniche.track.show', ['order' => $orderId]) }}" class="jtc-btn jtc-btn--outline">Track order</a>
+                <a href="{{ route('ecomx-anyniche.home') }}" class="jtc-btn jtc-btn--primary">Continue shopping</a>
+            </div>
         </div>
     @else
     <div class="checkout__grid">
