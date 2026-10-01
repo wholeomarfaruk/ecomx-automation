@@ -8,7 +8,8 @@
             <div class="checkout__success-icon">✓</div>
             <h2 style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:8px">Order placed — thank you!</h2>
             <p class="muted" style="font-size:13.5px;margin-bottom:20px">
-                Order #{{ $orderId }} has been placed. We'll contact you at {{ $phone ?: 'your phone' }} to confirm delivery.
+                Order #{{ $orderId }} has been placed.<br>
+                Dear {{ $name ?: 'customer' }}@if($phone) ({{ $phone }})@endif, your order has been confirmed. You will get your parcel within 2/4 days.
             </p>
             <a href="{{ route('ecomx-fashion.home') }}" class="btn btn--primary btn--pill">Continue shopping</a>
         </div>

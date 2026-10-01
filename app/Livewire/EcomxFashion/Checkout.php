@@ -405,8 +405,10 @@ class Checkout extends Component
             return;
         }
 
+        // Who it's shipping to — the delivery address, else the customer.
         $this->orderId = $order->id;
-        $this->phone = (string) $order->customer?->phone;
+        $this->name = (string) ($order->shippingAddress?->name ?: $order->customer?->full_name);
+        $this->phone = PhoneNumber::local($order->shippingAddress?->phone ?: $order->customer?->phone);
         $this->placed = true;
 
         $this->recordPurchase($order);
