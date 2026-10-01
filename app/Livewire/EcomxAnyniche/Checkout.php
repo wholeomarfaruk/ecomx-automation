@@ -637,17 +637,24 @@ class Checkout extends Component
             eventId: (string) $order->id,
         );
 
+        // The thank-you screen replaces the form in place on /checkout, so
+        // Purchase is reported on an order-received URL instead (with
+        // /checkout as its referrer), and the browser's address bar is
+        // switched to it so the Pixel sees the same page.
+        $pageUrl = route('ecomx-anyniche.checkout') . '/order-received?' . http_build_query(['order_id' => $order->id]);
+
         $result = app(MarketingEventService::class)->recordForCurrentRequest(
             event: $event,
             device: $device,
             customer: $order->customer,
+            pageUrl: $pageUrl,
         );
 
         // placeOrder() is a Livewire action, not a page load: a <script>
         // morphed into the updated component never runs, so the pending-events
         // component can't deliver this. Pushed via the same browser event
         // CartManager's AddToCart uses (Livewire.on('marketing-event') in app.js).
-        $this->dispatch('marketing-event', payload: $result['browserPayload']);
+        $this->dispatch('marketing-event', payload: $result['browserPayload'], url: $pageUrl);
     }
 
     /** Inputs OfferService needs for cart-level conditions and free-delivery offers. */
