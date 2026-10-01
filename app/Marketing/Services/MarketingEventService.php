@@ -40,26 +40,17 @@ final class MarketingEventService
      * DeviceTracker (i.e. $request->attributes->get('device')) — not for
      * use from queued jobs, webhooks, or console commands.
      *
-     * $pageUrl overrides the page the event is reported on (e.g. a Purchase
-     * shown in place on /checkout reported as its order-received URL); the
-     * page it actually happened on becomes the referrer.
-     *
      * @return array{model: MarketingEventModel, browserPayload: array}
      */
     public function recordForCurrentRequest(
         EventContract $event,
         Device $device,
         ?Customer $customer = null,
-        ?string $pageUrl = null,
     ): array {
         $context = $this->contextBuilder->build(
             deviceFingerprint: $device->fingerprint,
             customer: $customer,
         );
-
-        if ($pageUrl !== null) {
-            $context = $context->withPage($pageUrl, referrer: $context->pageUrl);
-        }
 
         $attribution = $this->attributionService->resolve($context);
         $context = $context->withAttribution($attribution);

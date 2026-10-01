@@ -18,6 +18,7 @@ use App\Models\Country;
 use App\Models\Customer;
 use App\Models\DeliveryAddress;
 use App\Models\Device;
+use App\Models\Marketing\MarketingEvent as MarketingEventModel;
 use App\Models\Order;
 use App\Models\User;
 use App\Services\BlockGuard;
@@ -69,6 +70,12 @@ class Checkout extends Component
 
     public function mount(): void
     {
+        if (request()->routeIs('ecomx-fashion.checkout.order-received')) {
+            $this->showOrderReceived((int) request()->query('order_id'));
+
+            return;
+        }
+
         $this->recordInitiateCheckout();
         $this->initShipping();
         $this->initAddressSelection();
@@ -369,12 +376,40 @@ class Checkout extends Component
             return;
         }
 
-        $this->recordPurchase($order);
+        // Placing the order may have just logged a guest in, which swaps
+        // the session under this page — a full page load onto the
+        // order-received URL picks the new session up (no 419 on the next
+        // action) and gives the thank-you screen a URL that survives a reload.
+        session()->push('placed_order_ids', $order->id);
 
-        $this->dispatch('cart-converted');
+        $this->redirectRoute('ecomx-fashion.checkout.order-received', ['order_id' => $order->id]);
+    }
+
+    /**
+     * The thank-you screen, at /checkout/order-received?order_id=… — only
+     * for the order's own customer, or the browser session that placed it
+     * (a returning customer without a linked user isn't logged in).
+     */
+    private function showOrderReceived(int $orderId): void
+    {
+        $order = Order::find($orderId);
+
+        $isOwn = $order && (
+            in_array($order->id, session('placed_order_ids', []), true)
+            || (auth()->check() && auth()->user()->customer?->id === $order->customer_id)
+        );
+
+        if (! $isOwn) {
+            $this->redirectRoute('ecomx-fashion.checkout');
+
+            return;
+        }
 
         $this->orderId = $order->id;
+        $this->phone = (string) $order->customer?->phone;
         $this->placed = true;
+
+        $this->recordPurchase($order);
     }
 
     /**
@@ -604,12 +639,22 @@ class Checkout extends Component
         $address->update(['is_default_shipping' => true, 'is_default_billing' => true]);
     }
 
+    /** Once per order — reloading the order-received page doesn't fire it again. */
     private function recordPurchase(Order $order): void
     {
         /** @var Device|null $device */
         $device = request()->attributes->get('device');
 
         if (! $device) {
+            return;
+        }
+
+        $alreadyRecorded = MarketingEventModel::query()
+            ->where('order_id', $order->id)
+            ->where('event_name', 'Purchase')
+            ->exists();
+
+        if ($alreadyRecorded) {
             return;
         }
 
@@ -637,24 +682,13 @@ class Checkout extends Component
             eventId: (string) $order->id,
         );
 
-        // The thank-you screen replaces the form in place on /checkout, so
-        // Purchase is reported on an order-received URL instead (with
-        // /checkout as its referrer), and the browser's address bar is
-        // switched to it so the Pixel sees the same page.
-        $pageUrl = route('ecomx-fashion.checkout') . '/order-received?' . http_build_query(['order_id' => $order->id]);
-
         $result = app(MarketingEventService::class)->recordForCurrentRequest(
             event: $event,
             device: $device,
             customer: $order->customer,
-            pageUrl: $pageUrl,
         );
 
-        // placeOrder() is a Livewire action, not a page load: a <script>
-        // morphed into the updated component never runs, so the pending-events
-        // component can't deliver this. Pushed via the same browser event
-        // CartManager's AddToCart uses (Livewire.on('marketing-event') in app.js).
-        $this->dispatch('marketing-event', payload: $result['browserPayload'], url: $pageUrl);
+        $this->marketingEvents[] = $result['browserPayload'];
     }
 
     /** Inputs OfferService needs for cart-level conditions and free-delivery offers. */

@@ -77,25 +77,6 @@ final readonly class MarketingContext
         );
     }
 
-    public function withPage(?string $pageUrl, ?string $referrer): self
-    {
-        return new self(
-            ipAddress: $this->ipAddress,
-            userAgent: $this->userAgent,
-            acceptLanguage: $this->acceptLanguage,
-            host: $this->host,
-            pageUrl: $pageUrl,
-            referrer: $referrer,
-            deviceFingerprint: $this->deviceFingerprint,
-            sessionId: $this->sessionId,
-            trackingCookies: $this->trackingCookies,
-            trackingParameters: $this->trackingParameters,
-            customer: $this->customer,
-            user: $this->user,
-            attribution: $this->attribution,
-        );
-    }
-
     // Normalized so 'Facebook'/'facebook'/'FACEBOOK' group as one campaign
     // source instead of three in reports. utm_campaign/term/content are left
     // as-is — those are often meaningfully case-sensitive creative/campaign

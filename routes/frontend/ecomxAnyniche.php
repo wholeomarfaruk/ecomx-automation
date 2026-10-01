@@ -30,4 +30,5 @@ Route::name('ecomx-anyniche.')
         Route::get('/track', \App\Livewire\EcomxAnyniche\Track::class)->name('track')->middleware('block.scope:orders');
         Route::get('/track/{order}', \App\Livewire\EcomxAnyniche\TrackDetails::class)->name('track.show')->middleware('block.scope:orders');
         Route::get('/checkout', \App\Livewire\EcomxAnyniche\Checkout::class)->name('checkout')->middleware('block.scope:checkout');
+        Route::get('/checkout/order-received', \App\Livewire\EcomxAnyniche\Checkout::class)->name('checkout.order-received')->middleware('block.scope:checkout');
     });

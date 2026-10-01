@@ -27,4 +27,5 @@ Route::name('ecomx-fashion.')
         Route::get('/reviews', \App\Livewire\EcomxFashion\Reviews::class)->name('reviews');
         Route::get('/track', \App\Livewire\EcomxFashion\Track::class)->name('track')->middleware('block.scope:orders');
         Route::get('/checkout', \App\Livewire\EcomxFashion\Checkout::class)->name('checkout')->middleware('block.scope:checkout');
+        Route::get('/checkout/order-received', \App\Livewire\EcomxFashion\Checkout::class)->name('checkout.order-received')->middleware('block.scope:checkout');
     });

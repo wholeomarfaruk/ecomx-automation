@@ -88,9 +88,7 @@ document.addEventListener('livewire:init', () => {
     // Marketing events recorded mid-request by a Livewire action (e.g.
     // CartManager::addToCart) — pushed directly since there's no fresh
     // page render for the pending-events blade component to run on.
-    Livewire.on('marketing-event', ({ payload, url }) => {
-        // Before the push, so a Pixel tag reading the page URL sees it too.
-        if (url) history.replaceState(history.state, '', url);
+    Livewire.on('marketing-event', ({ payload }) => {
         pushMarketingEvent(payload);
     });
 });
