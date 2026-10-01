@@ -1,4 +1,23 @@
-<div class="checkout" x-data="{ payment: '{{ $payment_method }}' }">
+<div class="checkout" x-data="{
+    payment: '{{ $payment_method }}',
+    placing: false,
+    step: 0,
+    steps: ['Checking your items…', 'Confirming your order…', 'Almost done…'],
+    timer: null,
+    place() {
+        this.placing = true;
+        this.step = 0;
+        clearInterval(this.timer);
+        this.timer = setInterval(() => { if (this.step < this.steps.length - 1) this.step++ }, 1500);
+        this.$wire.placeOrder()
+            .then(placed => { if (! placed) this.stopPlacing() })
+            .catch(() => this.stopPlacing());
+    },
+    stopPlacing() {
+        clearInterval(this.timer);
+        this.placing = false;
+    },
+}">
     <nav aria-label="Breadcrumb" style="font-size:12px;color:rgba(var(--pri-rgb),.5);margin-bottom:12px"><a href="{{ route('ecomx-anyniche.home') }}" style="color:rgba(var(--pri-rgb),.5)">Home</a> / <span style="color:var(--pri)">Checkout</span></nav>
     <h1 style="font-size:clamp(28px,3.4vw,40px);margin-bottom:6px">Checkout</h1>
     <p class="muted" style="font-size:13.5px;margin-bottom:28px">Complete your shipping and payment details to place the order.</p>
@@ -19,7 +38,7 @@
     @else
     <div class="checkout__grid">
         <div class="checkout__form">
-            <form wire:submit.prevent="placeOrder">
+            <form x-on:submit.prevent="place()">
                 @auth
                     @if ($this->savedAddresses->isNotEmpty())
                         <div class="field" style="margin-bottom:20px">
@@ -148,7 +167,7 @@
                     </div>
                 </div>
 
-                <button type="submit" class="jtc-btn jtc-btn--primary jtc-btn--block" style="margin-top:20px;padding:15px;font-size:1rem" wire:loading.attr="disabled" wire:target="placeOrder">Place Order</button>
+                <button type="submit" class="jtc-btn jtc-btn--primary jtc-btn--block" style="margin-top:20px;padding:15px;font-size:1rem" x-bind:disabled="placing">Place Order</button>
             </form>
         </div>
 
@@ -274,6 +293,16 @@
         @endif
     @endauth
     @endif
+
+    {{-- Up from the Place Order click until the order-received page loads. --}}
+    <div class="checkout__placing" x-show="placing" x-transition.opacity x-cloak role="status" aria-live="polite">
+        <div class="checkout__placing-card">
+            <div class="checkout__placing-spinner"></div>
+            <h3 class="checkout__placing-title">Placing your order</h3>
+            <p class="checkout__placing-step" x-text="steps[step]"></p>
+            <p class="checkout__placing-note">Please don't close or refresh this page.</p>
+        </div>
+    </div>
 
     <x-marketing.events :events="$marketingEvents" />
 </div>

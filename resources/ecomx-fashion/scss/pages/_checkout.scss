@@ -83,3 +83,13 @@
 
 .checkout__success{max-width:480px;margin:40px auto;text-align:center;background:#fff;border:1px solid rgba(var(--pri-rgb),.07);border-radius:$radius;box-shadow:0 12px 34px rgba(var(--pri-rgb),.05);padding:clamp(32px,5vw,48px);}
 .checkout__success-icon{width:56px;height:56px;border-radius:999px;background:var(--ac);color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;}
+
+// "Placing your order" overlay (Place Order → order-received page).
+.checkout__placing{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(var(--pri-rgb),.45);backdrop-filter:blur(3px);}
+.checkout__placing-card{width:100%;max-width:340px;background:#fff;border-radius:$radius;box-shadow:0 20px 50px rgba(var(--pri-rgb),.25);padding:32px 24px;text-align:center;}
+.checkout__placing-spinner{width:48px;height:48px;margin:0 auto 18px;border-radius:999px;border:4px solid rgba(var(--pri-rgb),.12);border-top-color:var(--ac);animation:checkout-placing-spin .8s linear infinite;}
+.checkout__placing-title{font-size:18px;margin-bottom:6px;color:var(--pri);}
+.checkout__placing-step{font-size:14px;color:var(--pri);margin-bottom:12px;min-height:1.4em;}
+.checkout__placing-note{font-size:12px;color:rgba(var(--pri-rgb),.55);}
+@keyframes checkout-placing-spin{to{transform:rotate(360deg);}}
+@media (prefers-reduced-motion:reduce){.checkout__placing-spinner{animation-duration:2.4s;}}

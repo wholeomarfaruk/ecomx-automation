@@ -247,7 +247,12 @@ class Checkout extends Component
 
     public ?int $orderId = null;
 
-    public function placeOrder(): void
+    /**
+     * true once the order exists and the redirect to order-received is
+     * under way — the "placing your order" overlay stays up until that page
+     * loads; false (or a validation error) takes it back down.
+     */
+    public function placeOrder(): bool
     {
         if (app(BlockGuard::class)->isBlocked(request(), Block::SCOPE_CHECKOUT)) {
             abort(403, 'This action is not available for your account.');
@@ -274,7 +279,7 @@ class Checkout extends Component
             if (! $selectedAddress) {
                 $this->addError('selectedAddressId', 'That address is no longer available — please pick another or add a new one.');
 
-                return;
+                return false;
             }
 
             // findOrCreateCustomer() below matches/logs in by phone number,
@@ -289,7 +294,7 @@ class Checkout extends Component
         if ($cart->items->isEmpty()) {
             $this->addError('name', 'Your cart is empty — nothing to check out.');
 
-            return;
+            return false;
         }
 
         $shippingMethod = $this->selectedShippingMethod();
@@ -373,7 +378,7 @@ class Checkout extends Component
         } catch (InsufficientStockException $e) {
             $this->addError('name', $e->getMessage());
 
-            return;
+            return false;
         }
 
         // Placing the order may have just logged a guest in, which swaps
@@ -383,6 +388,8 @@ class Checkout extends Component
         session()->push('placed_order_ids', $order->id);
 
         $this->redirectRoute('ecomx-anyniche.checkout.order-received', ['order_id' => $order->id]);
+
+        return true;
     }
 
     /**
