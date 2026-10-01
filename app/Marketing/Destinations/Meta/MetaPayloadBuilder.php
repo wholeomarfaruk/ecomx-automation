@@ -37,6 +37,7 @@ final class MetaPayloadBuilder
                     'event_time' => $event->occurredAt()->timestamp,
                     'event_id' => $event->eventId(),
                     'event_source_url' => $context->pageUrl,
+                    'referrer_url' => $context->referrer,
                     'action_source' => 'website',
                     'user_data' => $this->buildUserData($event, $context),
                     'custom_data' => $this->customData($event),

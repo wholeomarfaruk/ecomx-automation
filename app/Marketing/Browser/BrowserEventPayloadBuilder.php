@@ -40,6 +40,8 @@ final class BrowserEventPayloadBuilder
         return array_filter([
             'event' => $this->gtmEventName($event),
             'event_time' => $event->occurredAt()->getTimestamp(),
+            'event_source_url' => $data->context->pageUrl,
+            'referrer_url' => $data->context->referrer,
             // GA4's search parameter; Meta's search_string is in custom_data.
             'search_term' => $event instanceof Search ? $event->searchString : null,
 
