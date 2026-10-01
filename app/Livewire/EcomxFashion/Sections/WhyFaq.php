@@ -20,9 +20,13 @@ class WhyFaq extends Component
     public array $stats = [];
     public array $faqs = [];
 
+    /** The page it's on — its content is edited per page, falling back to the home page's. */
+    public string $page = 'home';
+
     public function mount(): void
     {
-        $config = PageSectionConfigRegistry::find('home', 'why-faq');
+        $config = PageSectionConfigRegistry::find($this->page, 'why-faq')
+            ?? PageSectionConfigRegistry::find('home', 'why-faq');
         $this->kicker = $config['kicker'] ?? '' ?: static::DEFAULT_KICKER;
         $this->heading = $config['heading'] ?? '' ?: static::DEFAULT_HEADING;
         $this->description = $config['description'] ?? '' ?: static::DEFAULT_DESCRIPTION;

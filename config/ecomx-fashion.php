@@ -70,7 +70,9 @@ return [
             'label' => 'Product',
             'icon' => 'icon-box',
             'route' => 'product',
-            'sections' => [],
+            'sections' => [
+                'why-faq',
+            ],
         ],
         'reviews' => [
             'label' => 'Reviews',

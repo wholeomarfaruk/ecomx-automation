@@ -3,6 +3,7 @@
 namespace App\Livewire\EcomxFashion;
 
 use App\Enums\Product\ProductType;
+use App\Livewire\EcomxFashion\Concerns\RendersPageSections;
 use App\Marketing\Catalog\CatalogItemId;
 use App\Marketing\Events\ViewContent;
 use App\Marketing\Services\MarketingEventService;
@@ -21,6 +22,8 @@ use Livewire\Attributes\Layout;
 #[Layout('ecomx-fashion.layouts.ecomx_fashion')]
 class Product extends Component
 {
+    use RendersPageSections;
+
     public int $productId;
 
     public array $product = [
@@ -104,7 +107,9 @@ class Product extends Component
 
     public function render()
     {
-        return view('ecomx-fashion.livewire.product')
+        return view('ecomx-fashion.livewire.product', [
+            'sections' => $this->activeSections('product'),
+        ])
             ->layout('ecomx-fashion.layouts.ecomx_fashion', array_filter([
                 'title' => $this->pageTitle,
                 'metaDescription' => $this->pageMetaDescription,
