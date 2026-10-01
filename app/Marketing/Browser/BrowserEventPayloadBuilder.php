@@ -21,7 +21,7 @@ use App\Marketing\Events\ViewContent;
  *   user_data   → advanced matching, already hashed (see MetaBrowserData)
  *   ecommerce   → GA4-style ecommerce
  *   marketing   → event_id (dedup), event_name, occurred_at, …
- *   page        → url, path
+ *   page        → url, path, referrer_url
  *   attribution → last (else first) touch source/medium/campaign
  */
 final class BrowserEventPayloadBuilder
@@ -67,6 +67,7 @@ final class BrowserEventPayloadBuilder
             'page' => array_filter([
                 'url' => $data->context->pageUrl,
                 'path' => $data->context->pageUrl ? (parse_url($data->context->pageUrl, PHP_URL_PATH) ?: null) : null,
+                'referrer_url' => $data->context->referrer,
             ], fn ($value) => $value !== null) ?: null,
 
             'attribution' => $this->buildAttribution($data->attribution),
