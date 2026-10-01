@@ -371,6 +371,8 @@ class Checkout extends Component
 
         $this->recordPurchase($order);
 
+        $this->dispatch('cart-converted');
+
         $this->orderId = $order->id;
         $this->placed = true;
     }

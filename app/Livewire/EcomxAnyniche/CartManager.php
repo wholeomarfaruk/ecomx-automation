@@ -192,6 +192,20 @@ class CartManager extends Component
         $this->dispatch('marketing-event', payload: $result['browserPayload']);
     }
 
+    /**
+     * After an order is placed the old cart is converted (it stays with the
+     * order for cart → order reporting), but this component still holds it.
+     * Switch to the device's new, empty active cart so the drawer and badge
+     * don't keep showing the ordered items.
+     */
+    #[On('cart-converted')]
+    public function startNewCart()
+    {
+        $this->cart = $this->getCart();
+        $this->cart->load('items.product', 'items.variant.values.productAttributeValue.attributeValue.attribute', 'items.variant.media');
+        $this->refreshBadge();
+    }
+
     #[On('cart-clear')]
     public function clearCart()
     {
