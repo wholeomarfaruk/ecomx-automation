@@ -35,9 +35,10 @@ final class Purchase extends MarketingEvent
         array $items = [],
         ?float $shipping = null,
         array $parameters = [],
+        ?string $eventId = null,
     ): self {
         return new self(
-            eventId: self::generateEventId(),
+            eventId: $eventId ?? self::generateEventId(),
             occurredAt: self::now(),
             value: $value,
             currency: $currency,

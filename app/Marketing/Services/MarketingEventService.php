@@ -295,6 +295,9 @@ final class MarketingEventService
         ])->all();
 
         $event = Purchase::create(
+            // The order id doubles as the event id, so the browser Pixel and
+            // Conversions API deduplicate on a value both sides already know.
+            eventId: (string) $order->id,
             value: (float) $order->total_amount,
             currency: $order->currency,
             orderId: $order->id,
