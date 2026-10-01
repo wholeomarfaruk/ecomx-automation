@@ -659,7 +659,7 @@ class Checkout extends Component
         $device = request()->attributes->get('device');
 
         $cart = Cart::firstOrCreate(
-            ['customer_id' => null, 'device_id' => $device?->id],
+            ['customer_id' => null, 'device_id' => $device?->id, 'status' => 'active'],
             []
         );
 

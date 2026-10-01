@@ -10,4 +10,5 @@ enum MarketingEventName: string
     case INITIATE_CHECKOUT = 'InitiateCheckout';
     case PURCHASE = 'Purchase';
     case LEAD = 'Lead';
+    case SEARCH = 'Search';
 }

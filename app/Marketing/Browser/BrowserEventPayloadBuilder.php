@@ -10,6 +10,7 @@ use App\Marketing\Destinations\Meta\MetaBrowserData;
 use App\Marketing\Events\AddToCart;
 use App\Marketing\Events\InitiateCheckout;
 use App\Marketing\Events\Purchase;
+use App\Marketing\Events\Search;
 use App\Marketing\Events\ViewContent;
 
 /**
@@ -39,6 +40,8 @@ final class BrowserEventPayloadBuilder
         return array_filter([
             'event' => $this->gtmEventName($event),
             'event_time' => $event->occurredAt()->getTimestamp(),
+            // GA4's search parameter; Meta's search_string is in custom_data.
+            'search_term' => $event instanceof Search ? $event->searchString : null,
 
             'custom_data' => $meta['custom_data'] ?? null,
             'user_data' => $meta['user_data'] ?? null,
@@ -91,6 +94,7 @@ final class BrowserEventPayloadBuilder
             'InitiateCheckout' => 'begin_checkout',
             'Purchase' => 'purchase',
             'Lead' => 'generate_lead',
+            'Search' => 'search',
             default => strtolower($event->eventName()),
         };
     }

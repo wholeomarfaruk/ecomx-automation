@@ -17,6 +17,7 @@ final class MarketingEventFactory
             'InitiateCheckout' => $this->makeInitiateCheckout($payload),
             'Purchase' => $this->makePurchase($payload),
             'Lead' => $this->makeLead($payload),
+            'Search' => $this->makeSearch($payload),
             default => throw new InvalidArgumentException(
                 'Unknown marketing event.'
             ),
@@ -129,6 +130,23 @@ final class MarketingEventFactory
             leadId: $data['lead_id'] ?? null,
             value: $data['value'] ?? null,
             currency: $data['currency'] ?? null,
+
+            parameters: $payload['parameters'] ?? [],
+        );
+    }
+
+    private function makeSearch(
+        array $payload,
+    ): Search {
+        $data = $payload['data'] ?? [];
+
+        return new Search(
+            eventId: $payload['event_id'],
+            occurredAt: $this->occurredAt($payload),
+
+            searchString: (string) ($data['search_string'] ?? ''),
+            currency: $data['currency'] ?? null,
+            items: $data['items'] ?? [],
 
             parameters: $payload['parameters'] ?? [],
         );

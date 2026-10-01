@@ -43,6 +43,8 @@ class CartManager extends Component
             [
                 'customer_id' => null,
                 'device_id' => $device?->id,
+                // A converted cart belongs to its order; the next add starts a new one.
+                'status' => 'active',
             ],
             []
         );

@@ -4,7 +4,7 @@
     <div class="modal__box search-modal__box" @click.outside="$store.ui.searchOpen=false">
         <div class="search-modal__bar">
             <x-icon name="search" />
-            <input type="search" wire:model.live.debounce.300ms="q" placeholder="Search products, categories…" aria-label="Search" x-ref="searchInput" x-effect="$store.ui.searchOpen && $nextTick(() => $refs.searchInput.focus())">
+            <input type="search" wire:model.live.debounce.300ms="q" x-on:input.debounce.1500ms="$wire.trackSearch()" placeholder="Search products, categories…" aria-label="Search" x-ref="searchInput" x-effect="$store.ui.searchOpen && $nextTick(() => $refs.searchInput.focus())">
             <button class="modal__close" @click="$store.ui.searchOpen=false" aria-label="Close">✕</button>
         </div>
 

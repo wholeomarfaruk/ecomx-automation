@@ -7,6 +7,7 @@ use App\Marketing\Contracts\EventContract;
 use App\Marketing\Events\AddToCart;
 use App\Marketing\Events\InitiateCheckout;
 use App\Marketing\Events\Purchase;
+use App\Marketing\Events\Search;
 use App\Marketing\Events\ViewContent;
 use App\Marketing\Identity\IdentityResolver;
 use App\Marketing\Identity\MarketingIdentity;
@@ -164,6 +165,7 @@ final class MetaPayloadBuilder
             $event instanceof Purchase => $this->buildPurchaseData($event),
             $event instanceof ViewContent, $event instanceof AddToCart => $this->buildContentData($event),
             $event instanceof InitiateCheckout => $this->buildCheckoutData($event),
+            $event instanceof Search => $this->buildSearchData($event),
             default => $this->buildGenericData($event),
         };
     }
@@ -222,6 +224,19 @@ final class MetaPayloadBuilder
             'content_ids' => $this->contentIds($event->items),
             'content_type' => 'product',
             'num_items' => $event->itemCount ?? count($event->items),
+        ]);
+    }
+
+    /** content_ids/contents: the results shown for the term, as catalog ids. */
+    private function buildSearchData(
+        Search $event,
+    ): array {
+        return $this->withoutEmpty([
+            'search_string' => $event->searchString,
+            'currency' => $event->currency,
+            'content_ids' => $this->contentIds($event->items),
+            'contents' => $this->contents($event->items),
+            'content_type' => $event->items !== [] ? 'product' : null,
         ]);
     }
 
