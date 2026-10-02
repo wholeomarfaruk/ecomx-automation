@@ -49,7 +49,7 @@
     "src": "node_modules/boxicons/fonts/boxicons.woff2"
   },
   "resources/css/admin.css": {
-    "file": "assets/app-Drb_H8vS.css",
+    "file": "assets/app-B25oNaRV.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "admin",
@@ -59,7 +59,7 @@
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-Drb_H8vS.css",
+    "file": "assets/app-B25oNaRV.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "admin",
@@ -69,7 +69,7 @@
     ]
   },
   "resources/ecomx-anyniche/js/app.js": {
-    "file": "assets/app-Dm4E2ARY.js",
+    "file": "assets/app-DqHC2FbU.js",
     "name": "app",
     "src": "resources/ecomx-anyniche/js/app.js",
     "isEntry": true,
@@ -90,7 +90,7 @@
     ]
   },
   "resources/ecomx-fashion/js/app.js": {
-    "file": "assets/app-Cyw3QfDw.js",
+    "file": "assets/app-CgTT6smD.js",
     "name": "app",
     "src": "resources/ecomx-fashion/js/app.js",
     "isEntry": true,

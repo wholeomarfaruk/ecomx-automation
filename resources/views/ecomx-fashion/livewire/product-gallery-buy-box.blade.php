@@ -117,14 +117,28 @@
             {{ ['low_stock' => 'Low stock', 'out_of_stock' => 'Out of stock', 'backorder' => 'Available on backorder'][$stockState] ?? 'In stock' }}
         </p>
 
-        {{-- Buy actions --}}
+        {{-- Buy actions — cartAction (app.js) calls CartManager directly --}}
+        @php
+            $cartPick = ['productId' => $productId, 'variantId' => $this->selectedVariantId, 'needsSize' => $hasSizes && ! $selectedSize];
+        @endphp
         <div style="display:flex;flex-direction:column;gap:10px">
             <div style="display:flex;gap:10px">
-                <button type="button" class="btn btn--primary" style="flex:1" wire:click="addToCart" @disabled($soldOut)>{{ $soldOut ? 'Sold out' : ($addedToCart ? 'Added to cart ✓' : 'Add to Cart — ৳' . number_format($this->currentPrice)) }}</button>
+                <button type="button" class="btn btn--primary" style="flex:1" x-data="cartAction" data-cart="{{ json_encode($cartPick) }}" wire:loading.attr="data-picking" wire:target="selectColor,selectSize" @click="send($el, false)" @disabled($soldOut)>
+                    @if($soldOut)
+                        Sold out
+                    @else
+                        <span x-show="busy" x-cloak><span class="spinner" style="border-color:currentColor;border-top-color:transparent;vertical-align:-2px;margin-right:6px"></span>Adding…</span>
+                        <span x-show="!busy && added" x-cloak>Added to cart ✓</span>
+                        <span x-show="!busy && !added">Add to Cart — ৳{{ number_format($this->currentPrice) }}</span>
+                    @endif
+                </button>
                 <button class="icon-btn {{ $this->isWished ? 'is-on' : '' }}" style="width:54px;height:auto;border-radius:12px;background:#fff;{{ $this->isWished ? 'color:var(--ac)' : '' }}" wire:click="toggleWishlist({{ $productId }}, {{ $this->selectedVariantId ?? 'null' }})" wire:loading.attr="disabled" wire:target="toggleWishlist({{ $productId }})" aria-label="Wishlist"><x-icon name="heart" /></button>
             </div>
             <div style="display:flex;gap:10px">
-                <button type="button" class="btn btn--outline" style="flex:1;border-color:var(--ac);color:var(--ac2)" wire:click="buyNow" wire:loading.attr="disabled" wire:target="buyNow" @disabled($soldOut)>Buy Now — 1 qty</button>
+                <button type="button" class="btn btn--outline" style="flex:1;border-color:var(--ac);color:var(--ac2)" x-data="cartAction" data-cart="{{ json_encode($cartPick) }}" wire:loading.attr="data-picking" wire:target="selectColor,selectSize" @click="send($el, true)" @disabled($soldOut)>
+                    <span x-show="busy" x-cloak><span class="spinner" style="border-color:currentColor;border-top-color:transparent;vertical-align:-2px;margin-right:6px"></span>Adding…</span>
+                    <span x-show="!busy">Buy Now — 1 qty</span>
+                </button>
                 @if($orderWhatsapp = \App\Support\ContactInfo::whatsappUrl('Hi, I want to order: ' . $product['name']))
                 <a href="{{ $orderWhatsapp }}" target="_blank" rel="noopener" class="icon-btn" style="width:54px;height:auto;border-radius:12px;border:1.5px solid #25D366;background:rgba(37,211,102,.08);color:#128C4A" aria-label="Order via WhatsApp"><x-icon name="whatsapp" /></a>
                 @endif

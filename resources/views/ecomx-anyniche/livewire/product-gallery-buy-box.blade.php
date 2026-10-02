@@ -121,15 +121,26 @@
             <button type="button" @click="inc()" aria-label="Increase">+</button>
         </div>
 
+        {{-- cartAction (app.js) calls CartManager directly --}}
+        @php
+            $cartPick = ['productId' => $productId, 'variantId' => $this->selectedVariantId, 'needsSize' => $hasSizes && ! $selectedSize];
+        @endphp
         <div class="jtc-pd-info__buyrow" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <button type="button" class="jtc-pd-actions__buy" @click="$wire.buyNow(qty)" wire:loading.attr="disabled" wire:target="buyNow" @disabled($soldOut)>
+            <button type="button" class="jtc-pd-actions__buy" x-data="cartAction" data-cart="{{ json_encode($cartPick) }}" wire:loading.attr="data-picking" wire:target="selectColor,selectSize" @click="send($el, true, qty)" @disabled($soldOut)>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M13 2 3 14h7v8l10-12h-7z"></path></svg>
-                Buy now
+                <span x-show="busy" x-cloak><span class="spinner" style="border-color:currentColor;border-top-color:transparent;vertical-align:-2px;margin-right:6px"></span>Adding…</span>
+                <span x-show="!busy">Buy now</span>
             </button>
 
-            <button type="button" class="jtc-pd-actions__cart" @click="$wire.addToCart(qty)" @disabled($soldOut)>
+            <button type="button" class="jtc-pd-actions__cart" x-data="cartAction" data-cart="{{ json_encode($cartPick) }}" wire:loading.attr="data-picking" wire:target="selectColor,selectSize" @click="send($el, false, qty)" @disabled($soldOut)>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M6 6h15l-1.5 9h-12z"></path><circle cx="9" cy="20" r="1.4"></circle><circle cx="18" cy="20" r="1.4"></circle></svg>
-                {{ $soldOut ? 'Sold out' : ($addedToCart ? 'Added ✓' : 'Add to cart') }}
+                @if($soldOut)
+                    Sold out
+                @else
+                    <span x-show="busy" x-cloak><span class="spinner" style="border-color:currentColor;border-top-color:transparent;vertical-align:-2px;margin-right:6px"></span>Adding…</span>
+                    <span x-show="!busy && added" x-cloak>Added ✓</span>
+                    <span x-show="!busy && !added">Add to cart</span>
+                @endif
             </button>
         </div>
 

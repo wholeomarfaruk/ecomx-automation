@@ -54,6 +54,8 @@ class CartManager extends Component
      * $checkout = true is the product page "Buy now": same add (and AddToCart
      * tracking), then straight to checkout instead of opening the drawer.
      * Any failure above returns early with a toast, so no redirect happens.
+     * Returns whether the item was added — the product page awaits it
+     * (cartAction in app.js) to end its "Adding…" state.
      */
     #[On('add-to-cart')]
     public function addToCart($productId, $variantId = null, $qty = 1, $checkout = false)
@@ -62,12 +64,12 @@ class CartManager extends Component
 
         if (! $product) {
             $this->dispatch('notify', type: 'error', message: 'Product not found.');
-            return;
+            return false;
         }
 
         if ($product->stock_status === 'out_of_stock') {
             $this->dispatch('notify', type: 'error', message: 'This product is out of stock.');
-            return;
+            return false;
         }
 
         $variant = null;
@@ -76,12 +78,12 @@ class CartManager extends Component
 
             if (! $variant) {
                 $this->dispatch('notify', type: 'error', message: 'Selected variant is not available.');
-                return;
+                return false;
             }
 
             if ($variant->status !== 'active' || $variant->stock_quantity <= 0) {
                 $this->dispatch('notify', type: 'error', message: 'This variant is out of stock.');
-                return;
+                return false;
             }
         } else {
             // No variant explicitly chosen (e.g. product/flash-sale card
@@ -99,7 +101,7 @@ class CartManager extends Component
             // line would match no catalog item and no stock).
             if (! $variant && $product->product_type === ProductType::VARIABLE) {
                 $this->dispatch('notify', type: 'error', message: 'This product is out of stock.');
-                return;
+                return false;
             }
         }
 
@@ -120,14 +122,14 @@ class CartManager extends Component
         if ($item) {
             if ($stockLimit !== null && $item->quantity + $qty > $stockLimit) {
                 $this->dispatch('notify', type: 'error', message: 'No more stock available for this product.');
-                return;
+                return false;
             }
             $item->quantity += $qty;
             $item->save();
         } else {
             if ($stockLimit !== null && $qty > $stockLimit) {
                 $this->dispatch('notify', type: 'error', message: 'No more stock available for this product.');
-                return;
+                return false;
             }
             $item = CartItem::create([
                 'cart_id' => $cart->id,
@@ -144,12 +146,14 @@ class CartManager extends Component
 
         if ($checkout) {
             $this->redirectRoute('ecomx-fashion.checkout');
-            return;
+            return true;
         }
 
         $this->refreshBadgeAndOpenDrawer();
 
         $this->dispatch('notify', type: 'success', message: 'Added to cart successfully.');
+
+        return true;
     }
 
     /**

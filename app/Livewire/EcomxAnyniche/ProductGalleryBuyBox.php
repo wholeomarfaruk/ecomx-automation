@@ -55,7 +55,6 @@ class ProductGalleryBuyBox extends Component
 
     public bool $showSizePrompt = false;
     public bool $showSizeGuide = false;
-    public bool $addedToCart = false;
 
     /** The product's stock status as set in the admin. */
     public string $stockStatus = 'in_stock';
@@ -228,13 +227,6 @@ class ProductGalleryBuyBox extends Component
         }
 
         $this->dispatch('add-to-cart', productId: $this->productId, variantId: $this->selectedVariantId, qty: max(1, $qty), checkout: $checkout);
-        $this->addedToCart = ! $checkout;
-    }
-
-    /** Add to cart, then CartManager redirects straight to checkout. */
-    public function buyNow(int $qty = 1): void
-    {
-        $this->addToCart($qty, true);
     }
 
     /**

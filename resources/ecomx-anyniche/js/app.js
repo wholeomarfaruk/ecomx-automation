@@ -671,6 +671,65 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
+    // PDP Add to cart / Buy now: calls the layout's CartManager directly —
+    // one request, instead of a buy-box round trip first whose only job was
+    // to re-dispatch `add-to-cart`. data-cart carries the server-rendered
+    // pick (productId/variantId/needsSize), read at click time.
+    //
+    // `busy` shows the "Adding…" spinner until CartManager::addToCart()
+    // returns whether it added — awaited from this exact call, so cart/notify
+    // events from anything else on the page (drawer edits, wishlist, product
+    // cards) can't end it early. A successful Buy now stays busy while
+    // CartManager redirects to checkout.
+    Alpine.data('cartAction', () => ({
+        busy: false,
+        added: false,
+        init() {
+            // Back from checkout restores this page from the bfcache with
+            // Buy now still mid-"Adding…" — reset it.
+            window.addEventListener('pageshow', (e) => {
+                if (e.persisted) this.busy = false;
+            });
+        },
+        async send(el, checkout, qty = 1) {
+            if (this.busy) return;
+            this.busy = true;
+
+            // A colour/size tap still on its way to the server (wire:loading
+            // sets data-picking) — wait for its re-render, else data-cart is
+            // the old pick and the wrong variant gets added.
+            const waitUntil = Date.now() + 15000;
+            while (el.hasAttribute('data-picking') && Date.now() < waitUntil) {
+                await new Promise((resolve) => setTimeout(resolve, 50));
+            }
+
+            const cart = JSON.parse(el.dataset.cart);
+
+            // 2+ sizes and none picked — the buy box shows its size prompt.
+            if (cart.needsSize) {
+                this.busy = false;
+                this.$wire.addToCart();
+                return;
+            }
+
+            const cartManager = Livewire.getByName('ecomx-anyniche.cart-manager')[0];
+            if (!cartManager) {
+                this.busy = false;
+                return;
+            }
+
+            const timeout = new Promise((resolve) => setTimeout(() => resolve(false), 15000));
+            const ok = await Promise.race([
+                cartManager.addToCart(cart.productId, cart.variantId, qty, checkout),
+                timeout,
+            ]).catch(() => false);
+
+            if (ok === true && checkout) return;
+            this.busy = false;
+            this.added = ok === true;
+        },
+    }));
+
     // Countdown timer for the flash-sale band. Always counts down to
     // 23:59:59 Bangladesh time (Asia/Dhaka, UTC+6, no DST) *today*, so it
     // reads the same real end-of-day target on every refresh instead of
