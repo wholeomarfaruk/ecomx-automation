@@ -73,28 +73,16 @@ class ProductReviewsSlider extends Component
         $limit = (int) Setting::get('product_page_review_limit', 20, 'reviews');
         $device = request()->attributes->get('device');
 
-        $own = ProductReview::approved()
-            ->forProduct($this->productId)
+        // This product's reviews first (newest first), then other products' in random order.
+        $mapped = ProductReview::approved()
             ->whereHas('media')
             ->with(['media', 'product', 'customer', 'helpfulVotes'])
-            ->latest()
+            ->orderByRaw('product_id = ? DESC', [$this->productId])
+            ->orderByRaw('CASE WHEN product_id = ? THEN created_at END DESC', [$this->productId])
+            ->inRandomOrder()
             ->limit($limit)
-            ->get();
-
-        $remaining = $limit - $own->count();
-
-        $fallback = $remaining > 0
-            ? ProductReview::approved()
-                ->where('product_id', '!=', $this->productId)
-                ->whereHas('media')
-                ->with(['media', 'product', 'customer', 'helpfulVotes'])
-                ->inRandomOrder()
-                ->limit($remaining)
-                ->get()
-            : collect();
-
-        $mapped = $own->concat($fallback)
-            ->map(fn (ProductReview $review) => $this->mapReview($review, $review->product_id === $this->productId, $device))
+            ->get()
+            ->map(fn (ProductReview $review) => $this->mapReview($review, (int) $review->product_id === $this->productId, $device))
             ->all();
 
         $this->reviews = ! empty($mapped) ? $mapped : Catalog::reviews();
@@ -123,11 +111,17 @@ class ProductReviewsSlider extends Component
             ]);
         }
 
-        ProductReview::where('id', $reviewId)->update([
-            'helpful_count' => ProductReviewHelpfulVote::where('product_review_id', $reviewId)->count(),
-        ]);
+        $helpfulCount = ProductReviewHelpfulVote::where('product_review_id', $reviewId)->count();
 
-        $this->loadReviews();
+        ProductReview::where('id', $reviewId)->update(['helpful_count' => $helpfulCount]);
+
+        // Update just this card — reloading would reshuffle the random part of the slider.
+        foreach ($this->reviews as $i => $review) {
+            if (($review['id'] ?? null) === $reviewId) {
+                $this->reviews[$i]['helpful_count'] = $helpfulCount;
+                $this->reviews[$i]['voted_helpful'] = ! $vote;
+            }
+        }
     }
 
     public function openForm(): void
