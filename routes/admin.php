@@ -260,6 +260,9 @@ Route::prefix('settings/advance/courier')->name('settings.advance.courier.')->gr
 // Activity Log
 Route::get('/activity-log', App\Livewire\Admin\ActivityLog\ActivityLog::class)->name('activity-log');
 
+// Visits Url — request log (App\Http\Middleware\LogRequest)
+Route::get('/visits', App\Livewire\Admin\Visits\Visits::class)->name('visits');
+
 //uploads
 Route::get('/uploads', App\Livewire\Admin\File\Uploads::class)->name('uploads');
 Route::post('/upload', [FileUploadController::class, 'storeAdmin']);

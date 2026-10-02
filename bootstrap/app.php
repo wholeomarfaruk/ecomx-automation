@@ -50,6 +50,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // it must run after it. Both defer their DB writes to terminate().
         $middleware->appendToGroup('web', \App\Http\Middleware\MarketingTracker::class);
 
+        // Request log for admin → Visits Url. After DeviceTracker (reads its
+        // `device` attribute); writes in terminate(), after the response.
+        $middleware->appendToGroup('web', \App\Http\Middleware\LogRequest::class);
+        $middleware->appendToGroup('api', \App\Http\Middleware\LogRequest::class);
+
         // Full-site block enforcement — storefront only, never /admin (an
         // IP/device block on a shopper must not be able to lock out staff
         // sharing that network/browser). Must run after DeviceTracker, which

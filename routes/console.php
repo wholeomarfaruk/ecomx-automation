@@ -2,6 +2,7 @@
 
 use App\Jobs\SyncCourierShipmentJob;
 use App\Models\CourierShipment;
+use App\Models\RequestLog;
 use App\Services\LicenseService;
 use App\Services\UpdateService;
 use Illuminate\Foundation\Inspiring;
@@ -43,4 +44,11 @@ Artisan::command('courier:sync-tracking', function () {
     $this->comment("Queued tracking sync for {$shipments->count()} shipment(s).");
 })->purpose('Sync tracking status for every non-final courier shipment')
     ->everyFifteenMinutes()
+    ->withoutOverlapping();
+
+Artisan::command('request-logs:prune', function () {
+    // Visits Url request log — keeps config('request-logs.retention_days').
+    $this->call('model:prune', ['--model' => [RequestLog::class]]);
+})->purpose('Delete request_logs rows past their retention window')
+    ->daily()
     ->withoutOverlapping();
