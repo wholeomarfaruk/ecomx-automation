@@ -178,6 +178,12 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
                                         </svg>
                                     </a>
+                                    <button wire:click="openEditModal({{ $review->id }})" type="button" title="Edit"
+                                        class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/>
+                                        </svg>
+                                    </button>
                                     @if($review->status !== 'approved')
                                         <button wire:click="approve({{ $review->id }})" type="button" title="Approve"
                                             class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:bg-emerald-50 hover:text-emerald-600 transition">
@@ -276,135 +282,6 @@
         </div>
     </div>
 
-    {{-- Create (Admin-Added) Review Modal --}}
-    @if($allowAdminReviews)
-    <div x-cloak x-data="{ open: @entangle('createModal') }" x-show="open" x-transition
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog">
-        <div class="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col" @click.outside="open = false">
-            <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100 shrink-0">
-                <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-                    </svg>
-                </div>
-                <div class="flex-1">
-                    <h2 class="text-base font-semibold text-gray-900">Add Review</h2>
-                    <p class="text-xs text-gray-400">Added reviews still require verification before they appear on the storefront.</p>
-                </div>
-                <button @click="open = false" type="button" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-            <form wire:submit.prevent="createReview" class="overflow-y-auto px-6 py-5 space-y-4">
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Product <span class="text-red-500">*</span></label>
-                    <x-searchable-select field="newProductId" :value="$newProductId"
-                        :options="$productOptions" :images="$productImages" placeholder="— Select a product —" search-placeholder="Search products…" />
-                    @error('newProductId') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                </div>
-
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Existing Customer (optional)</label>
-                    <x-searchable-select field="newCustomerId" :value="$newCustomerId"
-                        :options="$customerOptions" placeholder="— None (use name below) —" search-placeholder="Search customers…" />
-                    <p class="text-xs text-gray-400 mt-1.5">Link to a real customer record, or leave blank and enter their name manually below.</p>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Reviewer Name @if(!$newCustomerId)<span class="text-red-500">*</span>@endif</label>
-                    <input wire:model="newAuthorName" type="text" placeholder="e.g. Rahim Uddin"
-                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                    @error('newAuthorName') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Rating <span class="text-red-500">*</span></label>
-                        <select wire:model="newRating" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                            <option value="">— Select —</option>
-                            @foreach ([5, 4, 3, 2, 1] as $r)
-                                <option value="{{ $r }}">{{ $r }} Star</option>
-                            @endforeach
-                        </select>
-                        @error('newRating') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Source <span class="text-red-500">*</span></label>
-                        <select wire:model="newSource" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                            <option value="admin">Admin</option>
-                            <option value="website">Website</option>
-                            <option value="facebook">Facebook</option>
-                            <option value="whatsapp">WhatsApp</option>
-                            <option value="phone">Phone</option>
-                            <option value="import">Import</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Title (optional)</label>
-                    <input wire:model="newTitle" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Comment <span class="text-red-500">*</span></label>
-                    <textarea wire:model="newComment" rows="4" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"></textarea>
-                    @error('newComment') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                </div>
-
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1.5">
-                        Photos / Videos
-                        @if($requireImageAdmin)
-                            <span class="text-red-500">*</span> <span class="text-gray-400 font-normal">(at least 1 photo required)</span>
-                        @else
-                            <span class="text-gray-400 font-normal">(optional)</span>
-                        @endif
-                    </label>
-
-                    <div class="flex flex-wrap gap-2 mb-2">
-                        @foreach($newMedia as $index => $file)
-                            <div class="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center" wire:key="new-media-{{ $index }}">
-                                @if(str_starts_with($file->getMimeType() ?? '', 'video'))
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"/>
-                                    </svg>
-                                @else
-                                    <img src="{{ $file->temporaryUrl() }}" alt="" class="w-full h-full object-cover">
-                                @endif
-                                <button type="button" wire:click="removeNewMedia({{ $index }})"
-                                    class="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 text-white text-xs flex items-center justify-center">✕</button>
-                            </div>
-                        @endforeach
-
-                        <label class="w-16 h-16 rounded-lg border border-dashed border-gray-300 flex items-center justify-center cursor-pointer text-gray-400 hover:border-indigo-400 hover:text-indigo-500 transition text-2xl">
-                            +
-                            <input type="file" wire:model="newMedia" multiple accept="image/*,video/*" class="hidden">
-                        </label>
-                    </div>
-
-                    <div wire:loading wire:target="newMedia" class="text-xs text-gray-400">Uploading…</div>
-                    @error('newMedia') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                    @error('newMedia.*') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                </div>
-
-                <label class="flex items-center gap-2.5 cursor-pointer">
-                    <input type="checkbox" wire:model="newVerifiedPurchase" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                    <span class="text-sm text-gray-700">Mark as verified purchase</span>
-                </label>
-
-                <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
-                    <button @click="open = false" type="button" class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
-                    <button type="submit" wire:loading.attr="disabled" wire:target="createReview,newMedia"
-                        class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50">
-                        Add Review
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-    @endif
+    @include('livewire.admin.customers.reviews.partials.review-form-modal')
 
 </div>

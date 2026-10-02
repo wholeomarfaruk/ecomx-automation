@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Customers\Reviews;
 
+use App\Livewire\Traits\WithMediaPicker;
 use App\Models\ProductReview;
 use App\Models\ProductReviewReply;
 use App\Models\ProductReviewStatistic;
@@ -9,6 +10,8 @@ use Livewire\Component;
 
 class ReviewDetail extends Component
 {
+    use WithMediaPicker, HandlesReviewForm;
+
     public int $id;
 
     public $replyComment = '';
@@ -104,6 +107,7 @@ class ReviewDetail extends Component
 
         return view('livewire.admin.customers.reviews.review-detail', [
             'review' => $review,
+            ...$this->reviewFormViewData(),
         ])->layout('layouts.admin.admin');
     }
 }
