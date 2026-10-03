@@ -165,6 +165,137 @@ class PermissionSeeder extends Seeder
             ['id' => 88, 'name' => 'master_profile.edit'],
             ['id' => 89, 'name' => 'master_profile.delete'],
 
+            //users - devices, blocks, active
+            ['id' => 90, 'name' => 'user_device.view'],
+            ['id' => 91, 'name' => 'user_block.view'],
+            ['id' => 92, 'name' => 'user_block.manage'],
+            ['id' => 93, 'name' => 'active_user.view'],
+
+            //sales - orders
+            ['id' => 94, 'name' => 'order.view'],
+            ['id' => 95, 'name' => 'order.create'],
+            ['id' => 96, 'name' => 'order.edit'],
+            ['id' => 97, 'name' => 'order.delete'],
+            ['id' => 98, 'name' => 'order.status_change'],
+            ['id' => 99, 'name' => 'order.print'],
+
+            //sales - coupons
+            ['id' => 100, 'name' => 'coupon.view'],
+            ['id' => 101, 'name' => 'coupon.create'],
+            ['id' => 102, 'name' => 'coupon.edit'],
+            ['id' => 103, 'name' => 'coupon.delete'],
+            ['id' => 104, 'name' => 'coupon_usage.view'],
+
+            //sales - offers
+            ['id' => 105, 'name' => 'offer.view'],
+            ['id' => 106, 'name' => 'offer.create'],
+            ['id' => 107, 'name' => 'offer.edit'],
+            ['id' => 108, 'name' => 'offer.delete'],
+
+            //sales - pos
+            ['id' => 109, 'name' => 'pos.access'],
+            ['id' => 110, 'name' => 'pos_register.view'],
+            ['id' => 111, 'name' => 'pos_register.manage'],
+            ['id' => 112, 'name' => 'pos_session.view'],
+            ['id' => 113, 'name' => 'pos_session.open'],
+            ['id' => 114, 'name' => 'pos_session.close'],
+
+            //customers
+            ['id' => 115, 'name' => 'customer.view'],
+            ['id' => 116, 'name' => 'customer.create'],
+            ['id' => 117, 'name' => 'customer.edit'],
+            ['id' => 118, 'name' => 'customer.delete'],
+            ['id' => 119, 'name' => 'customer_group.view'],
+            ['id' => 120, 'name' => 'customer_group.create'],
+            ['id' => 121, 'name' => 'customer_group.edit'],
+            ['id' => 122, 'name' => 'customer_group.delete'],
+            ['id' => 123, 'name' => 'cart.view'],
+            ['id' => 124, 'name' => 'combo.view'],
+            ['id' => 125, 'name' => 'loved_product.view'],
+
+            //customers - reviews
+            ['id' => 126, 'name' => 'review.view'],
+            ['id' => 127, 'name' => 'review.create'],
+            ['id' => 128, 'name' => 'review.edit'],
+            ['id' => 129, 'name' => 'review.delete'],
+            ['id' => 130, 'name' => 'review.approve'],
+            ['id' => 131, 'name' => 'review_settings.manage'],
+
+            //purchase - supplier invoices & ledger
+            ['id' => 132, 'name' => 'supplier_invoice.view'],
+            ['id' => 133, 'name' => 'supplier_invoice.create'],
+            ['id' => 134, 'name' => 'supplier_invoice.edit'],
+            ['id' => 135, 'name' => 'supplier_invoice.delete'],
+            ['id' => 136, 'name' => 'supplier_ledger.view'],
+
+            //inventory
+            ['id' => 137, 'name' => 'stock.view'],
+            ['id' => 138, 'name' => 'stock.adjust'],
+            ['id' => 139, 'name' => 'stock_in.create'],
+            ['id' => 140, 'name' => 'batch.view'],
+            ['id' => 141, 'name' => 'stock_movement.view'],
+            ['id' => 142, 'name' => 'warehouse.view'],
+            ['id' => 143, 'name' => 'warehouse.create'],
+            ['id' => 144, 'name' => 'warehouse.edit'],
+            ['id' => 145, 'name' => 'warehouse.delete'],
+            ['id' => 146, 'name' => 'inventory_settings.manage'],
+
+            //accounts - chart of accounts & opening balance
+            ['id' => 147, 'name' => 'chart_of_account.view'],
+            ['id' => 148, 'name' => 'chart_of_account.manage'],
+            ['id' => 149, 'name' => 'opening_balance.manage'],
+
+            //marketing
+            ['id' => 150, 'name' => 'marketing_dashboard.view'],
+            ['id' => 151, 'name' => 'marketing_journey.view'],
+            ['id' => 152, 'name' => 'marketing_campaign.view'],
+            ['id' => 153, 'name' => 'marketing_campaign.manage'],
+            ['id' => 154, 'name' => 'marketing_analytics.view'],
+            ['id' => 155, 'name' => 'marketing_report.view'],
+            ['id' => 156, 'name' => 'marketing_settings.manage'],
+
+            //frontend / storefront
+            ['id' => 157, 'name' => 'frontend.view'],
+            ['id' => 158, 'name' => 'frontend.manage'],
+            ['id' => 159, 'name' => 'appearance.manage'],
+            ['id' => 160, 'name' => 'theme.manage'],
+            ['id' => 161, 'name' => 'menu.manage'],
+
+            //landing pages
+            ['id' => 162, 'name' => 'landing_page.view'],
+            ['id' => 163, 'name' => 'landing_page.create'],
+            ['id' => 164, 'name' => 'landing_page.edit'],
+            ['id' => 165, 'name' => 'landing_page.delete'],
+            ['id' => 166, 'name' => 'landing_page_settings.manage'],
+
+            //settings
+            ['id' => 167, 'name' => 'settings.view'],
+            ['id' => 168, 'name' => 'settings.manage'],
+            ['id' => 169, 'name' => 'shipping.view'],
+            ['id' => 170, 'name' => 'shipping.manage'],
+            ['id' => 171, 'name' => 'site_settings.view'],
+            ['id' => 172, 'name' => 'site_settings.manage'],
+            ['id' => 173, 'name' => 'location.view'],
+            ['id' => 174, 'name' => 'location.manage'],
+            ['id' => 175, 'name' => 'gender.manage'],
+            ['id' => 176, 'name' => 'currency.view'],
+            ['id' => 177, 'name' => 'currency.manage'],
+            ['id' => 178, 'name' => 'branch.view'],
+            ['id' => 179, 'name' => 'branch.create'],
+            ['id' => 180, 'name' => 'branch.edit'],
+            ['id' => 181, 'name' => 'branch.delete'],
+            ['id' => 182, 'name' => 'language.view'],
+            ['id' => 183, 'name' => 'language.create'],
+            ['id' => 184, 'name' => 'language.edit'],
+            ['id' => 185, 'name' => 'language.delete'],
+
+            //logs & media
+            ['id' => 186, 'name' => 'activity_log.view'],
+            ['id' => 187, 'name' => 'visit.view'],
+            ['id' => 188, 'name' => 'media.view'],
+            ['id' => 189, 'name' => 'media.upload'],
+            ['id' => 190, 'name' => 'media.delete'],
+
         ];
         foreach ($permissions as $permission) {
             // Permission::create(['name' => $permission]);
