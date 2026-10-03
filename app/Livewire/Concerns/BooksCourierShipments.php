@@ -62,7 +62,7 @@ trait BooksCourierShipments
         $this->bookingCodAmount        = (string) $order->due_amount;
         $this->bookingWeight           = (string) $this->totalWeightFor($order);
         $this->bookingQuantity         = (string) max(1, $order->items->sum('quantity'));
-        $this->bookingDescription      = $order->items->pluck('product_name')->filter()->implode(', ') ?: "Order #{$order->id}";
+        $this->bookingDescription      = $this->itemDescriptionFor($order);
         $this->bookingInstruction      = '';
 
         $this->bookingModal = true;
@@ -76,6 +76,31 @@ trait BooksCourierShipments
      * catalog. The admin can still edit the field afterward — this only
      * changes what the modal opens with.
      */
+    /**
+     * Courier item description, one line per product with its maths:
+     *   Zareen 4 Pcs - 2x2200=4400,
+     *   Elara Purple - 1x1950=1950
+     * Capped to the field's 500 characters.
+     */
+    protected function itemDescriptionFor(Order $order): string
+    {
+        $fmt = fn ($n) => rtrim(rtrim(number_format((float) $n, 2, '.', ''), '0'), '.') ?: '0';
+
+        $lines = $order->items
+            ->filter(fn (OrderItem $item) => filled($item->product_name))
+            ->map(function (OrderItem $item) use ($fmt) {
+                if ($item->is_gift) {
+                    return "{$item->product_name} - {$fmt($item->quantity)}x (gift)";
+                }
+
+                $lineTotal = (float) $item->quantity * (float) $item->unit_price;
+
+                return "{$item->product_name} - {$fmt($item->quantity)}x{$fmt($item->unit_price)}={$fmt($lineTotal)}";
+            });
+
+        return mb_substr($lines->implode(",\n"), 0, 500) ?: "Order #{$order->id}";
+    }
+
     protected function totalWeightFor(Order $order): float
     {
         $total = $order->items->sum(function (OrderItem $item) {

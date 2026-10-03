@@ -785,8 +785,8 @@
 
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1.5">Item Description</label>
-                    <input wire:model="bookingDescription" type="text"
-                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                    <textarea wire:model="bookingDescription" rows="3"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"></textarea>
                 </div>
 
                 <div>
