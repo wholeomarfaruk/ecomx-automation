@@ -160,44 +160,66 @@
                 </div>
 
                 {{-- Grid --}}
-                <div class="overflow-auto max-h-[68vh]">
-                    <table class="min-w-full text-sm border-separate border-spacing-0">
-                        <thead class="sticky top-0 z-10 bg-gray-50">
-                            <tr class="text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                <th class="sticky left-0 z-20 bg-gray-50 border-b border-gray-200 px-2 py-2 w-16">
+                {{-- Fixed column widths (table-fixed + colgroup): the sheet is wider than the
+                     screen and scrolls sideways instead of squeezing cells; # and Phone stay pinned. --}}
+                <div class="overflow-auto max-h-[68vh] overscroll-x-contain">
+                    <table class="table-fixed text-sm border-separate border-spacing-0" style="width: 2586px">
+                        <colgroup>
+                            <col style="width: 56px">  {{-- select + # --}}
+                            <col style="width: 150px"> {{-- phone --}}
+                            <col style="width: 170px"> {{-- customer --}}
+                            <col style="width: 260px"> {{-- address --}}
+                            <col style="width: 220px"> {{-- products --}}
+                            <col style="width: 280px"> {{-- matched items --}}
+                            <col style="width: 70px">  {{-- qty --}}
+                            <col style="width: 90px">  {{-- price --}}
+                            <col style="width: 160px"> {{-- zone --}}
+                            <col style="width: 100px"> {{-- delivery --}}
+                            <col style="width: 90px">  {{-- discount --}}
+                            <col style="width: 90px">  {{-- advance --}}
+                            <col style="width: 110px"> {{-- total --}}
+                            <col style="width: 100px"> {{-- due --}}
+                            <col style="width: 130px"> {{-- source --}}
+                            <col style="width: 200px"> {{-- note --}}
+                            <col style="width: 240px"> {{-- status --}}
+                            <col style="width: 70px">  {{-- actions --}}
+                        </colgroup>
+                        <thead class="sticky top-0 z-20">
+                            <tr class="text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">
+                                <th class="sticky left-0 z-30 bg-gray-50 border-b border-gray-200 px-3 py-2.5">
                                     <input type="checkbox" :checked="allSelected" @change="toggleAll($event.target.checked)" class="rounded border-gray-300 text-indigo-600">
                                 </th>
-                                <th class="border-b border-gray-200 px-2 py-2 min-w-36">Phone *</th>
-                                <th class="border-b border-gray-200 px-2 py-2 min-w-40">Customer</th>
-                                <th class="border-b border-gray-200 px-2 py-2 min-w-56">Address</th>
-                                <th class="border-b border-gray-200 px-2 py-2 min-w-52">Products *</th>
-                                <th class="border-b border-gray-200 px-2 py-2 min-w-64">Matched Items</th>
-                                <th class="border-b border-gray-200 px-2 py-2 w-16">Qty</th>
-                                <th class="border-b border-gray-200 px-2 py-2 w-20">Price</th>
-                                <th class="border-b border-gray-200 px-2 py-2 min-w-36">Zone</th>
-                                <th class="border-b border-gray-200 px-2 py-2 w-24">Delivery</th>
-                                <th class="border-b border-gray-200 px-2 py-2 w-20">Discount</th>
-                                <th class="border-b border-gray-200 px-2 py-2 w-20">Advance</th>
-                                <th class="border-b border-gray-200 px-2 py-2 w-24 text-right">Total</th>
-                                <th class="border-b border-gray-200 px-2 py-2 w-24 text-right">Due (COD)</th>
-                                <th class="border-b border-gray-200 px-2 py-2 min-w-28">Source</th>
-                                <th class="border-b border-gray-200 px-2 py-2 min-w-40">Note</th>
-                                <th class="border-b border-gray-200 px-2 py-2 min-w-48">Status</th>
-                                <th class="border-b border-gray-200 px-2 py-2 w-16"></th>
+                                <th class="sticky z-30 bg-gray-50 border-b border-r border-gray-200 px-3 py-2.5 shadow-[4px_0_6px_-4px_rgba(0,0,0,0.12)]" style="left: 56px">Phone <span class="text-red-400">*</span></th>
+                                <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5">Customer</th>
+                                <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5">Address</th>
+                                <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5">Products <span class="text-red-400">*</span></th>
+                                <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5">Matched Items</th>
+                                <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5 text-right">Qty</th>
+                                <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5 text-right">Price</th>
+                                <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5">Zone</th>
+                                <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5 text-right">Delivery</th>
+                                <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5 text-right">Discount</th>
+                                <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5 text-right">Advance</th>
+                                <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5 text-right">Total</th>
+                                <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5 text-right">Due (COD)</th>
+                                <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5">Source</th>
+                                <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5">Note</th>
+                                <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5">Status</th>
+                                <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5"></th>
                             </tr>
                         </thead>
                         <tbody>
                             <template x-for="(row, r) in rows" :key="row.key">
                                 <tr class="group align-top" :class="rowClass(row)" @input="if (row.result && !row.result.ok) row.result = null" @change="if (row.result && !row.result.ok) row.result = null">
-                                    <td class="sticky left-0 z-5 border-b border-gray-100 px-2 py-1.5 bg-inherit">
-                                        <div class="flex items-center gap-1.5">
+                                    <td class="sticky left-0 z-10 border-b border-gray-100 px-3 py-2.5" :class="stickyBg(row)">
+                                        <div class="flex items-center gap-2">
                                             <input type="checkbox" x-model="row.selected" class="rounded border-gray-300 text-indigo-600">
                                             <span class="text-[11px] text-gray-400 tabular-nums" x-text="r + 1"></span>
                                         </div>
                                     </td>
 
                                     {{-- Phone --}}
-                                    <td class="border-b border-gray-100 px-1 py-1">
+                                    <td class="sticky z-10 border-b border-r border-gray-100 px-1.5 py-1.5 shadow-[4px_0_6px_-4px_rgba(0,0,0,0.12)]" style="left: 56px" :class="stickyBg(row)">
                                         <input type="text" x-model="row.cells.phone" :data-cell="`${r}:0`" :readonly="isPlaced(row)"
                                             @keydown="nav($event, r, 0)" @paste="onPaste($event, r, 0)" inputmode="tel" placeholder="01XXXXXXXXX"
                                             class="cell" :class="info(row).phoneBad && 'text-red-600'">
@@ -218,14 +240,14 @@
                                     </td>
 
                                     {{-- Name --}}
-                                    <td class="border-b border-gray-100 px-1 py-1">
+                                    <td class="border-b border-gray-100 px-1.5 py-1.5">
                                         <input type="text" x-model="row.cells.name" :data-cell="`${r}:1`" :readonly="isPlaced(row)"
                                             @keydown="nav($event, r, 1)" @paste="onPaste($event, r, 1)"
                                             :placeholder="info(row).customer?.found ? info(row).customer.name : 'Name'" class="cell">
                                     </td>
 
                                     {{-- Address --}}
-                                    <td class="border-b border-gray-100 px-1 py-1">
+                                    <td class="border-b border-gray-100 px-1.5 py-1.5">
                                         <input type="text" x-model="row.cells.address" :data-cell="`${r}:2`" :readonly="isPlaced(row)"
                                             @keydown="nav($event, r, 2)" @paste="onPaste($event, r, 2)"
                                             :placeholder="info(row).customer?.found && info(row).customer.address ? info(row).customer.address : 'Full address'"
@@ -233,16 +255,16 @@
                                     </td>
 
                                     {{-- Products (free text) --}}
-                                    <td class="border-b border-gray-100 px-1 py-1">
+                                    <td class="border-b border-gray-100 px-1.5 py-1.5">
                                         <input type="text" x-model="row.cells.products" :data-cell="`${r}:3`" :readonly="isPlaced(row)"
                                             @keydown="nav($event, r, 3)" @paste="onPaste($event, r, 3)"
                                             placeholder="Code / SKU / name x qty, …" :title="row.cells.products" class="cell font-mono text-xs">
                                     </td>
 
                                     {{-- Matched items --}}
-                                    <td class="border-b border-gray-100 px-1 py-1">
+                                    <td class="border-b border-gray-100 px-1.5 py-1.5">
                                         <button type="button" @click="openEditor(row)" :disabled="isPlaced(row) || !catalogReady"
-                                            class="w-full min-h-8 text-left rounded-md px-1.5 py-1 hover:bg-indigo-50/60 transition flex flex-wrap gap-1 items-center">
+                                            class="w-full min-h-9 text-left rounded-lg border border-dashed border-gray-200 px-2 py-1 hover:border-indigo-300 hover:bg-indigo-50/60 transition flex flex-wrap gap-1 items-center">
                                             <template x-for="(it, i) in info(row).tokens" :key="i">
                                                 <span class="inline-flex items-center gap-1 max-w-full px-1.5 py-0.5 rounded text-[11px] border"
                                                     :class="it.ok ? (it.match === 'exact' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-amber-50 border-amber-200 text-amber-700') : 'bg-red-50 border-red-200 text-red-600'"
@@ -256,19 +278,19 @@
                                     </td>
 
                                     {{-- Qty / Price (single-product rows) --}}
-                                    <td class="border-b border-gray-100 px-1 py-1">
+                                    <td class="border-b border-gray-100 px-1.5 py-1.5">
                                         <input type="text" x-model="row.cells.qty" :data-cell="`${r}:4`" :readonly="isPlaced(row) || info(row).multi"
                                             @keydown="nav($event, r, 4)" @paste="onPaste($event, r, 4)" inputmode="decimal"
                                             :placeholder="info(row).multi ? 'multi' : '1'" class="cell text-right">
                                     </td>
-                                    <td class="border-b border-gray-100 px-1 py-1">
+                                    <td class="border-b border-gray-100 px-1.5 py-1.5">
                                         <input type="text" x-model="row.cells.price" :data-cell="`${r}:5`" :readonly="isPlaced(row) || info(row).multi"
                                             @keydown="nav($event, r, 5)" @paste="onPaste($event, r, 5)" inputmode="decimal"
                                             :placeholder="info(row).multi ? 'multi' : (info(row).tokens[0]?.ok ? String(info(row).tokens[0].defaultPrice) : 'auto')" class="cell text-right">
                                     </td>
 
                                     {{-- Zone --}}
-                                    <td class="border-b border-gray-100 px-1 py-1">
+                                    <td class="border-b border-gray-100 px-1.5 py-1.5">
                                         <template x-if="info(row).isLead">
                                             <div>
                                                 <select x-model="row.cells.method" :data-cell="`${r}:6`" :disabled="isPlaced(row)" @keydown="nav($event, r, 6)"
@@ -284,7 +306,7 @@
                                     </td>
 
                                     {{-- Delivery --}}
-                                    <td class="border-b border-gray-100 px-1 py-1">
+                                    <td class="border-b border-gray-100 px-1.5 py-1.5">
                                         <template x-if="info(row).isLead">
                                             <input type="text" x-model="row.cells.delivery" :data-cell="`${r}:7`" :readonly="isPlaced(row)"
                                                 @keydown="nav($event, r, 7)" @paste="onPaste($event, r, 7)" inputmode="decimal"
@@ -295,17 +317,17 @@
                                     </td>
 
                                     {{-- Discount / Advance --}}
-                                    <td class="border-b border-gray-100 px-1 py-1">
+                                    <td class="border-b border-gray-100 px-1.5 py-1.5">
                                         <input type="text" x-model="row.cells.discount" :data-cell="`${r}:8`" :readonly="isPlaced(row)"
                                             @keydown="nav($event, r, 8)" @paste="onPaste($event, r, 8)" inputmode="decimal" placeholder="0" class="cell text-right">
                                     </td>
-                                    <td class="border-b border-gray-100 px-1 py-1">
+                                    <td class="border-b border-gray-100 px-1.5 py-1.5">
                                         <input type="text" x-model="row.cells.advance" :data-cell="`${r}:9`" :readonly="isPlaced(row)"
                                             @keydown="nav($event, r, 9)" @paste="onPaste($event, r, 9)" inputmode="decimal" placeholder="0" class="cell text-right">
                                     </td>
 
                                     {{-- Totals --}}
-                                    <td class="border-b border-gray-100 px-2 py-1.5 text-right tabular-nums">
+                                    <td class="border-b border-gray-100 px-3 py-2.5 text-right tabular-nums">
                                         <template x-if="info(row).isLead && info(row).group.items.length">
                                             <div>
                                                 <div class="font-semibold text-gray-800" x-text="money(info(row).group.total)"></div>
@@ -313,14 +335,14 @@
                                             </div>
                                         </template>
                                     </td>
-                                    <td class="border-b border-gray-100 px-2 py-1.5 text-right tabular-nums">
+                                    <td class="border-b border-gray-100 px-3 py-2.5 text-right tabular-nums">
                                         <template x-if="info(row).isLead && info(row).group.items.length">
                                             <div class="font-semibold" :class="info(row).group.due > 0 ? 'text-red-500' : 'text-emerald-600'" x-text="money(info(row).group.due)"></div>
                                         </template>
                                     </td>
 
                                     {{-- Source --}}
-                                    <td class="border-b border-gray-100 px-1 py-1">
+                                    <td class="border-b border-gray-100 px-1.5 py-1.5">
                                         <select x-model="row.cells.source" :data-cell="`${r}:10`" :disabled="isPlaced(row)" @keydown="nav($event, r, 10)" class="cell pr-6" :class="!row.cells.source && 'text-gray-500'">
                                             <option value="" x-text="`Default (${sourceLabel(settings.source)})`"></option>
                                             <template x-for="s in config.sources" :key="s.value"><option :value="s.value" x-text="s.label" :selected="row.cells.source === s.value"></option></template>
@@ -328,13 +350,13 @@
                                     </td>
 
                                     {{-- Note --}}
-                                    <td class="border-b border-gray-100 px-1 py-1">
+                                    <td class="border-b border-gray-100 px-1.5 py-1.5">
                                         <input type="text" x-model="row.cells.note" :data-cell="`${r}:11`" :readonly="isPlaced(row)"
                                             @keydown="nav($event, r, 11)" @paste="onPaste($event, r, 11)" placeholder="Delivery note" :title="row.cells.note" class="cell">
                                     </td>
 
                                     {{-- Status --}}
-                                    <td class="border-b border-gray-100 px-2 py-1.5 text-[11px] leading-snug">
+                                    <td class="border-b border-gray-100 px-3 py-2.5 text-[11px] leading-snug">
                                         <template x-if="row.result?.ok">
                                             <a :href="row.result.url" target="_blank" class="inline-flex items-center gap-1 font-semibold text-emerald-600 hover:underline">
                                                 ✓ Placed <span x-text="`#${row.result.id}`"></span>
@@ -356,7 +378,7 @@
                                     </td>
 
                                     {{-- Row actions --}}
-                                    <td class="border-b border-gray-100 px-1 py-1">
+                                    <td class="border-b border-gray-100 px-1.5 py-1.5">
                                         <div class="flex items-center gap-0.5 opacity-40 group-hover:opacity-100 transition">
                                             <button type="button" @click="duplicateRow(r)" title="Duplicate row" class="w-6 h-6 inline-flex items-center justify-center rounded text-gray-500 hover:bg-gray-100">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75"/></svg>
@@ -516,8 +538,9 @@
 
     <style>
         [x-cloak] { display: none !important; }
-        .cell { width: 100%; border: 1px solid transparent; border-radius: .375rem; background: transparent; padding: .375rem .5rem; font-size: .8125rem; line-height: 1.25rem; color: #1f2937; }
-        .cell:hover { border-color: #e5e7eb; }
+        .cell { display: block; width: 100%; height: 2.25rem; border: 1px solid #eceef1; border-radius: .5rem; background: rgba(255,255,255,.85); padding: .4375rem .625rem; font-size: .8125rem; line-height: 1.25rem; color: #1f2937; text-overflow: ellipsis; white-space: nowrap; transition: border-color .12s, box-shadow .12s; }
+        select.cell { padding-right: 1.75rem; }
+        .cell:hover { border-color: #d1d5db; }
         .cell:focus { outline: none; border-color: #6366f1; background: #fff; box-shadow: 0 0 0 1px #6366f1; }
         .cell[readonly], .cell:disabled { color: #6b7280; cursor: default; }
         .cell::placeholder { color: #c4c8cf; }
@@ -625,6 +648,13 @@
             if (row.result && !row.result.ok) return 'bg-red-50/50';
             if (i.errors.length) return 'bg-red-50/30';
             return 'bg-white hover:bg-gray-50/50';
+        },
+        /** Pinned (#, Phone) cells need an opaque background so scrolled cells don't show through. */
+        stickyBg(row) {
+            if (row.result?.ok) return 'bg-emerald-50';
+            const i = this.info(row);
+            if (!i.empty && (row.result || i.errors.length)) return 'bg-red-50';
+            return 'bg-white group-hover:bg-gray-50';
         },
         nationalPhone(raw) {
             let d = asciiDigits(raw).replace(/\D/g, '');
