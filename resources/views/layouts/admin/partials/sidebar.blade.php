@@ -13,6 +13,11 @@
             $logoWhiteUrl  = $logoWhite  ? file_path($logoWhite)  : null;
             $logoSymbolUrl = $logoSymbol ? file_path($logoSymbol) : null;
             $initial       = strtoupper(mb_substr($siteName, 0, 1));
+
+            // Menu visibility: superadmin sees everything, other roles only what they're granted.
+            $authUser = auth()->user();
+            $isSuper  = $authUser?->hasRole('superadmin') ?? false;
+            $canSee   = fn (string ...$perms) => $isSuper || collect($perms)->contains(fn ($p) => $authUser?->can($p));
         @endphp
 
         <div class="relative flex items-center border-b border-white/5 h-20 shrink-0">
@@ -69,11 +74,14 @@
             <div class="h-[64vh] scrollbar scrollbar-thumb-gray-900 scrollbar-thin scrollbar-track-transparent"
                 :class="$store.sidebar.full ? 'overflow-y-scroll' : ''">
 
+                @if ($canSee('active_user.view', 'appearance.manage', 'customer.view', 'dashboard.view', 'frontend.view', 'frontend_component.manage', 'landing_page.view', 'landing_page_settings.manage', 'landing_page_template.view', 'master_profile.view', 'media.view', 'menu.manage', 'theme.manage', 'user.view', 'user_block.view', 'user_device.view'))
                 <div class="mt-4 mb-1">
                     <h2 class="text-gray-500 text-md font-semibold" :class="{ 'hidden': !$store.sidebar.full }"
                         x-transition>General</h2>
                 </div>
+                @endif
 
+                @if ($canSee('dashboard.view'))
                 <a href="{{ route('admin.dashboard') }}" x-data="tooltip" x-on:mouseover="show = true"
                     x-on:mouseleave="show = false"
                     class="relative flex items-center hover:text-gray-200 hover:bg-gray-800 space-x-2 rounded-md p-2 cursor-pointer justify-start text-gray-400
@@ -85,7 +93,9 @@
                     <h1 x-cloak x-bind:class="!$store.sidebar.full && show ? visibleClass : '' || !$store.sidebar.full ? 'sm:hidden' : ''">
                         Dashboard</h1>
                 </a>
+                @endif
 
+                @if ($canSee('media.view'))
                 <a href="{{ route('admin.uploads') }}" x-data="tooltip" x-on:mouseover="show = true"
                     x-on:mouseleave="show = false"
                     class="relative flex items-center hover:text-gray-200 hover:bg-gray-800 space-x-2 rounded-md p-2 cursor-pointer justify-start text-gray-400
@@ -98,7 +108,9 @@
                     <h1 x-cloak x-bind:class="!$store.sidebar.full && show ? visibleClass : '' || !$store.sidebar.full ? 'sm:hidden' : ''">
                         Uploads</h1>
                 </a>
+                @endif
 
+                @if ($canSee('active_user.view', 'customer.view', 'master_profile.view', 'user.view', 'user_block.view', 'user_device.view'))
                 @php
                     $usersActive = in_array(Route::currentRouteName(), [
                         'admin.users', 'admin.users.devices', 'admin.users.blocks', 'admin.users.active', 'admin.master-profile',
@@ -132,33 +144,47 @@
                     </div>
                     <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
+                        @if ($canSee('user.view'))
                         <a href="{{ route('admin.users') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.users' ? 'text-gray-200' : '' }}">
                             Users
                         </a>
+                        @endif
+                        @if ($canSee('master_profile.view'))
                         <a href="{{ route('admin.master-profile') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.master-profile' ? 'text-gray-200' : '' }}">
                             Master Profile
                         </a>
+                        @endif
+                        @if ($canSee('active_user.view'))
                         <a href="{{ route('admin.users.active') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.users.active' ? 'text-gray-200' : '' }}">
                             Active
                         </a>
+                        @endif
+                        @if ($canSee('customer.view'))
                         <a href="{{ route('admin.customers.index') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.customers.') ? 'text-gray-200' : '' }}">
                             Customers
                         </a>
+                        @endif
+                        @if ($canSee('user_device.view'))
                         <a href="{{ route('admin.users.devices') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.users.devices' ? 'text-gray-200' : '' }}">
                             Devices
                         </a>
+                        @endif
+                        @if ($canSee('user_block.view'))
                         <a href="{{ route('admin.users.blocks') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.users.blocks' ? 'text-gray-200' : '' }}">
                             Blocks
                         </a>
+                        @endif
                     </div>
                 </div>
+                @endif
 
+                @if ($canSee('appearance.manage', 'frontend.view', 'frontend_component.manage', 'menu.manage', 'theme.manage'))
                 @php
                     $frontendActive = str_starts_with(Route::currentRouteName(), 'admin.frontend.');
                 @endphp
@@ -188,29 +214,41 @@
                     </div>
                     <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
+                        @if ($canSee('frontend.view'))
                         <a href="{{ route('admin.frontend.menu') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.frontend.menu' || Route::currentRouteName() === 'admin.frontend.menu.show' ? 'text-gray-200' : '' }}">
                             Pages
                         </a>
+                        @endif
+                        @if ($canSee('theme.manage'))
                         <a href="{{ route('admin.frontend.themes') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.frontend.themes' ? 'text-gray-200' : '' }}">
                             Themes
                         </a>
+                        @endif
+                        @if ($canSee('appearance.manage'))
                         <a href="{{ route('admin.frontend.appearance') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.frontend.appearance' ? 'text-gray-200' : '' }}">
                             Appearance
                         </a>
+                        @endif
+                        @if ($canSee('menu.manage'))
                         <a href="{{ route('admin.frontend.menus') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.frontend.menus' ? 'text-gray-200' : '' }}">
                             Menus
                         </a>
+                        @endif
+                        @if ($canSee('frontend_component.manage'))
                         <a href="{{ route('admin.frontend.components') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.frontend.components' ? 'text-gray-200' : '' }}">
                             Components
                         </a>
+                        @endif
                     </div>
                 </div>
+                @endif
 
+                @if ($canSee('landing_page.view', 'landing_page_settings.manage', 'landing_page_template.view'))
                 @php
                     $landingPageActive = str_starts_with(Route::currentRouteName(), 'admin.landingpages.');
                 @endphp
@@ -240,26 +278,36 @@
                     </div>
                     <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
+                        @if ($canSee('landing_page.view'))
                         <a href="{{ route('admin.landingpages.pages') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.landingpages.pages' || str_starts_with(Route::currentRouteName(), 'admin.landingpages.pages.') ? 'text-gray-200' : '' }}">
                             All Pages
                         </a>
+                        @endif
+                        @if ($canSee('landing_page_template.view'))
                         <a href="{{ route('admin.landingpages.templates') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.landingpages.templates' ? 'text-gray-200' : '' }}">
                             Templates
                         </a>
+                        @endif
+                        @if ($canSee('landing_page_settings.manage'))
                         <a href="{{ route('admin.landingpages.settings') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.landingpages.settings' ? 'text-gray-200' : '' }}">
                             Settings
                         </a>
+                        @endif
                     </div>
                 </div>
+                @endif
 
+                @if ($canSee('accounts_cash_account.view', 'accounts_dashboard.view', 'accounts_expense.view', 'accounts_fixed_asset.view', 'accounts_loan.view', 'accounts_owner_equity.manage', 'accounts_payable.view', 'accounts_receivable.view', 'accounts_report.view', 'accounts_transaction.view', 'attribute.view', 'batch.view', 'brand.view', 'cart.view', 'category.view', 'combo.view', 'coupon.view', 'customer.view', 'customer_group.view', 'inventory_settings.manage', 'loved_product.view', 'marketing_attribution.view', 'marketing_audience.view', 'marketing_campaign.view', 'marketing_customer.view', 'marketing_dashboard.view', 'marketing_event.view', 'marketing_journey.view', 'marketing_product.view', 'marketing_report.view', 'marketing_settings.manage', 'marketing_source.view', 'offer.view', 'opening_balance.manage', 'order.view', 'pos.access', 'pos_register.view', 'pos_session.view', 'product.view', 'purchase_order.view', 'review.view', 'stock.view', 'stock_in.create', 'stock_movement.view', 'supplier.view', 'supplier_invoice.view', 'warehouse.view'))
                 <div class="mt-4 mb-1">
                     <h2 class="text-gray-500 text-md font-semibold" :class="{ 'hidden': !$store.sidebar.full }"
                         x-transition>Ecommerce</h2>
                 </div>
+                @endif
 
+                @if ($canSee('attribute.view', 'brand.view', 'category.view', 'product.view'))
                 @php
                     $catalogActive = str_starts_with(Route::currentRouteName(), 'admin.catalog.');
                 @endphp
@@ -289,25 +337,35 @@
                     </div>
                     <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
+                        @if ($canSee('category.view'))
                         <a href="{{ route('admin.catalog.categories') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.catalog.categories' ? 'text-gray-200' : '' }}">
                             Categories
                         </a>
+                        @endif
+                        @if ($canSee('brand.view'))
                         <a href="{{ route('admin.catalog.brands') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.catalog.brands' ? 'text-gray-200' : '' }}">
                             Brands
                         </a>
+                        @endif
+                        @if ($canSee('attribute.view'))
                         <a href="{{ route('admin.catalog.attributes') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.catalog.attributes' ? 'text-gray-200' : '' }}">
                             Attributes
                         </a>
+                        @endif
+                        @if ($canSee('product.view'))
                         <a href="{{ route('admin.catalog.products') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.catalog.products') ? 'text-gray-200' : '' }}">
                             Products
                         </a>
+                        @endif
                     </div>
                 </div>
+                @endif
 
+                @if ($canSee('cart.view', 'combo.view', 'customer.view', 'customer_group.view', 'loved_product.view', 'review.view'))
                 @php
                     $customersActive = str_starts_with(Route::currentRouteName(), 'admin.customers.');
                 @endphp
@@ -337,34 +395,48 @@
                     </div>
                     <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
+                        @if ($canSee('customer.view'))
                         <a href="{{ route('admin.customers.index') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.customers.index' ? 'text-gray-200' : '' }}">
                             Customers
                         </a>
+                        @endif
+                        @if ($canSee('cart.view'))
                         <a href="{{ route('admin.customers.carts') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.customers.carts') ? 'text-gray-200' : '' }}">
                             Carts
                         </a>
+                        @endif
+                        @if ($canSee('combo.view'))
                         <a href="{{ route('admin.customers.combo') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.customers.combo' ? 'text-gray-200' : '' }}">
                             Combo
                         </a>
+                        @endif
+                        @if ($canSee('loved_product.view'))
                         <a href="{{ route('admin.customers.loved') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.customers.loved' ? 'text-gray-200' : '' }}">
                             Loved
                         </a>
+                        @endif
+                        @if ($canSee('customer_group.view'))
                         <a href="{{ route('admin.customers.groups') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.customers.groups' ? 'text-gray-200' : '' }}">
                             Customer Group
                         </a>
+                        @endif
+                        @if ($canSee('review.view'))
                         <a href="{{ route('admin.customers.reviews.index') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.customers.reviews.') ? 'text-gray-200' : '' }}">
                             Reviews
                         </a>
+                        @endif
                     </div>
                 </div>
+                @endif
 
                 @if (\App\Models\Setting::get('accounts_enabled', true, 'modules'))
+                @if ($canSee('accounts_cash_account.view', 'accounts_dashboard.view', 'accounts_expense.view', 'accounts_fixed_asset.view', 'accounts_loan.view', 'accounts_owner_equity.manage', 'accounts_payable.view', 'accounts_receivable.view', 'accounts_report.view', 'accounts_transaction.view', 'opening_balance.manage'))
                 @php
                     $accountsActive = str_starts_with(Route::currentRouteName(), 'admin.accounts.');
                 @endphp
@@ -394,55 +466,79 @@
                     </div>
                     <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
+                        @if ($canSee('accounts_dashboard.view'))
                         <a href="{{ route('admin.accounts.dashboard') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.accounts.dashboard' ? 'text-gray-200' : '' }}">
                             Dashboard
                         </a>
+                        @endif
+                        @if ($canSee('accounts_transaction.view'))
                         <a href="{{ route('admin.accounts.transactions') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.accounts.transactions' ? 'text-gray-200' : '' }}">
                             Transactions
                         </a>
+                        @endif
+                        @if ($canSee('accounts_cash_account.view'))
                         <a href="{{ route('admin.accounts.cash-accounts.index') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.accounts.cash-accounts') ? 'text-gray-200' : '' }}">
                             Cash &amp; Bank
                         </a>
+                        @endif
+                        @if ($canSee('accounts_receivable.view'))
                         <a href="{{ route('admin.accounts.receivables.index') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.accounts.receivables') ? 'text-gray-200' : '' }}">
                             Receivables
                         </a>
+                        @endif
+                        @if ($canSee('accounts_payable.view'))
                         <a href="{{ route('admin.accounts.payables.index') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.accounts.payables') ? 'text-gray-200' : '' }}">
                             Payables
                         </a>
+                        @endif
+                        @if ($canSee('accounts_loan.view'))
                         <a href="{{ route('admin.accounts.loans.index') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.accounts.loans') ? 'text-gray-200' : '' }}">
                             Loans
                         </a>
+                        @endif
+                        @if ($canSee('accounts_fixed_asset.view'))
                         <a href="{{ route('admin.accounts.fixed-assets.index') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.accounts.fixed-assets') ? 'text-gray-200' : '' }}">
                             Fixed Assets
                         </a>
+                        @endif
+                        @if ($canSee('accounts_owner_equity.manage'))
                         <a href="{{ route('admin.accounts.owner-equity.index') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.accounts.owner-equity') ? 'text-gray-200' : '' }}">
                             Owner
                         </a>
+                        @endif
+                        @if ($canSee('accounts_expense.view'))
                         <a href="{{ route('admin.accounts.expenses.index') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.accounts.expenses') ? 'text-gray-200' : '' }}">
                             Expenses
                         </a>
+                        @endif
+                        @if ($canSee('accounts_report.view'))
                         <a href="{{ route('admin.accounts.reports.index') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.accounts.reports') ? 'text-gray-200' : '' }}">
                             Reports
                         </a>
+                        @endif
+                        @if ($canSee('opening_balance.manage'))
                         <a href="{{ route('admin.accounts.settings.opening-balance') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.accounts.settings') ? 'text-gray-200' : '' }}">
                             Settings
                         </a>
+                        @endif
                     </div>
                 </div>
                 @endif
+                @endif
 
                 @if (\App\Models\Setting::get('purchase_enabled', true, 'modules'))
+                @if ($canSee('purchase_order.view', 'supplier.view', 'supplier_invoice.view'))
                 @php
                     $purchaseActive = str_starts_with(Route::currentRouteName(), 'admin.purchase.');
                 @endphp
@@ -472,23 +568,31 @@
                     </div>
                     <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
+                        @if ($canSee('supplier.view'))
                         <a href="{{ route('admin.purchase.suppliers') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.purchase.suppliers') ? 'text-gray-200' : '' }}">
                             Suppliers
                         </a>
+                        @endif
+                        @if ($canSee('supplier_invoice.view'))
                         <a href="{{ route('admin.purchase.invoices') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.purchase.invoices' ? 'text-gray-200' : '' }}">
                             Invoices
                         </a>
+                        @endif
+                        @if ($canSee('purchase_order.view'))
                         <a href="{{ route('admin.purchase.orders') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.purchase.orders' ? 'text-gray-200' : '' }}">
                             Purchase Orders
                         </a>
+                        @endif
                     </div>
                 </div>
                 @endif
+                @endif
 
                 @if (\App\Models\Setting::get('inventory_enabled', true, 'modules'))
+                @if ($canSee('batch.view', 'inventory_settings.manage', 'stock.view', 'stock_in.create', 'stock_movement.view', 'warehouse.view'))
                 @php
                     $inventoryActive = str_starts_with(Route::currentRouteName(), 'admin.inventory.');
                 @endphp
@@ -518,34 +622,48 @@
                     </div>
                     <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
+                        @if ($canSee('stock.view'))
                         <a href="{{ route('admin.inventory.stock') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.inventory.stock' ? 'text-gray-200' : '' }}">
                             Stock
                         </a>
+                        @endif
+                        @if ($canSee('stock_in.create'))
                         <a href="{{ route('admin.inventory.stock-in') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.inventory.stock-in' ? 'text-gray-200' : '' }}">
                             Stock In
                         </a>
+                        @endif
+                        @if ($canSee('batch.view'))
                         <a href="{{ route('admin.inventory.batches') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.inventory.batches' ? 'text-gray-200' : '' }}">
                             Batches
                         </a>
+                        @endif
+                        @if ($canSee('stock_movement.view'))
                         <a href="{{ route('admin.inventory.movements') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.inventory.movements' ? 'text-gray-200' : '' }}">
                             Movements
                         </a>
+                        @endif
+                        @if ($canSee('warehouse.view'))
                         <a href="{{ route('admin.inventory.warehouses') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.inventory.warehouses' ? 'text-gray-200' : '' }}">
                             Warehouses
                         </a>
+                        @endif
+                        @if ($canSee('inventory_settings.manage'))
                         <a href="{{ route('admin.inventory.settings') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.inventory.settings' ? 'text-gray-200' : '' }}">
                             Settings
                         </a>
+                        @endif
                     </div>
                 </div>
                 @endif
+                @endif
 
+                @if ($canSee('coupon.view', 'offer.view', 'order.view', 'pos.access', 'pos_register.view', 'pos_session.view'))
                 @php
                     $salesActive = str_starts_with(Route::currentRouteName(), 'admin.sales.');
                 @endphp
@@ -575,33 +693,47 @@
                     </div>
                     <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
+                        @if ($canSee('order.view'))
                         <a href="{{ route('admin.sales.orders') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.orders') ? 'text-gray-200' : '' }}">
                             Orders
                         </a>
+                        @endif
+                        @if ($canSee('coupon.view'))
                         <a href="{{ route('admin.sales.coupons') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.coupons') ? 'text-gray-200' : '' }}">
                             Coupons
                         </a>
+                        @endif
+                        @if ($canSee('offer.view'))
                         <a href="{{ route('admin.sales.offers') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.offers') ? 'text-gray-200' : '' }}">
                             Offers
                         </a>
+                        @endif
+                        @if ($canSee('pos.access'))
                         <a href="{{ route('admin.sales.pos.screen') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.pos.screen') ? 'text-gray-200' : '' }}">
                             POS Screen
                         </a>
+                        @endif
+                        @if ($canSee('pos_session.view'))
                         <a href="{{ route('admin.sales.pos.sessions') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.pos.sessions') ? 'text-gray-200' : '' }}">
                             POS Sessions
                         </a>
+                        @endif
+                        @if ($canSee('pos_register.view'))
                         <a href="{{ route('admin.sales.pos.registers') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.pos.registers') ? 'text-gray-200' : '' }}">
                             POS Registers
                         </a>
+                        @endif
                     </div>
                 </div>
+                @endif
 
+                @if ($canSee('marketing_attribution.view', 'marketing_audience.view', 'marketing_campaign.view', 'marketing_customer.view', 'marketing_dashboard.view', 'marketing_event.view', 'marketing_journey.view', 'marketing_product.view', 'marketing_report.view', 'marketing_settings.manage', 'marketing_source.view'))
                 @php
                     $marketingActive = str_starts_with(Route::currentRouteName(), 'admin.marketing.');
                 @endphp
@@ -631,131 +763,185 @@
                     </div>
                     <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
+                        @if ($canSee('marketing_dashboard.view'))
                         <a href="{{ route('admin.marketing.dashboard') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.dashboard' ? 'text-gray-200' : '' }}">
                             Dashboard
                         </a>
+                        @endif
 
+                        @if ($canSee('marketing_journey.view'))
                         <div class="pt-1">
                             <span class="block text-[10px] uppercase tracking-wider text-gray-600 mb-1.5">Journey Explorer</span>
                             <div class="space-y-2.5 pl-1">
+                                @if ($canSee('marketing_journey.view'))
                                 <a href="{{ route('admin.marketing.journeys.visitors') }}"
                                     class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.journeys.visitors' ? 'text-gray-200' : '' }}">
                                     Visitor Journeys
                                 </a>
+                                @endif
+                                @if ($canSee('marketing_journey.view'))
                                 <a href="{{ route('admin.marketing.journeys.customers') }}"
                                     class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.journeys.customers' ? 'text-gray-200' : '' }}">
                                     Customer Journeys
                                 </a>
+                                @endif
+                                @if ($canSee('marketing_journey.view'))
                                 <a href="{{ route('admin.marketing.journeys.anonymous') }}"
                                     class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.journeys.anonymous' ? 'text-gray-200' : '' }}">
                                     Anonymous Visitors
                                 </a>
+                                @endif
                             </div>
                         </div>
+                        @endif
 
+                        @if ($canSee('marketing_campaign.view'))
                         <div class="pt-1">
                             <span class="block text-[10px] uppercase tracking-wider text-gray-600 mb-1.5">Campaign Tracking</span>
                             <div class="space-y-2.5 pl-1">
+                                @if ($canSee('marketing_campaign.view'))
                                 <a href="{{ route('admin.marketing.campaigns.index') }}"
                                     class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.campaigns.index' ? 'text-gray-200' : '' }}">
                                     All Campaigns
                                 </a>
+                                @endif
+                                @if ($canSee('marketing_campaign.view'))
                                 <a href="{{ route('admin.marketing.campaigns.meta') }}"
                                     class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.campaigns.meta' ? 'text-gray-200' : '' }}">
                                     Meta Campaigns
                                 </a>
+                                @endif
+                                @if ($canSee('marketing_campaign.view'))
                                 <a href="{{ route('admin.marketing.campaigns.google') }}"
                                     class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.campaigns.google' ? 'text-gray-200' : '' }}">
                                     Google Campaigns
                                 </a>
+                                @endif
+                                @if ($canSee('marketing_campaign.view'))
                                 <a href="{{ route('admin.marketing.campaigns.tiktok') }}"
                                     class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.campaigns.tiktok' ? 'text-gray-200' : '' }}">
                                     TikTok Campaigns
                                 </a>
+                                @endif
+                                @if ($canSee('marketing_campaign.view'))
                                 <a href="{{ route('admin.marketing.campaigns.other') }}"
                                     class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.campaigns.other' ? 'text-gray-200' : '' }}">
                                     Other / UTM
                                 </a>
+                                @endif
                             </div>
                         </div>
+                        @endif
 
+                        @if ($canSee('marketing_source.view'))
                         <a href="{{ route('admin.marketing.sources.index') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.sources.index' ? 'text-gray-200' : '' }}">
                             Source Analytics
                         </a>
+                        @endif
 
+                        @if ($canSee('marketing_product.view'))
                         <div class="pt-1">
                             <span class="block text-[10px] uppercase tracking-wider text-gray-600 mb-1.5">Product Analytics</span>
                             <div class="space-y-2.5 pl-1">
+                                @if ($canSee('marketing_product.view'))
                                 <a href="{{ route('admin.marketing.products.performance') }}"
                                     class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.products.performance' ? 'text-gray-200' : '' }}">
                                     Product Performance
                                 </a>
+                                @endif
+                                @if ($canSee('marketing_product.view'))
                                 <a href="{{ route('admin.marketing.products.journeys') }}"
                                     class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.products.journeys' ? 'text-gray-200' : '' }}">
                                     Product Journeys
                                 </a>
+                                @endif
                             </div>
                         </div>
+                        @endif
 
+                        @if ($canSee('marketing_customer.view'))
                         <div class="pt-1">
                             <span class="block text-[10px] uppercase tracking-wider text-gray-600 mb-1.5">Customer Analytics</span>
                             <div class="space-y-2.5 pl-1">
+                                @if ($canSee('marketing_customer.view'))
                                 <a href="{{ route('admin.marketing.customers.tracking') }}"
                                     class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.customers.tracking' ? 'text-gray-200' : '' }}">
                                     Customer Tracking
                                 </a>
+                                @endif
+                                @if ($canSee('marketing_customer.view'))
                                 <a href="{{ route('admin.marketing.customers.returning') }}"
                                     class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.customers.returning' ? 'text-gray-200' : '' }}">
                                     Returning Customers
                                 </a>
+                                @endif
                             </div>
                         </div>
+                        @endif
 
+                        @if ($canSee('marketing_audience.view'))
                         <div class="pt-1">
                             <span class="block text-[10px] uppercase tracking-wider text-gray-600 mb-1.5">Audience &amp; Devices</span>
                             <div class="space-y-2.5 pl-1">
+                                @if ($canSee('marketing_audience.view'))
                                 <a href="{{ route('admin.marketing.audience.devices') }}"
                                     class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.audience.devices' ? 'text-gray-200' : '' }}">
                                     Devices
                                 </a>
+                                @endif
+                                @if ($canSee('marketing_audience.view'))
                                 <a href="{{ route('admin.marketing.audience.ip') }}"
                                     class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.audience.ip' ? 'text-gray-200' : '' }}">
                                     IP Analysis
                                 </a>
+                                @endif
                             </div>
                         </div>
+                        @endif
 
+                        @if ($canSee('marketing_event.view'))
                         <a href="{{ route('admin.marketing.events.index') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.events.index' ? 'text-gray-200' : '' }}">
                             Event Explorer
                         </a>
+                        @endif
+                        @if ($canSee('marketing_attribution.view'))
                         <a href="{{ route('admin.marketing.attribution.index') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.attribution.index' ? 'text-gray-200' : '' }}">
                             Attribution
                         </a>
+                        @endif
+                        @if ($canSee('marketing_report.view'))
                         <a href="{{ route('admin.marketing.reports.index') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.reports.index' ? 'text-gray-200' : '' }}">
                             Reports
                         </a>
+                        @endif
+                        @if ($canSee('marketing_settings.manage'))
                         <a href="{{ route('admin.marketing.settings.index') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.settings.index' ? 'text-gray-200' : '' }}">
                             Tracking Settings
                         </a>
+                        @endif
                     </div>
                 </div>
+                @endif
 
+                @if ($canSee('activity_log.view', 'courier_configuration.view', 'developer_tools.view', 'email_configuration.view', 'icon.view', 'language.view', 'license_configuration.view', 'marketing_integration.manage', 'notification_configuration.view', 'panel.view', 'role.view', 'shipping.view', 'site_settings.view', 'sms_configuration.view', 'system_health.view', 'visit.view'))
                 <div class="mt-4 mb-1">
                     <h2 class="text-gray-500 text-md font-semibold" :class="{ 'hidden': !$store.sidebar.full }"
                         x-transition>Settings</h2>
                 </div>
+                @endif
 
                 @php
                     $languagesActive = in_array(Route::currentRouteName(), [
                         'admin.settings.languages', 'admin.settings.languages.create', 'admin.settings.languages.edit'
                     ]);
                 @endphp
+                @if ($canSee('language.view'))
                 <a href="{{ route('admin.settings.languages') }}" x-data="tooltip" x-on:mouseover="show = true"
                     x-on:mouseleave="show = false"
                     class="relative flex items-center hover:text-gray-200 hover:bg-gray-800 space-x-2 rounded-md p-2 cursor-pointer justify-start text-gray-400
@@ -766,7 +952,9 @@
                     <h1 x-cloak x-bind:class="!$store.sidebar.full && show ? visibleClass : '' || !$store.sidebar.full ? 'sm:hidden' : ''">
                         Languages</h1>
                 </a>
+                @endif
 
+                @if ($canSee('panel.view', 'role.view'))
                 @php
                     $permissionsActive = in_array(Route::currentRouteName(), [
                         'admin.roles.list', 'admin.roles.create', 'admin.roles.edit', 'admin.permissions.panels'
@@ -798,17 +986,23 @@
                     </div>
                     <div x-cloak x-show="open"
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
+                        @if ($canSee('role.view'))
                         <a href="{{ route('admin.roles.list') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ in_array(Route::currentRouteName(), ['admin.roles.list', 'admin.roles.create', 'admin.roles.edit']) ? 'text-gray-200' : '' }}">
                             Roles
                         </a>
+                        @endif
+                        @if ($canSee('panel.view'))
                         <a href="{{ route('admin.permissions.panels') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.permissions.panels' ? 'text-gray-200' : '' }}">
                             Panels
                         </a>
+                        @endif
                     </div>
                 </div>
+                @endif
 
+                @if ($canSee('activity_log.view'))
                 <a href="{{ route('admin.activity-log') }}" x-data="tooltip" x-on:mouseover="show = true"
                     x-on:mouseleave="show = false"
                     class="relative flex items-center hover:text-gray-200 hover:bg-gray-800 space-x-2 rounded-md p-2 cursor-pointer justify-start text-gray-400
@@ -819,7 +1013,9 @@
                     <h1 x-cloak x-bind:class="!$store.sidebar.full && show ? visibleClass : '' || !$store.sidebar.full ? 'sm:hidden' : ''">
                         Activity Log</h1>
                 </a>
+                @endif
 
+                @if ($canSee('visit.view'))
                 <a href="{{ route('admin.visits') }}" x-data="tooltip" x-on:mouseover="show = true"
                     x-on:mouseleave="show = false"
                     class="relative flex items-center hover:text-gray-200 hover:bg-gray-800 space-x-2 rounded-md p-2 cursor-pointer justify-start text-gray-400
@@ -830,7 +1026,9 @@
                     <h1 x-cloak x-bind:class="!$store.sidebar.full && show ? visibleClass : '' || !$store.sidebar.full ? 'sm:hidden' : ''">
                         Visits Url</h1>
                 </a>
+                @endif
 
+                @if ($canSee('icon.view'))
                 <a href="{{ route('admin.icons') }}" x-data="tooltip" x-on:mouseover="show = true"
                     x-on:mouseleave="show = false"
                     class="relative flex items-center hover:text-gray-200 hover:bg-gray-800 space-x-2 rounded-md p-2 cursor-pointer justify-start text-gray-400
@@ -841,7 +1039,9 @@
                     <h1 x-cloak x-bind:class="!$store.sidebar.full && show ? visibleClass : '' || !$store.sidebar.full ? 'sm:hidden' : ''">
                         Icons</h1>
                 </a>
+                @endif
 
+                @if ($canSee('shipping.view'))
                 <a href="{{ route('admin.settings.shipping') }}" x-data="tooltip" x-on:mouseover="show = true"
                     x-on:mouseleave="show = false"
                     class="relative flex items-center hover:text-gray-200 hover:bg-gray-800 space-x-2 rounded-md p-2 cursor-pointer justify-start text-gray-400
@@ -852,7 +1052,9 @@
                     <h1 x-cloak x-bind:class="!$store.sidebar.full && show ? visibleClass : '' || !$store.sidebar.full ? 'sm:hidden' : ''">
                         Shipping</h1>
                 </a>
+                @endif
 
+                @if ($canSee('site_settings.view'))
                 <a href="{{ route('admin.site-settings') }}" x-data="tooltip" x-on:mouseover="show = true"
                     x-on:mouseleave="show = false"
                     class="relative flex items-center hover:text-gray-200 hover:bg-gray-800 space-x-2 rounded-md p-2 cursor-pointer justify-start text-gray-400
@@ -864,7 +1066,9 @@
                     <h1 x-cloak x-bind:class="!$store.sidebar.full && show ? visibleClass : '' || !$store.sidebar.full ? 'sm:hidden' : ''">
                         Site Settings</h1>
                 </a>
+                @endif
 
+                @if ($canSee('courier_configuration.view', 'developer_tools.view', 'email_configuration.view', 'license_configuration.view', 'marketing_integration.manage', 'notification_configuration.view', 'sms_configuration.view', 'system_health.view'))
                 @php
                     $advanceActive = in_array(Route::currentRouteName(), [
                         'admin.settings.advance.developer-tools', 'admin.settings.advance.system-health', 'admin.settings.advance.license-configuration'
@@ -941,12 +1145,15 @@
                             Courier
                         </a>
                         @endcan
+                        @if ($canSee('marketing_integration.manage'))
                         <a href="{{ route('admin.site-settings', ['group' => 'marketing']) }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.site-settings' && request()->query('group') === 'marketing' ? 'text-gray-200' : '' }}">
                             Marketing
                         </a>
+                        @endif
                     </div>
                 </div>
+                @endif
 
             </div>
         </div>

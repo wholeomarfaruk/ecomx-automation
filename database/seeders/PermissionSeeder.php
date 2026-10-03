@@ -296,6 +296,18 @@ class PermissionSeeder extends Seeder
             ['id' => 189, 'name' => 'media.upload'],
             ['id' => 190, 'name' => 'media.delete'],
 
+            //sidebar menus not covered above
+            ['id' => 191, 'name' => 'frontend_component.manage'],
+            ['id' => 192, 'name' => 'landing_page_template.view'],
+            ['id' => 193, 'name' => 'icon.view'],
+            ['id' => 194, 'name' => 'marketing_source.view'],
+            ['id' => 195, 'name' => 'marketing_product.view'],
+            ['id' => 196, 'name' => 'marketing_customer.view'],
+            ['id' => 197, 'name' => 'marketing_audience.view'],
+            ['id' => 198, 'name' => 'marketing_event.view'],
+            ['id' => 199, 'name' => 'marketing_attribution.view'],
+            ['id' => 200, 'name' => 'marketing_integration.manage'],
+
         ];
         foreach ($permissions as $permission) {
             // Permission::create(['name' => $permission]);
