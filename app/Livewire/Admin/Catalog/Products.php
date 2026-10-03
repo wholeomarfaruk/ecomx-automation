@@ -42,6 +42,10 @@ class Products extends Component
     public bool $stockModal = false;
     public ?int $stockProductId = null;
 
+    // Quick view modal — read-only product details, never shows purchase price
+    public bool $quickViewModal = false;
+    public ?int $quickViewId = null;
+
     public function updatingSearch(): void            { $this->resetPage(); }
     public function updatingFilterStatus(): void      { $this->resetPage(); }
     public function updatingFilterBrand(): void       { $this->resetPage(); }
@@ -109,6 +113,12 @@ class Products extends Component
         $this->stockModal = true;
     }
 
+    public function openQuickView(int $id): void
+    {
+        $this->quickViewId = Product::findOrFail($id)->id;
+        $this->quickViewModal = true;
+    }
+
     /** Stock In / Adjust inside the stock modal — re-render so the Stock column shows the new figures. */
     #[On('product-stock-updated')]
     public function refreshStock(): void
@@ -166,6 +176,12 @@ class Products extends Component
         return view('livewire.admin.catalog.products', [
             'products'      => $products,
             'stockProduct'  => $this->stockProductId ? Product::find($this->stockProductId, ['id', 'name', 'code', 'product_type']) : null,
+            'quickProduct'  => $this->quickViewId ? Product::with([
+                'brand', 'categories',
+                'variants' => fn ($q) => $q->orderBy('sort_order'),
+                'variants.values.productAttributeValue.attributeValue.attribute',
+                'comboItems.product', 'comboItems.variant.values.productAttributeValue.attributeValue.attribute',
+            ])->find($this->quickViewId) : null,
             'brands'        => Brand::orderBy('name')->get(['id', 'name']),
             'totalCount'    => Product::count(),
             'activeCount'   => Product::where('status', 'active')->count(),

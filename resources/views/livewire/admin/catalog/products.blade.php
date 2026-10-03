@@ -1,5 +1,12 @@
 <div x-data x-init="$store.pageName = { name: 'Products', slug: 'catalog-products' }">
 
+    @php
+        // Row actions: superadmin sees all, other roles only what they're granted.
+        $authUser   = auth()->user();
+        $isSuper    = $authUser?->hasRole('superadmin') ?? false;
+        $canProduct = fn (string $perm) => $isSuper || (bool) $authUser?->can($perm);
+    @endphp
+
     {{-- Header --}}
     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div class="grid grid-cols-5 gap-3 flex-1 max-w-3xl">
@@ -24,13 +31,15 @@
                 <p class="text-xl font-semibold text-indigo-600 mt-0.5">{{ number_format($totalStock, floor($totalStock) == $totalStock ? 0 : 2) }}</p>
             </div>
         </div>
-        <button wire:click="openCreateModal" type="button"
-            class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition shadow-sm shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-            </svg>
-            Add Product
-        </button>
+        @if($canProduct('product.create'))
+            <button wire:click="openCreateModal" type="button"
+                class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition shadow-sm shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                </svg>
+                Add Product
+            </button>
+        @endif
     </div>
 
     {{-- Card --}}
@@ -154,7 +163,7 @@
                                         'backorder'    => 'Backorder',
                                     ];
                                     $stockInfo = $product->stock_info;
-                                    $stockClickable = $product->product_type !== \App\Enums\Product\ProductType::COMBO;
+                                    $stockClickable = $product->product_type !== \App\Enums\Product\ProductType::COMBO && $canProduct('product.edit');
                                 @endphp
                                 @if($stockClickable)
                                     <button type="button" wire:click="openStockModal({{ $product->id }})" title="View & manage stock"
@@ -197,27 +206,96 @@
                                 </span>
                             </td>
                             <td class="px-5 py-3">
-                                <div class="flex items-center justify-end gap-1">
-                                    <a href="{{ route('admin.catalog.products.edit', $product->id) }}" wire:navigate
-                                        class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/>
-                                        </svg>
-                                    </a>
-                                    <button type="button" x-data
-                                        @click="Swal.fire({
-                                            title: 'Delete product?',
-                                            text: '{{ addslashes($product->name) }} will be removed permanently.',
-                                            icon: 'warning',
-                                            showCancelButton: true,
-                                            confirmButtonColor: '#ef4444',
-                                            confirmButtonText: 'Delete'
-                                        }).then(r => { if (r.isConfirmed) $wire.deleteProduct({{ $product->id }}) })"
-                                        class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/>
+                                <div x-data="{
+                                        open: false,
+                                        top: 0,
+                                        right: 0,
+                                        toggle() {
+                                            const r = this.$refs.btn.getBoundingClientRect();
+                                            this.top   = r.bottom + window.scrollY + 4;
+                                            this.right = window.innerWidth - r.right;
+                                            this.open  = !this.open;
+                                        }
+                                    }"
+                                    class="flex justify-end">
+
+                                    <button x-ref="btn" @click="toggle()" type="button" title="Actions"
+                                        class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z"/>
                                         </svg>
                                     </button>
+
+                                    <template x-teleport="body">
+                                        <div x-show="open"
+                                             @click.outside="open = false"
+                                             @keydown.escape.window="open = false"
+                                             x-transition:enter="transition ease-out duration-100"
+                                             x-transition:enter-start="opacity-0 scale-95"
+                                             x-transition:enter-end="opacity-100 scale-100"
+                                             x-transition:leave="transition ease-in duration-75"
+                                             x-transition:leave-start="opacity-100 scale-100"
+                                             x-transition:leave-end="opacity-0 scale-95"
+                                             :style="`position: absolute; top: ${top}px; right: ${right}px; z-index: 9999;`"
+                                             class="w-52 bg-white rounded-xl shadow-xl border border-gray-200 py-1 text-sm origin-top-right">
+
+                                            @if($canProduct('product.view'))
+                                                <button wire:click="openQuickView({{ $product->id }})" @click="open = false" type="button"
+                                                    class="flex items-center gap-2.5 w-full px-4 py-2 text-gray-700 hover:bg-gray-50 transition">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/>
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                                                    </svg>
+                                                    Quick View
+                                                </button>
+                                            @endif
+
+                                            @if($canProduct('product.edit'))
+                                                <a href="{{ route('admin.catalog.products.edit', $product->id) }}" wire:navigate
+                                                    class="flex items-center gap-2.5 w-full px-4 py-2 text-gray-700 hover:bg-gray-50 transition">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/>
+                                                    </svg>
+                                                    Edit
+                                                </a>
+                                                @if($product->product_type !== \App\Enums\Product\ProductType::COMBO)
+                                                    <button wire:click="openStockModal({{ $product->id }})" @click="open = false" type="button"
+                                                        class="flex items-center gap-2.5 w-full px-4 py-2 text-gray-700 hover:bg-gray-50 transition">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"/>
+                                                        </svg>
+                                                        Manage Stock
+                                                    </button>
+                                                @endif
+                                                <button wire:click="toggleStatus({{ $product->id }})" @click="open = false" type="button"
+                                                    class="flex items-center gap-2.5 w-full px-4 py-2 text-gray-700 hover:bg-gray-50 transition">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5.636 5.636a9 9 0 1 0 12.728 0M12 3v9"/>
+                                                    </svg>
+                                                    {{ $product->status === 'active' ? 'Deactivate' : 'Activate' }}
+                                                </button>
+                                            @endif
+
+                                            @if($canProduct('product.delete'))
+                                                <div class="my-1 border-t border-gray-100"></div>
+                                                <button type="button"
+                                                    @click="open = false; Swal.fire({
+                                                        title: 'Delete product?',
+                                                        text: '{{ addslashes($product->name) }} will be removed permanently.',
+                                                        icon: 'warning',
+                                                        showCancelButton: true,
+                                                        confirmButtonColor: '#ef4444',
+                                                        confirmButtonText: 'Delete'
+                                                    }).then(r => { if (r.isConfirmed) $wire.deleteProduct({{ $product->id }}) })"
+                                                    class="flex items-center gap-2.5 w-full px-4 py-2 text-red-600 hover:bg-red-50 transition">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/>
+                                                    </svg>
+                                                    Delete
+                                                </button>
+                                            @endif
+                                        </div>
+                                    </template>
                                 </div>
                             </td>
                         </tr>
@@ -234,10 +312,12 @@
                                         <p class="text-sm font-semibold text-gray-700">No products found</p>
                                         <p class="text-xs text-gray-400 mt-0.5">Try adjusting filters or add a new product</p>
                                     </div>
-                                    <button wire:click="openCreateModal"
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">
-                                        Add First Product
-                                    </button>
+                                    @if($canProduct('product.create'))
+                                        <button wire:click="openCreateModal"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">
+                                            Add First Product
+                                        </button>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -281,6 +361,233 @@
                     @livewire('admin.catalog.product-stocks', ['productId' => $stockProduct->id, 'pendingType' => $stockProduct->product_type->value], key('stock-modal-' . $stockProduct->id))
                 @endif
             </div>
+        </div>
+    </div>
+
+    {{-- Quick View Modal — read-only details; purchase price is deliberately never shown --}}
+    <div x-cloak x-data="{ open: @entangle('quickViewModal') }" x-show="open" x-transition
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog">
+        <div class="w-full max-w-4xl max-h-[90vh] flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden" @click.outside="open = false">
+            <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100 shrink-0">
+                <div class="flex-1 min-w-0">
+                    <h2 class="text-base font-semibold text-gray-900 truncate">{{ $quickProduct?->name ?? 'Product' }}</h2>
+                    @if($quickProduct)
+                        <p class="text-xs text-gray-400 font-mono">{{ $quickProduct->code }} · {{ $quickProduct->slug }}</p>
+                    @endif
+                </div>
+                @if($quickProduct && $canProduct('product.edit'))
+                    <a href="{{ route('admin.catalog.products.edit', $quickProduct->id) }}" wire:navigate
+                        class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition shrink-0">
+                        Edit Product
+                    </a>
+                @endif
+                <button @click="open = false" type="button" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 transition shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            @if($quickProduct)
+                @php
+                    $qp         = $quickProduct;
+                    $qpImages   = collect([$qp->featured_image_id])->merge($qp->image_ids ?? [])->filter()->unique()->values()
+                                    ->map(fn ($id) => file_path($id))->filter()->values();
+                    $qpStock    = $qp->stock_info;
+                    $qpIsCombo  = $qp->product_type === \App\Enums\Product\ProductType::COMBO;
+                    $qpIsVar    = $qp->product_type === \App\Enums\Product\ProductType::VARIABLE;
+                    $qpFmtQty   = fn ($q) => rtrim(rtrim(number_format((float) $q, 3), '0'), '.') ?: '0';
+                    $qpStatusStyles = [
+                        'active'   => 'bg-emerald-50 text-emerald-600',
+                        'inactive' => 'bg-gray-100 text-gray-500',
+                        'draft'    => 'bg-amber-50 text-amber-600',
+                        'archived' => 'bg-red-50 text-red-500',
+                    ];
+                    $qpStockStyles = [
+                        'in_stock'     => 'bg-emerald-50 text-emerald-600',
+                        'low_stock'    => 'bg-amber-50 text-amber-600',
+                        'out_of_stock' => 'bg-red-50 text-red-500',
+                        'backorder'    => 'bg-indigo-50 text-indigo-600',
+                    ];
+                @endphp
+                <div class="px-6 py-5 overflow-y-auto space-y-6" wire:key="quick-view-{{ $qp->id }}">
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
+
+                        {{-- Images --}}
+                        <div class="md:col-span-2" x-data="{ active: @js($qpImages->first()) }">
+                            <div class="aspect-square rounded-xl bg-gray-100 overflow-hidden flex items-center justify-center">
+                                @if($qpImages->isNotEmpty())
+                                    <img :src="active" alt="" class="h-full w-full object-cover">
+                                @else
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>
+                                    </svg>
+                                @endif
+                            </div>
+                            @if($qpImages->count() > 1)
+                                <div class="grid grid-cols-5 gap-2 mt-2">
+                                    @foreach($qpImages as $img)
+                                        <button type="button" @click="active = @js($img)"
+                                            class="aspect-square rounded-lg overflow-hidden border-2 transition"
+                                            :class="active === @js($img) ? 'border-indigo-500' : 'border-transparent hover:border-gray-300'">
+                                            <img src="{{ $img }}" alt="" class="h-full w-full object-cover">
+                                        </button>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- Details --}}
+                        <div class="md:col-span-3 space-y-4">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize {{ $qpStatusStyles[$qp->status] ?? 'bg-gray-100 text-gray-500' }}">{{ $qp->status }}</span>
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600">{{ $qp->product_type->label() }}</span>
+                                @if($qp->featured)
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-600">Featured</span>
+                                @endif
+                            </div>
+
+                            {{-- Pricing (selling prices only) --}}
+                            <div class="flex items-end gap-3">
+                                @if($qp->sale_price)
+                                    <span class="text-2xl font-semibold text-gray-900">{{ number_format($qp->sale_price, 2) }}</span>
+                                    <span class="text-sm text-gray-400 line-through mb-1">{{ number_format($qp->price, 2) }}</span>
+                                @elseif($qp->price)
+                                    <span class="text-2xl font-semibold text-gray-900">{{ number_format($qp->price, 2) }}</span>
+                                @else
+                                    <span class="text-sm text-gray-400">{{ $qpIsVar ? 'Priced per variant' : 'No price set' }}</span>
+                                @endif
+                            </div>
+
+                            <dl class="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                                <div>
+                                    <dt class="text-xs text-gray-400">Brand</dt>
+                                    <dd class="text-gray-700">{{ $qp->brand?->name ?? '—' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-xs text-gray-400">Categories</dt>
+                                    <dd class="text-gray-700">{{ $qp->categories->pluck('name')->join(', ') ?: '—' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-xs text-gray-400">Stock</dt>
+                                    <dd class="flex items-center gap-2">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $qpStockStyles[$qp->stock_status] ?? 'bg-gray-100 text-gray-500' }}">
+                                            {{ \Illuminate\Support\Str::headline($qp->stock_status) }}
+                                        </span>
+                                        @if($qpStock['quantity'] !== null)
+                                            <span class="text-gray-700">{{ $qpFmtQty($qpStock['quantity']) }}{{ $qpIsCombo ? ' bundles' : '' }}</span>
+                                        @endif
+                                    </dd>
+                                </div>
+                                @if($qp->combo_price)
+                                    <div>
+                                        <dt class="text-xs text-gray-400">Combo Price</dt>
+                                        <dd class="text-gray-700">{{ number_format($qp->combo_price, 2) }}</dd>
+                                    </div>
+                                @endif
+                                @if((float) $qp->weight > 0)
+                                    <div>
+                                        <dt class="text-xs text-gray-400">Weight</dt>
+                                        <dd class="text-gray-700">{{ $qpFmtQty($qp->weight) }}</dd>
+                                    </div>
+                                @endif
+                                @if((float) $qp->length > 0 || (float) $qp->width > 0 || (float) $qp->height > 0)
+                                    <div>
+                                        <dt class="text-xs text-gray-400">Dimensions (L × W × H)</dt>
+                                        <dd class="text-gray-700">{{ $qpFmtQty($qp->length) }} × {{ $qpFmtQty($qp->width) }} × {{ $qpFmtQty($qp->height) }}</dd>
+                                    </div>
+                                @endif
+                                <div>
+                                    <dt class="text-xs text-gray-400">Combo / Gift</dt>
+                                    <dd class="text-gray-700">{{ $qp->combo_allowed ? 'Combo allowed' : 'No combo' }} · {{ $qp->gift_allowed ? 'Gift allowed' : 'No gift' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-xs text-gray-400">Created</dt>
+                                    <dd class="text-gray-700">{{ $qp->created_at?->format('d M Y') ?? '—' }}</dd>
+                                </div>
+                            </dl>
+
+                            @if($qp->short_description)
+                                <div>
+                                    <p class="text-xs text-gray-400 mb-1">Short Description</p>
+                                    <div class="text-sm text-gray-600 prose prose-sm max-w-none">{!! $qp->short_description !!}</div>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- Variants --}}
+                    @if($qpIsVar && $qp->variants->isNotEmpty())
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800 mb-2">Variants ({{ $qp->variants->count() }})</h3>
+                            <div class="overflow-x-auto rounded-xl border border-gray-100">
+                                <table class="min-w-full text-sm">
+                                    <thead class="bg-gray-50/60">
+                                        <tr>
+                                            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500">Variant</th>
+                                            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500">SKU</th>
+                                            <th class="px-4 py-2 text-right text-xs font-semibold text-gray-500">Price</th>
+                                            <th class="px-4 py-2 text-right text-xs font-semibold text-gray-500">Sale Price</th>
+                                            <th class="px-4 py-2 text-right text-xs font-semibold text-gray-500">Stock</th>
+                                            <th class="px-4 py-2 text-center text-xs font-semibold text-gray-500">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100">
+                                        @foreach($qp->variants as $variant)
+                                            <tr>
+                                                <td class="px-4 py-2 text-gray-700">{{ collect($variant->options_map)->map(fn ($v, $k) => "{$k}: {$v}")->join(', ') ?: '—' }}</td>
+                                                <td class="px-4 py-2 font-mono text-xs text-gray-500">{{ $variant->sku ?: '—' }}</td>
+                                                <td class="px-4 py-2 text-right text-gray-700">{{ $variant->price ? number_format($variant->price, 2) : '—' }}</td>
+                                                <td class="px-4 py-2 text-right text-gray-700">{{ $variant->sale_price ? number_format($variant->sale_price, 2) : '—' }}</td>
+                                                <td class="px-4 py-2 text-right {{ (float) $variant->stock_quantity > 0 ? 'text-gray-700' : 'text-red-500' }}">{{ $qpFmtQty($variant->stock_quantity) }}</td>
+                                                <td class="px-4 py-2 text-center">
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium capitalize {{ $variant->status === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500' }}">{{ $variant->status }}</span>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- Combo items --}}
+                    @if($qpIsCombo && $qp->comboItems->isNotEmpty())
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800 mb-2">Combo Items ({{ $qp->comboItems->count() }})</h3>
+                            <div class="rounded-xl border border-gray-100 divide-y divide-gray-100">
+                                @foreach($qp->comboItems as $item)
+                                    <div class="flex items-center justify-between gap-3 px-4 py-2 text-sm">
+                                        <div class="min-w-0">
+                                            <p class="text-gray-700 truncate">{{ $item->product?->name ?? 'Removed product' }}</p>
+                                            <p class="text-xs text-gray-400">
+                                                @if($item->variant)
+                                                    {{ collect($item->variant->options_map)->map(fn ($v, $k) => "{$k}: {$v}")->join(', ') }}
+                                                @elseif($item->allow_variant)
+                                                    Customer picks variant
+                                                @endif
+                                            </p>
+                                        </div>
+                                        <span class="text-xs font-medium text-gray-500 shrink-0">× {{ $qpFmtQty($item->quantity) }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- Description --}}
+                    @if($qp->description)
+                        <div x-data="{ more: false }">
+                            <h3 class="text-sm font-semibold text-gray-800 mb-2">Description</h3>
+                            <div class="relative text-sm text-gray-600 prose prose-sm max-w-none overflow-hidden" :class="more ? '' : 'max-h-40'">
+                                {!! $qp->description !!}
+                                <div x-show="!more" class="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-white"></div>
+                            </div>
+                            <button type="button" @click="more = !more" class="mt-1 text-xs font-medium text-indigo-600 hover:text-indigo-700" x-text="more ? 'Show less' : 'Show more'"></button>
+                        </div>
+                    @endif
+                </div>
+            @endif
         </div>
     </div>
 
