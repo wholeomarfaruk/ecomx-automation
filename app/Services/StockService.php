@@ -386,6 +386,42 @@ class StockService
         $this->adjustBooking($item, -(float) $item->quantity, 'unbooked_cancelled', $warehouse ?? Warehouse::default(), $note);
     }
 
+    /**
+     * Undoes everything one order line still holds against stock, ahead of
+     * the order being permanently deleted: whatever is still booked for it
+     * (net of its booking-ledger rows) is unbooked, and whatever is still
+     * physically deducted for it (net of its sale / sale_cancelled / return
+     * movements) is added back. Works from this line's own ledger rows, so
+     * partial returns or an earlier cancel are never restored twice.
+     */
+    public function reverseItemForDeletion(OrderItem $item, ?Warehouse $warehouse = null): void
+    {
+        if (! $item->product_id) {
+            return;
+        }
+
+        $warehouse ??= Warehouse::default();
+        $note = "Order #{$item->order_id} deleted";
+
+        $netBooked = (float) InventoryStockBookingMovement::query()
+            ->where('reference_type', OrderItem::class)
+            ->where('reference_id', $item->id)
+            ->sum('quantity');
+
+        if ($netBooked > 0) {
+            $this->adjustBooking($item, -$netBooked, 'unbooked_cancelled', $warehouse, $note);
+        }
+
+        $netPhysical = (float) InventoryStockMovement::query()
+            ->where('reference_type', OrderItem::class)
+            ->where('reference_id', $item->id)
+            ->sum('quantity');
+
+        if ($netPhysical < 0) {
+            $this->increase($item->product, $item->variant, -$netPhysical, 'sale_cancelled', $warehouse, $item, $note);
+        }
+    }
+
     protected function orderAlreadyBooked(Order $order): bool
     {
         return InventoryStockBookingMovement::query()

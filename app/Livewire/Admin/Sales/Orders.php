@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Sales;
 
+use App\Actions\Sales\DeleteOrder;
 use App\Enums\Sales\CourierStatus;
 use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\OrderStatus;
@@ -150,6 +151,36 @@ class Orders extends Component
             ->log("Order #{$order->id} payment status updated");
 
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Payment status updated']);
+    }
+
+    /** Permanently delete an order (e.g. a test order) — stock and accounts are reversed first, see DeleteOrder. */
+    public function deleteOrder(int $orderId, DeleteOrder $deleteOrder): void
+    {
+        $user = auth()->user();
+        abort_unless($user?->hasRole('superadmin') || $user?->can('order.delete'), 403);
+
+        $order = Order::findOrFail($orderId);
+
+        try {
+            $deleteOrder->handle($order);
+        } catch (\Throwable $e) {
+            report($e);
+            $this->dispatch('toast', ['type' => 'error', 'message' => "Order #{$orderId} could not be deleted: {$e->getMessage()}"]);
+            return;
+        }
+
+        activity('sales')
+            ->causedBy($user)
+            ->withProperties(['order_id' => $orderId, 'total_amount' => $order->total_amount, 'status' => $order->status?->value])
+            ->event('deleted')
+            ->log("Order #{$orderId} was deleted");
+
+        if ($this->viewOrderId === $orderId) {
+            $this->viewModal = false;
+            $this->viewOrderId = null;
+        }
+
+        $this->dispatch('toast', ['type' => 'success', 'message' => "Order #{$orderId} deleted"]);
     }
 
     public function render(): mixed
