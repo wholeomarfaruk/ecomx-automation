@@ -63,7 +63,7 @@
     <div class="grid grid-cols-12 gap-5">
 
         {{-- Settings --}}
-        <div class="col-span-12">
+        <div class="col-span-12 min-w-0">
             <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-4">
                 <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
                     <div>
@@ -124,7 +124,7 @@
         </div>
 
         {{-- Sheet --}}
-        <div class="col-span-12">
+        <div class="col-span-12 min-w-0">
             <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
 
                 {{-- Toolbar --}}
@@ -162,7 +162,7 @@
                 {{-- Grid --}}
                 {{-- Fixed column widths (table-fixed + colgroup): the sheet is wider than the
                      screen and scrolls sideways instead of squeezing cells; # and Phone stay pinned. --}}
-                <div class="overflow-auto max-h-[68vh] overscroll-x-contain">
+                <div class="sheet-scroll overflow-auto max-h-[68vh] overscroll-x-contain">
                     <table class="table-fixed text-sm border-separate border-spacing-0" style="width: 2586px">
                         <colgroup>
                             <col style="width: 56px">  {{-- select + # --}}
@@ -540,6 +540,13 @@
         [x-cloak] { display: none !important; }
         .cell { display: block; width: 100%; height: 2.25rem; border: 1px solid #eceef1; border-radius: .5rem; background: rgba(255,255,255,.85); padding: .4375rem .625rem; font-size: .8125rem; line-height: 1.25rem; color: #1f2937; text-overflow: ellipsis; white-space: nowrap; transition: border-color .12s, box-shadow .12s; }
         select.cell { padding-right: 1.75rem; }
+        /* Always-visible scrollbars on the sheet (both axes). */
+        .sheet-scroll { scrollbar-width: auto; scrollbar-color: #cbd5e1 #f1f5f9; }
+        .sheet-scroll::-webkit-scrollbar { width: 12px; height: 12px; }
+        .sheet-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+        .sheet-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; border: 3px solid #f1f5f9; }
+        .sheet-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .sheet-scroll::-webkit-scrollbar-corner { background: #f1f5f9; }
         .cell:hover { border-color: #d1d5db; }
         .cell:focus { outline: none; border-color: #6366f1; background: #fff; box-shadow: 0 0 0 1px #6366f1; }
         .cell[readonly], .cell:disabled { color: #6b7280; cursor: default; }
