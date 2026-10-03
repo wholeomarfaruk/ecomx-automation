@@ -13,8 +13,16 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Setting;
 use App\Services\StockService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Url;
+use OpenSpout\Common\Entity\Row;
+use OpenSpout\Common\Entity\Style\Style;
+use OpenSpout\Writer\XLSX\Entity\SheetView;
+use OpenSpout\Writer\XLSX\Options as XlsxOptions;
+use OpenSpout\Writer\XLSX\Writer as XlsxWriter;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -153,6 +161,129 @@ class Orders extends Component
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Payment status updated']);
     }
 
+    /** The Orders tab's search + filters — shared by the table and the Excel export so both always match. */
+    private function filteredOrders(): Builder
+    {
+        return Order::query()
+            ->when($this->search, fn ($q) => $q->where(fn ($w) => $w
+                ->where('id', 'like', "%{$this->search}%")
+                ->orWhereHas('customer', fn ($c) => $c
+                    ->where('full_name', 'like', "%{$this->search}%")
+                    ->orWhere('phone', 'like', "%{$this->search}%"))
+                ->orWhereHas('items', fn ($i) => $i
+                    ->where('product_name', 'like', "%{$this->search}%")
+                    ->orWhere('sku', 'like', "%{$this->search}%"))
+            ))
+            ->when($this->filterStatus !== '', fn ($q) => $q->where('status', $this->filterStatus))
+            ->when($this->filterPaymentStatus !== '', fn ($q) => $q->where('payment_status', $this->filterPaymentStatus))
+            ->when($this->filterSource !== '', fn ($q) => $q->where('source', $this->filterSource))
+            ->when($this->dateFrom, fn ($q) => $q->whereDate('created_at', '>=', $this->dateFrom))
+            ->when($this->dateTo, fn ($q) => $q->whereDate('created_at', '<=', $this->dateTo));
+    }
+
+    /**
+     * Excel export of the Orders tab with its current search/filters applied
+     * (one row per order). Uses OpenSpout; falls back to a CSV Excel can open
+     * if the package isn't installed on this server.
+     */
+    public function exportExcel(): BinaryFileResponse|StreamedResponse
+    {
+        $headers = [
+            'Order #', 'Date', 'Status', 'Payment Status', 'Fulfillment', 'Source',
+            'Customer', 'Customer Phone', 'Ship To', 'Ship To Phone', 'Address', 'City',
+            'Items', 'Qty', 'Subtotal', 'Discount', 'Shipping', 'Charges', 'Total', 'Paid', 'Due',
+            'Coupon', 'Courier', 'Tracking #', 'Courier Status', 'Customer Note', 'Admin Note',
+        ];
+
+        $rows = function () {
+            $query = $this->filteredOrders()
+                ->with('customer', 'items', 'shippingAddress.city')
+                ->orderByDesc('id');
+
+            foreach ($query->lazy(500) as $order) {
+                $address = $order->shippingAddress;
+
+                yield [
+                    $order->id,
+                    local_time($order->placed_at ?? $order->created_at)?->format('Y-m-d H:i'),
+                    $order->status?->label(),
+                    $order->payment_status?->label(),
+                    $order->fulfillment_status?->label(),
+                    $order->source?->label(),
+                    $order->customer?->full_name,
+                    $order->customer?->phone,
+                    $address?->name,
+                    $address?->phone,
+                    $address?->full_address,
+                    $address?->city?->name,
+                    $order->items->map(fn ($i) => trim($i->product_name . ($i->variant_name ? " ({$i->variant_name})" : ''))
+                        . ' x' . rtrim(rtrim(number_format((float) $i->quantity, 3, '.', ''), '0'), '.')
+                        . ($i->is_gift ? ' [gift]' : ''))->join('; '),
+                    (float) $order->items->sum('quantity'),
+                    (float) $order->subtotal,
+                    (float) $order->discount_amount,
+                    (float) $order->shipping_amount,
+                    (float) $order->charges_amount,
+                    (float) $order->total_amount,
+                    (float) $order->paid_amount,
+                    (float) $order->due_amount,
+                    $order->coupon_code,
+                    $order->courier_provider,
+                    $order->courier_tracking_number,
+                    $order->courier_status?->label(),
+                    $order->customer_note,
+                    $order->admin_note,
+                ];
+            }
+        };
+
+        $filename = 'orders-' . local_time(now())->format('Y-m-d-His');
+
+        if (! class_exists(XlsxWriter::class)) {
+            return response()->streamDownload(function () use ($headers, $rows) {
+                $handle = fopen('php://output', 'w');
+                fwrite($handle, "\xEF\xBB\xBF"); // UTF-8 BOM so Excel reads Bangla correctly
+                fputcsv($handle, $headers);
+                foreach ($rows() as $row) {
+                    fputcsv($handle, $row);
+                }
+                fclose($handle);
+            }, "{$filename}.csv", ['Content-Type' => 'text/csv; charset=UTF-8']);
+        }
+
+        $options = new XlsxOptions();
+        $options->setColumnWidth(9, 1);
+        $options->setColumnWidth(17, 2);
+        $options->setColumnWidthForRange(14, 3, 6);
+        $options->setColumnWidthForRange(18, 7, 10);
+        $options->setColumnWidth(40, 11);
+        $options->setColumnWidth(14, 12);
+        $options->setColumnWidth(50, 13);
+        $options->setColumnWidthForRange(12, 14, 22);
+        $options->setColumnWidthForRange(16, 23, 26);
+        $options->setColumnWidth(30, 27);
+
+        $path = tempnam(sys_get_temp_dir(), 'orders') . '.xlsx';
+        $writer = new XlsxWriter($options);
+        $writer->openToFile($path);
+        $writer->getCurrentSheet()->setName('Orders');
+        $writer->getCurrentSheet()->setSheetView((new SheetView())->withFreezeRow(2));
+
+        $writer->addRow(Row::fromValuesWithStyle($headers, new Style(fontBold: true, backgroundColor: 'E5E7EB')));
+        foreach ($rows() as $row) {
+            $writer->addRow(Row::fromValues($row));
+        }
+        $writer->close();
+
+        activity('sales')
+            ->causedBy(auth()->user())
+            ->withProperties(['rows' => $writer->getWrittenRowCount() - 1])
+            ->event('exported')
+            ->log('Orders exported to Excel');
+
+        return response()->download($path, "{$filename}.xlsx")->deleteFileAfterSend();
+    }
+
     /** Permanently delete an order (e.g. a test order) — stock and accounts are reversed first, see DeleteOrder. */
     public function deleteOrder(int $orderId, DeleteOrder $deleteOrder): void
     {
@@ -185,23 +316,9 @@ class Orders extends Component
 
     public function render(): mixed
     {
-        $orders = Order::query()
+        $orders = $this->filteredOrders()
             ->with('customer')
             ->withCount('items')
-            ->when($this->search, fn ($q) => $q->where(fn ($w) => $w
-                ->where('id', 'like', "%{$this->search}%")
-                ->orWhereHas('customer', fn ($c) => $c
-                    ->where('full_name', 'like', "%{$this->search}%")
-                    ->orWhere('phone', 'like', "%{$this->search}%"))
-                ->orWhereHas('items', fn ($i) => $i
-                    ->where('product_name', 'like', "%{$this->search}%")
-                    ->orWhere('sku', 'like', "%{$this->search}%"))
-            ))
-            ->when($this->filterStatus !== '', fn ($q) => $q->where('status', $this->filterStatus))
-            ->when($this->filterPaymentStatus !== '', fn ($q) => $q->where('payment_status', $this->filterPaymentStatus))
-            ->when($this->filterSource !== '', fn ($q) => $q->where('source', $this->filterSource))
-            ->when($this->dateFrom, fn ($q) => $q->whereDate('created_at', '>=', $this->dateFrom))
-            ->when($this->dateTo, fn ($q) => $q->whereDate('created_at', '<=', $this->dateTo))
             ->orderByDesc('id')
             ->paginate(20);
 

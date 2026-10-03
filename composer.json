@@ -21,6 +21,7 @@
         "livewire/livewire": "^3.6.4",
         "matomo/device-detector": "*",
         "minishlink/web-push": "^10.1",
+        "openspout/openspout": "^5.3",
         "spatie/laravel-activitylog": "^4.12",
         "spatie/laravel-permission": "^7.1"
     },
