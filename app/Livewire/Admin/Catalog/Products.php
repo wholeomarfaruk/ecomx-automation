@@ -26,6 +26,8 @@ class Products extends Component
     #[Url]
     public string $filterStockStatus = '';
     public string $filterProductType = '';
+    public string $minPrice          = '';
+    public string $maxPrice          = '';
 
     protected string $paginationTheme = 'tailwind';
 
@@ -51,6 +53,14 @@ class Products extends Component
     public function updatingFilterBrand(): void       { $this->resetPage(); }
     public function updatingFilterStockStatus(): void { $this->resetPage(); }
     public function updatingFilterProductType(): void { $this->resetPage(); }
+    public function updatingMinPrice(): void          { $this->resetPage(); }
+    public function updatingMaxPrice(): void          { $this->resetPage(); }
+
+    public function clearPriceRange(): void
+    {
+        $this->reset('minPrice', 'maxPrice');
+        $this->resetPage();
+    }
 
     public function updatedNewName(string $value): void
     {
@@ -159,7 +169,21 @@ class Products extends Component
 
     public function render(): mixed
     {
+        $min = is_numeric($this->minPrice) ? (float) $this->minPrice : null;
+        $max = is_numeric($this->maxPrice) ? (float) $this->maxPrice : null;
+
+        // Selling price: a valid sale price, else the regular price (same rule as Product::sellingPrice).
+        $selling = fn (string $t) => "CASE WHEN {$t}.sale_price > 0 AND {$t}.sale_price < {$t}.price THEN {$t}.sale_price ELSE {$t}.price END";
+        $inRange = function ($q, string $t) use ($min, $max, $selling) {
+            if ($min !== null) $q->whereRaw("{$selling($t)} >= ?", [$min]);
+            if ($max !== null) $q->whereRaw("{$selling($t)} <= ?", [$max]);
+        };
+
         $products = Product::query()
+            ->when($min !== null || $max !== null, fn ($q) => $q->where(fn ($w) => $w
+                ->where(fn ($p) => $inRange($p, 'products'))
+                ->orWhereHas('variants', fn ($v) => $inRange($v, 'product_variants'))
+            ))
             ->with('brand', 'variants', 'comboItems.product.variants', 'comboItems.variant')
             ->when($this->search, fn($q) => $q->where(fn($s) => $s
                 ->where('name', 'like', "%{$this->search}%")

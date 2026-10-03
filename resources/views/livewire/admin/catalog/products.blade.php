@@ -84,6 +84,21 @@
                 <option value="variable">Variable</option>
                 <option value="combo">Combo</option>
             </select>
+            <div class="flex items-center gap-1.5" title="Selling price range (sale price if set, otherwise regular price; variants included)">
+                <input wire:model.live.debounce.500ms="minPrice" type="number" min="0" step="0.01" placeholder="Min price"
+                    class="w-28 text-sm rounded-lg border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                <span class="text-gray-400 text-sm">–</span>
+                <input wire:model.live.debounce.500ms="maxPrice" type="number" min="0" step="0.01" placeholder="Max price"
+                    class="w-28 text-sm rounded-lg border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                @if($minPrice !== '' || $maxPrice !== '')
+                    <button wire:click="clearPriceRange" type="button" title="Clear price range"
+                        class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                @endif
+            </div>
         </div>
 
         {{-- Table --}}
@@ -250,6 +265,23 @@
                                                 </button>
                                             @endif
 
+                                            @if($product->url)
+                                                <button type="button" @click="open = false; copyProductLink(@js($product->url))"
+                                                    class="flex items-center gap-2.5 w-full px-4 py-2 text-gray-700 hover:bg-gray-50 transition">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"/>
+                                                    </svg>
+                                                    Copy Link
+                                                </button>
+                                                <a href="{{ $product->url }}" target="_blank" rel="noopener" @click="open = false"
+                                                    class="flex items-center gap-2.5 w-full px-4 py-2 text-gray-700 hover:bg-gray-50 transition">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/>
+                                                    </svg>
+                                                    Open in Store
+                                                </a>
+                                            @endif
+
                                             @if($canProduct('product.edit'))
                                                 <a href="{{ route('admin.catalog.products.edit', $product->id) }}" wire:navigate
                                                     class="flex items-center gap-2.5 w-full px-4 py-2 text-gray-700 hover:bg-gray-50 transition">
@@ -375,6 +407,15 @@
                         <p class="text-xs text-gray-400 font-mono">{{ $quickProduct->code }} · {{ $quickProduct->slug }}</p>
                     @endif
                 </div>
+                @if($quickProduct?->url)
+                    <button type="button" @click="copyProductLink(@js($quickProduct->url))"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"/>
+                        </svg>
+                        Copy Link
+                    </button>
+                @endif
                 @if($quickProduct && $canProduct('product.edit'))
                     <a href="{{ route('admin.catalog.products.edit', $quickProduct->id) }}" wire:navigate
                         class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition shrink-0">
@@ -581,7 +622,7 @@
                             <h3 class="text-sm font-semibold text-gray-800 mb-2">Description</h3>
                             <div class="relative text-sm text-gray-600 prose prose-sm max-w-none overflow-hidden" :class="more ? '' : 'max-h-40'">
                                 {!! $qp->description !!}
-                                <div x-show="!more" class="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-white"></div>
+                                <div x-show="!more" class="absolute inset-x-0 bottom-0 h-12 bg-linear-to-t from-white"></div>
                             </div>
                             <button type="button" @click="more = !more" class="mt-1 text-xs font-medium text-indigo-600 hover:text-indigo-700" x-text="more ? 'Show less' : 'Show more'"></button>
                         </div>
@@ -590,6 +631,24 @@
             @endif
         </div>
     </div>
+
+    @script
+    <script>
+        window.copyProductLink = async (url) => {
+            try {
+                await navigator.clipboard.writeText(url);
+            } catch (e) {
+                const ta = Object.assign(document.createElement('textarea'), { value: url });
+                ta.style.cssText = 'position:fixed;opacity:0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                ta.remove();
+            }
+            Toast.fire({ icon: 'success', title: 'Product link copied' });
+        };
+    </script>
+    @endscript
 
     {{-- Quick-add Modal --}}
     <div x-cloak x-data="{ open: @entangle('createModal') }" x-show="open" x-transition
