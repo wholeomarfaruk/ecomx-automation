@@ -151,7 +151,8 @@ Route::prefix('customers')->name('customers.')->group(function () {
 Route::prefix('sales')->name('sales.')->group(function () {
     Route::get('/orders', App\Livewire\Admin\Sales\Orders::class)->name('orders');
     Route::get('/orders/create', App\Livewire\Admin\Sales\OrderCreate::class)->name('orders.create');
-    Route::get('/orders/{id}', App\Livewire\Admin\Sales\OrderDetail::class)->name('orders.show');
+    Route::get('/orders/bulk', App\Livewire\Admin\Sales\BulkOrderCreate::class)->name('orders.bulk');
+    Route::get('/orders/{id}',App\Livewire\Admin\Sales\OrderDetail::class)->name('orders.show');
     Route::get('/orders/{id}/print/{type?}', OrderPrintController::class)
         ->whereNumber('id')->whereIn('type', ['invoice', 'packing-slip'])->name('orders.print');
 

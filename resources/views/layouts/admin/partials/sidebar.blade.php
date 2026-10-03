@@ -300,7 +300,7 @@
                 </div>
                 @endif
 
-                @if ($canSee('accounts_cash_account.view', 'accounts_dashboard.view', 'accounts_expense.view', 'accounts_fixed_asset.view', 'accounts_loan.view', 'accounts_owner_equity.manage', 'accounts_payable.view', 'accounts_receivable.view', 'accounts_report.view', 'accounts_transaction.view', 'attribute.view', 'batch.view', 'brand.view', 'cart.view', 'category.view', 'combo.view', 'coupon.view', 'customer.view', 'customer_group.view', 'inventory_settings.manage', 'loved_product.view', 'marketing_attribution.view', 'marketing_audience.view', 'marketing_campaign.view', 'marketing_customer.view', 'marketing_dashboard.view', 'marketing_event.view', 'marketing_journey.view', 'marketing_product.view', 'marketing_report.view', 'marketing_settings.manage', 'marketing_source.view', 'offer.view', 'opening_balance.manage', 'order.view', 'pos.access', 'pos_register.view', 'pos_session.view', 'product.view', 'purchase_order.view', 'review.view', 'stock.view', 'stock_in.create', 'stock_movement.view', 'supplier.view', 'supplier_invoice.view', 'warehouse.view'))
+                @if ($canSee('accounts_cash_account.view', 'accounts_dashboard.view', 'accounts_expense.view', 'accounts_fixed_asset.view', 'accounts_loan.view', 'accounts_owner_equity.manage', 'accounts_payable.view', 'accounts_receivable.view', 'accounts_report.view', 'accounts_transaction.view', 'attribute.view', 'batch.view', 'brand.view', 'cart.view', 'category.view', 'combo.view', 'coupon.view', 'customer.view', 'customer_group.view', 'inventory_settings.manage', 'loved_product.view', 'marketing_attribution.view', 'marketing_audience.view', 'marketing_campaign.view', 'marketing_customer.view', 'marketing_dashboard.view', 'marketing_event.view', 'marketing_journey.view', 'marketing_product.view', 'marketing_report.view', 'marketing_settings.manage', 'marketing_source.view', 'offer.view', 'opening_balance.manage', 'order.create', 'order.view', 'pos.access', 'pos_register.view', 'pos_session.view', 'product.view', 'purchase_order.view', 'review.view', 'stock.view', 'stock_in.create', 'stock_movement.view', 'supplier.view', 'supplier_invoice.view', 'warehouse.view'))
                 <div class="mt-4 mb-1">
                     <h2 class="text-gray-500 text-md font-semibold" :class="{ 'hidden': !$store.sidebar.full }"
                         x-transition>Ecommerce</h2>
@@ -663,7 +663,7 @@
                 @endif
                 @endif
 
-                @if ($canSee('coupon.view', 'offer.view', 'order.view', 'pos.access', 'pos_register.view', 'pos_session.view'))
+                @if ($canSee('coupon.view', 'offer.view', 'order.create', 'order.view', 'pos.access', 'pos_register.view', 'pos_session.view'))
                 @php
                     $salesActive = str_starts_with(Route::currentRouteName(), 'admin.sales.');
                 @endphp
@@ -695,8 +695,14 @@
                         :class="$store.sidebar.full ? expandedClass : shrinkedClass" class="text-gray-400 space-y-3">
                         @if ($canSee('order.view'))
                         <a href="{{ route('admin.sales.orders') }}"
-                            class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.orders') ? 'text-gray-200' : '' }}">
+                            class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.orders') && Route::currentRouteName() !== 'admin.sales.orders.bulk' ? 'text-gray-200' : '' }}">
                             Orders
+                        </a>
+                        @endif
+                        @if ($canSee('order.create'))
+                        <a href="{{ route('admin.sales.orders.bulk') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.sales.orders.bulk' ? 'text-gray-200' : '' }}">
+                            Bulk Order
                         </a>
                         @endif
                         @if ($canSee('coupon.view'))
