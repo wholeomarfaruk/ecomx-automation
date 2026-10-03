@@ -13,7 +13,7 @@ class RoleCreate extends Component
     public array  $permissions = [];
     public bool   $selectAll   = false;
 
-    public function mount(int $id = 0, RoleService $roleService): void
+    public function mount(RoleService $roleService, int $id = 0): void
     {
         if ($id > 0) {
             if (! auth()->user()->can('role.edit')) {
