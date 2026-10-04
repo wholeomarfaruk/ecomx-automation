@@ -17,6 +17,7 @@
                         'registration' => ['label' => 'Registration',  'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"/>'],
                         'pricing'      => ['label' => 'Pricing',       'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182.553-.44 1.278-.659 2.003-.659.725 0 1.45.22 2.003.659l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>'],
                         'marketing'    => ['label' => 'Marketing',     'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 1 1 0-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 0 1-1.44-4.282m3.102.069a18.03 18.03 0 0 1-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 0 1 8.835 2.535M10.34 6.66a23.847 23.847 0 0 0 8.835-2.535m0 0A23.74 23.74 0 0 0 18.795 3m.38 1.125a23.91 23.91 0 0 1 1.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 0 0 1.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 0 1 0 3.46"/>'],
+                        'custom_code'  => ['label' => 'Custom Code',   'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5"/>'],
                         'queue'        => ['label' => 'Queue Setup',   'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>'],
                         'modules'      => ['label' => 'Modules',       'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"/>'],
                         'media'        => ['label' => 'Media',         'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>'],
@@ -850,6 +851,49 @@
                                         </p>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- ══════════════════ CUSTOM CODE ══════════════════ --}}
+                    @if ($activeGroup === 'custom_code')
+                        <div class="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-sm font-semibold text-gray-900">Custom Code</h2>
+                                <p class="text-xs text-gray-400">Raw HTML / script snippets added to every storefront and landing page</p>
+                            </div>
+                        </div>
+
+                        <div class="px-6 py-5 space-y-5">
+                            <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+                                Code here is printed on the live site exactly as written, with no escaping. A broken or unclosed tag can break the page layout, so only paste snippets from sources you trust. The admin panel is not affected.
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Header Code</label>
+                                <textarea wire:model="head_code" rows="8" spellcheck="false" placeholder="<meta name=&quot;google-site-verification&quot; content=&quot;...&quot; />"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"></textarea>
+                                @error('head_code') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                <p class="text-xs text-gray-400 mt-1.5">Printed inside <code class="bg-gray-100 px-1 rounded">&lt;head&gt;</code>, just before <code class="bg-gray-100 px-1 rounded">&lt;/head&gt;</code>. For site-verification meta tags, extra pixels, custom CSS.</p>
+                            </div>
+                            <div class="border-t border-gray-100 pt-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">After &lt;body&gt; Opens</label>
+                                <textarea wire:model="body_start_code" rows="6" spellcheck="false" placeholder="<noscript>...</noscript>"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"></textarea>
+                                @error('body_start_code') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                <p class="text-xs text-gray-400 mt-1.5">Printed right after the opening <code class="bg-gray-100 px-1 rounded">&lt;body&gt;</code> tag. For <code class="bg-gray-100 px-1 rounded">&lt;noscript&gt;</code> pixel/iframe fallbacks.</p>
+                            </div>
+                            <div class="border-t border-gray-100 pt-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Before &lt;/body&gt; Closes</label>
+                                <textarea wire:model="body_end_code" rows="8" spellcheck="false" placeholder="<script src=&quot;...&quot;></script>"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"></textarea>
+                                @error('body_end_code') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                <p class="text-xs text-gray-400 mt-1.5">Printed just before the closing <code class="bg-gray-100 px-1 rounded">&lt;/body&gt;</code> tag. For chat widgets and scripts that should load after the page.</p>
                             </div>
                         </div>
                     @endif

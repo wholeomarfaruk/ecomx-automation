@@ -17,14 +17,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
     @livewireStyles
+    <x-custom-code position="head_code" />
 </head>
 <body>
     <x-marketing.gtm-noscript />
+    <x-custom-code position="body_start_code" />
 
     {{ $slot }}
 
     @livewireScripts
 
     <x-device-fingerprint-script />
+    <x-custom-code position="body_end_code" />
 </body>
 </html>

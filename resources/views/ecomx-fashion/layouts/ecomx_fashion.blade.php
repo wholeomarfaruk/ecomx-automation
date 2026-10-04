@@ -62,9 +62,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     @vite(['resources/ecomx-fashion/scss/app.scss', 'resources/ecomx-fashion/js/app.js'])
     @livewireStyles
+    <x-custom-code position="head_code" />
 </head>
 <body>
     <x-marketing.gtm-noscript />
+    <x-custom-code position="body_start_code" />
     @include('ecomx-fashion.partials.header')
 
     <main>
@@ -82,5 +84,6 @@
     @livewireScripts
 
     <x-device-fingerprint-script />
+    <x-custom-code position="body_end_code" />
 </body>
 </html>

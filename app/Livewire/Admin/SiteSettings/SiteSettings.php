@@ -110,6 +110,12 @@ class SiteSettings extends Component
     public string $session_timeout_minutes   = '30';
     public string $attribution_lifetime_days = '90';
 
+    // Custom Code — raw snippets injected into every storefront/landing page
+    // (see components/custom-code.blade.php)
+    public string $head_code       = '';
+    public string $body_start_code = '';
+    public string $body_end_code   = '';
+
     // Queue (read-only display + notes)
     public string $queue_notes = '';
     public string $queue_cron_supervisor_path = '';
@@ -491,6 +497,35 @@ class SiteSettings extends Component
             $this->logSettingsChange('Marketing settings were updated', $old, $new);
         }
 
+        if ($this->activeGroup === 'custom_code') {
+            // Raw HTML/JS on every storefront page — the route itself only
+            // checks panel access, so gate this group explicitly.
+            if (! auth()->user()->can('site_settings.manage')) {
+                abort(403, 'Unauthorized action.');
+            }
+
+            // settings.value is a TEXT column (65,535 bytes); 16k chars stays
+            // under that even if every char is 4-byte UTF-8 (Bangla is 3).
+            $this->validate([
+                'head_code'       => 'nullable|string|max:16000',
+                'body_start_code' => 'nullable|string|max:16000',
+                'body_end_code'   => 'nullable|string|max:16000',
+            ]);
+
+            $keys = ['head_code', 'body_start_code', 'body_end_code'];
+            $old  = [];
+            $new  = [];
+
+            foreach ($keys as $key) {
+                $old[$key] = $this->customCodeSetting($key);
+                $new[$key] = trim((string) $this->{$key});
+                $this->{$key} = $new[$key];
+                Setting::set($key, $new[$key], 'custom_code');
+            }
+
+            $this->logSettingsChange('Custom code was updated', $old, $new);
+        }
+
         if ($this->activeGroup === 'queue') {
             $old = [
                 'notes' => Setting::get('notes', '', 'queue'),
@@ -574,6 +609,18 @@ class SiteSettings extends Component
         }
 
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Settings saved successfully']);
+    }
+
+    /**
+     * Setting::get() json-decodes values, so a snippet that happens to be a
+     * bare JSON object/array comes back as a PHP array — treat that as empty
+     * rather than letting a (string) cast throw.
+     */
+    private function customCodeSetting(string $key): string
+    {
+        $value = Setting::get($key, '', 'custom_code');
+
+        return is_string($value) ? $value : '';
     }
 
     private function logSettingsChange(string $description, array $old, array $new): void
@@ -681,6 +728,10 @@ class SiteSettings extends Component
         $this->server_destinations       = Setting::get('server_destinations',       'meta',  'marketing');
         $this->session_timeout_minutes   = Setting::get('session_timeout_minutes',   '30',    'marketing');
         $this->attribution_lifetime_days = Setting::get('attribution_lifetime_days', '90',    'marketing');
+
+        $this->head_code       = $this->customCodeSetting('head_code');
+        $this->body_start_code = $this->customCodeSetting('body_start_code');
+        $this->body_end_code   = $this->customCodeSetting('body_end_code');
 
         $this->queue_notes = Setting::get('notes', '', 'queue');
         $this->queue_cron_supervisor_path = Setting::get('cron_supervisor_path', '', 'queue');
