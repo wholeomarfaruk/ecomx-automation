@@ -11,6 +11,7 @@ use App\Listeners\NotificationEventListener;
 use App\Marketing\Context\MarketingContextBuilder;
 use App\Models\ActivityLog;
 use App\Models\Setting;
+use App\Services\QueueHealthService;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
@@ -48,6 +49,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerActivityTracking();
         $this->registerAuthListeners();
         $this->registerNotificationListeners();
+        QueueHealthService::listen();
         $this->configureMailFromSettings();
         $this->configureMarketingFromSettings();
 

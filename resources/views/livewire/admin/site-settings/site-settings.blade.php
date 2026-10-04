@@ -868,6 +868,8 @@
                             </div>
                         </div>
 
+                        <livewire:admin.site-settings.queue-monitor wire:key="queue-monitor" />
+
                         <div class="px-6 py-5 space-y-5">
                             {{-- Connection / driver --}}
                             <div>
