@@ -5,6 +5,7 @@ namespace App\Actions\Accounts;
 use App\Enums\Accounts\TransactionType;
 use App\Enums\Sales\OrderPaymentType;
 use App\Enums\Sales\PaymentMethod;
+use App\Enums\Sales\PaymentStatus;
 use App\Models\Account;
 use App\Models\AccountsCustomerAdvance;
 use App\Models\AccountsCustomerInvoice;
@@ -68,6 +69,7 @@ class PostCourierCodCollected
             ]);
 
             $order->recalculateTotals();
+            $order->update(['payment_status' => $order->due_amount > 0 ? PaymentStatus::PARTIAL : PaymentStatus::PAID]);
 
             $customer = $order->customer;
             $invoice = AccountsCustomerInvoice::where('order_id', $order->id)->first();
