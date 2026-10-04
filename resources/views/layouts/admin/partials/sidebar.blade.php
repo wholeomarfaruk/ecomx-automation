@@ -825,6 +825,12 @@
                                 </a>
                                 @endif
                                 @if ($canSee('marketing_campaign.view'))
+                                <a href="{{ route('admin.marketing.campaigns.youtube') }}"
+                                    class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.campaigns.youtube' ? 'text-gray-200' : '' }}">
+                                    YouTube Campaigns
+                                </a>
+                                @endif
+                                @if ($canSee('marketing_campaign.view'))
                                 <a href="{{ route('admin.marketing.campaigns.tiktok') }}"
                                     class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.marketing.campaigns.tiktok' ? 'text-gray-200' : '' }}">
                                     TikTok Campaigns

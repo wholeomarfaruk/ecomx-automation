@@ -4,6 +4,8 @@ namespace App\Livewire\Admin\Marketing;
 
 use App\Livewire\Admin\Marketing\Concerns\HasDateRange;
 use App\Marketing\Enums\MarketingEventName;
+use App\Marketing\Services\CampaignDiscovery;
+use App\Marketing\Services\CampaignPerformance;
 use App\Models\Marketing\MarketingCampaign;
 use App\Models\Marketing\MarketingEvent;
 use App\Models\Marketing\MarketingEventDestination;
@@ -84,34 +86,30 @@ class Dashboard extends Component
             'purchases' => $period->map(fn ($d) => (int) ($dailyRaw->get($d, collect())->firstWhere('event_name', MarketingEventName::PURCHASE->value)->total ?? 0))->all(),
         ];
 
-        // Campaign performance table — joins the raw utm_campaign string on
-        // marketing_events (see MarketingCampaign::events()) rather than a
-        // campaign_id FK, since events can predate campaign registration.
-        $campaigns = MarketingCampaign::with('source')
-            ->get()
-            ->map(function (MarketingCampaign $campaign) use ($since, $until) {
-                $campaignEvents = MarketingEvent::query()
-                    ->when($since, fn ($q) => $q->where('occurred_at', '>=', $since))
-                    ->when($until, fn ($q) => $q->where('occurred_at', '<=', $until))
-                    ->where('utm_campaign', $campaign->campaign_key);
+        // Campaign performance table — campaigns register themselves from
+        // traffic (CampaignDiscovery) and are credited by last touch, so the
+        // add-to-carts/purchases that happen after the landing page count too.
+        app(CampaignDiscovery::class)->backfill();
 
-                $campaignCounts = (clone $campaignEvents)
-                    ->selectRaw('event_name, COUNT(*) as total')
-                    ->groupBy('event_name')
-                    ->pluck('total', 'event_name');
+        $campaignModels = MarketingCampaign::with('source')->get();
+        $campaignStats = app(CampaignPerformance::class)->forKeys($campaignModels->pluck('campaign_key')->all(), $since, $until);
+
+        $campaigns = $campaignModels
+            ->map(function (MarketingCampaign $campaign) use ($campaignStats) {
+                $stats = $campaignStats[mb_strtolower((string) $campaign->campaign_key)] ?? CampaignPerformance::empty();
 
                 return [
                     'id' => $campaign->id,
                     'platform' => $campaign->source?->platform,
                     'name' => $campaign->external_campaign_name ?? $campaign->campaign_key,
-                    'visitors' => (clone $campaignEvents)->distinct('device_id')->count('device_id'),
-                    'product_views' => (int) ($campaignCounts[MarketingEventName::VIEW_CONTENT->value] ?? 0),
-                    'add_to_cart' => (int) ($campaignCounts[MarketingEventName::ADD_TO_CART->value] ?? 0),
-                    'purchases' => (int) ($campaignCounts[MarketingEventName::PURCHASE->value] ?? 0),
-                    'revenue' => (float) (clone $campaignEvents)->where('event_name', MarketingEventName::PURCHASE->value)->sum('value'),
+                    ...$stats,
                 ];
             })
-            ->sortByDesc('revenue')
+            // Any activity in the period — not visitors alone, since an event
+            // with no device (e.g. a purchase) still counts.
+            ->filter(fn ($row) => $row['visitors'] + $row['page_views'] + $row['product_views'] + $row['add_to_cart'] + $row['checkout'] + $row['purchases'] > 0)
+            ->sortBy([['revenue', 'desc'], ['visitors', 'desc']])
+            ->take(8)
             ->values();
 
         // Source breakdown (by raw utm_source — always available even for

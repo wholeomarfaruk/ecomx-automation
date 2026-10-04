@@ -65,7 +65,9 @@ class EventExplorer extends Component
             ))
             ->when($this->eventName !== '', fn ($q) => $q->where('event_name', $this->eventName))
             ->when($this->source !== '', fn ($q) => $q->where('utm_source', $this->source))
-            ->when($this->campaign !== '', fn ($q) => $q->where('utm_campaign', $this->campaign))
+            // Same last-touch crediting as the Campaigns screen, so "View Events"
+            // shows the add-to-carts/purchases it counted, not just landings.
+            ->when($this->campaign !== '', fn ($q) => $q->whereHas('attribution', fn ($a) => $a->where('last_touch_campaign', $this->campaign)))
             ->when($this->deviceId, fn ($q) => $q->where('device_id', $this->deviceId))
             ->when($this->customerId, fn ($q) => $q->where('customer_id', $this->customerId))
             ->when($this->dateFrom, fn ($q) => $q->whereDate('occurred_at', '>=', $this->dateFrom))

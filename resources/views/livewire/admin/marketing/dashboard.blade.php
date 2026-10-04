@@ -109,7 +109,7 @@
                                         <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
                                         <div>
                                             <div class="text-gray-900 font-medium">{{ $campaign['name'] ?? '—' }}</div>
-                                            <div class="text-xs text-gray-400">{{ ucfirst($campaign['platform'] ?? 'unknown') }}</div>
+                                            <div class="text-xs text-gray-400">{{ \App\Marketing\Services\CampaignDiscovery::PLATFORMS[$campaign['platform'] ?? ''] ?? ucfirst($campaign['platform'] ?? 'unknown') }}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -122,7 +122,7 @@
                         @empty
                             <tr>
                                 <td colspan="6" class="px-5 py-8 text-center text-gray-400 text-sm">
-                                    No campaigns registered yet — see <a href="{{ route('admin.marketing.settings.index') }}" class="text-indigo-600 hover:underline">Tracking Settings</a>.
+                                    No campaign traffic in this period — campaigns appear automatically from ad links carrying <code class="bg-gray-100 px-1 rounded">utm_campaign</code>.
                                 </td>
                             </tr>
                         @endforelse

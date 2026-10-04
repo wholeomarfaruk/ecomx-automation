@@ -185,6 +185,7 @@ Route::prefix('marketing')->name('marketing.')->group(function () {
     Route::get('/campaigns', App\Livewire\Admin\Marketing\Campaigns::class)->name('campaigns.index');
     Route::get('/campaigns/meta', App\Livewire\Admin\Marketing\Campaigns::class)->name('campaigns.meta')->defaults('platform', 'meta');
     Route::get('/campaigns/google', App\Livewire\Admin\Marketing\Campaigns::class)->name('campaigns.google')->defaults('platform', 'google');
+    Route::get('/campaigns/youtube', App\Livewire\Admin\Marketing\Campaigns::class)->name('campaigns.youtube')->defaults('platform', 'youtube');
     Route::get('/campaigns/tiktok', App\Livewire\Admin\Marketing\Campaigns::class)->name('campaigns.tiktok')->defaults('platform', 'tiktok');
     Route::get('/campaigns/other', App\Livewire\Admin\Marketing\Campaigns::class)->name('campaigns.other')->defaults('platform', 'other');
 

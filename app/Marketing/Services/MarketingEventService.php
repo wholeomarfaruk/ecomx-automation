@@ -26,6 +26,7 @@ final class MarketingEventService
         private readonly BrowserEventPayloadBuilder $browserPayloadBuilder,
         private readonly MarketingContextBuilder $contextBuilder,
         private readonly MarketingSessionResolver $sessionResolver,
+        private readonly CampaignDiscovery $campaignDiscovery,
     ) {}
 
     /**
@@ -134,7 +135,7 @@ final class MarketingEventService
             }
         }
 
-        return DB::transaction(function () use ($event, $context, $attribution, $deviceId, $customerId, $sessionId, $orderId) {
+        $model = DB::transaction(function () use ($event, $context, $attribution, $deviceId, $customerId, $sessionId, $orderId) {
             $data = method_exists($event, 'data') ? $event->data() : [];
 
             $model = MarketingEventModel::create([
@@ -226,6 +227,26 @@ final class MarketingEventService
 
             return $model;
         });
+
+        // Auto-registers the campaign this event is credited to, so it shows
+        // up under Marketing → Campaigns without anyone adding it by hand.
+        // After commit, so it never runs inside (or gets rolled back with) a
+        // caller's transaction; and never allowed to break event recording.
+        $lastTouch = $attribution->lastTouch;
+
+        try {
+            DB::afterCommit(function () use ($lastTouch) {
+                try {
+                    $this->campaignDiscovery->discover($lastTouch);
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            });
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return $model;
     }
 
     private function pathFromUrl(?string $url): ?string
