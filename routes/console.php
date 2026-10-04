@@ -8,6 +8,7 @@ use App\Services\UpdateService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -17,6 +18,15 @@ Artisan::command('scheduler:heartbeat', function () {
     Cache::put('scheduler_last_ran_at', now());
 })->purpose('Record a heartbeat used to verify the scheduler is running')
     ->everyMinute();
+
+// With QUEUE_CONNECTION=database every queued job (Meta CAPI delivery, SMS,
+// courier, notifications) just sits in the jobs table until a worker runs.
+// Hosts without Supervisor only have the schedule:run cron, so drain the
+// queue from here each minute; a Supervisor worker can run alongside safely.
+Schedule::command('queue:work --queue=default,meta --stop-when-empty --max-time=55 --sleep=3')
+    ->everyMinute()
+    ->withoutOverlapping(5)
+    ->runInBackground();
 
 Artisan::command('license:check', function () {
     app(LicenseService::class)->check();
