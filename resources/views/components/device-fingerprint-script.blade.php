@@ -37,7 +37,7 @@
         if (Date.now() - lastSent > ONE_DAY_MS) {
             var payload = {
                 screen_resolution: window.screen ? (window.screen.width + 'x' + window.screen.height) : null,
-                screen_density: window.devicePixelRatio ? String(window.devicePixelRatio) : null,
+                screen_density: window.devicePixelRatio ? String(Math.round(window.devicePixelRatio * 100) / 100) : null,
                 timezone: Intl && Intl.DateTimeFormat ? Intl.DateTimeFormat().resolvedOptions().timeZone : null,
             };
 

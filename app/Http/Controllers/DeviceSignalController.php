@@ -21,6 +21,14 @@ class DeviceSignalController extends Controller
             return response()->json(['ok' => false], 204);
         }
 
+        // devicePixelRatio is a raw float — zoomed browsers and in-app
+        // webviews (e.g. Facebook on Android) report values like
+        // 1.100000023841858, which would fail max:10 and drop the whole
+        // signal. Round it here too, for pages still running the old script.
+        if (is_numeric($request->input('screen_density'))) {
+            $request->merge(['screen_density' => (string) round((float) $request->input('screen_density'), 2)]);
+        }
+
         $data = $request->validate([
             'screen_resolution' => 'nullable|string|max:20',
             'screen_density'    => 'nullable|string|max:10',
