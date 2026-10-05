@@ -200,6 +200,12 @@ class SiteSettings extends Component
 
     public function save(): void
     {
+        // AI Order saves through its own component (AiOrderSettings); Enter
+        // in one of its inputs still submits this form — ignore it.
+        if ($this->activeGroup === 'ai_order') {
+            return;
+        }
+
         if ($this->activeGroup === 'application') {
             $this->validate([
                 'site_short_name' => 'nullable|string|max:50',

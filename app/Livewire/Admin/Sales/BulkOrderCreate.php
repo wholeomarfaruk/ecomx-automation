@@ -7,14 +7,15 @@ use App\Enums\Product\ProductType;
 use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\OrderStatus;
 use App\Exceptions\Inventory\InsufficientStockException;
+use App\Livewire\Admin\Sales\Concerns\HandlesOrderIntake;
 use App\Models\Account;
-use App\Models\Customer;
 use App\Models\InventoryStock;
-use App\Models\Order;
 use App\Models\Product;
 use App\Models\Setting;
 use App\Models\ShippingMethod;
 use App\Models\Warehouse;
+use App\OrderIntake\CustomerDirectory;
+use App\OrderIntake\OrderIntakeService;
 use App\Services\Shipping\ShippingCalculator;
 use App\Services\StockService;
 use App\Support\PhoneNumber;
@@ -39,10 +40,12 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
  * this component only serves data — the catalogue, customer lookups by
  * phone, delivery quotes, Excel upload parsing — and places the orders,
  * one transaction per order through PlaceBulkOrder so one bad row never
- * blocks the rest.
+ * blocks the rest. "AI Order" (HandlesOrderIntake) turns a pasted message,
+ * chat or screenshots into rows on this same sheet.
  */
 class BulkOrderCreate extends Component
 {
+    use HandlesOrderIntake;
     use WithFileUploads;
 
     /** Excel/CSV picked in "Upload Excel" — parsed by readUpload() and handed to the sheet. */
@@ -151,55 +154,7 @@ class BulkOrderCreate extends Component
     #[Renderless]
     public function lookupCustomers(array $phones): array
     {
-        $byNational = collect($phones)
-            ->filter(fn ($p) => is_string($p) && trim($p) !== '')
-            ->take(500)
-            ->mapWithKeys(fn ($p) => [$p => PhoneNumber::national($p)])
-            ->filter(fn ($n) => strlen($n) >= 6);
-
-        if ($byNational->isEmpty()) {
-            return [];
-        }
-
-        $customers = Customer::query()
-            ->whereIn('phone', $byNational->unique()->values())
-            ->with(['deliveryAddresses' => fn ($q) => $q->orderByDesc('is_default_shipping')->orderByDesc('id')])
-            ->withCount([
-                'orders',
-                'orders as cancelled_count' => fn ($q) => $q->whereIn('status', [OrderStatus::CANCELLED, OrderStatus::RETURNED]),
-            ])
-            ->get()
-            ->keyBy('phone');
-
-        $recent = Order::query()
-            ->whereIn('customer_id', $customers->pluck('id'))
-            ->where('created_at', '>=', now()->subDay())
-            ->where('status', '!=', OrderStatus::CANCELLED)
-            ->orderByDesc('id')
-            ->get(['id', 'customer_id', 'created_at'])
-            ->groupBy('customer_id');
-
-        return $byNational->map(function ($national) use ($customers, $recent) {
-            $c = $customers->get($national);
-
-            if (! $c) {
-                return ['found' => false, 'national' => $national];
-            }
-
-            $last = $recent->get($c->id)?->first();
-
-            return [
-                'found'      => true,
-                'national'   => $national,
-                'id'         => $c->id,
-                'name'       => $c->full_name,
-                'address'    => $c->deliveryAddresses->first()?->full_address,
-                'orders'     => $c->orders_count,
-                'cancelled'  => $c->cancelled_count,
-                'recent'     => $last ? ['id' => $last->id, 'ago' => $last->created_at->diffForHumans(), 'url' => route('admin.sales.orders.show', $last->id)] : null,
-                'url'        => route('admin.sales.orders', ['search' => $c->phone]),
-            ];
-        })->all();
+        return CustomerDirectory::lookup($phones);
     }
 
     /**
@@ -267,6 +222,8 @@ class BulkOrderCreate extends Component
         foreach (array_slice($orders, 0, 50) as $o) {
             $key = (string) ($o['key'] ?? '');
 
+            $intakeIds = collect($o['intake_ids'] ?? [])->map(fn ($id) => (int) $id)->filter()->unique()->take(10)->values()->all();
+
             try {
                 $source = in_array($o['source'] ?? '', $sources, true) ? $o['source'] : OrderSource::ADMIN->value;
 
@@ -290,10 +247,14 @@ class BulkOrderCreate extends Component
                     'source'             => $source,
                     'status'             => $settings['status'],
                     'customer_note'      => isset($o['note']) ? mb_substr((string) $o['note'], 0, 1000) : null,
-                    'admin_note'         => trim("Bulk order {$settings['batch']}\n" . ($settings['admin_note'] ?? '')),
+                    'admin_note'         => trim("Bulk order {$settings['batch']}" . ($intakeIds ? ' · AI Order #' . implode(', #', $intakeIds) : '') . "\n" . ($settings['admin_note'] ?? '')),
                 ]);
 
                 $placed++;
+
+                foreach ($intakeIds as $intakeId) {
+                    app(OrderIntakeService::class)->recordPlaced($intakeId, $order->id);
+                }
 
                 activity('sales')
                     ->causedBy(auth()->user())
@@ -439,6 +400,7 @@ class BulkOrderCreate extends Component
                         ->map(fn ($a) => ['id' => $a->id, 'label' => "{$a->code} · {$a->name}"])->all()
                     : [],
                 'ordersUrl' => route('admin.sales.orders'),
+                'intake'    => $this->intakeConfig(),
             ],
         ])->layout('layouts.admin.admin');
     }

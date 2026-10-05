@@ -16,6 +16,11 @@
             </div>
         </div>
         <div class="flex flex-wrap items-center gap-2">
+            <button type="button" @click="openIntake()" :disabled="!catalogReady"
+                class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-linear-to-r from-violet-600 to-indigo-600 rounded-lg hover:opacity-90 transition shadow-sm disabled:opacity-50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z"/></svg>
+                AI Order
+            </button>
             <button type="button" wire:click="downloadTemplate"
                 class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
@@ -26,7 +31,7 @@
                 <svg x-show="!uploading" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/></svg>
                 <svg x-show="uploading" x-cloak class="h-4 w-4 animate-spin text-gray-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
                 Upload Excel
-                <input type="file" accept=".xlsx,.csv" class="hidden" @change="uploadFile($event)">
+                <input type="file" accept=".xlsx,.csv" class="hidden" @change="uploadSheet($event.target.files?.[0]); $event.target.value = ''">
             </label>
             <button type="button" @click="openConfirm()" :disabled="submitting || !catalogReady"
                 class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition shadow-sm disabled:opacity-50">
@@ -163,7 +168,7 @@
                 {{-- Fixed column widths (table-fixed + colgroup): the sheet is wider than the
                      screen and scrolls sideways instead of squeezing cells; # and Phone stay pinned. --}}
                 <div class="sheet-scroll overflow-auto max-h-[68vh] overscroll-x-contain">
-                    <table class="table-fixed text-sm border-separate border-spacing-0" style="width: 2586px">
+                    <table class="table-fixed text-sm border-separate border-spacing-0" style="width: 2606px">
                         <colgroup>
                             <col style="width: 56px">  {{-- select + # --}}
                             <col style="width: 150px"> {{-- phone --}}
@@ -182,7 +187,7 @@
                             <col style="width: 130px"> {{-- source --}}
                             <col style="width: 200px"> {{-- note --}}
                             <col style="width: 240px"> {{-- status --}}
-                            <col style="width: 70px">  {{-- actions --}}
+                            <col style="width: 90px">  {{-- actions --}}
                         </colgroup>
                         <thead class="sticky top-0 z-20">
                             <tr class="text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">
@@ -216,6 +221,12 @@
                                             <input type="checkbox" x-model="row.selected" class="rounded border-gray-300 text-indigo-600">
                                             <span class="text-[11px] text-gray-400 tabular-nums" x-text="r + 1"></span>
                                         </div>
+                                        <template x-if="row.meta">
+                                            <span class="mt-1 inline-block px-1 rounded text-[9px] font-semibold leading-4 cursor-help"
+                                                :class="row.meta.confidence >= 0.85 ? 'bg-emerald-50 text-emerald-700' : (row.meta.confidence >= 0.6 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700')"
+                                                :title="intakeTitle(row)"
+                                                x-text="`${row.meta.via === 'ai' ? 'AI' : 'Auto'} ${Math.round(row.meta.confidence * 100)}%`"></span>
+                                        </template>
                                     </td>
 
                                     {{-- Phone --}}
@@ -380,6 +391,13 @@
                                     {{-- Row actions --}}
                                     <td class="border-b border-gray-100 px-1.5 py-1.5">
                                         <div class="flex items-center gap-0.5 opacity-40 group-hover:opacity-100 transition">
+                                            <template x-if="row.meta?.sourceText && config.intake.aiAvailable && !isPlaced(row)">
+                                                <button type="button" @click="retryRowWithAi(row)" :disabled="row.retrying" title="Read this order again with AI"
+                                                    class="w-6 h-6 inline-flex items-center justify-center rounded text-violet-500 hover:bg-violet-50 disabled:opacity-40">
+                                                    <svg x-show="!row.retrying" xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z"/></svg>
+                                                    <svg x-show="row.retrying" class="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                                                </button>
+                                            </template>
                                             <button type="button" @click="duplicateRow(r)" title="Duplicate row" class="w-6 h-6 inline-flex items-center justify-center rounded text-gray-500 hover:bg-gray-100">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75"/></svg>
                                             </button>
@@ -506,6 +524,8 @@
         </div>
     </div>
 
+    @include('livewire.admin.sales.partials.order-intake-modal')
+
     {{-- Confirm & progress --}}
     <div x-show="confirm.open" x-cloak x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
         <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
@@ -586,7 +606,8 @@
 
     let keySeq = 0;
     const blankCells = () => ({ phone: '', name: '', address: '', products: '', qty: '', price: '', method: '', delivery: '', discount: '', advance: '', source: '', note: '' });
-    const newRow = (cells = {}) => ({ key: `r${Date.now().toString(36)}${(keySeq++).toString(36)}`, cells: { ...blankCells(), ...cells }, selected: false, result: null });
+    // meta: rows that came from AI Order — { intakeId, via, confidence, issues, needsAi, sourceText }.
+    const newRow = (cells = {}, meta = null) => ({ key: `r${Date.now().toString(36)}${(keySeq++).toString(36)}`, cells: { ...blankCells(), ...cells }, meta, selected: false, result: null, retrying: false });
 
     Alpine.data('bulkSheet', (config) => ({
         config,
@@ -612,6 +633,7 @@
         placed: [],
         draft: null,
         draftKey: `bulk-order-draft-${config.userId}`,
+        intake: { open: false, text: '', files: [], source: 'messenger', forceAi: false, busy: false, busyText: '', error: '', result: null, dragging: false },
 
         init() {
             this.loadDraftBanner();
@@ -630,6 +652,7 @@
             });
 
             this.recalc();
+            if (this.config.intake.open) this.$nextTick(() => this.openIntake());
             this.$watch('rows', () => { this.recalc(); this.saveDraft(); });
             this.$watch('settings', () => this.recalc());
         },
@@ -845,6 +868,7 @@
                 else if (this.config.phoneCode === '880' && !/^1[3-9]\d{8}$/.test(leadInfo.national)) warnings.push('Phone does not look like a BD mobile number');
 
                 for (const r of g.rows) {
+                    for (const m of r.meta?.issues ?? []) warnings.push(m);
                     for (const t of rowsInfo[r.key].tokens) {
                         if (!t.ok) errors.push(t.product ? `${t.product.name}: ${t.problem}` : t.problem);
                         else if (t.match !== 'exact') warnings.push(`"${t.raw}" matched by name → ${t.product.name}${t.variant ? ' · ' + t.variant.label : ''}`);
@@ -1145,9 +1169,7 @@
         },
 
         // ---------- upload ----------
-        uploadFile(e) {
-            const file = e.target.files?.[0];
-            e.target.value = '';
+        uploadSheet(file) {
             if (!file) return;
             this.uploading = true;
             this.$wire.upload('sheetFile', file,
@@ -1183,6 +1205,7 @@
                 advance: g.advance,
                 source: g.source,
                 note: g.note,
+                intake_ids: [...new Set(g.rows.map((r) => r.meta?.intakeId).filter(Boolean))],
             };
         },
 
@@ -1232,7 +1255,7 @@
             clearTimeout(this._draftTimer);
             this._draftTimer = setTimeout(() => {
                 try {
-                    const rows = this.rows.filter((r) => !this.isEmpty(r) && !r.result?.ok).map((r) => r.cells);
+                    const rows = this.rows.filter((r) => !this.isEmpty(r) && !r.result?.ok).map((r) => ({ cells: r.cells, meta: r.meta }));
                     if (rows.length) localStorage.setItem(this.draftKey, JSON.stringify({ rows, savedAt: Date.now() }));
                     else localStorage.removeItem(this.draftKey);
                 } catch (e) {}
@@ -1248,11 +1271,105 @@
             } catch (e) {}
         },
         restoreDraft() {
-            this.rows = [...this.draft.rows.map((c) => newRow(c)), ...Array.from({ length: 5 }, () => newRow())];
+            // Older drafts stored bare cells; newer ones { cells, meta }.
+            this.rows = [...this.draft.rows.map((d) => d.cells ? newRow(d.cells, d.meta ?? null) : newRow(d)), ...Array.from({ length: 5 }, () => newRow())];
             this.draft = null;
         },
         discardDraft() { this.clearDraft(); this.draft = null; },
         clearDraft() { try { localStorage.removeItem(this.draftKey); } catch (e) {} },
+
+        // ---------- AI Order intake ----------
+        openIntake() {
+            this.intake = { ...this.intake, open: true, error: '', result: null, source: this.intake.result ? this.intake.source : this.settings.source };
+            this.$nextTick(() => this.$refs.intakeText?.focus());
+        },
+        closeIntake() {
+            this.intake.files.forEach((f) => f.preview && URL.revokeObjectURL(f.preview));
+            this.intake = { ...this.intake, open: false, text: '', files: [], forceAi: false, error: '', result: null };
+        },
+        intakeAddFiles(list) {
+            for (const file of Array.from(list ?? [])) {
+                const name = file.name.toLowerCase();
+                // Spreadsheets aren't messages — they go through the sheet's own Excel import.
+                if (/\.(xlsx|csv)$/.test(name)) { this.uploadSheet(file); this.closeIntake(); return; }
+                if (!this.config.intake.mimes.includes(file.type)) { this.intake.error = `${file.name}: this file type isn't allowed`; continue; }
+                if (file.size > this.config.intake.maxFileKb * 1024) { this.intake.error = `${file.name} is larger than ${Math.round(this.config.intake.maxFileKb / 102.4) / 10} MB`; continue; }
+                if (this.intake.files.length >= this.config.intake.maxFiles) { this.intake.error = `At most ${this.config.intake.maxFiles} files`; break; }
+                this.intake.files.push({ file, preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null });
+            }
+        },
+        intakeRemoveFile(i) {
+            const [f] = this.intake.files.splice(i, 1);
+            if (f?.preview) URL.revokeObjectURL(f.preview);
+        },
+        intakePaste(e) {
+            const files = [...(e.clipboardData?.files ?? [])].filter((f) => f.type.startsWith('image/'));
+            if (files.length) { e.preventDefault(); this.intakeAddFiles(files); }
+        },
+        uploadIntakeFiles(files) {
+            if (!files.length) return Promise.resolve();
+            return new Promise((resolve, reject) => this.$wire.uploadMultiple('intakeFiles', files, resolve, () => reject(new Error('Upload failed'))));
+        },
+        async runIntake(forceAi) {
+            const text = this.intake.text;
+            // A paste from Excel/Sheets is columns, not a message — use the sheet's own column import.
+            if (!this.intake.files.length && this.parseTsv(text).filter((r) => r.length >= 3).length >= 2) {
+                const start = this.rows.findIndex((r) => this.isEmpty(r));
+                this.importGrid(this.parseTsv(text), start < 0 ? this.rows.length : start, 0);
+                this.closeIntake();
+                return;
+            }
+            this.intake.busy = true;
+            this.intake.error = '';
+            try {
+                this.intake.busyText = this.intake.files.length ? 'Uploading files…' : 'Reading…';
+                await this.uploadIntakeFiles(this.intake.files.map((f) => Alpine.raw(f.file)));
+                this.intake.busyText = forceAi || this.intake.files.length ? 'Reading with AI… this can take a few seconds' : 'Reading…';
+                const res = await this.$wire.extractOrders(text, this.intake.source, !!forceAi);
+                if (res?.error) this.intake.error = res.error;
+                else this.intake.result = res;
+            } catch (err) {
+                this.intake.error = 'Could not read the order — check your connection and try again.';
+            } finally {
+                this.intake.busy = false;
+            }
+        },
+        addIntakeRows() {
+            const rows = this.intake.result?.rows ?? [];
+            let at = this.rows.findIndex((r) => this.isEmpty(r) && !r.result);
+            if (at < 0) at = this.rows.length;
+            rows.forEach((r, i) => {
+                const row = newRow(r.cells, r.meta);
+                if (this.rows[at + i] && this.isEmpty(this.rows[at + i])) this.rows.splice(at + i, 1, row);
+                else this.rows.splice(at + i, 0, row);
+            });
+            this.notify(`${rows.length} order${rows.length === 1 ? '' : 's'} added to the sheet — review and place`);
+            this.closeIntake();
+            this.focusCell(at, 0);
+        },
+        intakeTitle(row) {
+            const m = row.meta;
+            return `${m.via === 'ai' ? 'Read by AI' : 'Read by the parser'} · ${Math.round(m.confidence * 100)}% sure` + (m.issues.length ? '\n• ' + m.issues.join('\n• ') : '');
+        },
+        async retryRowWithAi(row) {
+            row.retrying = true;
+            try {
+                const res = await this.$wire.extractOrders(row.meta.sourceText, row.cells.source || this.settings.source, true);
+                if (res?.error || !res?.rows?.length) {
+                    this.notify(res?.error || 'AI could not read this order either', 'error');
+                    return;
+                }
+                if (res.ai?.error) this.notify(res.ai.error, 'warning');
+                const at = this.rows.indexOf(row);
+                if (at < 0) return;
+                this.rows.splice(at, 1, ...res.rows.map((r) => newRow(r.cells, r.meta)));
+                this.notify('Row read again with AI');
+            } catch (err) {
+                this.notify('AI retry failed — check your connection', 'error');
+            } finally {
+                row.retrying = false;
+            }
+        },
 
         notify(message, icon = 'success') {
             if (window.Toast) Toast.fire({ icon, title: message });

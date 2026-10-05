@@ -22,6 +22,7 @@
         "matomo/device-detector": "*",
         "minishlink/web-push": "^10.1",
         "openspout/openspout": "^5.3",
+        "smalot/pdfparser": "^2.12",
         "spatie/laravel-activitylog": "^4.12",
         "spatie/laravel-permission": "^7.1"
     },

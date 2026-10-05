@@ -48,4 +48,12 @@ return [
         'test_event_code' => env('META_TEST_EVENT_CODE'),
     ],
 
+    // AI Order fallback (App\OrderIntake). Settings → AI Order overrides
+    // these; the key here is used only when no key is saved there.
+    'openrouter' => [
+        'api_key' => env('OPENROUTER_API_KEY'),
+        'model' => env('OPENROUTER_MODEL', 'openrouter/free'),
+        'base_url' => env('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1'),
+    ],
+
 ];
