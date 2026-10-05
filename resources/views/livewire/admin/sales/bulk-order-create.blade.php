@@ -1351,9 +1351,20 @@
                 this.intake.busyText = this.intake.files.length ? 'Uploading files…' : 'Reading…';
                 const files = await Promise.all(this.intake.files.map((f) => this.shrinkImage(Alpine.raw(f.file))));
                 await this.uploadIntakeFiles(files);
+                // The upload's finish callback runs inside Livewire's handling of that
+                // request; calling straight away rides along with it and the return
+                // value comes back empty. Let it finish first.
+                if (files.length) await new Promise((r) => setTimeout(r, 150));
                 this.intake.busyText = forceAi || files.length ? 'Reading with AI… up to a minute with free models' : 'Reading…';
                 console.info('[AI Order] sending', { textLength: text.length, files: files.map((f) => ({ name: f.name, type: f.type, kb: Math.round(f.size / 1024) })), forceAi: !!forceAi });
-                const res = await this.$wire.extractOrders(text, this.intake.source, !!forceAi);
+                let res = await this.$wire.extractOrders(text, this.intake.source, !!forceAi);
+                // Still empty: ask once more — the server answers from its cache, no new AI call.
+                // (The server drops uploads after each call, so the files go up again.)
+                if (!res && files.length) {
+                    await this.uploadIntakeFiles(files);
+                    await new Promise((r) => setTimeout(r, 400));
+                    res = await this.$wire.extractOrders(text, this.intake.source, false);
+                }
                 console.info('[AI Order] result', res);
                 if (res?.error) this.intake.error = res.error;
                 // A request cut off by a server time limit comes back empty — say so instead of "0 orders".
