@@ -286,10 +286,8 @@ class OrderIntakeServiceTest extends TestCase
 
     public function test_extract_orders_rejects_disallowed_files(): void
     {
-        $component = Livewire::test(BulkOrderCreate::class)
-            ->set('intakeFiles', [UploadedFile::fake()->create('virus.exe', 10, 'application/x-msdownload')]);
-
-        $result = $component->instance()->extractOrders('hello', 'messenger');
+        $result = Livewire::test(BulkOrderCreate::class)->instance()
+            ->extractOrders('hello', 'messenger', false, [['name' => 'virus.exe', 'type' => 'application/x-msdownload', 'data' => base64_encode("MZ " . str_repeat(" ", 200))]]);
 
         $this->assertArrayHasKey('error', $result);
         $this->assertSame(0, OrderIntakeLog::count());

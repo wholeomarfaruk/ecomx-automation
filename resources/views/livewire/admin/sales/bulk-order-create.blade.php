@@ -1332,9 +1332,13 @@
                 return file;
             }
         },
-        uploadIntakeFiles(files) {
-            if (!files.length) return Promise.resolve();
-            return new Promise((resolve, reject) => this.$wire.uploadMultiple('intakeFiles', files, resolve, () => reject(new Error('Upload failed'))));
+        fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(String(reader.result).replace(/^data:[^,]*,/, ''));
+                reader.onerror = () => reject(reader.error);
+                reader.readAsDataURL(file);
+            });
         },
         async runIntake(forceAi) {
             const text = this.intake.text;
@@ -1350,21 +1354,12 @@
             try {
                 this.intake.busyText = this.intake.files.length ? 'Uploading files…' : 'Reading…';
                 const files = await Promise.all(this.intake.files.map((f) => this.shrinkImage(Alpine.raw(f.file))));
-                await this.uploadIntakeFiles(files);
-                // The upload's finish callback runs inside Livewire's handling of that
-                // request; calling straight away rides along with it and the return
-                // value comes back empty. Let it finish first.
-                if (files.length) await new Promise((r) => setTimeout(r, 150));
+                // Files travel inside the call as base64 — a Livewire upload's finish
+                // step shared the request with this call and its result came back empty.
+                const attachments = await Promise.all(files.map(async (f) => ({ name: f.name, type: f.type, data: await this.fileToBase64(f) })));
                 this.intake.busyText = forceAi || files.length ? 'Reading with AI… up to a minute with free models' : 'Reading…';
                 console.info('[AI Order] sending', { textLength: text.length, files: files.map((f) => ({ name: f.name, type: f.type, kb: Math.round(f.size / 1024) })), forceAi: !!forceAi });
-                let res = await this.$wire.extractOrders(text, this.intake.source, !!forceAi);
-                // Still empty: ask once more — the server answers from its cache, no new AI call.
-                // (The server drops uploads after each call, so the files go up again.)
-                if (!res && files.length) {
-                    await this.uploadIntakeFiles(files);
-                    await new Promise((r) => setTimeout(r, 400));
-                    res = await this.$wire.extractOrders(text, this.intake.source, false);
-                }
+                const res = await this.$wire.extractOrders(text, this.intake.source, !!forceAi, attachments);
                 console.info('[AI Order] result', res);
                 if (res?.error) this.intake.error = res.error;
                 // A request cut off by a server time limit comes back empty — say so instead of "0 orders".

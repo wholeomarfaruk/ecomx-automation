@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Sales\Concerns;
 use App\Enums\Sales\OrderSource;
 use App\OrderIntake\IntakeSettings;
 use App\OrderIntake\OrderIntakeService;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Renderless;
@@ -17,20 +18,21 @@ use Livewire\Attributes\Renderless;
  */
 trait HandlesOrderIntake
 {
-    /** Screenshots / PDFs / .txt picked in the AI Order modal (uploaded before extractOrders()). */
-    public array $intakeFiles = [];
-
     /**
+     * Screenshots / PDFs / .txt come in the call itself as base64
+     * ([{name, type, data}]) — not through a Livewire upload, whose finish
+     * step shares the request with this call and swallowed its result.
+     *
+     * @param  list<array{name?: string, type?: string, data?: string}>  $attachments
      * @return array<string, mixed> OrderIntakeService::extract()'s result, or ['error' => …]
      */
     #[Renderless]
-    public function extractOrders(string $text, string $source, bool $forceAi = false): array
+    public function extractOrders(string $text, string $source, bool $forceAi = false, array $attachments = []): array
     {
         $this->authorizeCreate();
 
         $settings = app(IntakeSettings::class);
-        $files = array_values(array_filter($this->intakeFiles));
-        $this->intakeFiles = [];
+        $files = $this->attachmentFiles(array_slice($attachments, 0, $settings->maxFiles() + 1));
 
         $validator = validator(['text' => $text, 'source' => $source, 'files' => $files], [
             'text'    => 'nullable|string|max:' . OrderIntakeService::MAX_TEXT,
@@ -68,6 +70,34 @@ trait HandlesOrderIntake
 
             return ['error' => 'Could not read this message: ' . $e->getMessage()];
         }
+    }
+
+    /**
+     * Base64 attachments → temporary UploadedFile objects (removed at the end
+     * of the request), so validation and the service treat them like uploads.
+     *
+     * @return list<UploadedFile>
+     */
+    protected function attachmentFiles(array $attachments): array
+    {
+        $files = [];
+
+        foreach ($attachments as $a) {
+            $data = is_array($a) && is_string($a['data'] ?? null) ? base64_decode(preg_replace('/^data:[^,]*,/', '', $a['data']), true) : false;
+
+            if ($data === false || $data === '') {
+                continue;
+            }
+
+            $path = tempnam(sys_get_temp_dir(), 'intake');
+            file_put_contents($path, $data);
+            register_shutdown_function(fn () => @unlink($path));
+
+            $name = mb_substr(basename((string) ($a['name'] ?? 'attachment')), 0, 100);
+            $files[] = new UploadedFile($path, $name, null, null, true);
+        }
+
+        return $files;
     }
 
     /** What the modal needs to know about AI Order. */
