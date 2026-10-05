@@ -38,7 +38,9 @@ class AiOrderExtractor
         $last = null;
         $tries = 0;
 
-        foreach ($this->attempts() as $i => $model) {
+        $attempts = $this->attempts();
+
+        foreach ($attempts as $i => $model) {
             $remaining = $deadline !== null ? (int) floor($deadline - microtime(true)) : $this->settings->timeout();
 
             // Not enough time left for another useful try — keep the last error.
@@ -49,7 +51,9 @@ class AiOrderExtractor
             $tries++;
 
             try {
-                $reply = $this->client->chat($messages, self::schema(), 'order_drafts', $model, min($this->settings->timeout(), $remaining));
+                // Leave room for the next try while one is still planned.
+                $cap = $deadline !== null && $i < count($attempts) - 1 ? max(15, (int) floor($remaining * 0.6)) : $remaining;
+                $reply = $this->client->chat($messages, self::schema(), 'order_drafts', $model, min($this->settings->timeout(), $cap));
                 $usage = self::addUsage($usage, $reply['usage']);
                 $latency += $reply['latency_ms'];
 
@@ -61,6 +65,11 @@ class AiOrderExtractor
                 $orders = self::validate($data);
                 if ($orders === null) {
                     throw new AiExtractionException('AI reply did not match the order format', $reply['model'], [], $reply['latency_ms']);
+                }
+
+                // A model that can't actually see images answers "no orders" — try another.
+                if ($files !== [] && ! array_filter($orders, fn ($o) => ! empty($o['phone']) || ! empty($o['items']) || ! empty($o['customer_name']) || ! empty($o['address']))) {
+                    throw new AiExtractionException('AI found no order in the screenshot', $reply['model'], [], $reply['latency_ms']);
                 }
 
                 return [

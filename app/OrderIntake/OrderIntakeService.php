@@ -71,6 +71,8 @@ class OrderIntakeService
             } else {
                 $cached = $forceAi ? null : OrderIntakeLog::query()
                     ->where('input_hash', $hash)->whereNotNull('ai_result')
+                    // Only an answer that gave usable orders is worth reusing.
+                    ->where('orders_ready', '>', 0)
                     ->where('created_at', '>=', now()->subDays(7))
                     ->latest('id')->first();
 

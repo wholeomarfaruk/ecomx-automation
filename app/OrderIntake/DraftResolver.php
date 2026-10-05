@@ -75,7 +75,9 @@ final class DraftResolver
             $needsAi[] = 'name';
             $issues[] = $this->issue('error', 'name', 'Customer name not found');
         } elseif ($nameConf < 0.9) {
-            $issues[] = $this->issue('warning', 'name', "Name \"{$raw['name']}\" taken from an unlabelled line — check it");
+            $issues[] = $this->issue('warning', 'name', $src('name') === 'ai'
+                ? "Name \"{$raw['name']}\" read by AI — check it"
+                : "Name \"{$raw['name']}\" taken from an unlabelled line — check it");
         }
 
         // Address — the customer's saved one covers a missing address.

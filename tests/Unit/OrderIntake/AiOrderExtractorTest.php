@@ -98,6 +98,18 @@ class AiOrderExtractorTest extends TestCase
         $this->assertEqualsWithDelta(0.00052, $result['usage']['cost'], 1e-9);   // both tries counted
     }
 
+    public function test_screenshot_with_an_empty_answer_is_retried_on_another_model(): void
+    {
+        Http::fake(['openrouter.test/*' => Http::sequence()
+            ->push($this->reply([]))
+            ->push($this->reply([$this->aiOrder()]))]);
+
+        $result = $this->extractor()->extract('', [['mime' => 'image/png', 'name' => 'chat.png', 'data' => base64_encode('png')]], [], [], []);
+
+        Http::assertSentCount(2);
+        $this->assertCount(1, $result['orders']);
+    }
+
     public function test_no_retry_once_the_deadline_is_near(): void
     {
         Http::fake(['openrouter.test/*' => Http::response(['error' => ['message' => 'overloaded']], 503)]);
