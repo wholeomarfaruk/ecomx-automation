@@ -855,7 +855,9 @@
                 g.signature = g.methodId && g.items.length
                     ? `${g.methodId}|${g.items.map((t) => `${t.product.id}:${t.qty}`).join(',')}|${g.subtotal}` : null;
                 g.autoDelivery = g.signature && this.quotes[g.signature] !== undefined ? this.quotes[g.signature] : null;
-                g.quotePending = !!g.signature && g.autoDelivery === null;
+                // A typed delivery charge needs no quote — queueQuotes() never asks for one,
+                // so waiting on it would keep the order from ever being ready.
+                g.quotePending = !g.manual && !!g.signature && g.autoDelivery === null;
                 g.delivery = g.manual ? (num(lead.cells.delivery) ?? 0) : (g.autoDelivery ?? 0);
                 g.total = Math.max(0, g.subtotal + g.delivery - g.discount);
                 g.due = Math.max(0, g.total - g.advance);
