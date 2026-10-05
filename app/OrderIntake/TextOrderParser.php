@@ -36,7 +36,7 @@ final class TextOrderParser
         'alt'       => 'alt phone|alternative number|alternative phone|alternative|alternate|another number|2nd number|second number|alt|বিকল্প নাম্বার|বিকল্প নম্বর|বিকল্প|অন্য নাম্বার',
         'name'      => 'customer name|receiver name|recipient name|full name|name|customer|receiver|recipient|nam|naam|গ্রাহকের নাম|প্রাপকের নাম|নাম|গ্রাহক|প্রাপক',
         'phone'     => 'phone number|mobile number|contact number|whatsapp number|phone|mobile|contact|number|cell|whatsapp|imo|ph|mob|ফোন নাম্বার|মোবাইল নাম্বার|ফোন নম্বর|মোবাইল নম্বর|ফোন|মোবাইল|নাম্বার|নম্বর',
-        'address'   => 'full address|delivery address|shipping address|address|addr|location|thikana|পূর্ণ ঠিকানা|ঠিকানা|এড্রেস|অ্যাড্রেস',
+        'address'   => 'full address|delivery address|shipping address|address|addr|add|location|thikana|পূর্ণ ঠিকানা|ঠিকানা|এড্রেস|অ্যাড্রেস',
         'addr_part' => 'house|holding|road|flat|floor|block|sector|village|vill|gram|post office|post|p\.?o|union|ward|para|area|district|zilla|zila|thana|upazila|upozila|city|বাসা|বাড়ি|হোল্ডিং|রোড|ফ্ল্যাট|ব্লক|সেক্টর|গ্রাম|পোস্ট অফিস|পোস্ট|ডাকঘর|ইউনিয়ন|ওয়ার্ড|এলাকা|জেলা|থানা|উপজেলা',
         'product'   => 'product name|product code|item name|item code|dress code|design code|design|model|products|product|items|item|order(?!\s*(?:no|id|number|#|নং))|code|sku|পণ্যের নাম|পণ্য|প্রোডাক্ট|অর্ডার|কোড',
         'qty'       => 'qty|quantity|pcs|piece|pieces|পরিমাণ|পিস',

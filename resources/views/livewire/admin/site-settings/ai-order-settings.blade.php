@@ -116,7 +116,7 @@
             <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Limits</p>
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 @foreach ([
-                    ['timeout', 'Timeout (seconds)', '5–120'],
+                    ['timeout', 'Timeout per try (seconds)', '25 recommended — a slow free model is retried on another within the ~60 s a request may run'],
                     ['dailyLimit', 'AI calls per day', '0 = no limit'],
                     ['perMinute', 'AI calls per admin per minute', null],
                     ['maxFiles', 'Files per extraction', '1–10'],

@@ -37,7 +37,7 @@ class AiOrderSettings extends Component
     public string $fallbackModel = '';
     public string $temperature = '0';
     public string $maxTokens = '3000';
-    public string $timeout = '45';
+    public string $timeout = '25';
     public string $dailyLimit = '200';
     public string $perMinute = '6';
     public string $maxFiles = '4';

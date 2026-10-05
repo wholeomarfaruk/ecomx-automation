@@ -43,6 +43,29 @@ class AiTriggerTest extends TestCase
         $this->assertContains('screenshots/files', $this->reasons('', [['mime' => 'image/png', 'name' => 'a.png', 'data' => '']]));
     }
 
+    public function test_typed_product_and_screenshot_customer_become_one_order(): void
+    {
+        $parsed = $this->parser()->parse('product: zareen');
+        $resolved = array_map(fn ($r) => $this->resolver()->resolve($r), $parsed);
+        $fromScreenshot = \App\OrderIntake\Ai\AiOrderExtractor::toRawDraft(\App\OrderIntake\Ai\AiOrderExtractor::validate(['orders' => [[
+            'customer_name' => 'Saila Barkat', 'phone' => '01572146290', 'alt_phone' => null,
+            'address' => 'House 23, Road A2, Hasnabad, South Keraniganj, Dhaka', 'area' => 'Keraniganj', 'delivery_zone' => null,
+            'items' => [], 'discount' => ['type' => 'none', 'value' => null], 'delivery_charge' => 80, 'advance' => null,
+            'stated_total' => ['kind' => 'total', 'value' => 2280], 'payment_method' => null, 'note' => null, 'confidence' => 0.9, 'unresolved' => [],
+        ]]])[0], 'product: zareen');
+
+        $merge = new \ReflectionMethod(OrderIntakeService::class, 'merge');
+        $merged = $merge->invoke(app(OrderIntakeService::class), $parsed, $resolved, [$fromScreenshot]);
+        $d = $this->resolver()->resolve($merged[0]);
+
+        $this->assertCount(1, $merged);
+        $this->assertSame('Saila Barkat', $d['name']['value']);
+        $this->assertSame('01572146290', $d['phone']['display']);
+        $this->assertSame(2, $d['items'][0]['product_id']);       // Zareen, from the typed text
+        $this->assertSame(11, $d['area']['method_id']);            // Keraniganj → sub area
+        $this->assertSame(80.0, $d['amounts']['delivery']);
+    }
+
     public function test_greeting_only_text_is_not_sent_to_ai(): void
     {
         $this->assertSame([], $this->reasons('??'));

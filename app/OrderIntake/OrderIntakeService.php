@@ -30,6 +30,9 @@ class OrderIntakeService
 {
     public const MAX_TEXT = 20000;
 
+    /** Seconds a request can safely run behind a typical nginx/PHP-FPM/Cloudflare setup. */
+    public const REQUEST_LIMIT = 58;
+
     public function __construct(
         protected IntakeSettings $settings,
         protected AiOrderExtractor $ai,
@@ -85,6 +88,7 @@ class OrderIntakeService
                             $drafts,
                             $this->candidates($catalog, $text),
                             array_column($areas->zones(), 'zone'),
+                            $this->aiDeadline(),
                         );
                         $aiOrders = $reply['orders'];
                         $aiResult = $reply['raw'];
@@ -192,6 +196,21 @@ class OrderIntakeService
         }
 
         return [mb_substr($text, 0, self::MAX_TEXT), $media];
+    }
+
+    /**
+     * When every AI attempt must be done: inside PHP's own time limit and the
+     * ~60 s most web servers/proxies allow a request, with room left to
+     * resolve and log the result. A request cut off there loses everything
+     * — the parser's drafts included — so the AI gets less time instead.
+     */
+    protected function aiDeadline(): float
+    {
+        $started = defined('LARAVEL_START') ? LARAVEL_START : microtime(true);
+        $phpLimit = (int) ini_get('max_execution_time');
+        $limit = $phpLimit > 0 ? min($phpLimit, self::REQUEST_LIMIT) : self::REQUEST_LIMIT;
+
+        return $started + $limit - 8;
     }
 
     /** The PDF's text layer, or null when it has none worth reading (scanned pages). */

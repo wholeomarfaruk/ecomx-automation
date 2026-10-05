@@ -1313,6 +1313,25 @@
             const files = [...(e.clipboardData?.files ?? [])].filter((f) => f.type.startsWith('image/'));
             if (files.length) { e.preventDefault(); this.intakeAddFiles(files); }
         },
+        /**
+         * Phone screenshots are often 2–4 MB; text stays readable at 1600 px,
+         * and a smaller image uploads faster and is read faster by the AI.
+         */
+        async shrinkImage(file) {
+            if (!/^image\/(png|jpeg|webp)$/.test(file.type) || file.size < 400 * 1024) return file;
+            try {
+                const bitmap = await createImageBitmap(file);
+                const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.round(bitmap.width * scale);
+                canvas.height = Math.round(bitmap.height * scale);
+                canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+                const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg', 0.85));
+                return blob && blob.size < file.size ? new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }) : file;
+            } catch (e) {
+                return file;
+            }
+        },
         uploadIntakeFiles(files) {
             if (!files.length) return Promise.resolve();
             return new Promise((resolve, reject) => this.$wire.uploadMultiple('intakeFiles', files, resolve, () => reject(new Error('Upload failed'))));
@@ -1330,13 +1349,17 @@
             this.intake.error = '';
             try {
                 this.intake.busyText = this.intake.files.length ? 'Uploading files…' : 'Reading…';
-                await this.uploadIntakeFiles(this.intake.files.map((f) => Alpine.raw(f.file)));
-                this.intake.busyText = forceAi || this.intake.files.length ? 'Reading with AI… this can take a few seconds' : 'Reading…';
+                const files = await Promise.all(this.intake.files.map((f) => this.shrinkImage(Alpine.raw(f.file))));
+                await this.uploadIntakeFiles(files);
+                this.intake.busyText = forceAi || files.length ? 'Reading with AI… up to a minute with free models' : 'Reading…';
                 const res = await this.$wire.extractOrders(text, this.intake.source, !!forceAi);
                 if (res?.error) this.intake.error = res.error;
-                else { this.intake.cards = this.buildCards(res); this.intake.result = res; }
+                // A request cut off by a server time limit comes back empty — say so instead of "0 orders".
+                else if (!res || typeof res !== 'object' || !Array.isArray(res.drafts) || !Array.isArray(res.rows)) {
+                    this.intake.error = 'The server didn\'t send a result — most likely the AI took too long. Try again, or paste the chat text instead of a screenshot.';
+                } else { this.intake.cards = this.buildCards(res); this.intake.result = res; }
             } catch (err) {
-                this.intake.error = 'Could not read the order — check your connection and try again.';
+                this.intake.error = 'Could not read the order — the request failed or took too long. Try again.';
             } finally {
                 this.intake.busy = false;
             }

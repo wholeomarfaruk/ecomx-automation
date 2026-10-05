@@ -72,7 +72,7 @@ class AiOrderExtractorTest extends TestCase
             return $request->url() === 'https://openrouter.test/api/v1/chat/completions'
                 && $request->hasHeader('Authorization', 'Bearer sk-or-test-SECRET')
                 && ! str_contains(json_encode($body), 'SECRET')
-                && $body['models'] === ['openrouter/free', 'google/gemini-2.5-flash']
+                && $body['model'] === 'openrouter/free'
                 && $body['response_format']['type'] === 'json_schema'
                 && $body['response_format']['json_schema']['strict'] === true
                 && collect($parts)->contains(fn ($p) => $p['type'] === 'image_url' && str_starts_with($p['image_url']['url'], 'data:image/png;base64,'));
@@ -82,6 +82,32 @@ class AiOrderExtractorTest extends TestCase
         $this->assertSame(0.00042, $result['usage']['cost']);
         $this->assertCount(1, $result['orders']);
         $this->assertSame('ai', $result['orders'][0]['via']);
+    }
+
+    public function test_a_bad_reply_is_retried_on_the_fallback_model(): void
+    {
+        Http::fake(['openrouter.test/*' => Http::sequence()
+            ->push(['model' => 'nvidia/content-safety:free', 'choices' => [['message' => ['content' => 'safe']]], 'usage' => ['cost' => 0.0001]])
+            ->push($this->reply([$this->aiOrder()]))]);
+
+        $result = $this->extractor()->extract('text', [], [], [], []);
+
+        Http::assertSentCount(2);
+        Http::assertSent(fn (Request $r) => $r->data()['model'] === 'google/gemini-2.5-flash');
+        $this->assertSame('google/gemini-2.5-flash', $result['model']);
+        $this->assertEqualsWithDelta(0.00052, $result['usage']['cost'], 1e-9);   // both tries counted
+    }
+
+    public function test_no_retry_once_the_deadline_is_near(): void
+    {
+        Http::fake(['openrouter.test/*' => Http::response(['error' => ['message' => 'overloaded']], 503)]);
+
+        try {
+            $this->extractor()->extract('text', [], [], [], [], microtime(true) + 5);
+            $this->fail('Expected an exception');
+        } catch (AiExtractionException) {
+            Http::assertSentCount(1);
+        }
     }
 
     public function test_pdf_is_sent_as_a_file_part(): void

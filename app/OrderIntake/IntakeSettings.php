@@ -84,7 +84,7 @@ class IntakeSettings
 
     public function timeout(): int
     {
-        return max(5, min(120, (int) Setting::get('timeout', '45', self::GROUP)));
+        return max(5, min(120, (int) Setting::get('timeout', '25', self::GROUP)));
     }
 
     public function maxOutputTokens(): int

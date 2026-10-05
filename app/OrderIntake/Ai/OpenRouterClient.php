@@ -21,11 +21,16 @@ class OpenRouterClient
      * @param  array<string, mixed>  $schema  JSON Schema for the reply
      * @return array{content: string, model: string, usage: array<string, mixed>, latency_ms: int}
      *
+     * @param  ?string  $model  one model for this call; null = primary with the fallback model behind it
+     * @param  ?int  $timeout  seconds; null = the configured timeout
+     *
      * @throws AiExtractionException
      */
-    public function chat(array $messages, array $schema, string $schemaName): array
+    public function chat(array $messages, array $schema, string $schemaName, ?string $model = null, ?int $timeout = null): array
     {
-        $models = array_values(array_unique(array_filter([$this->settings->model(), $this->settings->fallbackModel()])));
+        $models = $model !== null
+            ? [$model]
+            : array_values(array_unique(array_filter([$this->settings->model(), $this->settings->fallbackModel()])));
 
         $body = [
             'messages'        => $messages,
@@ -41,7 +46,7 @@ class OpenRouterClient
         $started = hrtime(true);
 
         try {
-            $response = $this->request()->timeout($this->settings->timeout())->post('/chat/completions', $body);
+            $response = $this->request()->timeout(max(5, $timeout ?? $this->settings->timeout()))->post('/chat/completions', $body);
         } catch (ConnectionException $e) {
             throw new AiExtractionException('AI request timed out or could not connect: ' . $e->getMessage(), $models[0], [], $this->elapsed($started));
         }

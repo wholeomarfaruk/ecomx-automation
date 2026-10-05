@@ -26,30 +26,96 @@ class AiOrderExtractor
      * @param  list<string>  $zones
      * @return array{orders: list<RawDraft>, raw: array<string, mixed>, model: string, usage: array<string, mixed>, latency_ms: int}
      *
+     * @param  ?float  $deadline  unix time all attempts must finish by (null = one attempt, configured timeout)
+     *
      * @throws AiExtractionException
      */
-    public function extract(string $text, array $files, array $parserDrafts, array $candidates, array $zones): array
+    public function extract(string $text, array $files, array $parserDrafts, array $candidates, array $zones, ?float $deadline = null): array
     {
-        $reply = $this->client->chat($this->messages($text, $files, $parserDrafts, $candidates, $zones), self::schema(), 'order_drafts');
+        $messages = $this->messages($text, $files, $parserDrafts, $candidates, $zones);
+        $usage = ['prompt_tokens' => 0, 'completion_tokens' => 0, 'cost' => 0.0];
+        $latency = 0;
+        $last = null;
+        $tries = 0;
 
-        $data = self::decode($reply['content']);
+        foreach ($this->attempts() as $i => $model) {
+            $remaining = $deadline !== null ? (int) floor($deadline - microtime(true)) : $this->settings->timeout();
 
-        if ($data === null) {
-            throw new AiExtractionException('AI reply was not valid JSON', $reply['model'], $reply['usage'], $reply['latency_ms']);
+            // Not enough time left for another useful try — keep the last error.
+            if ($i > 0 && $remaining < 10) {
+                break;
+            }
+
+            $tries++;
+
+            try {
+                $reply = $this->client->chat($messages, self::schema(), 'order_drafts', $model, min($this->settings->timeout(), $remaining));
+                $usage = self::addUsage($usage, $reply['usage']);
+                $latency += $reply['latency_ms'];
+
+                $data = self::decode($reply['content']);
+                if ($data === null) {
+                    throw new AiExtractionException('AI reply was not valid JSON', $reply['model'], [], $reply['latency_ms']);
+                }
+
+                $orders = self::validate($data);
+                if ($orders === null) {
+                    throw new AiExtractionException('AI reply did not match the order format', $reply['model'], [], $reply['latency_ms']);
+                }
+
+                return [
+                    'orders'     => array_map(fn ($o) => self::toRawDraft($o, $text), $orders),
+                    'raw'        => ['orders' => $orders],
+                    'model'      => $reply['model'],
+                    'usage'      => $usage,
+                    'latency_ms' => $latency,
+                ];
+            } catch (AiExtractionException $e) {
+                $usage = self::addUsage($usage, $e->usage);
+                $latency += (int) $e->latencyMs;
+                $last = $e;
+
+                // A bad key or no credit won't get better on another model.
+                if (preg_match('/rejected the API key|out of credit/i', $e->getMessage())) {
+                    break;
+                }
+            }
         }
 
-        $orders = self::validate($data);
+        throw new AiExtractionException(
+            ($last?->getMessage() ?? 'AI request failed') . ($tries > 1 ? " (tried {$tries} times)" : ''),
+            $last?->model,
+            $usage,
+            $latency,
+        );
+    }
 
-        if ($orders === null) {
-            throw new AiExtractionException('AI reply did not match the order format', $reply['model'], $reply['usage'], $reply['latency_ms']);
+    /**
+     * Models to try, in order: the primary, the fallback, and — when the
+     * primary is a router that picks a random model ("openrouter/free") —
+     * the router once more, which usually lands on a different model.
+     *
+     * @return list<string>
+     */
+    protected function attempts(): array
+    {
+        $primary = $this->settings->model();
+        $fallback = $this->settings->fallbackModel();
+        $list = array_values(array_unique(array_filter([$primary, $fallback])));
+
+        if (str_starts_with($primary, 'openrouter/') && count($list) < 3) {
+            $list[] = $primary;
         }
 
+        return array_slice($list, 0, 3);
+    }
+
+    private static function addUsage(array $total, array $usage): array
+    {
         return [
-            'orders'     => array_map(fn ($o) => self::toRawDraft($o, $text), $orders),
-            'raw'        => ['orders' => $orders],
-            'model'      => $reply['model'],
-            'usage'      => $reply['usage'],
-            'latency_ms' => $reply['latency_ms'],
+            'prompt_tokens'     => $total['prompt_tokens'] + (int) ($usage['prompt_tokens'] ?? 0),
+            'completion_tokens' => $total['completion_tokens'] + (int) ($usage['completion_tokens'] ?? 0),
+            'cost'              => $total['cost'] + (float) ($usage['cost'] ?? 0),
         ];
     }
 
@@ -71,6 +137,7 @@ Rules:
 - stated_total: a total/payable amount stated in the message ("total", "COD", "condition"); kind "cod" for an amount to collect on delivery.
 - advance: an amount stated as already paid (advance/bKash/Nagad).
 - unresolved: list field names you could not find or are unsure about. confidence: 0..1 for the whole order.
+- The typed text and the screenshots/files are parts of the SAME conversation: combine them. E.g. the product typed in the text and the name/phone/address in a screenshot are one order, not two.
 PROMPT;
 
         if ($extra = trim($this->settings->extraPrompt())) {
