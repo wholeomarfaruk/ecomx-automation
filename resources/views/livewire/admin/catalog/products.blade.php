@@ -209,8 +209,9 @@
                                 @endphp
                                 @if($held && $product->product_type !== \App\Enums\Product\ProductType::COMBO)
                                     <div class="text-[11px] text-amber-600 mt-0.5" title="Units in Pending orders — taken from stock only when those orders are confirmed">
-                                        {{ $held['orders'] }} pending order{{ $held['orders'] === 1 ? '' : 's' }}
-                                        <span class="text-gray-400">· free {{ rtrim(rtrim(number_format($free, 3), '0'), '.') ?: '0' }}</span>
+                                        {{ rtrim(rtrim(number_format($held['quantity'], 3), '0'), '.') }} held
+                                        · {{ $held['orders'] }} pending order{{ $held['orders'] === 1 ? '' : 's' }}
+                                        <span class="text-gray-400">· {{ rtrim(rtrim(number_format($free, 3), '0'), '.') ?: '0' }} free</span>
                                     </div>
                                 @endif
                                 @if($stockClickable)
