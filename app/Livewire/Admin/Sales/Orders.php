@@ -308,6 +308,13 @@ class Orders extends Component
         $this->dispatch('toast', ['type' => 'success', 'message' => "Order #{$orderId} deleted"]);
     }
 
+    /** The courier modal (its own component) booked a shipment — show the order's new courier/status. */
+    #[\Livewire\Attributes\On('courier-booked')]
+    public function refreshAfterCourierBooking(): void
+    {
+        // Re-render is all that's needed.
+    }
+
     public function render(): mixed
     {
         $orders = $this->filteredOrders()
@@ -411,7 +418,6 @@ class Orders extends Component
             'pendingCount'    => Order::where('status', OrderStatus::PENDING)->count(),
             'dueTotal'        => Order::sum('due_amount'),
             'viewingOrder'    => $viewingOrder,
-            'bookableAccounts' => $canManageCourier ? $this->bookableAccounts() : collect(),
             'canManageCourier' => $canManageCourier,
         ])->layout('layouts.admin.admin');
     }

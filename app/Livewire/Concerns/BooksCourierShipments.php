@@ -207,6 +207,7 @@ trait BooksCourierShipments
         if ($response->success) {
             $this->bookingModal = false;
             $this->bookingOrderId = null;
+            $this->dispatch('courier-booked', orderId: $order->id);
         }
     }
 

@@ -135,6 +135,15 @@ class OrderDetail extends Component
         $this->redirect(route('admin.sales.orders.show', $copy->id), navigate: true);
     }
 
+    /** The courier modal (its own component) booked this order — pick up its new status (Processing). */
+    #[\Livewire\Attributes\On('courier-booked')]
+    public function refreshAfterCourierBooking(int $orderId): void
+    {
+        if ($orderId === $this->orderId) {
+            $this->status = Order::findOrFail($this->orderId)->status->value;
+        }
+    }
+
     /** This page always books for its own order — wraps the trait's generic method so the view can call openBookingModal() with no arguments, same as before. */
     public function openBookingModalForCurrentOrder(): void
     {
@@ -722,7 +731,6 @@ class OrderDetail extends Component
             'paymentStatuses'     => PaymentStatus::cases(),
             'fulfillmentStatuses' => FulfillmentStatus::cases(),
             'courierStatuses'     => CourierStatus::cases(),
-            'bookableAccounts'    => $canManageCourier ? $this->bookableAccounts() : collect(),
             'canManageCourier'    => $canManageCourier,
             'cashAccounts'        => Account::active()->whereIn('subtype', ['cash', 'bank', 'mobile_banking'])->orderBy('code')->get(),
             'packableBatches'     => $this->packableBatchesForCurrentItem(),
