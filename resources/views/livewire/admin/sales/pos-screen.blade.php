@@ -74,7 +74,9 @@
                     {{-- Cart items --}}
                     <div class="flex-1 overflow-y-auto p-4 space-y-3 max-h-[40vh]">
                         @forelse($items as $i => $item)
-                            @php($variants = $variantOptions->get((int) $item['product_id']))
+                            @php
+                                $variants = $variantOptions->get((int) $item['product_id']);
+                            @endphp
                             <div class="rounded-lg border border-gray-200 px-3 py-2.5">
                                 <div class="flex items-start gap-2.5">
                                     <div class="w-11 h-11 rounded-lg bg-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
@@ -127,8 +129,10 @@
                                 @endif
                                 @error('items.' . $i . '.unit_price') <p class="text-right text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                                 @if(isset($cartStock[$i]))
-                                    @php($s = $cartStock[$i])
-                                    @php($fmt = fn ($v) => rtrim(rtrim(number_format($v, 3, '.', ''), '0'), '.') ?: '0')
+                                    @php
+                                        $s = $cartStock[$i];
+                                        $fmt = fn ($v) => rtrim(rtrim(number_format($v, 3, '.', ''), '0'), '.') ?: '0';
+                                    @endphp
                                     <p class="mt-1 text-[11px] {{ (float) $item['quantity'] > $s['free'] ? 'text-amber-600' : 'text-gray-400' }}">
                                         Stock {{ $fmt($s['stock']) }}
                                         @if($s['held'] > 0)

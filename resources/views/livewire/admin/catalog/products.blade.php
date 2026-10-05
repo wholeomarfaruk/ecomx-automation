@@ -203,9 +203,11 @@
                                         {{ rtrim(rtrim(number_format($stockInfo['quantity'], 3), '0'), '.') ?: '0' }}
                                     @endif
                                 </div>
-                                @php($held = $heldStock[$product->id] ?? null)
+                                @php
+                                    $held = $heldStock[$product->id] ?? null;
+                                    $free = $held ? max(0, (float) ($stockInfo['quantity'] ?? 0) - $held['quantity']) : 0;
+                                @endphp
                                 @if($held && $product->product_type !== \App\Enums\Product\ProductType::COMBO)
-                                    @php($free = max(0, (float) ($stockInfo['quantity'] ?? 0) - $held['quantity']))
                                     <div class="text-[11px] text-amber-600 mt-0.5" title="Units in Pending orders — taken from stock only when those orders are confirmed">
                                         {{ rtrim(rtrim(number_format($held['quantity'], 3), '0'), '.') }} held
                                         · {{ $held['orders'] }} pending order{{ $held['orders'] === 1 ? '' : 's' }}
