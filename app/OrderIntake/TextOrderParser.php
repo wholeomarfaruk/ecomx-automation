@@ -505,11 +505,11 @@ final class TextOrderParser
 
         // Discount — percent first.
         if (preg_match('/(\d+(?:\.\d+)?)\s*%\s*(?:off|discount|disc|less|ছাড়|ছাড|ডিসকাউন্ট|কম|kom)/u', $t, $m)
-            || preg_match('/(?:discount|disc|ছাড়|ছাড|ডিসকাউন্ট|off|less)\s*[:=\-]?\s*(\d+(?:\.\d+)?)\s*%/u', $t, $m)) {
+            || preg_match('/(?:discount|disc|ছাড়|ছাড|ডিসকাউন্ট|off|less)\s*[:=\-]*\s*(\d+(?:\.\d+)?)\s*%/u', $t, $m)) {
             if ((float) $m[1] > 0 && (float) $m[1] < 100) {
                 $draft['discount'] = ['type' => 'percent', 'value' => (float) $m[1], 'text' => trim($m[0])];
             }
-        } elseif (preg_match("/(?:discount|disc|ছাড়|ছাড|ডিসকাউন্ট|less)\s*(?:dilam|diben|den|dilen|দিলাম|দিবেন|দেন|দিলেন|amount)?\s*[:=\-]?\s*{$tk}\s*(\d+(?:\.\d+)?)/u", $t, $m)
+        } elseif (preg_match("/(?:discount|disc|ছাড়|ছাড|ডিসকাউন্ট|less)\s*(?:dilam|diben|den|dilen|দিলাম|দিবেন|দেন|দিলেন|amount)?\s*[:=\-]*\s*{$tk}\s*(\d+(?:\.\d+)?)/u", $t, $m)
             || preg_match("/(\d+(?:\.\d+)?)\s*{$tk}\s*(?:discount|disc|ছাড়|ছাড|ডিসকাউন্ট|off|less|কম|kom)/u", $t, $m)) {
             $draft['discount'] = ['type' => 'amount', 'value' => (float) $m[1], 'text' => trim($m[0])];
         }
@@ -517,22 +517,22 @@ final class TextOrderParser
         // Delivery charge.
         if (preg_match('/free\s*(?:home\s*)?delivery|delivery\s*(?:charge\s*)?free|ফ্রি\s*ডেলিভারি|ডেলিভারি\s*(?:চার্জ\s*)?ফ্রি/u', $t)) {
             $draft['delivery_charge'] = 0.0;
-        } elseif (preg_match("/(?:delivery|ডেলিভারি|shipping|courier|কুরিয়ার)\s*(?:charge|fee|cost|চার্জ|খরচ)?\s*[:=\-]?\s*{$tk}\s*(\d{2,4})(?!\d){$notTime}/u", $t, $m)
+        } elseif (preg_match("/(?:delivery|ডেলিভারি|shipping|courier|কুরিয়ার)\s*(?:charge|fee|cost|চার্জ|খরচ|ফি)?\s*[:=\-]*\s*{$tk}\s*(\d{2,4})(?!\d){$notTime}/u", $t, $m)
             || preg_match("/(?<![\d.])(\d{2,4})\s*{$tk}\s*(?:delivery|ডেলিভারি)\s*(?:charge|চার্জ)/u", $t, $m)) {
             $draft['delivery_charge'] = (float) $m[1];
         }
 
         // Advance.
-        if (preg_match("/(?:advance|adv|অগ্রিম|এডভান্স|অ্যাডভান্স)\s*(?:paid|payment|dilam|দিলাম|পেমেন্ট)?\s*[:=\-]?\s*{$tk}\s*(\d{2,6})(?!\d)/u", $t, $m)
+        if (preg_match("/(?:advance|adv|অগ্রিম|এডভান্স|অ্যাডভান্স)\s*(?:paid|payment|dilam|দিলাম|পেমেন্ট)?\s*[:=\-]*\s*{$tk}\s*(\d{2,6})(?!\d)/u", $t, $m)
             || preg_match("/(?<![\d.])(\d{2,6})\s*{$tk}\s*(?:advance|adv|অগ্রিম|এডভান্স)/u", $t, $m)
-            || preg_match("/(?:bkash|bikash|nagad|rocket|বিকাশ|নগদ)\s*(?:e|a|এ)?\s*(?:paid|sent|send|korechi|dilam|pathaisi|pathiyechi|করেছি|দিলাম|দিয়েছি|পাঠিয়েছি)?\s*[:=\-]?\s*{$tk}\s*(\d{2,6})(?!\d)/u", $t, $m)) {
+            || preg_match("/(?:bkash|bikash|nagad|rocket|বিকাশ|নগদ)\s*(?:e|a|এ)?\s*(?:paid|sent|send|korechi|dilam|pathaisi|pathiyechi|করেছি|দিলাম|দিয়েছি|পাঠিয়েছি)?\s*[:=\-]*\s*{$tk}\s*(\d{2,6})(?!\d)/u", $t, $m)) {
             $draft['advance'] = (float) $m[1];
         }
 
         // Stated total / COD amount.
-        if (preg_match("/(?:cod|condition|কন্ডিশন|collect|due)\s*(?:amount|charge|টাকা)?\s*[:=\-]?\s*{$tk}\s*(\d{2,7})(?!\d)/u", $t, $m)) {
+        if (preg_match("/(?:cod|condition|কন্ডিশন|collect|due)\s*(?:amount|charge|টাকা)?\s*[:=\-]*\s*{$tk}\s*(\d{2,7})(?!\d)/u", $t, $m)) {
             $draft['stated_total'] = ['value' => (float) $m[1], 'kind' => 'cod', 'text' => trim($m[0])];
-        } elseif (preg_match("/(?:grand\s*total|total|মোট|সর্বমোট|bill|payable)\s*(?:amount|taka|টাকা|price)?\s*[:=\-]?\s*{$tk}\s*(\d{2,7})(?!\d)/u", $t, $m)) {
+        } elseif (preg_match("/(?:grand\s*total|total|মোট|সর্বমোট|bill|payable)\s*(?:amount|bill|taka|টাকা|price)?\s*[:=\-]*\s*{$tk}\s*(\d{2,7})(?!\d)/u", $t, $m)) {
             $draft['stated_total'] = ['value' => (float) $m[1], 'kind' => 'total', 'text' => trim($m[0])];
         }
 
@@ -553,7 +553,7 @@ final class TextOrderParser
     {
         $t = PhoneExtractor::strip(Text::norm(str_replace(',', '', Text::asciiDigits($text))));
 
-        return preg_match('/(?:price|dam|daam|rate|দাম|মূল্য)\s*(?:koto|কত)?\s*[:=\-]?\s*(?:tk\.?|৳)?\s*(\d{2,6})(?!\d)/u', $t, $m)
+        return preg_match('/(?:price|dam|daam|rate|দাম|মূল্য)\s*(?:koto|কত)?\s*[:=\-]*\s*(?:tk\.?|৳)?\s*(\d{2,6})(?!\d)/u', $t, $m)
             || preg_match('/(?<![\d.])(\d{3,6})\s*(?:tk|taka|৳|টাকা)(?!\s*(?:discount|ছাড়|advance|অগ্রিম|delivery|ডেলিভারি))/u', $t, $m)
             ? (float) $m[1] : null;
     }

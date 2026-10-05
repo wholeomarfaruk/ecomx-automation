@@ -21,6 +21,38 @@ class ParserCoverageTest extends TestCase
         return array_map(fn ($raw) => $resolver->resolve($raw), $parser->parse($text));
     }
 
+    public function test_screenshot_case_safina_yallow_with_price_delivery_and_total(): void
+    {
+        $catalog = new \App\OrderIntake\Catalog([
+            ['id' => 31, 'name' => 'Safina | Unstitched | 3 Piece', 'code' => 'SF-0201', 'variable' => true, 'price' => 1400.0, 'keywords' => [], 'variants' => [
+                ['id' => 311, 'sku' => 'SF-0201-YEL', 'label' => 'Yellow', 'values' => ['yellow'], 'price' => 1400.0],
+                ['id' => 312, 'sku' => 'SF-0201-PNK', 'label' => 'Pink', 'values' => ['pink'], 'price' => 1400.0],
+            ]],
+            ['id' => 32, 'name' => 'Safina | Stitched | 2 Piece', 'code' => 'SF-0202', 'variable' => false, 'price' => 1800.0, 'keywords' => [], 'variants' => []],
+            ['id' => 33, 'name' => 'Meher Digital Printed 3 Piece', 'code' => 'SF-0170', 'variable' => false, 'price' => 1050.0, 'keywords' => [], 'variants' => []],
+        ]);
+        $resolver = new \App\OrderIntake\DraftResolver($catalog, $this->areas(), fn () => 120.0, [], 10);
+        $text = "Dighee paul\n01949629235\nNarail, lohagara, dighalia bazar\nproduct: safina yallow\n\nProduct price:=1400tk\nDelivery fee:=150tk\nTotal Bill:=1550tk";
+
+        $d = $resolver->resolve((new TextOrderParser($catalog, $this->areas()))->parse($text)[0]);
+
+        $this->assertSame(31, $d['items'][0]['product_id']);   // tie settled by the 1400 price
+        $this->assertSame(311, $d['items'][0]['variant_id']);  // "yallow" → Yellow
+        $this->assertSame(150.0, $d['amounts']['delivery']);
+        $this->assertSame('stated', $d['amounts']['delivery_source']);
+        $this->assertSame(1550.0, $d['amounts']['total']);
+        $this->assertSame(0.0, $d['amounts']['discount']);
+        $this->assertSame(12, $d['area']['method_id']);
+        $this->assertSame([], $d['needs_ai']);
+    }
+
+    public function test_unfound_product_comes_with_suggestions(): void
+    {
+        $d = $this->read("Name: Rahim\nPhone: 01711223344\nAddress: Road 2, Uttara\nProduct: meher digitel")[0];
+
+        $this->assertContains(3, $d['items'][0]['options'] ?: [$d['items'][0]['product_id']]);
+    }
+
     public function test_shop_number_and_name_in_a_chat_are_not_the_customer(): void
     {
         $chat = "Seldom Fashion\nApu order korte call korun 01999-887766\n\nRahima Akter\n01711223344\nHouse 12, Road 5, Dhanmondi\nSF-0156 x1";

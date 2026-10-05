@@ -83,11 +83,27 @@ final class Catalog
      * ("sunset charm" → "Sunset Charm 3 Pcs Unstitched Dress"), or one long
      * word no other product has ("safina ta nibo"). When several products
      * qualify, the one with clearly more of its words in the text wins;
-     * otherwise nothing does.
+     * otherwise nothing does (partialMatches() has the tied ones).
      *
      * @return array{product: CatalogProduct, text: string}|null
      */
     private function partialIn(string $norm): ?array
+    {
+        $hits = array_values(array_filter($this->partialMatches($norm), fn ($h) => ! $h['weak']));
+
+        return match (true) {
+            count($hits) === 1 => $hits[0],
+            count($hits) > 1 && $hits[0]['score'] > $hits[1]['score'] => $hits[0],
+            default => null,
+        };
+    }
+
+    /**
+     * Every product partialIn() would accept, best first.
+     *
+     * @return list<array{product: CatalogProduct, text: string, score: int}>
+     */
+    public function partialMatches(string $norm): array
     {
         $words = Text::words($norm);
         $hits = [];
@@ -103,18 +119,19 @@ final class Catalog
             $firstTwo = count($distinct) >= 2 && array_diff(array_slice($distinct, 0, 2), $words) === [];
             $unique = (bool) array_filter($present, fn ($w) => mb_strlen($w) >= 4 && ($this->wordFrequency[$w] ?? 0) === 1);
 
-            if ($firstTwo || $unique) {
-                $hits[] = ['product' => $p, 'text' => implode(' ', array_unique($present)), 'score' => count($present)];
+            // A shared distinctive word ("safina" in two products) makes it a
+            // candidate only — never a match on its own (see resolve()).
+            $weak = ! $firstTwo && ! $unique && array_filter($present, fn ($w) => mb_strlen($w) >= 4);
+
+            if ($firstTwo || $unique || $weak) {
+                $hits[] = ['product' => $p, 'text' => implode(' ', array_unique($present)), 'score' => count($present), 'weak' => (bool) $weak];
             }
         }
 
-        usort($hits, fn ($a, $b) => $b['score'] <=> $a['score']);
+        // Strong before weak, then by how many of its words are there.
+        usort($hits, fn ($a, $b) => [$a['weak'], $b['score']] <=> [$b['weak'], $a['score']]);
 
-        return match (true) {
-            count($hits) === 1 => $hits[0],
-            count($hits) > 1 && $hits[0]['score'] > $hits[1]['score'] => $hits[0],
-            default => null,
-        };
+        return $hits;
     }
 
     /**
@@ -312,9 +329,26 @@ final class Catalog
         }
 
         if ($scored === []) {
-            $partial = $this->partialIn($key);
+            $partials = $this->partialMatches($key);
+            $hintFor = fn ($hit) => trim(implode(' ', array_diff(Text::words($key), explode(' ', $hit['text']))));
 
-            return $partial ? ['product' => $partial['product'], 'variant' => null, 'hint' => trim(str_replace(explode(' ', $partial['text']), ' ', $key)), 'match' => 'partial'] : null;
+            if ($partials === []) {
+                return null;
+            }
+            $strong = array_values(array_filter($partials, fn ($h) => ! $h['weak']));
+            if ($strong !== [] && (count($strong) === 1 || $strong[0]['score'] > $strong[1]['score'])) {
+                return ['product' => $strong[0]['product'], 'variant' => null, 'hint' => $hintFor($strong[0]), 'match' => 'partial'];
+            }
+
+            // Tied strong matches, or only weak ones: let price/context decide.
+            $pool = $strong !== [] ? $strong : $partials;
+            $tied = array_values(array_filter($pool, fn ($h) => $h['score'] === $pool[0]['score']));
+
+            return [
+                'ambiguous'  => true,
+                'options'    => array_map(fn ($h) => $h['product']['name'], array_slice($tied, 0, 4)),
+                'candidates' => array_map(fn ($h) => ['product' => $h['product'], 'hint' => $hintFor($h), 'match' => 'partial'], array_slice($tied, 0, 6)),
+            ];
         }
 
         usort($scored, fn ($a, $b) => $b['score'] <=> $a['score']);
@@ -445,7 +479,8 @@ final class Catalog
             $hw = Text::words($h);
             $scored = array_map(fn ($v) => [
                 'v' => $v,
-                'score' => count(array_filter($v['values'], fn ($val) => in_array($val, $hw, true) || (mb_strlen($val) >= 3 && str_contains($h, $val))))
+                'score' => count(array_filter($v['values'], fn ($val) => in_array($val, $hw, true) || (mb_strlen($val) >= 3 && str_contains($h, $val))
+                        || (bool) array_filter($hw, fn ($w) => self::similar($w, $val))))
                     + ($v['sku'] !== '' && str_contains(Text::compact($h), Text::compact($v['sku'])) ? 5 : 0),
             ], $variants);
             usort($scored, fn ($a, $b) => $b['score'] <=> $a['score']);
@@ -553,7 +588,7 @@ final class Catalog
      *
      * @return list<CatalogProduct>
      */
-    public function candidates(string $text, int $limit): array
+    public function candidates(string $text, int $limit, bool $fill = true): array
     {
         $words = array_filter(Text::words($text), fn ($w) => mb_strlen($w) >= 3);
         $compactText = Text::compact($text);
@@ -587,7 +622,7 @@ final class Catalog
 
         // Nothing in the text points anywhere (e.g. only a screenshot): fill
         // with the start of the catalogue so the AI has names to map to.
-        if (count($picked) < $limit) {
+        if ($fill && count($picked) < $limit) {
             $ids = array_column($picked, 'id');
             foreach ($this->products as $p) {
                 if (count($picked) >= $limit) {

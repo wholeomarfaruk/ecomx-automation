@@ -212,17 +212,28 @@ final class DraftResolver
             'code' => null, 'variant_text' => $raw['variant_text'] ?? null, 'variable' => false,
             'qty' => $qty ?? 1.0, 'qty_source' => $qty !== null ? $source : 'default',
             'unit_price' => 0.0, 'catalog_price' => 0.0, 'price_source' => 'catalog', 'match' => null, 'confidence' => 0.0, 'issue' => null, 'source' => $source,
+            // Product ids the review screen offers for this line ("did you mean").
+            'options' => [],
         ];
 
         if ($hit === null) {
-            return [...$base, 'issue' => "\"{$raw['text']}\" — product not found"];
+            return [
+                ...$base,
+                'issue'   => "\"{$said}\" — product not found",
+                'options' => array_column($this->catalog->candidates($said, 5, false), 'id'),
+            ];
         }
         if (isset($hit['ambiguous'])) {
             $options = $hit['options'];
-            $hit = $this->settleTie($hit['candidates'], $raw);
+            $candidates = $hit['candidates'];
+            $hit = $this->settleTie($candidates, $raw);
 
             if ($hit === null) {
-                return [...$base, 'issue' => "\"{$said}\" matches several products: " . implode(', ', $options)];
+                return [
+                    ...$base,
+                    'issue'   => "\"{$said}\" matches several products: " . implode(', ', $options),
+                    'options' => array_values(array_unique(array_map(fn ($c) => $c['product']['id'], $candidates))),
+                ];
             }
         }
 
@@ -430,6 +441,9 @@ final class DraftResolver
         }, $draft['items']);
 
         $amounts = $draft['amounts'];
+        // The sheet re-checks phone/name/address/products itself; the rest only we know.
+        $sheetIssues = array_values(array_filter($draft['issues'],
+            fn ($i) => $i['level'] !== 'error' || ! in_array($i['field'], ['phone', 'name', 'address', 'products'], true)));
 
         return [
             'cells' => [
@@ -450,9 +464,8 @@ final class DraftResolver
                 'intakeId'   => $intakeId,
                 'via'        => $draft['via'],
                 'confidence' => $draft['confidence'],
-                // The sheet re-checks phone/name/address/products itself; the rest only we know.
-                'issues'     => array_values(array_map(fn ($i) => $i['message'], array_filter($draft['issues'],
-                    fn ($i) => $i['level'] !== 'error' || ! in_array($i['field'], ['phone', 'name', 'address', 'products'], true)))),
+                'issues'     => array_values(array_map(fn ($i) => $i['message'], $sheetIssues)),
+                'issueFields' => array_values(array_map(fn ($i) => $i['field'], $sheetIssues)),
                 'needsAi'    => $draft['needs_ai'],
                 'sourceText' => mb_substr((string) $draft['source_text'], 0, 4000),
             ],

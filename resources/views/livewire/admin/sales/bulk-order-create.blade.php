@@ -223,9 +223,9 @@
                                         </div>
                                         <template x-if="row.meta">
                                             <span class="mt-1 inline-block px-1 rounded text-[9px] font-semibold leading-4 cursor-help"
-                                                :class="row.meta.confidence >= 0.85 ? 'bg-emerald-50 text-emerald-700' : (row.meta.confidence >= 0.6 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700')"
+                                                :class="row.meta.reviewed || row.meta.confidence >= 0.85 ? 'bg-emerald-50 text-emerald-700' : (row.meta.confidence >= 0.6 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700')"
                                                 :title="intakeTitle(row)"
-                                                x-text="`${row.meta.via === 'ai' ? 'AI' : 'Auto'} ${Math.round(row.meta.confidence * 100)}%`"></span>
+                                                x-text="row.meta.reviewed ? '✓ Checked' : `${row.meta.via === 'ai' ? 'AI' : 'Auto'} ${Math.round(row.meta.confidence * 100)}%`"></span>
                                         </template>
                                     </td>
 
@@ -633,7 +633,7 @@
         placed: [],
         draft: null,
         draftKey: `bulk-order-draft-${config.userId}`,
-        intake: { open: false, text: '', files: [], source: 'messenger', forceAi: false, busy: false, busyText: '', error: '', result: null, dragging: false },
+        intake: { open: false, text: '', files: [], source: 'messenger', forceAi: false, busy: false, busyText: '', error: '', result: null, cards: [], dragging: false },
 
         init() {
             this.loadDraftBanner();
@@ -1285,12 +1285,12 @@
 
         // ---------- AI Order intake ----------
         openIntake() {
-            this.intake = { ...this.intake, open: true, error: '', result: null, source: this.intake.result ? this.intake.source : this.settings.source };
+            this.intake = { ...this.intake, open: true, error: '', result: null, cards: [], source: this.intake.result ? this.intake.source : this.settings.source };
             { const refs = this.$refs; this.$nextTick(() => refs?.intakeText?.focus()); }
         },
         closeIntake() {
             this.intake.files.forEach((f) => f.preview && URL.revokeObjectURL(f.preview));
-            this.intake = { ...this.intake, open: false, text: '', files: [], forceAi: false, error: '', result: null };
+            this.intake = { ...this.intake, open: false, text: '', files: [], forceAi: false, error: '', result: null, cards: [] };
         },
         intakeAddFiles(list) {
             for (const file of Array.from(list ?? [])) {
@@ -1332,19 +1332,122 @@
                 this.intake.busyText = forceAi || this.intake.files.length ? 'Reading with AI… this can take a few seconds' : 'Reading…';
                 const res = await this.$wire.extractOrders(text, this.intake.source, !!forceAi);
                 if (res?.error) this.intake.error = res.error;
-                else this.intake.result = res;
+                else { this.intake.cards = this.buildCards(res); this.intake.result = res; }
             } catch (err) {
                 this.intake.error = 'Could not read the order — check your connection and try again.';
             } finally {
                 this.intake.busy = false;
             }
         },
+        // ---- review cards: each extracted order, editable before it goes to the sheet ----
+        buildCards(res) {
+            return (res.drafts ?? []).map((d, i) => ({
+                key: `c${i}-${Date.now().toString(36)}`,
+                include: true,
+                cells: { ...res.rows[i].cells },
+                meta: res.rows[i].meta,
+                draft: d,
+                edited: [],
+                quote: d.amounts.delivery_source === 'quote' ? d.amounts.delivery : null,
+                quoting: false,
+                timer: null,
+                items: d.items.map((it) => this.cardItem(it)),
+            }));
+        },
+        cardItem(it = {}) {
+            return {
+                productId: it.product_id ?? null,
+                variantId: it.variant_id ? String(it.variant_id) : '',
+                qty: String(it.qty ?? 1),
+                price: it.price_source === 'stated' ? String(it.unit_price) : '',
+                text: it.text ?? '',
+                options: (it.options ?? []).filter((id) => this.productById(id)),
+                search: '',
+                picking: !it.product_id,
+            };
+        },
+        amount(v) { return num(v); },
+        cardEdit(card, field) {
+            if (!card.edited.includes(field)) card.edited.push(field);
+            if (field === 'products' || field === 'area') this.requote(card);
+        },
+        cardPick(card, it, p) {
+            if (!p) return;
+            it.productId = p.id;
+            it.variantId = p.variable && p.variants.length === 1 ? String(p.variants[0].id) : '';
+            Object.assign(it, { price: '', search: '', picking: false, options: [] });
+            this.cardEdit(card, 'products');
+        },
+        cardAddItem(card) { card.items.push(this.cardItem()); },
+        cardRemoveItem(card, k) { card.items.splice(k, 1); this.cardEdit(card, 'products'); },
+        itemPrice(it) {
+            if (String(it.price).trim() !== '' && num(it.price) !== null) return num(it.price);
+            return it.productId ? this.defaultPriceFor(it.productId, it.variantId) : 0;
+        },
+        cardSubtotal(card) { return card.items.filter((it) => it.productId).reduce((s, it) => s + (+it.qty || 0) * this.itemPrice(it), 0); },
+        cardDelivery(card) {
+            const typed = String(card.cells.delivery ?? '').trim();
+            return typed !== '' ? (num(typed) ?? 0) : card.quote;
+        },
+        cardTotal(card) { return Math.max(0, this.cardSubtotal(card) + (this.cardDelivery(card) ?? 0) - (num(card.cells.discount) ?? 0)); },
+        /** What still blocks this order — the same rules the sheet applies. */
+        cardProblems(card) {
+            const out = [];
+            const national = this.nationalPhone(card.cells.phone);
+            const existing = !!card.draft.customer?.found && card.draft.customer.national === national;
+            if (!/^1[3-9]\d{8}$/.test(national)) out.push('phone');
+            if (!existing && !String(card.cells.name ?? '').trim()) out.push('name');
+            if (!existing && !String(card.cells.address ?? '').trim()) out.push('address');
+            if (!card.items.length || card.items.some((it) => !it.productId)) out.push('product');
+            if (card.items.some((it) => it.productId && this.productById(it.productId)?.variable && !it.variantId)) out.push('variant');
+            return out;
+        },
+        /** The reader's notes, minus those about fields fixed here. */
+        cardIssues(card) {
+            return (card.draft.issues ?? []).filter((is) => !card.edited.includes(is.field)
+                && !(is.field === 'products' && card.items.every((it) => it.productId)));
+        },
+        /** Delivery charge from Settings → Shipping for the card's zone and items (the sheet's own quote). */
+        requote(card, delay = 350) {
+            clearTimeout(card.timer);
+            const methodId = +(card.cells.method || this.settings.methodId || 0);
+            const items = card.items.filter((it) => it.productId && +it.qty > 0);
+            if (!methodId || !items.length) { card.quote = null; return; }
+            card.quoting = true;
+            card.timer = setTimeout(() => {
+                const key = card.key;
+                this.$wire.quoteShipping([{ key, method_id: methodId, subtotal: this.cardSubtotal(card), items: items.map((it) => ({ product_id: it.productId, quantity: +it.qty })) }])
+                    .then((res) => { card.quote = res?.[key] ?? 0; })
+                    .catch(() => {})
+                    .finally(() => { card.quoting = false; });
+            }, delay);
+        },
+        /** A card → a sheet row, product cells written as codes/SKUs like the items editor does. */
+        cardRow(card) {
+            const tokens = card.items.map((it) => {
+                const qty = +it.qty > 0 ? +it.qty : 1;
+                if (!it.productId) return it.text ? `${it.text.replace(/[,;|]/g, ' ')} x${qty}` : null;
+                const p = this.productById(it.productId);
+                const v = p?.variants.find((x) => String(x.id) === String(it.variantId));
+                const ref = v ? (v.sku || `${p.code} ${v.label}`) : (p.code || p.name);
+                const def = v ? v.price : p.price;
+                const price = String(it.price).trim() !== '' && +it.price !== +def ? ` @${+it.price}` : '';
+                return `${ref} x${qty}${price}`;
+            }).filter(Boolean);
+            const fields = card.meta.issueFields ?? [];
+            const keep = (i) => !card.edited.includes(fields[i]) && !(fields[i] === 'products' && card.items.every((it) => it.productId));
+            return newRow({ ...card.cells, products: tokens.join(', '), qty: '', price: '' }, {
+                ...card.meta,
+                issues: card.meta.issues.filter((_, i) => keep(i)),
+                issueFields: fields.filter((_, i) => keep(i)),
+                reviewed: card.edited.length > 0,
+            });
+        },
         addIntakeRows() {
-            const rows = this.intake.result?.rows ?? [];
+            const rows = (this.intake.cards ?? []).filter((c) => c.include).map((c) => this.cardRow(c));
             let at = this.rows.findIndex((r) => this.isEmpty(r) && !r.result);
             if (at < 0) at = this.rows.length;
-            rows.forEach((r, i) => {
-                const row = newRow(r.cells, r.meta);
+            rows.forEach((row, i) => {
                 if (this.rows[at + i] && this.isEmpty(this.rows[at + i])) this.rows.splice(at + i, 1, row);
                 else this.rows.splice(at + i, 0, row);
             });
