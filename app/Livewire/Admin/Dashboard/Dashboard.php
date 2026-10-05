@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Dashboard;
 
+use App\Enums\Product\ProductType;
 use App\Enums\Sales\CourierStatus;
 use App\Enums\Sales\OrderStatus;
 use App\Enums\Sales\PaymentStatus;
@@ -9,13 +10,16 @@ use App\Livewire\Admin\Marketing\Concerns\HasDateRange;
 use App\Models\Courier;
 use App\Models\CourierShipment;
 use App\Models\Customer;
+use App\Models\InventoryStock;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderPayment;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Services\StockService;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -94,7 +98,7 @@ class Dashboard extends Component
         $inventory = [
             'total_products' => Product::count(),
             'active_products' => Product::where('status', 'active')->count(),
-            'draft_products' => Product::where('status', 'draft')->count(),
+            'total_stock' => $this->totalStock(),
             'out_of_stock' => Product::where('stock_status', 'out_of_stock')->count(),
             'low_stock' => Product::where('stock_status', 'low_stock')->count(),
         ];
@@ -239,6 +243,24 @@ class Dashboard extends Component
      * range — these are always-current counts an admin needs to act on today,
      * independent of whichever historical window the KPI cards are showing.
      */
+    /**
+     * Units on hand across the catalog — simple products plus variants
+     * (combo stock is derived from its components, so it isn't counted).
+     * Inventory module on: available (quantity - booked) across every
+     * warehouse; off: the items' own stock_quantity columns.
+     */
+    protected function totalStock(): float
+    {
+        if (app(StockService::class)->usesOwnStock()) {
+            return (float) Product::where('product_type', ProductType::SIMPLE)->where('stock_quantity', '>', 0)->sum('stock_quantity')
+                + (float) ProductVariant::whereHas('product')->where('stock_quantity', '>', 0)->sum('stock_quantity');
+        }
+
+        return (float) InventoryStock::whereHas('product')
+            ->where(fn ($q) => $q->whereNull('variant_id')->orWhereHas('variant'))
+            ->sum(DB::raw('GREATEST(quantity - booked_quantity, 0)'));
+    }
+
     protected function actionRequiredAlerts(): array
     {
         return [

@@ -188,7 +188,7 @@
             $inventoryCards = [
                 ['label' => 'Total Products', 'raw' => (float) $inventory['total_products'], 'bg' => 'bg-linear-to-br from-indigo-50 to-white border-indigo-200', 'value' => 'text-indigo-700'],
                 ['label' => 'Active', 'raw' => (float) $inventory['active_products'], 'bg' => 'bg-linear-to-br from-emerald-50 to-white border-emerald-200', 'value' => 'text-emerald-700'],
-                ['label' => 'Draft', 'raw' => (float) $inventory['draft_products'], 'bg' => 'bg-linear-to-br from-slate-50 to-white border-slate-200', 'value' => 'text-slate-700'],
+                ['label' => 'Total Stock', 'raw' => (float) $inventory['total_stock'], 'bg' => 'bg-linear-to-br from-sky-50 to-white border-sky-200', 'value' => 'text-sky-700'],
                 ['label' => 'Out of Stock', 'raw' => (float) $inventory['out_of_stock'], 'bg' => 'bg-linear-to-br from-rose-50 to-white border-rose-200', 'value' => 'text-rose-700'],
                 ['label' => 'Low Stock', 'raw' => (float) $inventory['low_stock'], 'bg' => 'bg-linear-to-br from-amber-50 to-white border-amber-200', 'value' => 'text-amber-700'],
             ];
