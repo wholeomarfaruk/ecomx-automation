@@ -995,8 +995,13 @@
 
         // ---------- keyboard & paste ----------
         focusCell(r, c) {
+            // Resolve the sheet now: `$root` is looked up from the element that
+            // triggered the call, which may be gone by the next tick (e.g. a
+            // button inside a modal that just closed) — and an error thrown in
+            // $nextTick stops Alpine's own queued DOM updates.
+            const root = this.$root ?? document;
             this.$nextTick(() => {
-                const el = this.$root.querySelector(`[data-cell="${r}:${c}"]`);
+                const el = root?.querySelector?.(`[data-cell="${r}:${c}"]`);
                 if (el) { el.focus(); el.select?.(); }
             });
         },
@@ -1131,7 +1136,7 @@
                 })),
                 unmatched: info.tokens.filter((t) => !t.product).map((t) => t.raw),
             };
-            this.$nextTick(() => this.$refs.editorSearch?.focus());
+            { const refs = this.$refs; this.$nextTick(() => refs?.editorSearch?.focus()); }
         },
 
         searchProducts(q) {
@@ -1147,7 +1152,7 @@
         editorAdd(p) {
             this.editor.items.push({ productId: p.id, variantId: p.variable && p.variants.length === 1 ? String(p.variants[0].id) : '', qty: '1', price: String(p.variable && p.variants.length === 1 ? p.variants[0].price : p.price), note: '' });
             this.editor.search = '';
-            this.$nextTick(() => this.$refs.editorSearch?.focus());
+            { const refs = this.$refs; this.$nextTick(() => refs?.editorSearch?.focus()); }
         },
 
         saveEditor() {
@@ -1281,7 +1286,7 @@
         // ---------- AI Order intake ----------
         openIntake() {
             this.intake = { ...this.intake, open: true, error: '', result: null, source: this.intake.result ? this.intake.source : this.settings.source };
-            this.$nextTick(() => this.$refs.intakeText?.focus());
+            { const refs = this.$refs; this.$nextTick(() => refs?.intakeText?.focus()); }
         },
         closeIntake() {
             this.intake.files.forEach((f) => f.preview && URL.revokeObjectURL(f.preview));
@@ -1344,8 +1349,8 @@
                 else this.rows.splice(at + i, 0, row);
             });
             this.notify(`${rows.length} order${rows.length === 1 ? '' : 's'} added to the sheet — review and place`);
-            this.closeIntake();
             this.focusCell(at, 0);
+            this.closeIntake();
         },
         intakeTitle(row) {
             const m = row.meta;

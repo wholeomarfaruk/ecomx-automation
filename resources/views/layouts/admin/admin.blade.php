@@ -53,7 +53,10 @@
         });
     </script>
 
-    <script>
+    {{-- data-navigate-once: wire:navigate re-runs page scripts on every
+         visit — this one declares a const and registers alpine:init stores,
+         which must happen only once per full page load. --}}
+    <script data-navigate-once>
         // Keeps the browser tab title in sync with whichever admin page is
         // active — every admin Livewire view already sets $store.pageName
         // on mount (x-init="$store.pageName = { name: '...', slug: '...' }"),
