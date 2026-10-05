@@ -33,8 +33,6 @@ class Orders extends Component
 
     protected string $paginationTheme = 'tailwind';
 
-    public bool $viewModal = false;
-    public ?int $viewOrderId = null;
 
     /** orders | products | packed | autosaved */
     #[Url]
@@ -72,17 +70,6 @@ class Orders extends Component
         $this->resetPage('productsPage');
     }
 
-    public function viewOrder(int $id): void
-    {
-        $this->viewOrderId = $id;
-        $this->viewModal = true;
-    }
-
-    public function closeViewModal(): void
-    {
-        $this->viewModal = false;
-        $this->viewOrderId = null;
-    }
 
     /**
      * Inline status edits straight from the table row — mirrors
@@ -300,10 +287,8 @@ class Orders extends Component
             ->event('deleted')
             ->log("Order #{$orderId} was deleted");
 
-        if ($this->viewOrderId === $orderId) {
-            $this->viewModal = false;
-            $this->viewOrderId = null;
-        }
+        // The "View details" modal (its own component) closes if it's showing this order.
+        $this->dispatch('close-order-view', orderId: $orderId);
 
         $this->dispatch('toast', ['type' => 'success', 'message' => "Order #{$orderId} deleted"]);
     }
@@ -391,18 +376,6 @@ class Orders extends Component
                 ->paginate(20, pageName: 'packedPage');
         }
 
-        $viewingOrder = $this->viewOrderId
-            ? Order::with([
-                'customer',
-                'billingAddress',
-                'shippingAddress',
-                'items.product',
-                'items.variant',
-                'payments',
-                'courierShipments.courier',
-            ])->find($this->viewOrderId)
-            : null;
-
         $canManageCourier = auth()->user()->can('courier_configuration.manage');
 
         return view('livewire.admin.sales.orders', [
@@ -417,7 +390,6 @@ class Orders extends Component
             'totalRevenue'    => Order::where('payment_status', PaymentStatus::PAID)->sum('total_amount'),
             'pendingCount'    => Order::where('status', OrderStatus::PENDING)->count(),
             'dueTotal'        => Order::sum('due_amount'),
-            'viewingOrder'    => $viewingOrder,
             'canManageCourier' => $canManageCourier,
         ])->layout('layouts.admin.admin');
     }
