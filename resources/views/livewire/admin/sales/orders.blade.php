@@ -228,6 +228,16 @@
                                              :style="`position: absolute; top: ${top}px; right: ${right}px; z-index: 9999;`"
                                              class="w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-1 text-sm origin-top-right">
 
+                                            @if($order->status === \App\Enums\Sales\OrderStatus::RETURNING)
+                                                <button wire:click="markReturnReceived({{ $order->id }})" @click="open = false" type="button"
+                                                    wire:confirm="Parcel for Order #{{ $order->id }} is back in your hands? The order becomes Returned and its stock is put back."
+                                                    class="flex items-center gap-2.5 w-full px-4 py-2 text-orange-700 hover:bg-orange-50 transition">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"/>
+                                                    </svg>
+                                                    Return received
+                                                </button>
+                                            @endif
                                             <button @click="open = false; $dispatch('open-order-view', { orderId: {{ $order->id }} })" type="button"
                                                 class="flex items-center gap-2.5 w-full px-4 py-2 text-gray-700 hover:bg-gray-50 transition">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

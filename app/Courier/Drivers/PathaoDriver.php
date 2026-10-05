@@ -521,6 +521,10 @@ class PathaoDriver implements CourierDriverInterface
 
             // Return
             'return' => CourierStatus::RETURNING,
+            // Webhook "order.return-id-created": the customer refused, a return
+            // consignment was opened — the parcel is on its way back.
+            'return_id_created' => CourierStatus::RETURNING,
+            'return_in_transit' => CourierStatus::RETURNING,
             'assigned_for_return' => CourierStatus::RETURNING,
             'paid_return' => CourierStatus::RETURNING,
             'returned' => CourierStatus::RETURNED,

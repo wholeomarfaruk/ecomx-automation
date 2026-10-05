@@ -36,7 +36,8 @@ class PostCourierCodCollected
 {
     public function __construct(protected PostJournalEntry $postJournalEntry) {}
 
-    public function handle(CourierShipment $shipment, float $collectedAmount, string $entryDate): void
+    /** @param  string  $when  for the journal description: "on delivery", "on partial delivery", "on paid return" */
+    public function handle(CourierShipment $shipment, float $collectedAmount, string $entryDate, string $when = 'on delivery'): void
     {
         $order = $shipment->order;
 
@@ -58,7 +59,7 @@ class PostCourierCodCollected
         $fee = min($collectedAmount, max(0.0, (float) $order->courier_charge));
         $netAmount = round($collectedAmount - $fee, 2);
 
-        DB::transaction(function () use ($order, $shipment, $collectedAmount, $fee, $netAmount, $entryDate, $cashAccount) {
+        DB::transaction(function () use ($order, $shipment, $collectedAmount, $fee, $netAmount, $entryDate, $cashAccount, $when) {
             $order->payments()->create([
                 'type'            => OrderPaymentType::PAYMENT,
                 'payment_method'  => PaymentMethod::COD,
@@ -73,7 +74,7 @@ class PostCourierCodCollected
 
             $customer = $order->customer;
             $invoice = AccountsCustomerInvoice::where('order_id', $order->id)->first();
-            $description = "COD collected on delivery — Order #{$order->id} ({$shipment->tracking_number})";
+            $description = "COD collected {$when} — Order #{$order->id} ({$shipment->tracking_number})";
 
             $creditAccountId = $invoice ? $this->accountId('1100') : $this->accountId('2160');
 

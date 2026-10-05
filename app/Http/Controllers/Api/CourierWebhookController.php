@@ -129,12 +129,20 @@ class CourierWebhookController extends Controller
         // courier's own cash-in-hand sub-account (1045.x) rather than
         // waiting for the later bank settlement to be the first sign this
         // order was ever paid.
-        if ($event->status === CourierStatus::DELIVERED) {
-            $collectedAmount = (float) ($event->rawData['collected_amount'] ?? 0);
+        //
+        // Same for any update that reports money collected: a partial
+        // delivery, or a paid return (Pathao "paid_return" — the customer
+        // refused the goods but paid the delivery charge).
+        $collectedAmount = (float) ($event->rawData['collected_amount'] ?? 0);
 
-            if ($collectedAmount > 0) {
-                app(PostCourierCodCollected::class)->handle($shipment, $collectedAmount, now()->toDateString());
-            }
+        if ($collectedAmount > 0 && in_array($event->status, [CourierStatus::DELIVERED, CourierStatus::PARTIAL_DELIVERED, CourierStatus::RETURNING, CourierStatus::RETURNED], true)) {
+            $label = match ($event->status) {
+                CourierStatus::DELIVERED => 'on delivery',
+                CourierStatus::PARTIAL_DELIVERED => 'on partial delivery',
+                default => 'on paid return',
+            };
+
+            app(PostCourierCodCollected::class)->handle($shipment, $collectedAmount, now()->toDateString(), $label);
         }
 
         return response()->json(['message' => 'ok']);

@@ -23,7 +23,9 @@ use Illuminate\Support\Facades\Log;
  *   delivered               -> order delivered, fulfilled
  *   partially delivered     -> order delivered, partial      (courier returning)
  *   returning               -> order returning               (full return only)
- *   returned                -> order returned, unfulfilled   (full return only)
+ *   returned (by courier)   -> order returning — it becomes Returned (and is
+ *                              restocked) only when the shop marks the parcel
+ *                              received (Orders → "Return received")
  *
  * A partial delivery's leftover return (returning/returned after the order
  * is already delivered) only moves the courier status — the order stays
@@ -47,6 +49,12 @@ class ApplyCourierStatus
 
     public function handle(CourierShipment $shipment, CourierStatus $status): void
     {
+        // An update a driver couldn't place falls back to "pending" — never let
+        // that pull a shipment that's already moving back to the start.
+        if ($status === CourierStatus::PENDING && ! in_array($shipment->status, [null, '', CourierStatus::PENDING->value], true)) {
+            return;
+        }
+
         $stored = $status === CourierStatus::PARTIAL_DELIVERED ? CourierStatus::RETURNING : $status;
 
         $shipment->update([
@@ -72,7 +80,9 @@ class ApplyCourierStatus
             CourierStatus::DELIVERED => $this->moveOrderFrom($order, [...$inFlight, OrderStatus::RETURNING], OrderStatus::DELIVERED, FulfillmentStatus::FULFILLED),
             CourierStatus::PARTIAL_DELIVERED => $this->moveOrderFrom($order, $inFlight, OrderStatus::DELIVERED, FulfillmentStatus::PARTIAL),
             CourierStatus::RETURNING => $this->moveOrderFrom($order, $inFlight, OrderStatus::RETURNING),
-            CourierStatus::RETURNED => $this->moveOrderFrom($order, [...$inFlight, OrderStatus::RETURNING], OrderStatus::RETURNED, FulfillmentStatus::UNFULFILLED),
+            // The courier says it's back — but it's in the shop's hands only once
+            // someone receives it, so the order waits in Returning for that.
+            CourierStatus::RETURNED => $this->moveOrderFrom($order, $inFlight, OrderStatus::RETURNING),
             default => null,
         };
     }

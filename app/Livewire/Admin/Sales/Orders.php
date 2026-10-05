@@ -77,6 +77,25 @@ class Orders extends Component
      * status flip here behaves identically to doing it from the full order
      * page, just without the courier/payment/returns fields also on screen.
      */
+    /**
+     * The returned parcel is physically back with the shop — only now is the
+     * order Returned and its stock put back (the courier's own "returned"
+     * update leaves it in Returning). Same path as choosing Returned in the
+     * status dropdown.
+     */
+    public function markReturnReceived(int $orderId): void
+    {
+        $order = Order::findOrFail($orderId);
+
+        if ($order->status !== OrderStatus::RETURNING) {
+            $this->dispatch('toast', ['type' => 'error', 'message' => "Order #{$orderId} isn't in Returning."]);
+
+            return;
+        }
+
+        $this->updateOrderStatus($orderId, OrderStatus::RETURNED->value);
+    }
+
     public function updateOrderStatus(int $orderId, string $status): void
     {
         $order = Order::with('items')->findOrFail($orderId);
