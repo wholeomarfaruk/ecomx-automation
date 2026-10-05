@@ -87,6 +87,33 @@ class StockService
         }
     }
 
+    /**
+     * Units promised to Pending orders — not taken from stock yet (that
+     * happens on confirm, in either module mode), but already spoken for.
+     * What a walk-in sale (POS) must not take without knowing.
+     *
+     * @param  iterable<int>  $productIds
+     * @return array<string, array{quantity: float, orders: int}> keyed "productId:variantId" ("12:" for no variant)
+     */
+    public function heldByPendingOrders(iterable $productIds): array
+    {
+        $ids = collect($productIds)->filter()->map(fn ($id) => (int) $id)->unique()->values();
+
+        if ($ids->isEmpty()) {
+            return [];
+        }
+
+        return OrderItem::query()
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('orders.status', \App\Enums\Sales\OrderStatus::PENDING->value)
+            ->whereIn('order_items.product_id', $ids)
+            ->groupBy('order_items.product_id', 'order_items.variant_id')
+            ->selectRaw('order_items.product_id, order_items.variant_id, SUM(order_items.quantity) AS held, COUNT(DISTINCT orders.id) AS order_count')
+            ->get()
+            ->mapWithKeys(fn ($r) => ["{$r->product_id}:{$r->variant_id}" => ['quantity' => (float) $r->held, 'orders' => (int) $r->order_count]])
+            ->all();
+    }
+
     /** Order stock on the items' own stock_quantity — the Inventory-off path. */
     protected function own(): OwnOrderStock
     {

@@ -197,8 +197,20 @@ class Products extends Component
             ->orderByDesc('id')
             ->paginate(15);
 
+        // Units Pending orders are waiting for (taken from stock only on confirm) — per product, variants summed.
+        $heldStock = \App\Models\OrderItem::query()
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('orders.status', \App\Enums\Sales\OrderStatus::PENDING->value)
+            ->whereIn('order_items.product_id', $products->pluck('id'))
+            ->groupBy('order_items.product_id')
+            ->selectRaw('order_items.product_id, SUM(order_items.quantity) AS held, COUNT(DISTINCT orders.id) AS order_count')
+            ->get()
+            ->mapWithKeys(fn ($r) => [$r->product_id => ['quantity' => (float) $r->held, 'orders' => (int) $r->order_count]])
+            ->all();
+
         return view('livewire.admin.catalog.products', [
             'products'      => $products,
+            'heldStock'     => $heldStock,
             'stockProduct'  => $this->stockProductId ? Product::find($this->stockProductId, ['id', 'name', 'code', 'product_type']) : null,
             'quickProduct'  => $this->quickViewId ? Product::with([
                 'brand', 'categories',

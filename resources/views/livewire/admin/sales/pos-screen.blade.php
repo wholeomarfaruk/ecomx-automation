@@ -126,6 +126,18 @@
                                     <p class="text-right text-[11px] text-gray-400 mt-0.5">min {{ number_format($this->minAllowedPrice((float) $item['purchase_price']) ?? 0, 2) }}</p>
                                 @endif
                                 @error('items.' . $i . '.unit_price') <p class="text-right text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                @if(isset($cartStock[$i]))
+                                    @php($s = $cartStock[$i])
+                                    @php($fmt = fn ($v) => rtrim(rtrim(number_format($v, 3, '.', ''), '0'), '.') ?: '0')
+                                    <p class="mt-1 text-[11px] {{ (float) $item['quantity'] > $s['free'] ? 'text-amber-600' : 'text-gray-400' }}">
+                                        Stock {{ $fmt($s['stock']) }}
+                                        @if($s['held'] > 0)
+                                            · <span class="font-medium">{{ $fmt($s['held']) }} held</span> by {{ $s['orders'] }} pending order{{ $s['orders'] === 1 ? '' : 's' }}
+                                            · {{ $fmt($s['free']) }} free
+                                        @endif
+                                    </p>
+                                @endif
+                                @error('items.' . $i . '.quantity') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                                 <p class="text-right text-xs text-gray-400 mt-1">= {{ number_format((float) $item['quantity'] * (float) $item['unit_price'], 2) }}</p>
                             </div>
                         @empty
@@ -193,6 +205,13 @@
                                 <span class="text-emerald-700">Change Due</span>
                                 <span class="text-emerald-700 font-semibold">{{ number_format($this->changeDue, 2) }}</span>
                             </div>
+                        @endif
+
+                        @if($heldWarning)
+                            <label class="flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800 cursor-pointer">
+                                <input type="checkbox" wire:model.live="sellHeldStock" class="mt-0.5 rounded border-amber-300 text-amber-600 focus:ring-amber-500">
+                                <span><b>Sell anyway</b> — take units pending orders are waiting for. Those orders may then be short when you confirm them.</span>
+                            </label>
                         @endif
 
                         <button wire:click="completeSale" type="button"

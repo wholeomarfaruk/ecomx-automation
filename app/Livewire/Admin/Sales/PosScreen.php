@@ -39,6 +39,14 @@ class PosScreen extends Component
 
     public string $discountAmount = '';
 
+    /**
+     * Set when the cart needs units that Pending orders are waiting for —
+     * the cashier ticks "Sell anyway" to take them (sellHeldStock).
+     */
+    public bool $heldWarning = false;
+
+    public bool $sellHeldStock = false;
+
     public string $paymentMethod  = 'cash';
     public string $amountTendered = '';
 
@@ -341,6 +349,17 @@ class PosScreen extends Component
 
         $stockService = app(StockService::class);
 
+        // Units Pending orders are waiting for (not taken from stock until
+        // they're confirmed) — selling them needs the cashier's say-so.
+        $held = $stockService->heldByPendingOrders(collect($this->items)->pluck('product_id'));
+        $demand = [];
+        foreach ($this->items as $item) {
+            if ($item['product_id']) {
+                $key = "{$item['product_id']}:{$item['variant_id']}";
+                $demand[$key] = ($demand[$key] ?? 0) + (float) $item['quantity'];
+            }
+        }
+
         // Pre-flight every line before creating anything, so a failed sale
         // doesn't leave a half-built order behind.
         foreach ($this->items as $index => $item) {
@@ -357,10 +376,28 @@ class PosScreen extends Component
 
             $available = $stockService->available($product, $variant, $warehouse);
 
-            if ($available < (float) $item['quantity']) {
+            $key = "{$item['product_id']}:{$item['variant_id']}";
+            $needed = $demand[$key] ?? (float) $item['quantity'];
+
+            if ($available < $needed) {
                 $this->addError(
                     "items.{$index}.quantity",
-                    sprintf('Only %s in stock for "%s".', $available, $item['label'])
+                    sprintf('Only %s in stock for "%s".', self::qty($available), $item['label'])
+                );
+                return;
+            }
+
+            $heldQty = $held[$key]['quantity'] ?? 0.0;
+            $free = max(0.0, $available - $heldQty);
+
+            if ($needed > $free && ! $this->sellHeldStock) {
+                $this->heldWarning = true;
+                $this->addError(
+                    "items.{$index}.quantity",
+                    sprintf(
+                        'Only %s free for "%s" — %s of the %s in stock are held by %d pending order(s). Tick "Sell anyway" to sell from held stock.',
+                        self::qty($free), $item['label'], self::qty($heldQty), self::qty($available), $held[$key]['orders'],
+                    )
                 );
                 return;
             }
@@ -461,8 +498,42 @@ class PosScreen extends Component
 
         $this->dispatch('toast', ['type' => 'success', 'message' => "Sale completed — Order #{$order->id}"]);
 
-        $this->reset(['items', 'customerId', 'couponCode', 'shippingDiscount', 'couponError', 'discountAmount', 'amountTendered', 'productSearch']);
+        $this->reset(['items', 'customerId', 'couponCode', 'shippingDiscount', 'couponError', 'discountAmount', 'amountTendered', 'productSearch', 'heldWarning', 'sellHeldStock']);
         $this->paymentMethod = 'cash';
+    }
+
+    private static function qty(float $v): string
+    {
+        return rtrim(rtrim(number_format($v, 3, '.', ''), '0'), '.') ?: '0';
+    }
+
+    /**
+     * In stock / held by pending orders / free, per cart line — shown under
+     * each line so the cashier sees what's already promised.
+     *
+     * @return array<int, array{stock: float, held: float, free: float, orders: int}>
+     */
+    protected function cartStock(): array
+    {
+        $stockService = app(StockService::class);
+        $held = $stockService->heldByPendingOrders(collect($this->items)->pluck('product_id'));
+        $out = [];
+
+        foreach ($this->items as $i => $item) {
+            $product = $item['product_id'] ? Product::find($item['product_id']) : null;
+            if (! $product) {
+                continue;
+            }
+            $variant = $item['variant_id'] ? ProductVariant::find($item['variant_id']) : null;
+            if ($product->product_type->value === 'variable' && ! $variant) {
+                continue; // stock is per variant
+            }
+            $stock = $stockService->available($product, $variant);
+            $h = $held["{$item['product_id']}:{$item['variant_id']}"] ?? ['quantity' => 0.0, 'orders' => 0];
+            $out[$i] = ['stock' => $stock, 'held' => $h['quantity'], 'free' => max(0.0, $stock - $h['quantity']), 'orders' => $h['orders']];
+        }
+
+        return $out;
     }
 
     public function render(): mixed
@@ -500,6 +571,7 @@ class PosScreen extends Component
             'couponOptions'    => $couponOptions,
             'selectedCustomer' => $selectedCustomer,
             'variantOptions'   => $variantOptions,
+            'cartStock'        => $this->cartStock(),
         ])->layout('layouts.admin.admin');
     }
 }
