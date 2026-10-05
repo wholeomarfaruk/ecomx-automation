@@ -10,6 +10,7 @@ use App\OrderIntake\Ai\AiExtractionException;
 use App\OrderIntake\Ai\AiOrderExtractor;
 use App\Services\Shipping\ShippingCalculator;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Smalot\PdfParser\Parser as PdfParser;
 
@@ -56,7 +57,17 @@ class OrderIntakeService
         $resolver = $this->resolver($catalog, $areas, $parsed, $defaultMethodId);
         $drafts = array_map(fn ($r) => $resolver->resolve($r), $parsed);
 
+        Log::info('AI Order: input', [
+            'user'      => $userId,
+            'text_len'  => mb_strlen($text),
+            'uploaded'  => array_map(fn ($f) => ['name' => $f->getClientOriginalName(), 'mime' => $f->getMimeType(), 'kb' => (int) round($f->getSize() / 1024)], $files),
+            'media'     => array_map(fn ($f) => ['mime' => $f['mime'], 'kb' => (int) round(strlen($f['data']) * 3 / 4 / 1024)], $media),
+            'parsed'    => count($drafts),
+            'force_ai'  => $forceAi,
+        ]);
+
         $reasons = $this->aiReasons($text, $media, $drafts, $forceAi);
+        Log::info('AI Order: ai decision', ['reasons' => $reasons, 'ai_available' => $this->settings->aiAvailable(), 'blocked' => $reasons ? $this->aiBlockedReason($userId) : null]);
         $ai = ['available' => $this->settings->aiAvailable(), 'used' => false, 'cached' => false, 'model' => null, 'error' => null, 'reasons' => $reasons];
         $resolution = OrderIntakeLog::RESOLUTION_PARSER;
         $usage = [];
@@ -104,6 +115,7 @@ class OrderIntakeService
                     $resolution = OrderIntakeLog::RESOLUTION_AI;
                     $ai['used'] = true;
                 } catch (AiExtractionException $e) {
+                    Log::warning('AI Order: ai failed', ['error' => $e->getMessage(), 'model' => $e->model, 'ms' => $e->latencyMs]);
                     report($e);
                     $resolution = OrderIntakeLog::RESOLUTION_AI_FAILED;
                     $ai['error'] = $e->getMessage();
@@ -112,6 +124,15 @@ class OrderIntakeService
                 }
             }
         }
+
+        Log::info('AI Order: result', [
+            'resolution' => $resolution,
+            'model'      => $ai['model'],
+            'cached'     => $ai['cached'],
+            'error'      => $ai['error'],
+            'drafts'     => count($drafts),
+            'ready'      => count(array_filter($drafts, fn ($d) => $d['ready'])),
+        ]);
 
         $log = OrderIntakeLog::create([
             'user_id'           => $userId,
@@ -177,6 +198,7 @@ class OrderIntakeService
             $mime = (string) $file->getMimeType();
 
             if (! in_array($mime, $allowed, true) || $file->getSize() > $this->settings->maxFileKb() * 1024) {
+                Log::warning('AI Order: file skipped', ['name' => $file->getClientOriginalName(), 'mime' => $mime, 'kb' => (int) round($file->getSize() / 1024), 'allowed' => $allowed]);
                 continue;
             }
 

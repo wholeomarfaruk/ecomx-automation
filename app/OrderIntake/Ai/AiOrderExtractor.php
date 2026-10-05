@@ -4,6 +4,7 @@ namespace App\OrderIntake\Ai;
 
 use App\OrderIntake\IntakeSettings;
 use App\OrderIntake\Text;
+use Illuminate\Support\Facades\Log;
 
 /**
  * The AI fallback: sends the message text, screenshots/PDFs, what the parser
@@ -80,6 +81,7 @@ class AiOrderExtractor
                     'latency_ms' => $latency,
                 ];
             } catch (AiExtractionException $e) {
+                Log::info('AI Order: attempt failed', ['try' => $tries, 'model' => $e->model ?? $model, 'ms' => $e->latencyMs, 'error' => $e->getMessage()]);
                 $usage = self::addUsage($usage, $e->usage);
                 $latency += (int) $e->latencyMs;
                 $last = $e;

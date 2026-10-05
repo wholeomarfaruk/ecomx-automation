@@ -1352,7 +1352,9 @@
                 const files = await Promise.all(this.intake.files.map((f) => this.shrinkImage(Alpine.raw(f.file))));
                 await this.uploadIntakeFiles(files);
                 this.intake.busyText = forceAi || files.length ? 'Reading with AI… up to a minute with free models' : 'Reading…';
+                console.info('[AI Order] sending', { textLength: text.length, files: files.map((f) => ({ name: f.name, type: f.type, kb: Math.round(f.size / 1024) })), forceAi: !!forceAi });
                 const res = await this.$wire.extractOrders(text, this.intake.source, !!forceAi);
+                console.info('[AI Order] result', res);
                 if (res?.error) this.intake.error = res.error;
                 // A request cut off by a server time limit comes back empty — say so instead of "0 orders".
                 else if (!res || typeof res !== 'object' || !Array.isArray(res.drafts) || !Array.isArray(res.rows)) {

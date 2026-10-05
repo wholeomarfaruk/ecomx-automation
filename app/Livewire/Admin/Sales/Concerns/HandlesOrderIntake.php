@@ -44,6 +44,8 @@ trait HandlesOrderIntake
         ]);
 
         if ($validator->fails()) {
+            \Illuminate\Support\Facades\Log::warning('AI Order: rejected', ['error' => $validator->errors()->first(), 'files' => array_map(fn ($f) => [$f->getClientOriginalName(), $f->getMimeType(), $f->getSize()], $files)]);
+
             return ['error' => $validator->errors()->first()];
         }
         if (trim($text) === '' && $files === []) {
