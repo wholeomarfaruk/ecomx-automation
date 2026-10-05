@@ -105,18 +105,10 @@ class ApplyCourierStatus
 
         $order->save();
 
-        if (! (bool) Setting::get('book_on_order_confirm', true, 'inventory')) {
-            return;
-        }
-
-        if (! $from->isBookable() && $to->isBookable()) {
-            try {
-                $this->stockService->bookOrder($order->load('items'));
-            } catch (InsufficientStockException $e) {
-                Log::warning("Order #{$order->id}: stock booking skipped on courier status change — {$e->getMessage()}");
-            }
-        } elseif ($from->isBookable() && ! $to->isBookable()) {
-            $this->stockService->releaseBooking($order->load('items'), $to->bookingReleaseType());
+        try {
+            $this->stockService->onStatusChange($order->load('items'), $from, $to);
+        } catch (InsufficientStockException $e) {
+            Log::warning("Order #{$order->id}: stock not taken on courier status change — {$e->getMessage()}");
         }
     }
 }

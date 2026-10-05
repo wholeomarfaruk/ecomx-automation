@@ -124,7 +124,7 @@ class PlaceBulkOrder
 
             $order->recalculateTotals();
 
-            if ((bool) Setting::get('book_on_order_confirm', true, 'inventory') && $status->isBookable()) {
+            if ($status->isBookable() && $this->stockService->reservesOnConfirm()) {
                 $order->load('items');
                 $this->stockService->bookOrder($order);
             }

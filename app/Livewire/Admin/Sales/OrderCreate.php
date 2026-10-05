@@ -323,10 +323,9 @@ class OrderCreate extends Component
                     $order->recalculateTotals();
                 }
 
-                $bookOnConfirm = (bool) Setting::get('book_on_order_confirm', true, 'inventory');
                 $status = OrderStatus::from($this->status);
 
-                if ($bookOnConfirm && $status->isBookable()) {
+                if ($status->isBookable() && app(StockService::class)->reservesOnConfirm()) {
                     $order->load('items');
                     app(StockService::class)->bookOrder($order);
                 }

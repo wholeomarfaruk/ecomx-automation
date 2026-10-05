@@ -15,6 +15,7 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Setting;
 use App\Models\Warehouse;
+use App\Services\Stock\OwnOrderStock;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
@@ -45,6 +46,51 @@ class StockService
     public function usesOwnStock(): bool
     {
         return ! Setting::get('inventory_enabled', true, 'modules');
+    }
+
+    /**
+     * Whether an order's stock is taken when it's confirmed. Always with the
+     * Inventory module off (that's the only time stock_quantity moves for an
+     * order, and the setting lives on the Inventory settings page); with it
+     * on, Inventory → "book stock on order confirm".
+     */
+    public function reservesOnConfirm(): bool
+    {
+        return $this->usesOwnStock() || (bool) Setting::get('book_on_order_confirm', true, 'inventory');
+    }
+
+    /**
+     * What an order's status change means for stock — the one call every
+     * status-changing place makes after saving the new status. Inventory
+     * off: every change (Returning → Returned too) re-syncs the lines'
+     * stock_quantity. Inventory on: booking is taken when the order enters
+     * the confirmed group and released when it leaves it.
+     *
+     * @throws InsufficientStockException
+     */
+    public function onStatusChange(Order $order, \App\Enums\Sales\OrderStatus $from, \App\Enums\Sales\OrderStatus $to): void
+    {
+        if ($this->usesOwnStock()) {
+            $this->own()->sync($order);
+
+            return;
+        }
+
+        if (! $this->reservesOnConfirm()) {
+            return;
+        }
+
+        if (! $from->isBookable() && $to->isBookable()) {
+            $this->bookOrder($order);
+        } elseif ($from->isBookable() && ! $to->isBookable()) {
+            $this->releaseBooking($order, $to->bookingReleaseType());
+        }
+    }
+
+    /** Order stock on the items' own stock_quantity — the Inventory-off path. */
+    protected function own(): OwnOrderStock
+    {
+        return app(OwnOrderStock::class);
     }
 
     /** The item's own stock_quantity (variant's if given, else the product's). */
@@ -249,6 +295,12 @@ class StockService
      */
     public function bookOrder(Order $order, ?Warehouse $warehouse = null): void
     {
+        if ($this->usesOwnStock()) {
+            $this->own()->sync($order);
+
+            return;
+        }
+
         if ($this->orderAlreadyBooked($order)) {
             return;
         }
@@ -276,6 +328,13 @@ class StockService
      */
     public function releaseBooking(Order $order, string $type, ?Warehouse $warehouse = null): void
     {
+        if ($this->usesOwnStock()) {
+            // Callers save the new status first — give back what it no longer holds.
+            $this->own()->sync($order);
+
+            return;
+        }
+
         $warehouse ??= Warehouse::default();
 
         DB::transaction(function () use ($order, $type, $warehouse) {
@@ -353,6 +412,10 @@ class StockService
     /** Whether this order's stock is currently booked (confirmed and not yet released/completed). */
     public function isOrderBooked(Order $order): bool
     {
+        if ($this->usesOwnStock()) {
+            return $order->status->isBookable() || $this->own()->holds($order);
+        }
+
         return $this->orderAlreadyBooked($order);
     }
 
@@ -365,6 +428,12 @@ class StockService
      */
     public function bookItem(OrderItem $item, ?string $note = null, ?Warehouse $warehouse = null): void
     {
+        if ($this->usesOwnStock()) {
+            $this->own()->syncItem($item);
+
+            return;
+        }
+
         if (! $item->product_id || (float) $item->quantity <= 0) {
             return;
         }
@@ -379,6 +448,12 @@ class StockService
      */
     public function releaseItemBooking(OrderItem $item, ?string $note = null, ?Warehouse $warehouse = null): void
     {
+        if ($this->usesOwnStock()) {
+            $this->own()->releaseItem($item);
+
+            return;
+        }
+
         if (! $item->product_id || (float) $item->quantity <= 0) {
             return;
         }
@@ -397,6 +472,12 @@ class StockService
     public function reverseItemForDeletion(OrderItem $item, ?Warehouse $warehouse = null): void
     {
         if (! $item->product_id) {
+            return;
+        }
+
+        if ($this->usesOwnStock()) {
+            $this->own()->releaseItem($item);
+
             return;
         }
 
@@ -438,6 +519,12 @@ class StockService
      */
     public function releaseOrder(Order $order, ?Warehouse $warehouse = null): void
     {
+        if ($this->usesOwnStock()) {
+            $this->own()->sync($order);
+
+            return;
+        }
+
         if (! $this->orderAlreadyCommitted($order) || $this->orderAlreadyReleased($order)) {
             return;
         }
@@ -471,6 +558,13 @@ class StockService
      */
     public function restockReturnedItem(OrderItem $item, float $returnedQuantity, ?Warehouse $warehouse = null): void
     {
+        if ($this->usesOwnStock()) {
+            // returned_quantity is already saved — the line now holds only the rest.
+            $this->own()->syncItem($item->fresh() ?? $item);
+
+            return;
+        }
+
         if (! $item->product_id || ! $this->orderAlreadyCommitted($item->order)) {
             return;
         }

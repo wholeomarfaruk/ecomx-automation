@@ -238,7 +238,7 @@ class OrderEditor extends Component
 
         $stock = app(StockService::class);
         $booked = $order->status->isBookable()
-            && (bool) Setting::get('book_on_order_confirm', true, 'inventory')
+            && $stock->reservesOnConfirm()
             && $stock->isOrderBooked($order);
 
         $existing = $order->items->keyBy('id');

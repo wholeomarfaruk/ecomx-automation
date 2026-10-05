@@ -398,13 +398,18 @@ class PosScreen extends Component
                         'total_amount'   => $unitPrice * $quantity,
                     ]);
 
-                    if ($product) {
+                    // Inventory off: taken below for the whole order, off stock_quantity (no ledger).
+                    if ($product && ! $stockService->usesOwnStock()) {
                         $stockService->decrease(
                             $product, $variant, $quantity, 'sale',
                             warehouse: $warehouse, reference: $orderItem,
                             note: "POS sale — Order #{$order->id}",
                         );
                     }
+                }
+
+                if ($stockService->usesOwnStock()) {
+                    $stockService->bookOrder($order->load('items'));
                 }
 
                 if ($this->couponCode !== '' && $this->couponError === '') {

@@ -233,9 +233,7 @@ trait BooksCourierShipments
             DB::transaction(function () use ($order, $oldStatus) {
                 $order->update(['status' => OrderStatus::PROCESSING]);
 
-                if ((bool) Setting::get('book_on_order_confirm', true, 'inventory') && ! $oldStatus->isBookable()) {
-                    app(StockService::class)->bookOrder($order->load('items'));
-                }
+                app(StockService::class)->onStatusChange($order->load('items'), $oldStatus, OrderStatus::PROCESSING);
             });
         } catch (InsufficientStockException $e) {
             return " — status not changed to Processing: {$e->getMessage()}";

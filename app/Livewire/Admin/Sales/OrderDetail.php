@@ -181,13 +181,7 @@ class OrderDetail extends Component
                     'fulfillment_status' => $this->fulfillmentStatus,
                 ]);
 
-                $bookOnConfirm = (bool) Setting::get('book_on_order_confirm', true, 'inventory');
-
-                if ($bookOnConfirm && ! $oldStatus->isBookable() && $newStatus->isBookable()) {
-                    $stockService->bookOrder($order);
-                } elseif ($bookOnConfirm && $oldStatus->isBookable() && ! $newStatus->isBookable()) {
-                    $stockService->releaseBooking($order, $newStatus->bookingReleaseType());
-                }
+                $stockService->onStatusChange($order, $oldStatus, $newStatus);
             });
         } catch (InsufficientStockException $e) {
             $this->dispatch('toast', ['type' => 'error', 'message' => $e->getMessage()]);
