@@ -6,7 +6,7 @@ use App\Marketing\Services\MarketingEventService;
 use App\Models\Order;
 
 /**
- * "Send Purchase to Meta" on the order page and the orders list — sends the
+ * "Send Purchase to Meta" on the order page — sends the
  * order's Purchase to Meta Conversions API with action_source 'chat' (see
  * MarketingEventService::sendPurchaseFromAdmin). The result shows on the
  * order's timeline.
