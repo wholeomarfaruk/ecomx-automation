@@ -8,6 +8,7 @@ use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\OrderStatus;
 use App\Enums\Sales\PaymentStatus;
 use App\Exceptions\Inventory\InsufficientStockException;
+use App\Livewire\Admin\Sales\Concerns\SendsPurchaseToMeta;
 use App\Livewire\Concerns\BooksCourierShipments;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -30,6 +31,7 @@ class Orders extends Component
 {
     use WithPagination;
     use BooksCourierShipments;
+    use SendsPurchaseToMeta;
 
     protected string $paginationTheme = 'tailwind';
 

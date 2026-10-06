@@ -270,6 +270,16 @@
                                                     Book Courier
                                                 </button>
                                             @endif
+                                            @if(auth()->user()?->hasRole('superadmin') || auth()->user()?->can('order.edit'))
+                                                <button wire:click="sendPurchaseToMeta({{ $order->id }})" @click="open = false" type="button"
+                                                    wire:confirm="Send a Purchase event for Order #{{ $order->id }} to Meta Conversions API (action source: chat)?"
+                                                    class="flex items-center gap-2.5 w-full px-4 py-2 text-gray-700 hover:bg-gray-50 transition">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"/>
+                                                    </svg>
+                                                    Send Purchase to Meta
+                                                </button>
+                                            @endif
                                             @if(auth()->user()?->hasRole('superadmin') || auth()->user()?->can('order.delete'))
                                                 <div class="my-1 border-t border-gray-100"></div>
                                                 <button type="button"

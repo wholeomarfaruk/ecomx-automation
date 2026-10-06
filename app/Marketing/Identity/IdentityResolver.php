@@ -4,6 +4,7 @@ namespace App\Marketing\Identity;
 
 use App\Marketing\Context\MarketingContext;
 use App\Marketing\Contracts\EventContract;
+use App\Marketing\Events\CustomChatPurchaseEvent;
 use App\Marketing\Events\Purchase;
 use App\Models\Country;
 use App\Models\DeliveryAddress;
@@ -61,7 +62,7 @@ final class IdentityResolver
         mixed $customer,
         ?EventContract $event,
     ): ?DeliveryAddress {
-        if ($event instanceof Purchase && is_numeric($event->orderId)) {
+        if (($event instanceof Purchase || $event instanceof CustomChatPurchaseEvent) && is_numeric($event->orderId)) {
             $addressId = Order::whereKey($event->orderId)->value('shipping_address_id');
 
             $address = $addressId

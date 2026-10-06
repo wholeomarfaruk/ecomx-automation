@@ -6,9 +6,13 @@ use App\Marketing\Attribution\AttributionTouch;
 use App\Marketing\Attribution\MarketingAttribution;
 use App\Marketing\Context\MarketingContext;
 use App\Marketing\Destinations\DestinationRegistry;
+use App\Marketing\DTOs\DestinationResult;
+use App\Marketing\Events\CustomChatPurchaseEvent;
 use App\Marketing\Events\MarketingEventFactory;
+use App\Marketing\Events\Purchase;
 use App\Marketing\Contracts\EventContract;
 use App\Models\Customer;
+use App\Models\Order;
 use App\Models\Marketing\MarketingEvent as MarketingEventModel;
 use App\Models\Marketing\MarketingEventDestination;
 use App\Models\User;
@@ -73,6 +77,8 @@ final class DispatchMarketingEventJob implements ShouldQueue
         $result = $destination->send(event: $event, context: $context);
         $durationMs = (int) round((microtime(true) - $startedAt) * 1000);
 
+        $this->logOnOrderTimeline($event, $destinationKey, $result);
+
         if (! $result->success) {
             Log::channel('marketing')->warning("Marketing delivery to [{$destinationKey}] failed", [
                 'event' => $event->eventName(),
@@ -113,6 +119,51 @@ final class DispatchMarketingEventJob implements ShouldQueue
             throw new \RuntimeException(
                 "Marketing destination [{$destinationKey}] failed retryably: {$result->errorMessage}"
             );
+        }
+    }
+
+    /**
+     * A Purchase's delivery result (sent / failed, each attempt) goes on its
+     * order's timeline, so admin can see whether Meta got it. Never allowed
+     * to break delivery itself.
+     */
+    private function logOnOrderTimeline(
+        EventContract $event,
+        string $destinationKey,
+        DestinationResult $result,
+    ): void {
+        if (! ($event instanceof Purchase || $event instanceof CustomChatPurchaseEvent) || ! is_numeric($event->orderId)) {
+            return;
+        }
+
+        try {
+            $order = Order::find((int) $event->orderId);
+
+            if (! $order) {
+                return;
+            }
+
+            $label = $destinationKey === 'meta' ? 'Meta Conversions API' : $destinationKey;
+            $source = $event instanceof CustomChatPurchaseEvent ? $event->actionSource() : 'website';
+
+            activity('marketing')
+                ->causedByAnonymous()
+                ->performedOn($order)
+                ->event($result->success ? 'capi_sent' : 'capi_failed')
+                ->withProperties([
+                    'destination' => $destinationKey,
+                    'event_id' => $event->eventId(),
+                    'action_source' => $source,
+                    'attempt' => $this->attempts(),
+                    'http_status' => $result->httpStatus,
+                    'error_code' => $result->errorCode,
+                    'error_message' => $result->errorMessage,
+                ])
+                ->log($result->success
+                    ? "Purchase event sent to {$label} ({$source})"
+                    : "Purchase event to {$label} failed ({$source}): ".mb_strimwidth((string) $result->errorMessage, 0, 200, '…'));
+        } catch (Throwable $e) {
+            report($e);
         }
     }
 

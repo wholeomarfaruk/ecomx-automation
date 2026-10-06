@@ -8,6 +8,7 @@ use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\OrderStatus;
 use App\Exceptions\Inventory\InsufficientStockException;
 use App\Livewire\Admin\Sales\Concerns\HandlesOrderIntake;
+use App\Marketing\Services\MarketingEventService;
 use App\Models\Account;
 use App\Models\InventoryStock;
 use App\Models\Product;
@@ -213,7 +214,10 @@ class BulkOrderCreate extends Component
             'admin_note'  => 'nullable|string|max:1000',
             'advance_account_id' => 'nullable|integer|exists:accounts,id',
             'advance_method'     => 'nullable|string|max:20',
+            'send_capi'          => 'nullable|boolean',
         ])->validate();
+
+        $sendCapi = (bool) ($settings['send_capi'] ?? false);
 
         $sources = array_column(OrderSource::cases(), 'value');
         $results = [];
@@ -262,6 +266,16 @@ class BulkOrderCreate extends Component
                     ->withProperties(['batch' => $settings['batch']])
                     ->event('created')
                     ->log("Order #{$order->id} was created from bulk order {$settings['batch']}");
+
+                // After the order is committed, and never allowed to fail
+                // the row — the result shows on the order's timeline.
+                if ($sendCapi) {
+                    try {
+                        app(MarketingEventService::class)->sendPurchaseFromAdmin($order);
+                    } catch (\Throwable $e) {
+                        report($e);
+                    }
+                }
 
                 $results[$key] = [
                     'ok'    => true,

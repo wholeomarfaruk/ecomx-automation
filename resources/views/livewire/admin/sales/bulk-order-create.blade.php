@@ -124,6 +124,10 @@
                         <input type="checkbox" x-model="settings.removePlaced" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                         Remove rows once their order is placed
                     </label>
+                    <label class="inline-flex items-center gap-2 cursor-pointer" title="Each placed order's Purchase goes to Meta Conversions API with action source &quot;chat&quot; — the result shows on the order's timeline">
+                        <input type="checkbox" x-model="settings.sendCapi" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        Send Purchase event to Meta (server-side CAPI)
+                    </label>
                 </div>
             </div>
         </div>
@@ -618,7 +622,7 @@
         settings: {
             status: 'pending', source: 'messenger', methodId: config.defaultMethodId ? String(config.defaultMethodId) : '',
             advanceAccountId: config.accounts.length === 1 ? String(config.accounts[0].id) : '', advanceMethod: 'bkash',
-            adminNote: '', merge: true, smartZone: true, removePlaced: false,
+            adminNote: '', merge: true, smartZone: true, removePlaced: false, sendCapi: false,
         },
         customers: {},          // national phone → lookup result
         quotes: {},             // signature → amount
@@ -1222,7 +1226,7 @@
             const d = new Date();
             const pad = (n) => String(n).padStart(2, '0');
             const batch = `B${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
-            const settings = { status: this.settings.status, batch, admin_note: this.settings.adminNote, advance_account_id: this.settings.advanceAccountId ? +this.settings.advanceAccountId : null, advance_method: this.settings.advanceMethod };
+            const settings = { status: this.settings.status, batch, admin_note: this.settings.adminNote, advance_account_id: this.settings.advanceAccountId ? +this.settings.advanceAccountId : null, advance_method: this.settings.advanceMethod, send_capi: !!this.settings.sendCapi };
 
             this.submitting = true;
             this.progress = { done: 0, total: groups.length, ok: 0, failed: 0 };

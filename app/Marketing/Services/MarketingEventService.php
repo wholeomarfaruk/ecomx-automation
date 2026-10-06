@@ -9,6 +9,8 @@ use App\Marketing\Context\MarketingContext;
 use App\Marketing\Context\MarketingContextBuilder;
 use App\Marketing\Contracts\EventContract;
 use App\Marketing\Data\MarketingEventData;
+use App\Marketing\Enums\MarketingDeliveryStatus;
+use App\Marketing\Events\CustomChatPurchaseEvent;
 use App\Marketing\Events\Purchase;
 use App\Marketing\Identity\IdentityResolver;
 use App\Marketing\Jobs\DispatchMarketingEventJob;
@@ -122,7 +124,7 @@ final class MarketingEventService
     ): MarketingEventModel {
         $attribution = $context->attribution ?? $this->attributionService->resolve($context);
 
-        $orderId = $event instanceof Purchase ? $this->resolveOrderId($event->orderId) : null;
+        $orderId = $event instanceof Purchase || $event instanceof CustomChatPurchaseEvent ? $this->resolveOrderId($event->orderId) : null;
 
         if ($orderId) {
             $existing = MarketingEventModel::query()
@@ -181,7 +183,7 @@ final class MarketingEventService
                 'gclid' => $context->trackingParameters['gclid'] ?? null,
                 'ttclid' => $context->trackingParameters['ttclid'] ?? null,
 
-                'event_source' => 'website',
+                'event_source' => $event instanceof CustomChatPurchaseEvent ? $event->actionSource() : 'website',
                 'event_channel' => 'server',
 
                 'commerce_data' => $data ?: null,
@@ -341,6 +343,102 @@ final class MarketingEventService
     }
 
     /**
+     * Sends a CustomChatPurchaseEvent for an order taken in admin (bulk
+     * sheet, order page, orders list) to the server-side destinations (Meta
+     * CAPI) as a Purchase with action_source 'chat' — there's no browser, so no IP/user agent/fbp,
+     * just the customer's hashed details from the order.
+     *
+     * Once per order: if a Purchase for it was already delivered (from the
+     * storefront or an earlier send) nothing is sent again. Otherwise the
+     * existing Purchase row (if any) and its event_id are reused, so a
+     * retry never creates a second event — the order id is the event id,
+     * the same as the storefront's, so Meta deduplicates on it too.
+     *
+     * The delivery result lands on the order's timeline
+     * (DispatchMarketingEventJob).
+     *
+     * @return 'queued'|'already_sent'|'already_queued'|'not_configured'|'failed'
+     */
+    public function sendPurchaseFromAdmin(Order $order): string
+    {
+        if (config('marketing.destinations', []) === []) {
+            return 'not_configured';
+        }
+
+        $existing = MarketingEventModel::query()
+            ->where('order_id', $order->id)
+            ->where('event_name', 'Purchase')
+            ->first();
+
+        if ($existing && $existing->destinations()->where('status', MarketingDeliveryStatus::SUCCESS)->exists()) {
+            return 'already_sent';
+        }
+
+        // Sent from admin moments ago and the worker hasn't picked it up yet
+        // (its delivery row is only created when the job runs) — don't queue
+        // a second job. After an hour it's treated as lost and can be resent.
+        if ($existing
+            && $existing->event_source === 'chat'
+            && $existing->created_at?->gt(now()->subHour())
+            && ! $existing->destinations()->exists()) {
+            return 'already_queued';
+        }
+
+        $order->loadMissing(['items.product', 'customer']);
+
+        $currency = $order->currency ?: 'BDT';
+
+        // A line whose product was since deleted has no catalog id to send.
+        $items = $order->items->filter(fn ($item) => $item->product_id !== null)->map(fn ($item) => [
+            'item_id' => CatalogItemId::line($item->product, $item->product_id, $item->variant_id),
+            'product_id' => $item->product_id,
+            'variant_id' => $item->variant_id,
+            'item_name' => $item->product_name,
+            'sku' => $item->sku,
+            'quantity' => (float) $item->quantity,
+            'price' => (float) $item->unit_price,
+            'currency' => $currency,
+        ])->values()->all();
+
+        $event = CustomChatPurchaseEvent::create(
+            value: (float) $order->total_amount,
+            currency: $currency,
+            orderId: $order->id,
+            items: $items,
+            shipping: max(0, (float) $order->shipping_amount - (float) $order->shipping_discount),
+            eventId: $existing?->event_id ?? (string) $order->id,
+        );
+
+        $context = new MarketingContext(customer: $order->customer);
+
+        $this->record(
+            event: $event,
+            context: $context,
+            deviceId: null,
+            customerId: $order->customer_id,
+            sessionId: null,
+        );
+
+        activity('marketing')
+            ->causedBy(auth()->user())
+            ->performedOn($order)
+            ->event('capi_queued')
+            ->log('Purchase event queued for Meta Conversions API (chat)');
+
+        try {
+            $this->dispatchDestinations($event, $context);
+        } catch (\Throwable $e) {
+            // With a sync queue a failed delivery throws right here; the job
+            // has already put the failure on the order's timeline.
+            report($e);
+
+            return 'failed';
+        }
+
+        return 'queued';
+    }
+
+    /**
      * Purchase::orderId is string|int|null on the canonical event (it may be
      * a human-readable order number in future call sites) — the DB column
      * is a numeric FK to orders.id, so only a genuinely numeric value maps.
@@ -374,6 +472,8 @@ final class MarketingEventService
     ): array {
         return [
             'name' => $event->eventName(),
+            // Which class to rebuild when it differs from the event name.
+            'kind' => $event instanceof CustomChatPurchaseEvent ? CustomChatPurchaseEvent::KIND : null,
             'event_id' => $event->eventId(),
             'occurred_at' => $event->occurredAt()->toISOString(),
 

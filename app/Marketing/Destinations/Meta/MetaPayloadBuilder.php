@@ -5,6 +5,7 @@ namespace App\Marketing\Destinations\Meta;
 use App\Marketing\Context\MarketingContext;
 use App\Marketing\Contracts\EventContract;
 use App\Marketing\Events\AddToCart;
+use App\Marketing\Events\CustomChatPurchaseEvent;
 use App\Marketing\Events\InitiateCheckout;
 use App\Marketing\Events\Purchase;
 use App\Marketing\Events\Search;
@@ -38,7 +39,7 @@ final class MetaPayloadBuilder
                     'event_id' => $event->eventId(),
                     'event_source_url' => $context->pageUrl,
                     'referrer_url' => $context->referrer,
-                    'action_source' => 'website',
+                    'action_source' => $event instanceof CustomChatPurchaseEvent ? $event->actionSource() : 'website',
                     'user_data' => $this->buildUserData($event, $context),
                     'custom_data' => $this->customData($event),
                 ], fn ($value) => $value !== null && $value !== []),
@@ -163,7 +164,7 @@ final class MetaPayloadBuilder
         EventContract $event,
     ): array {
         return match (true) {
-            $event instanceof Purchase => $this->buildPurchaseData($event),
+            $event instanceof Purchase, $event instanceof CustomChatPurchaseEvent => $this->buildPurchaseData($event),
             $event instanceof ViewContent, $event instanceof AddToCart => $this->buildContentData($event),
             $event instanceof InitiateCheckout => $this->buildCheckoutData($event),
             $event instanceof Search => $this->buildSearchData($event),
@@ -172,7 +173,7 @@ final class MetaPayloadBuilder
     }
 
     private function buildPurchaseData(
-        Purchase $event,
+        Purchase|CustomChatPurchaseEvent $event,
     ): array {
         return $this->withoutEmpty([
             'value' => $event->value,
@@ -182,6 +183,8 @@ final class MetaPayloadBuilder
             'contents' => $this->contents($event->items),
             'content_ids' => $this->contentIds($event->items),
             'content_type' => 'product',
+            // Line count — same as InitiateCheckout's num_items.
+            'num_items' => $event->items !== [] ? count($event->items) : null,
         ]);
     }
 

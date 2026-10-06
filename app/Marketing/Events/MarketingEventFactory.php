@@ -10,12 +10,13 @@ final class MarketingEventFactory
     public function make(
         array $payload,
     ): MarketingEvent {
-        return match ($payload['name'] ?? null) {
+        return match ($payload['kind'] ?? $payload['name'] ?? null) {
             'PageView' => $this->makePageView($payload),
             'ViewContent' => $this->makeViewContent($payload),
             'AddToCart' => $this->makeAddToCart($payload),
             'InitiateCheckout' => $this->makeInitiateCheckout($payload),
             'Purchase' => $this->makePurchase($payload),
+            CustomChatPurchaseEvent::KIND => $this->makeCustomChatPurchase($payload),
             'Lead' => $this->makeLead($payload),
             'Search' => $this->makeSearch($payload),
             default => throw new InvalidArgumentException(
@@ -105,6 +106,25 @@ final class MarketingEventFactory
         $data = $payload['data'] ?? [];
 
         return new Purchase(
+            eventId: $payload['event_id'],
+            occurredAt: $this->occurredAt($payload),
+
+            value: (float) ($data['value'] ?? 0),
+            currency: (string) ($data['currency'] ?? 'BDT'),
+            orderId: $data['order_id'] ?? null,
+            items: $data['items'] ?? [],
+            shipping: isset($data['shipping']) ? (float) $data['shipping'] : null,
+
+            parameters: $payload['parameters'] ?? [],
+        );
+    }
+
+    private function makeCustomChatPurchase(
+        array $payload,
+    ): CustomChatPurchaseEvent {
+        $data = $payload['data'] ?? [];
+
+        return new CustomChatPurchaseEvent(
             eventId: $payload['event_id'],
             occurredAt: $this->occurredAt($payload),
 

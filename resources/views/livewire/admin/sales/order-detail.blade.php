@@ -268,11 +268,23 @@
 
             {{-- Timeline (activity log for this order) --}}
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <h2 class="text-sm font-semibold text-gray-800 mb-4">Timeline</h2>
+                <div class="flex items-center justify-between gap-3 mb-4">
+                    <h2 class="text-sm font-semibold text-gray-800">Timeline</h2>
+                    @if(auth()->user()?->hasRole('superadmin') || auth()->user()?->can('order.edit'))
+                        <button type="button" wire:click="sendPurchaseToMeta({{ $order->id }})" wire:loading.attr="disabled" wire:target="sendPurchaseToMeta"
+                            wire:confirm="Send a Purchase event for Order #{{ $order->id }} to Meta Conversions API (action source: chat)?"
+                            class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"/>
+                            </svg>
+                            Send Purchase to Meta
+                        </button>
+                    @endif
+                </div>
                 <ol class="relative border-l border-gray-200 ml-2 space-y-4">
                     @foreach($timeline as $entry)
                         <li class="ml-4" x-data="{ open: false }">
-                            <span class="absolute -left-1.5 mt-1.5 w-3 h-3 rounded-full border-2 border-white {{ $entry->event === 'created' ? 'bg-emerald-500' : 'bg-indigo-400' }}"></span>
+                            <span class="absolute -left-1.5 mt-1.5 w-3 h-3 rounded-full border-2 border-white {{ match ($entry->event) { 'created', 'capi_sent' => 'bg-emerald-500', 'capi_failed' => 'bg-red-500', default => 'bg-indigo-400' } }}"></span>
                             <p class="text-sm text-gray-800">{{ $entry->description }}</p>
                             <p class="text-xs text-gray-400">
                                 {{ local_time($entry->created_at)?->format('d M Y, h:i A') }}

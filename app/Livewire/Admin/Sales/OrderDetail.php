@@ -18,6 +18,7 @@ use App\Enums\Sales\OrderStatus;
 use App\Enums\Sales\PaymentMethod;
 use App\Enums\Sales\PaymentStatus;
 use App\Exceptions\Inventory\InsufficientStockException;
+use App\Livewire\Admin\Sales\Concerns\SendsPurchaseToMeta;
 use App\Livewire\Concerns\BooksCourierShipments;
 use App\Models\Account;
 use App\Models\AccountsCustomerAdvance;
@@ -36,6 +37,7 @@ use Spatie\Activitylog\Models\Activity;
 class OrderDetail extends Component
 {
     use BooksCourierShipments;
+    use SendsPurchaseToMeta;
 
     public int $orderId;
 
