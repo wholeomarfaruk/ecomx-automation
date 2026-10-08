@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class OrderPayment extends Model
 {
     protected $fillable = [
-        'order_id', 'type', 'payment_method', 'cash_account_id', 'transaction_id', 'amount', 'status', 'paid_at',
+        'order_id', 'type', 'payment_method', 'cash_account_id', 'transaction_id', 'note', 'amount', 'status', 'paid_at',
     ];
 
     protected function casts(): array

@@ -27,6 +27,7 @@ use App\Models\InventoryBatch;
 use App\Models\JournalEntry;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderPayment;
 use App\Models\Setting;
 use App\Services\StockService;
 use Illuminate\Support\Facades\DB;
@@ -51,10 +52,15 @@ class OrderDetail extends Component
     public string $courierStatus   = '';
 
     public bool   $paymentModal    = false;
+    public ?int   $editingPaymentId = null;
+    /** Editing a payment that's already paid — its journal is posted, so only the transaction ID and note can change. */
+    public bool   $editingPaidPayment = false;
+    public string $paymentMethod   = 'cash';
     public string $paymentAccountId = '';
     public string $transactionId   = '';
     public string $paymentAmount   = '';
     public string $paymentStatusNew = 'paid';
+    public string $paymentNote     = '';
 
     public bool   $refundModal        = false;
     public string $refundAmount       = '';
@@ -293,71 +299,220 @@ class OrderDetail extends Component
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Courier details updated' . $statusNote]);
     }
 
+    protected function accountsEnabled(): bool
+    {
+        return (bool) Setting::get('accounts_enabled', true, 'modules');
+    }
+
     public function openPaymentModal(): void
     {
-        $this->reset(['paymentAccountId', 'transactionId', 'paymentAmount']);
+        $this->reset(['editingPaymentId', 'editingPaidPayment', 'paymentAccountId', 'transactionId', 'paymentAmount', 'paymentNote']);
+        $this->paymentMethod = PaymentMethod::CASH->value;
         $this->paymentStatusNew = 'paid';
         $this->resetValidation();
         $this->paymentModal = true;
     }
 
-    public function addPayment(): void
+    public function editPayment(int $paymentId): void
     {
+        $payment = $this->findOrderPayment($paymentId);
+
+        $this->resetValidation();
+        $this->editingPaymentId   = $payment->id;
+        $this->editingPaidPayment = $payment->status === PaymentStatus::PAID;
+        $this->paymentMethod      = $payment->payment_method?->value ?? PaymentMethod::CASH->value;
+        $this->paymentAccountId   = $payment->cash_account_id ? (string) $payment->cash_account_id : '';
+        $this->transactionId      = $payment->transaction_id ?? '';
+        $this->paymentAmount      = (string) $payment->amount;
+        $this->paymentStatusNew   = $payment->status->value;
+        $this->paymentNote        = $payment->note ?? '';
+        $this->paymentModal       = true;
+    }
+
+    /** Picking a cash/bank account pre-fills the method from its subtype — the admin can still change it. */
+    public function updatedPaymentAccountId(string $value): void
+    {
+        if ($value !== '' && $account = Account::find((int) $value)) {
+            $this->paymentMethod = $this->paymentMethodForAccount($account)->value;
+        }
+    }
+
+    /**
+     * Add Payment and Edit Payment share this. A payment that turns paid
+     * here (new, or a pending/failed one edited to paid) posts its journal
+     * the same way it always has — see postPaidPayment().
+     */
+    public function savePayment(): void
+    {
+        $order = Order::findOrFail($this->orderId);
+
+        if ($this->editingPaidPayment) {
+            $this->validate([
+                'transactionId' => 'nullable|string|max:255',
+                'paymentNote'   => 'nullable|string|max:1000',
+            ]);
+
+            $this->findOrderPayment($this->editingPaymentId)->update([
+                'transaction_id' => $this->transactionId ?: null,
+                'note'           => $this->paymentNote ?: null,
+            ]);
+
+            $this->logPaymentActivity($order, "Payment details updated for Order #{$order->id}");
+            $this->paymentModal = false;
+            $this->dispatch('toast', ['type' => 'success', 'message' => 'Payment updated']);
+            return;
+        }
+
+        $accountsOn = $this->accountsEnabled();
+        $methods = collect(PaymentMethod::cases())->reject(fn ($m) => $m === PaymentMethod::STORE_CREDIT)->map->value->implode(',');
+
+        // An unconfirmed (pending) payment hasn't hit any account yet, so the
+        // account is only required once it's recorded as paid.
         $this->validate([
-            'paymentAccountId' => 'required|exists:accounts,id',
+            'paymentMethod'    => 'required|in:' . $methods,
+            'paymentAccountId' => ($accountsOn && $this->paymentStatusNew === 'paid' ? 'required' : 'nullable') . '|exists:accounts,id',
             'transactionId'    => 'nullable|string|max:255',
             'paymentAmount'    => 'required|numeric|min:0.01',
             'paymentStatusNew' => 'required|in:pending,partial,paid,failed,refunded',
+            'paymentNote'      => 'nullable|string|max:1000',
         ]);
 
-        $order = Order::findOrFail($this->orderId);
-        $cashAccount = Account::findOrFail((int) $this->paymentAccountId);
-
-        $order->payments()->create([
-            'type'            => OrderPaymentType::PAYMENT,
-            'payment_method'  => $this->paymentMethodForAccount($cashAccount),
-            'cash_account_id' => $cashAccount->id,
+        $data = [
+            'payment_method'  => $this->paymentMethod,
+            'cash_account_id' => $accountsOn && $this->paymentAccountId !== '' ? (int) $this->paymentAccountId : null,
             'transaction_id'  => $this->transactionId ?: null,
+            'note'            => $this->paymentNote ?: null,
             'amount'          => $this->paymentAmount,
             'status'          => $this->paymentStatusNew,
             'paid_at'         => $this->paymentStatusNew === 'paid' ? now() : null,
-        ]);
+        ];
+
+        if ($this->editingPaymentId) {
+            $payment = $this->findOrderPayment($this->editingPaymentId);
+            $payment->update($data);
+            $message = "Payment of {$this->paymentAmount} updated for Order #{$order->id}";
+        } else {
+            $payment = $order->payments()->create(['type' => OrderPaymentType::PAYMENT] + $data);
+            $message = "Payment of {$this->paymentAmount} recorded for Order #{$order->id}";
+        }
 
         $order->recalculateTotals();
 
-        if ($this->paymentStatusNew === 'paid' && $order->customer_id) {
-            $hasBeenCompleted = AccountsCustomerInvoice::where('order_id', $order->id)->exists();
-
-            if ($hasBeenCompleted) {
-                app(PostCustomerPayment::class)->handle(
-                    customer: $order->customer,
-                    cashAccountId: $cashAccount->id,
-                    receivableAccountId: $this->accountId('1100'),
-                    amount: (float) $this->paymentAmount,
-                    entryDate: now()->toDateString(),
-                    description: "Payment for Order #{$order->id} ({$cashAccount->name})",
-                );
-            } else {
-                app(PostCustomerAdvance::class)->handle(
-                    customer: $order->customer,
-                    order: $order,
-                    customerAdvanceAccountId: $this->accountId('2160'),
-                    cashAccountId: $cashAccount->id,
-                    amount: (float) $this->paymentAmount,
-                    entryDate: now()->toDateString(),
-                    description: "Advance for Order #{$order->id} ({$cashAccount->name})",
-                );
-            }
+        if ($payment->status === PaymentStatus::PAID) {
+            $this->postPaidPayment($order, $payment->fresh());
         }
 
+        $this->logPaymentActivity($order, $message . " ({$payment->status->label()})");
+
+        $this->paymentModal = false;
+        $this->dispatch('toast', ['type' => 'success', 'message' => $this->editingPaymentId ? 'Payment updated' : 'Payment recorded']);
+    }
+
+    /**
+     * Confirms a pending payment (e.g. a bKash send-money the customer
+     * submitted a transaction ID for at checkout). With the Accounts module
+     * on, a payment with no received-into account opens the edit modal
+     * instead so the admin picks one before it's posted.
+     */
+    public function confirmPayment(int $paymentId): void
+    {
+        $payment = $this->findOrderPayment($paymentId);
+
+        if ($payment->status === PaymentStatus::PAID) {
+            return;
+        }
+
+        if ($this->accountsEnabled() && ! $payment->cash_account_id) {
+            $this->editPayment($payment->id);
+            $this->paymentStatusNew = 'paid';
+            $this->addError('paymentAccountId', 'Select the account this payment was received into, then save to confirm.');
+            return;
+        }
+
+        $payment->update(['status' => PaymentStatus::PAID, 'paid_at' => now()]);
+
+        $order = Order::findOrFail($this->orderId);
+        $order->recalculateTotals();
+        $this->postPaidPayment($order, $payment->fresh());
+
+        $this->logPaymentActivity($order, "Payment of {$payment->amount} confirmed for Order #{$order->id}");
+        $this->dispatch('toast', ['type' => 'success', 'message' => 'Payment confirmed']);
+    }
+
+    public function rejectPayment(int $paymentId): void
+    {
+        $payment = $this->findOrderPayment($paymentId);
+
+        if ($payment->status === PaymentStatus::PAID) {
+            return;
+        }
+
+        $payment->update(['status' => PaymentStatus::FAILED, 'paid_at' => null]);
+
+        $order = Order::findOrFail($this->orderId);
+        $order->recalculateTotals();
+
+        $this->logPaymentActivity($order, "Payment of {$payment->amount} rejected for Order #{$order->id}");
+        $this->dispatch('toast', ['type' => 'success', 'message' => 'Payment rejected']);
+    }
+
+    protected function findOrderPayment(?int $paymentId): OrderPayment
+    {
+        return OrderPayment::where('order_id', $this->orderId)
+            ->where('type', OrderPaymentType::PAYMENT)
+            ->findOrFail($paymentId);
+    }
+
+    /**
+     * A payment just became paid: flip the order's payment status to
+     * Partial/Paid, and — with the Accounts module on — post it as a
+     * customer payment (order already completed) or a customer advance.
+     */
+    protected function postPaidPayment(Order $order, OrderPayment $payment): void
+    {
+        $order->refresh();
+
+        if ((float) $order->paid_amount > 0) {
+            $order->update(['payment_status' => $order->due_amount > 0 ? PaymentStatus::PARTIAL : PaymentStatus::PAID]);
+            $this->paymentStatus = $order->payment_status->value;
+        }
+
+        if (! $this->accountsEnabled() || ! $order->customer_id || ! $payment->cashAccount) {
+            return;
+        }
+
+        $cashAccount = $payment->cashAccount;
+        $hasBeenCompleted = AccountsCustomerInvoice::where('order_id', $order->id)->exists();
+
+        if ($hasBeenCompleted) {
+            app(PostCustomerPayment::class)->handle(
+                customer: $order->customer,
+                cashAccountId: $cashAccount->id,
+                receivableAccountId: $this->accountId('1100'),
+                amount: (float) $payment->amount,
+                entryDate: now()->toDateString(),
+                description: "Payment for Order #{$order->id} ({$cashAccount->name})",
+            );
+        } else {
+            app(PostCustomerAdvance::class)->handle(
+                customer: $order->customer,
+                order: $order,
+                customerAdvanceAccountId: $this->accountId('2160'),
+                cashAccountId: $cashAccount->id,
+                amount: (float) $payment->amount,
+                entryDate: now()->toDateString(),
+                description: "Advance for Order #{$order->id} ({$cashAccount->name})",
+            );
+        }
+    }
+
+    protected function logPaymentActivity(Order $order, string $message): void
+    {
         activity('sales')
             ->causedBy(auth()->user())
             ->performedOn($order)
             ->event('updated')
-            ->log("Payment of {$this->paymentAmount} recorded for Order #{$order->id}");
-
-        $this->paymentModal = false;
-        $this->dispatch('toast', ['type' => 'success', 'message' => 'Payment recorded']);
+            ->log($message);
     }
 
     public function openRefundModal(): void
@@ -734,6 +889,8 @@ class OrderDetail extends Component
             'fulfillmentStatuses' => FulfillmentStatus::cases(),
             'courierStatuses'     => CourierStatus::cases(),
             'canManageCourier'    => $canManageCourier,
+            'accountsEnabled'     => $this->accountsEnabled(),
+            'paymentMethods'      => array_filter(PaymentMethod::cases(), fn ($m) => $m !== PaymentMethod::STORE_CREDIT),
             'cashAccounts'        => Account::active()->whereIn('subtype', ['cash', 'bank', 'mobile_banking'])->orderBy('code')->get(),
             'packableBatches'     => $this->packableBatchesForCurrentItem(),
             'timeline'            => Activity::query()

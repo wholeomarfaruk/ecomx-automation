@@ -239,6 +239,9 @@
                                     <span class="text-xs text-gray-400 font-mono ml-2">{{ $payment->transaction_id }}</span>
                                 @endif
                                 <span class="block text-xs text-gray-400">{{ $payment->paid_at?->format('d M, Y H:i') ?? $payment->created_at->format('d M, Y H:i') }}</span>
+                                @if($payment->note)
+                                    <span class="block text-xs text-gray-500 mt-0.5 whitespace-pre-line">{{ $payment->note }}</span>
+                                @endif
                             </div>
                             <div class="text-right">
                                 <span class="text-sm font-medium {{ $payment->type->value === 'refund' ? 'text-red-500' : 'text-gray-800' }}">
@@ -247,6 +250,22 @@
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium {{ $payment->status->badgeClass() }} ml-2">
                                     {{ $payment->status->label() }}
                                 </span>
+                                @if($payment->type->value === 'payment')
+                                    <div class="flex items-center justify-end gap-1.5 mt-1.5">
+                                        @if($payment->status->value !== 'paid')
+                                            <button type="button" wire:click="confirmPayment({{ $payment->id }})" wire:loading.attr="disabled"
+                                                wire:confirm="Confirm this payment of {{ number_format($payment->amount, 2) }} as received?"
+                                                class="px-2 py-0.5 text-[11px] font-medium text-emerald-700 bg-emerald-50 rounded hover:bg-emerald-100 transition">Confirm</button>
+                                        @endif
+                                        <button type="button" wire:click="editPayment({{ $payment->id }})"
+                                            class="px-2 py-0.5 text-[11px] font-medium text-indigo-600 bg-indigo-50 rounded hover:bg-indigo-100 transition">Edit</button>
+                                        @if(! in_array($payment->status->value, ['paid', 'failed']))
+                                            <button type="button" wire:click="rejectPayment({{ $payment->id }})" wire:loading.attr="disabled"
+                                                wire:confirm="Reject this payment? It will be marked Failed."
+                                                class="px-2 py-0.5 text-[11px] font-medium text-red-600 bg-red-50 rounded hover:bg-red-100 transition">Reject</button>
+                                        @endif
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     @empty
@@ -537,7 +556,10 @@
         <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden" @click.outside="open = false">
             <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
                 <div class="flex-1">
-                    <h2 class="text-base font-semibold text-gray-900">Add Payment</h2>
+                    <h2 class="text-base font-semibold text-gray-900">{{ $editingPaymentId ? 'Edit Payment' : 'Add Payment' }}</h2>
+                    @if($editingPaidPayment)
+                        <p class="text-xs text-gray-400 mt-0.5">Already paid — only the transaction ID and note can be changed.</p>
+                    @endif
                 </div>
                 <button @click="open = false" type="button" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 transition">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -545,36 +567,58 @@
                     </svg>
                 </button>
             </div>
-            <form wire:submit.prevent="addPayment" class="px-6 py-5 space-y-4">
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Received Into <span class="text-red-500">*</span></label>
-                    <x-searchable-select field="paymentAccountId" :value="$paymentAccountId"
-                        :options="$cashAccounts->mapWithKeys(fn ($a) => [(string) $a->id => $a->code . ' — ' . $a->name])"
-                        placeholder="— Select cash/bank account —" search-placeholder="Search accounts…" />
-                    @error('paymentAccountId') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                </div>
+            <form wire:submit.prevent="savePayment" class="px-6 py-5 space-y-4">
+                @unless($editingPaidPayment)
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Payment Method <span class="text-red-500">*</span></label>
+                        <select wire:model="paymentMethod" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            @foreach($paymentMethods as $pm)
+                                <option value="{{ $pm->value }}">{{ $pm->label() }}</option>
+                            @endforeach
+                        </select>
+                        @error('paymentMethod') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    @if($accountsEnabled)
+                        <div wire:key="payment-account-{{ $editingPaymentId ?? 'new' }}">
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Received Into <span class="text-red-500">*</span></label>
+                            <x-searchable-select field="paymentAccountId" :value="$paymentAccountId"
+                                :options="$cashAccounts->mapWithKeys(fn ($a) => [(string) $a->id => $a->code . ' — ' . $a->name])"
+                                placeholder="— Select cash/bank account —" search-placeholder="Search accounts…" />
+                            @error('paymentAccountId') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    @endif
+                @endunless
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1.5">Transaction ID</label>
                     <input wire:model="transactionId" type="text"
                         class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                    @error('transactionId') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>
+                @unless($editingPaidPayment)
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Amount</label>
+                        <input wire:model="paymentAmount" type="number" step="0.01" min="0.01"
+                            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                        @error('paymentAmount') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Status</label>
+                        <select wire:model="paymentStatusNew" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            @foreach($paymentStatuses as $ps)
+                                <option value="{{ $ps->value }}">{{ $ps->label() }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endunless
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Amount</label>
-                    <input wire:model="paymentAmount" type="number" step="0.01" min="0.01"
-                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                    @error('paymentAmount') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Status</label>
-                    <select wire:model="paymentStatusNew" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                        @foreach($paymentStatuses as $ps)
-                            <option value="{{ $ps->value }}">{{ $ps->label() }}</option>
-                        @endforeach
-                    </select>
+                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Note</label>
+                    <textarea wire:model="paymentNote" rows="2" placeholder="Optional"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"></textarea>
+                    @error('paymentNote') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
                     <button @click="open = false" type="button" class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
-                    <button type="submit" class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">Add Payment</button>
+                    <button type="submit" class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">{{ $editingPaymentId ? 'Save Payment' : 'Add Payment' }}</button>
                 </div>
             </form>
         </div>
