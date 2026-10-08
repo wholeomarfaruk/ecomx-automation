@@ -3,6 +3,7 @@
 namespace App\Livewire\EcomxAnyniche;
 
 use App\Models\Order;
+use App\Support\OrderTrackLookup;
 use App\Support\PhoneNumber;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -23,20 +24,35 @@ class Track extends Component
     public string $phone = '';
     public string $trackError = '';
 
+    /** ?order_id=…&phone=… (a shared/refreshed track link) runs the same guest lookup as the form — see OrderTrackLookup. */
+    public function mount(): void
+    {
+        $query = request()->query();
+
+        if (! isset($query['order_id']) && ! isset($query['phone'])) {
+            return;
+        }
+
+        $this->orderId = (string) (OrderTrackLookup::orderId($query['order_id'] ?? null) ?? '');
+        $this->phone = ($national = OrderTrackLookup::phone($query['phone'] ?? null)) ? PhoneNumber::local($national) : '';
+
+        if (! auth()->check()) {
+            $this->track();
+        }
+    }
+
     /** Guest lookup: order # + phone must both match, so a stranger can't view someone else's order by guessing the ID. */
     public function track(): void
     {
         $this->trackError = '';
 
-        $numericId = preg_replace('/\D/', '', $this->orderId);
+        if (OrderTrackLookup::tooManyAttempts()) {
+            $this->trackError = 'Too many attempts. Please try again in a minute.';
 
-        $nationalPhone = PhoneNumber::national($this->phone);
+            return;
+        }
 
-        $order = $numericId !== ''
-            ? Order::where('id', $numericId)
-                ->whereHas('customer', fn ($q) => $q->where('phone', $nationalPhone))
-                ->first()
-            : null;
+        $order = OrderTrackLookup::find($this->orderId, $this->phone);
 
         if (! $order) {
             $this->trackError = 'No order found with that ID and phone number.';
@@ -46,7 +62,10 @@ class Track extends Component
 
         session(['track_order_verified_' . $order->id => true]);
 
-        $this->redirectRoute('ecomx-anyniche.track.show', ['order' => $order->id], navigate: true);
+        // Phone rides along so the details link stays shareable/refreshable — built from the verified order, never from raw input.
+        $query = OrderTrackLookup::queryFor($order, OrderTrackLookup::phone($this->phone));
+
+        $this->redirectRoute('ecomx-anyniche.track.show', ['order' => $order->id, 'phone' => $query['phone']], navigate: true);
     }
 
     public function viewOrder(int $orderId): void

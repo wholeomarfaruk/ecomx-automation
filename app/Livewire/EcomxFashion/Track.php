@@ -6,8 +6,11 @@ use App\Enums\Sales\OrderStatus;
 use App\Models\Order;
 use App\Models\SmsGatewayConfig;
 use App\Sms\Facades\Sms;
+use App\Support\OrderTrackLookup;
 use App\Support\PhoneNumber;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Js;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 
@@ -18,7 +21,12 @@ class Track extends Component
     public string $phone = '';
     public bool $tracked = false;
 
-    /** Set after a successful guest lookup or when a logged-in customer opens one of their own orders. */
+    /**
+     * Set after a successful guest lookup or when a logged-in customer opens
+     * one of their own orders. Locked — otherwise the browser could swap in
+     * any other order's ID and skip the phone check.
+     */
+    #[Locked]
     public ?int $trackedOrderId = null;
 
     public string $trackError = '';
@@ -30,15 +38,29 @@ class Track extends Component
     public string $otpError = '';
     public string $companyPhone = '';
 
-    /** Guest lookup: order # + phone must both match, so a stranger can't view someone else's order by guessing the ID. */
     /**
      * ?order=… from the order-received page's "Track order" button: opens
      * straight onto that order for the session that placed it, or for its
      * logged-in customer (viewOrder() checks that).
+     * ?order_id=…&phone=… (a shared/refreshed track link) runs the same
+     * guest lookup as the form — see OrderTrackLookup.
      */
     public function mount(): void
     {
-        $orderId = (int) request()->query('order');
+        $query = request()->query();
+
+        if (isset($query['order_id']) || isset($query['phone'])) {
+            $this->orderId = (string) (OrderTrackLookup::orderId($query['order_id'] ?? null) ?? '');
+            $this->phone = ($national = OrderTrackLookup::phone($query['phone'] ?? null)) ? PhoneNumber::local($national) : '';
+
+            if (! auth()->check()) {
+                $this->track();
+            }
+
+            return;
+        }
+
+        $orderId = OrderTrackLookup::orderId($query['order'] ?? null);
 
         if (! $orderId) {
             return;
@@ -54,29 +76,34 @@ class Track extends Component
         $this->viewOrder($orderId);
     }
 
+    /** Guest lookup: order # + phone must both match, so a stranger can't view someone else's order by guessing the ID. */
     public function track(): void
     {
         $this->trackError = '';
 
-        $numericId = preg_replace('/\D/', '', $this->orderId);
+        if (OrderTrackLookup::tooManyAttempts()) {
+            $this->trackError = 'Too many attempts. Please try again in a minute.';
+            $this->tracked = false;
 
-        $nationalPhone = PhoneNumber::national($this->phone);
+            return;
+        }
 
-        $order = $numericId !== ''
-            ? Order::where('id', $numericId)
-                ->whereHas('customer', fn ($q) => $q->where('phone', $nationalPhone))
-                ->first()
-            : null;
+        $order = OrderTrackLookup::find($this->orderId, $this->phone);
 
         if (! $order) {
             $this->trackError = 'No order found with that ID and phone number.';
             $this->tracked = false;
+            $this->trackedOrderId = null;
 
             return;
         }
 
         $this->trackedOrderId = $order->id;
         $this->tracked = true;
+
+        // Shareable/refreshable URL — built from the verified order, never from raw input.
+        $url = route('ecomx-fashion.track', OrderTrackLookup::queryFor($order, OrderTrackLookup::phone($this->phone)));
+        $this->js('history.replaceState(history.state, "", ' . Js::from($url) . ')');
     }
 
     public function viewOrder(int $orderId): void

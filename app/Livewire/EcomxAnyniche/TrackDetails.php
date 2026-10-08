@@ -6,9 +6,11 @@ use App\Enums\Sales\OrderStatus;
 use App\Models\Order;
 use App\Models\SmsGatewayConfig;
 use App\Sms\Facades\Sms;
+use App\Support\OrderTrackLookup;
 use App\Support\PhoneNumber;
 use Illuminate\Support\Carbon;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 /**
@@ -24,6 +26,8 @@ use Livewire\Component;
 #[Layout('ecomx-anyniche.layouts.ecomx_anyniche')]
 class TrackDetails extends Component
 {
+    /** Locked — access is checked once in mount(), so the browser must not be able to swap in another order's ID afterwards. */
+    #[Locked]
     public int $orderId;
 
     // Confirm/cancel modal state
@@ -36,8 +40,16 @@ class TrackDetails extends Component
     public function mount(int $order): void
     {
         $this->orderId = $order;
+        $model = $this->order();
 
-        if (! $this->canView($this->order())) {
+        // /track/{order}?phone=… (shared or refreshed link) — same check as the
+        // search form, so a guest whose session lost the flag still gets in.
+        if ($model && ! $this->canView($model) && request()->has('phone') && ! OrderTrackLookup::tooManyAttempts()
+            && OrderTrackLookup::find($order, request()->query('phone'))) {
+            session(['track_order_verified_' . $model->id => true]);
+        }
+
+        if (! $this->canView($model)) {
             abort(403);
         }
     }
