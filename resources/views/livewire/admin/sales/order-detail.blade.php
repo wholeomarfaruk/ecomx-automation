@@ -21,6 +21,15 @@
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 border border-gray-200 hover:bg-gray-50 hover:text-gray-700 transition">Packing Slip</a>
             <button type="button" wire:click="duplicateOrder" wire:confirm="Create a new Pending order with the same customer, items and charges?"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 border border-gray-200 hover:bg-gray-50 hover:text-gray-700 transition">Duplicate</button>
+            @if(auth()->user()?->hasRole('superadmin') || auth()->user()?->can('order.edit'))
+                <button type="button" @click="$dispatch('open-order-notification', { orderId: {{ $order->id }} })"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 border border-gray-200 hover:bg-gray-50 hover:text-gray-700 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/>
+                    </svg>
+                    Send Notification
+                </button>
+            @endif
             <a href="{{ route('admin.accounts.reports.order-ledger', ['orderId' => $order->id]) }}"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 border border-gray-200 hover:bg-gray-50 hover:text-gray-700 transition">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -776,4 +785,5 @@
 
     {{-- Courier booking: its own component, so it doesn't re-render this whole page. --}}
     <livewire:admin.sales.courier-booking-modal />
+    <livewire:admin.sales.send-order-notification-modal />
 </div>
