@@ -85,46 +85,96 @@ final readonly class MarketingContext
 
     private static function trackingParameters(Request $request): array
     {
-        $keys = [
-            'utm_source',
-            'utm_medium',
-            'utm_campaign',
-            'utm_term',
-            'utm_content',
-            'fbclid',
-            'gclid',
-            'ttclid',
+        $query = fn (string $key) => self::queryValue($request, $key);
+
+        $parameters = [
+            'utm_source' => $query('utm_source'),
+            'utm_medium' => $query('utm_medium'),
+            // Explicit name first, then the id params ad platforms send when
+            // there's no utm_campaign: utm_id (TikTok/Meta auto-UTMs, GA4),
+            // campaign_id (Meta {{campaign.id}} templates), gad_campaignid
+            // (Google Ads auto-tagging, which sends no UTMs at all).
+            'utm_campaign' => $query('utm_campaign') ?? $query('utm_id') ?? $query('campaign_id') ?? $query('gad_campaignid'),
+            'utm_term' => $query('utm_term'),
+            'utm_content' => $query('utm_content'),
+            'fbclid' => $query('fbclid'),
+            // gbraid/wbraid replace gclid on iOS traffic; dclid is Display & Video 360.
+            'gclid' => $query('gclid') ?? $query('gbraid') ?? $query('wbraid') ?? $query('dclid'),
+            'ttclid' => $query('ttclid'),
         ];
 
-        $parameters = collect($keys)
-            ->mapWithKeys(fn ($key) => [
-                $key => self::normalize($key, $request->query($key)),
-            ])
+        // Click ids say which platform sent the visit even when the ad link
+        // has no utm_source. Only when it has none — an explicit source wins,
+        // and its medium is never mixed with an inferred one.
+        if ($parameters['utm_source'] === null) {
+            [$parameters['utm_source'], $inferredMedium] = self::inferredSource($request, $parameters);
+            $parameters['utm_medium'] ??= $inferredMedium;
+        }
+
+        return collect($parameters)
+            ->map(fn ($value, $key) => self::normalize($key, $value))
             ->filter()
             ->all();
+    }
 
-        return self::withGoogleAutoTagging($request, $parameters);
+    /** @return array{0: ?string, 1: ?string} [source, medium] */
+    private static function inferredSource(Request $request, array $parameters): array
+    {
+        $googleAds = $parameters['gclid'] !== null
+            || self::queryValue($request, 'gad_campaignid') !== null
+            || self::queryValue($request, 'gad_source') !== null;
+
+        if ($googleAds) {
+            // YouTube ads run through Google Ads with the same click ids —
+            // the referrer is the only tell.
+            return [self::referredBy($request, ['youtube.com', 'youtu.be']) ? 'youtube' : 'google', 'cpc'];
+        }
+
+        if ($parameters['ttclid'] !== null) {
+            return ['tiktok', 'paid'];
+        }
+
+        // Facebook/Instagram add fbclid to every outbound link, organic posts
+        // included, so it names the source but doesn't prove a paid click.
+        if ($parameters['fbclid'] !== null) {
+            return [self::referredBy($request, ['instagram.com']) ? 'instagram' : 'facebook', null];
+        }
+
+        return [null, null];
+    }
+
+    private static function referredBy(Request $request, array $domains): bool
+    {
+        $host = mb_strtolower((string) parse_url((string) $request->headers->get('referer'), PHP_URL_HOST));
+
+        foreach ($domains as $domain) {
+            if ($host === $domain || str_ends_with($host, '.'.$domain)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function queryValue(Request $request, string $key): ?string
+    {
+        $value = $request->query($key);
+
+        if (! is_string($value) || ($value = trim($value)) === '' || self::isUnreplacedMacro($value)) {
+            return null;
+        }
+
+        return $value;
     }
 
     /**
-     * Google Ads auto-tagging sends no UTMs — only gclid (or gbraid/wbraid
-     * on iOS) plus gad_campaignid. Without this the visit has no campaign,
-     * so it's never credited or discovered under Marketing → Campaigns.
-     * Explicit UTMs on the ad link still win.
+     * Ad macros arrive literally when a link is opened from an ad preview or
+     * the macro is mistyped — Meta "{{campaign.name}}", Google "{campaignid}",
+     * TikTok "__CAMPAIGN_NAME__" — and aren't real values.
      */
-    private static function withGoogleAutoTagging(Request $request, array $parameters): array
+    public static function isUnreplacedMacro(string $value): bool
     {
-        $campaignId = $request->query('gad_campaignid');
-
-        if (! is_string($campaignId) || ! preg_match('/^\d+$/', $campaignId)) {
-            return $parameters;
-        }
-
-        $parameters['utm_campaign'] ??= self::normalize('utm_campaign', $campaignId);
-        $parameters['utm_source'] ??= self::normalize('utm_source', 'google');
-        $parameters['utm_medium'] ??= self::normalize('utm_medium', 'cpc');
-
-        return array_filter($parameters);
+        return str_contains($value, '{') || preg_match('/__[A-Z][A-Z_]*__/', $value) === 1;
     }
 
     private static function normalize(string $key, mixed $value): mixed

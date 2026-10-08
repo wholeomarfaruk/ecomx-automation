@@ -3,6 +3,7 @@
 namespace App\Marketing\Services;
 
 use App\Marketing\Attribution\AttributionTouch;
+use App\Marketing\Context\MarketingContext;
 use App\Models\Marketing\MarketingAttribution;
 use App\Models\Marketing\MarketingCampaign;
 use App\Models\Marketing\MarketingSource;
@@ -175,12 +176,13 @@ final class CampaignDiscovery
     /**
      * Skips blanks and unreplaced ad macros — e.g. "{{campaign.name}}"
      * arrives literally when a link is opened from an ad preview or the
-     * macro is mistyped, and isn't a real campaign.
+     * macro is mistyped, and isn't a real campaign. New traffic is already
+     * filtered in MarketingContext; this also covers older stored rows.
      */
     public static function isUsableKey(?string $key): bool
     {
         $key = trim((string) $key);
 
-        return $key !== '' && mb_strlen($key) <= 255 && ! str_contains($key, '{{');
+        return $key !== '' && mb_strlen($key) <= 255 && ! MarketingContext::isUnreplacedMacro($key);
     }
 }

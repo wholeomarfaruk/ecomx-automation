@@ -113,7 +113,7 @@
                                 <p class="text-sm font-semibold text-gray-700">No campaigns yet</p>
                                 <p class="text-xs text-gray-400 mt-0.5 max-w-md mx-auto">
                                     Campaigns appear here automatically once visitors arrive from an ad link carrying
-                                    <code class="bg-gray-100 px-1 rounded">utm_campaign</code> (or Google Ads auto-tagging) — or
+                                    <code class="bg-gray-100 px-1 rounded">utm_campaign</code> (or a Google, YouTube, Meta or TikTok campaign id) — or
                                     <button wire:click="openCreate" type="button" class="text-indigo-600 hover:underline">add one manually</button>.
                                 </p>
                             </td>
