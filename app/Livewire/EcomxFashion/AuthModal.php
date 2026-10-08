@@ -139,9 +139,9 @@ class AuthModal extends Component
         $this->formError = '';
 
         $this->validate([
-            'loginPhone' => 'required|string|max:20',
+            'loginPhone' => 'required|string|max:150',
             'loginPassword' => 'required|string',
-        ]);
+        ], [], ['loginPhone' => 'email or phone']);
 
         $key = $this->throttleKey('password', $this->loginPhone);
 
@@ -152,11 +152,16 @@ class AuthModal extends Component
             return;
         }
 
-        $user = User::where('phone', PhoneNumber::national($this->loginPhone))->first();
+        // One field for both: an "@" means email, anything else is a phone number.
+        $identifier = trim($this->loginPhone);
+
+        $user = str_contains($identifier, '@')
+            ? User::where('email', $identifier)->first()
+            : User::where('phone', PhoneNumber::national($identifier))->first();
 
         if (! $user || ! Hash::check($this->loginPassword, $user->password)) {
             RateLimiter::hit($key, 60);
-            $this->formError = 'Incorrect phone number or password.';
+            $this->formError = 'Incorrect email/phone or password.';
 
             return;
         }

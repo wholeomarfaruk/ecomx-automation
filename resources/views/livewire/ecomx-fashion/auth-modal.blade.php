@@ -23,8 +23,8 @@
                 @if($loginTab === 'password')
                     <form wire:submit.prevent="loginWithPassword">
                         <div class="field">
-                            <label>Phone number</label>
-                            <input wire:model="loginPhone" inputmode="tel" placeholder="01XXXXXXXXX" required>
+                            <label>Email or phone</label>
+                            <input wire:model="loginPhone" type="text" autocomplete="username" placeholder="you@example.com or 01XXXXXXXXX" required>
                             @error('loginPhone') <span class="field__error">{{ $message }}</span> @enderror
                         </div>
                         <div class="field">
