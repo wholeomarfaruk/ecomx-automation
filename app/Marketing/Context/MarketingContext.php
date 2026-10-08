@@ -96,12 +96,35 @@ final readonly class MarketingContext
             'ttclid',
         ];
 
-        return collect($keys)
+        $parameters = collect($keys)
             ->mapWithKeys(fn ($key) => [
                 $key => self::normalize($key, $request->query($key)),
             ])
             ->filter()
             ->all();
+
+        return self::withGoogleAutoTagging($request, $parameters);
+    }
+
+    /**
+     * Google Ads auto-tagging sends no UTMs — only gclid (or gbraid/wbraid
+     * on iOS) plus gad_campaignid. Without this the visit has no campaign,
+     * so it's never credited or discovered under Marketing → Campaigns.
+     * Explicit UTMs on the ad link still win.
+     */
+    private static function withGoogleAutoTagging(Request $request, array $parameters): array
+    {
+        $campaignId = $request->query('gad_campaignid');
+
+        if (! is_string($campaignId) || ! preg_match('/^\d+$/', $campaignId)) {
+            return $parameters;
+        }
+
+        $parameters['utm_campaign'] ??= self::normalize('utm_campaign', $campaignId);
+        $parameters['utm_source'] ??= self::normalize('utm_source', 'google');
+        $parameters['utm_medium'] ??= self::normalize('utm_medium', 'cpc');
+
+        return array_filter($parameters);
     }
 
     private static function normalize(string $key, mixed $value): mixed
