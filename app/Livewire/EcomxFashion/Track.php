@@ -289,7 +289,7 @@ class Track extends Component
             return null;
         }
 
-        return Order::with(['items.product', 'shippingAddress'])->find($this->trackedOrderId);
+        return Order::with(['items.product', 'shippingAddress', 'payments'])->find($this->trackedOrderId);
     }
 
     public function render()

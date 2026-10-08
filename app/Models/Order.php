@@ -93,6 +93,39 @@ class Order extends Model
         return $this->hasMany(OrderPayment::class);
     }
 
+    /**
+     * Customer-facing payment picture for the storefront track page.
+     * 'verifying' = a payment the customer sent (e.g. bKash with a TrxID)
+     * is still pending admin confirmation. Rejected payments only show
+     * while the order is still owed money — once paid, they're history.
+     *
+     * @return array{state: string, total: float, paid: float, due: float, pending: \Illuminate\Support\Collection, rejected: \Illuminate\Support\Collection}
+     */
+    public function paymentSummary(): array
+    {
+        $payments = $this->payments->where('type', OrderPaymentType::PAYMENT);
+
+        $paid = (float) $this->paid_amount;
+        $due = (float) $this->due_amount;
+        $pending = $payments->where('status', PaymentStatus::PENDING)->values();
+
+        $state = match (true) {
+            $paid > 0 && $due <= 0 => 'paid',
+            $pending->isNotEmpty() => 'verifying',
+            $paid > 0 => 'partial',
+            default => 'unpaid',
+        };
+
+        return [
+            'state' => $state,
+            'total' => (float) $this->total_amount,
+            'paid' => $paid,
+            'due' => $due,
+            'pending' => $pending,
+            'rejected' => $due > 0 ? $payments->where('status', PaymentStatus::FAILED)->values() : collect(),
+        ];
+    }
+
     /** Named extra charges (gift wrap, COD fee, …) — summed into charges_amount by recalculateTotals(). */
     public function charges(): HasMany
     {

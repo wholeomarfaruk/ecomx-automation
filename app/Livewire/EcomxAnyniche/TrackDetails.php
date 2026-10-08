@@ -242,7 +242,7 @@ class TrackDetails extends Component
 
     public function order(): ?Order
     {
-        return Order::with(['items.product', 'shippingAddress'])->find($this->orderId);
+        return Order::with(['items.product', 'shippingAddress', 'payments'])->find($this->orderId);
     }
 
     public function render()

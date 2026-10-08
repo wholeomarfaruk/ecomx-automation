@@ -40,6 +40,8 @@
                     @endforeach
                 </div>
 
+                @include('ecomx-fashion.livewire.partials.track-payment', ['order' => $trackedOrder])
+
                 @if($trackedOrder->courier_tracking_number)
                     <div style="padding:12px 14px;background:rgba(var(--pri-rgb),.03);border-radius:10px;margin-bottom:20px">
                         <p style="font-size:12px;color:rgba(var(--pri-rgb),.5);margin:0 0 2px">Courier tracking</p>
@@ -127,6 +129,8 @@
                             </div>
                         @endforeach
                     </div>
+
+                    @include('ecomx-fashion.livewire.partials.track-payment', ['order' => $trackedOrder])
                 </div>
             @endif
         </div>
