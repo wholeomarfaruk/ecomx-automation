@@ -1,5 +1,6 @@
-{{-- Payment status on the track page — see Order::paymentSummary(). Expects $order. --}}
+{{-- Payment status on the track page — see Order::paymentSummary(). Expects $order; $full (logged-in owner) lists every payment. --}}
 @php
+    $full = $full ?? false;
     $pay = $order->paymentSummary();
     $badge = [
         'paid'      => ['Paid', '#1e7e4f', 'rgba(30,126,79,.1)'],
@@ -21,19 +22,56 @@
         <div style="display:flex;justify-content:space-between;font-weight:700"><span>Due</span><span>৳{{ number_format($pay['due'], 2) }}</span></div>
     </div>
 
-    @foreach($pay['pending'] as $p)
-        <div style="margin-top:10px;padding:9px 12px;border-radius:8px;background:rgba(154,107,0,.08);font-size:12px;color:#7a5500">
-            <strong>{{ $p->payment_method?->label() ?? 'Payment' }} ৳{{ number_format($p->amount, 2) }}</strong>
-            @if($p->transaction_id) · TrxID {{ $p->transaction_id }} @endif
-            <br>Received — we're verifying it. Your due will update once it's confirmed.
+    @if($full && $order->payments->isNotEmpty())
+        <div style="border-top:1px solid rgba(var(--pri-rgb),.08);margin-top:12px;padding-top:10px;display:flex;flex-direction:column;gap:10px">
+            @foreach($order->payments->sortBy('id') as $p)
+                @php $isRefund = $p->type === \App\Enums\Sales\OrderPaymentType::REFUND; @endphp
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font-size:12.5px">
+                    <div>
+                        <p style="margin:0;font-weight:600">{{ $p->payment_method?->label() ?? 'Payment' }}{{ $isRefund ? ' · Refund' : '' }}</p>
+                        @if($p->transaction_id)
+                            <p class="muted" style="margin:2px 0 0;font-size:11.5px">TrxID <span style="font-family:monospace">{{ $p->transaction_id }}</span></p>
+                        @endif
+                        <p class="muted" style="margin:2px 0 0;font-size:11.5px">{{ ($p->paid_at ?? $p->created_at)->format('d M, Y · h:i A') }}</p>
+                    </div>
+                    <div style="text-align:right;white-space:nowrap">
+                        <p style="margin:0;font-weight:600;{{ $isRefund ? 'color:#a93226' : '' }}">{{ $isRefund ? '−' : '' }}৳{{ number_format($p->amount, 2) }}</p>
+                        <p style="margin:2px 0 0;font-size:11px;font-weight:600;color:{{ ['paid' => '#1e7e4f', 'pending' => '#9a6b00', 'failed' => '#a93226', 'refunded' => '#a93226'][$p->status->value] ?? 'rgba(var(--pri-rgb),.6)' }}">
+                            {{ $p->status === \App\Enums\Sales\PaymentStatus::PENDING ? 'Verifying' : ($p->status === \App\Enums\Sales\PaymentStatus::FAILED ? 'Not verified' : $p->status->label()) }}
+                        </p>
+                    </div>
+                </div>
+            @endforeach
         </div>
-    @endforeach
+    @endif
 
-    @foreach($pay['rejected'] as $p)
-        <div style="margin-top:10px;padding:9px 12px;border-radius:8px;background:rgba(192,57,43,.07);font-size:12px;color:#a93226">
-            <strong>{{ $p->payment_method?->label() ?? 'Payment' }} ৳{{ number_format($p->amount, 2) }}</strong>
-            @if($p->transaction_id) · TrxID {{ $p->transaction_id }} @endif
-            <br>We couldn't verify this payment. Please contact us.
-        </div>
-    @endforeach
+    @if($full)
+        {{-- The list above already names each payment — just the one-line explanation here. --}}
+        @if($pay['pending']->isNotEmpty())
+            <div style="margin-top:10px;padding:9px 12px;border-radius:8px;background:rgba(154,107,0,.08);font-size:12px;color:#7a5500">
+                We've received your payment and are verifying it. Your due will update once it's confirmed.
+            </div>
+        @endif
+        @if($pay['rejected']->isNotEmpty())
+            <div style="margin-top:10px;padding:9px 12px;border-radius:8px;background:rgba(192,57,43,.07);font-size:12px;color:#a93226">
+                We couldn't verify a payment on this order. Please contact us.
+            </div>
+        @endif
+    @else
+        @foreach($pay['pending'] as $p)
+            <div style="margin-top:10px;padding:9px 12px;border-radius:8px;background:rgba(154,107,0,.08);font-size:12px;color:#7a5500">
+                <strong>{{ $p->payment_method?->label() ?? 'Payment' }} ৳{{ number_format($p->amount, 2) }}</strong>
+                @if($p->transaction_id) · TrxID {{ $p->transaction_id }} @endif
+                <br>Received — we're verifying it. Your due will update once it's confirmed.
+            </div>
+        @endforeach
+
+        @foreach($pay['rejected'] as $p)
+            <div style="margin-top:10px;padding:9px 12px;border-radius:8px;background:rgba(192,57,43,.07);font-size:12px;color:#a93226">
+                <strong>{{ $p->payment_method?->label() ?? 'Payment' }} ৳{{ number_format($p->amount, 2) }}</strong>
+                @if($p->transaction_id) · TrxID {{ $p->transaction_id }} @endif
+                <br>We couldn't verify this payment. Please contact us.
+            </div>
+        @endforeach
+    @endif
 </div>

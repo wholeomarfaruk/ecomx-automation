@@ -89,21 +89,56 @@
                     <div style="display:flex;justify-content:space-between;font-weight:700"><span>Due</span><span>৳{{ number_format($pay['due'], 2) }}</span></div>
                 </div>
 
-                @foreach($pay['pending'] as $p)
-                    <div style="margin-top:10px;padding:9px 12px;border-radius:8px;background:rgba(154,107,0,.08);font-size:0.78rem;color:#7a5500">
-                        <strong>{{ $p->payment_method?->label() ?? 'Payment' }} ৳{{ number_format($p->amount, 2) }}</strong>
-                        @if($p->transaction_id) · TrxID {{ $p->transaction_id }} @endif
-                        <br>Received — we're verifying it. Your due will update once it's confirmed.
-                    </div>
-                @endforeach
+                @if($isOwner)
+                    @if($order->payments->isNotEmpty())
+                        <div style="border-top:1px solid rgba(0,0,0,.06);margin-top:12px;padding-top:10px;display:flex;flex-direction:column;gap:10px">
+                            @foreach($order->payments->sortBy('id') as $p)
+                                @php $isRefund = $p->type === \App\Enums\Sales\OrderPaymentType::REFUND; @endphp
+                                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font-size:0.84rem">
+                                    <div>
+                                        <div style="font-weight:600">{{ $p->payment_method?->label() ?? 'Payment' }}{{ $isRefund ? ' · Refund' : '' }}</div>
+                                        @if($p->transaction_id)
+                                            <div style="font-size:0.76rem;color:#6b7a73;margin-top:2px">TrxID <span style="font-family:monospace">{{ $p->transaction_id }}</span></div>
+                                        @endif
+                                        <div style="font-size:0.76rem;color:#6b7a73;margin-top:2px">{{ ($p->paid_at ?? $p->created_at)->format('d M Y, h:i A') }}</div>
+                                    </div>
+                                    <div style="text-align:right;white-space:nowrap">
+                                        <div style="font-weight:600;{{ $isRefund ? 'color:#a93226' : '' }}">{{ $isRefund ? '−' : '' }}৳{{ number_format($p->amount, 2) }}</div>
+                                        <div style="font-size:0.72rem;font-weight:600;margin-top:2px;color:{{ ['paid' => '#1e7e4f', 'pending' => '#9a6b00', 'failed' => '#a93226', 'refunded' => '#a93226'][$p->status->value] ?? '#6b7a73' }}">
+                                            {{ $p->status === \App\Enums\Sales\PaymentStatus::PENDING ? 'Verifying' : ($p->status === \App\Enums\Sales\PaymentStatus::FAILED ? 'Not verified' : $p->status->label()) }}
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                    @if($pay['pending']->isNotEmpty())
+                        <div style="margin-top:10px;padding:9px 12px;border-radius:8px;background:rgba(154,107,0,.08);font-size:0.78rem;color:#7a5500">
+                            We've received your payment and are verifying it. Your due will update once it's confirmed.
+                        </div>
+                    @endif
+                    @if($pay['rejected']->isNotEmpty())
+                        <div style="margin-top:10px;padding:9px 12px;border-radius:8px;background:rgba(192,57,43,.07);font-size:0.78rem;color:#a93226">
+                            We couldn't verify a payment on this order. Please contact us.
+                        </div>
+                    @endif
+                @else
+                    @foreach($pay['pending'] as $p)
+                        <div style="margin-top:10px;padding:9px 12px;border-radius:8px;background:rgba(154,107,0,.08);font-size:0.78rem;color:#7a5500">
+                            <strong>{{ $p->payment_method?->label() ?? 'Payment' }} ৳{{ number_format($p->amount, 2) }}</strong>
+                            @if($p->transaction_id) · TrxID {{ $p->transaction_id }} @endif
+                            <br>Received — we're verifying it. Your due will update once it's confirmed.
+                        </div>
+                    @endforeach
 
-                @foreach($pay['rejected'] as $p)
-                    <div style="margin-top:10px;padding:9px 12px;border-radius:8px;background:rgba(192,57,43,.07);font-size:0.78rem;color:#a93226">
-                        <strong>{{ $p->payment_method?->label() ?? 'Payment' }} ৳{{ number_format($p->amount, 2) }}</strong>
-                        @if($p->transaction_id) · TrxID {{ $p->transaction_id }} @endif
-                        <br>We couldn't verify this payment. Please contact us.
-                    </div>
-                @endforeach
+                    @foreach($pay['rejected'] as $p)
+                        <div style="margin-top:10px;padding:9px 12px;border-radius:8px;background:rgba(192,57,43,.07);font-size:0.78rem;color:#a93226">
+                            <strong>{{ $p->payment_method?->label() ?? 'Payment' }} ৳{{ number_format($p->amount, 2) }}</strong>
+                            @if($p->transaction_id) · TrxID {{ $p->transaction_id }} @endif
+                            <br>We couldn't verify this payment. Please contact us.
+                        </div>
+                    @endforeach
+                @endif
             </div>
 
             @if($order->courier_tracking_number)
@@ -130,7 +165,7 @@
                 @foreach($order->items as $item)
                     <div class="jtc-order-item">
                         <div class="jtc-order-item__thumb">
-                            <img src="{{ $item->product?->featured_image ?? '' }}" alt="">
+                            <img src="{{ $item->variant?->display_image ?? $item->product?->featured_image ?? '' }}" alt="{{ $item->product_name }}" loading="lazy">
                         </div>
                         <div class="jtc-order-item__name">
                             @if($item->product?->url)
@@ -142,7 +177,10 @@
                                 <span class="muted"> · {{ $item->variant_name }}</span>
                             @endif
                         </div>
-                        <div class="jtc-order-item__qty">× {{ (int) $item->quantity }}</div>
+                        <div class="jtc-order-item__qty">
+                            ৳{{ number_format($item->unit_price, 2) }} × {{ (int) $item->quantity }}
+                            <div style="font-weight:600;color:inherit">৳{{ number_format($item->total_amount, 2) }}</div>
+                        </div>
                     </div>
                 @endforeach
             </div>

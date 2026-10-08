@@ -242,7 +242,7 @@ class TrackDetails extends Component
 
     public function order(): ?Order
     {
-        return Order::with(['items.product', 'shippingAddress', 'payments'])->find($this->orderId);
+        return Order::with(['items.product', 'items.variant.media', 'shippingAddress', 'payments'])->find($this->orderId);
     }
 
     public function render()
@@ -252,6 +252,8 @@ class TrackDetails extends Component
         return view('ecomx-anyniche.livewire.track-details', [
             'order' => $order,
             'steps' => $this->steps(),
+            // Logged-in owner sees every payment (method, TrxID); a guest who verified by phone gets the summary only.
+            'isOwner' => $order && $this->ownsTrackedOrder($order),
         ]);
     }
 }

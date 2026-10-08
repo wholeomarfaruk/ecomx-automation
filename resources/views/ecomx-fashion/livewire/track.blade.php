@@ -40,7 +40,7 @@
                     @endforeach
                 </div>
 
-                @include('ecomx-fashion.livewire.partials.track-payment', ['order' => $trackedOrder])
+                @include('ecomx-fashion.livewire.partials.track-payment', ['order' => $trackedOrder, 'full' => true])
 
                 @if($trackedOrder->courier_tracking_number)
                     <div style="padding:12px 14px;background:rgba(var(--pri-rgb),.03);border-radius:10px;margin-bottom:20px">
@@ -53,16 +53,23 @@
                     <p style="font-size:13px;font-weight:600;margin-bottom:10px">Items</p>
                     <div style="display:flex;flex-direction:column;gap:10px">
                         @foreach($trackedOrder->items as $item)
-                            <div style="display:flex;justify-content:space-between;font-size:13px">
-                                <span>
+                            @php $itemImage = $item->variant?->display_image ?? $item->product?->featured_image; @endphp
+                            <div style="display:flex;align-items:center;gap:12px;font-size:13px">
+                                <div style="width:52px;height:64px;flex-shrink:0;border-radius:8px;overflow:hidden;background:rgba(var(--pri-rgb),.05)">
+                                    @if($itemImage)
+                                        <img src="{{ $itemImage }}" alt="{{ $item->product_name }}" loading="lazy" style="width:100%;height:100%;object-fit:cover">
+                                    @endif
+                                </div>
+                                <span style="flex:1;min-width:0">
                                     @if($item->product)
                                         <a href="{{ route('ecomx-fashion.product', $item->product->slug) }}" style="color:var(--pri);text-decoration:underline" wire:navigate>{{ $item->product_name }}</a>
                                     @else
                                         {{ $item->product_name }}
                                     @endif
-                                    {{ $item->variant_name ? ' · ' . $item->variant_name : '' }} <span class="muted">× {{ (int) $item->quantity }}</span>
+                                    @if($item->variant_name)<span class="muted" style="display:block;font-size:12px">{{ $item->variant_name }}</span>@endif
+                                    <span class="muted" style="display:block;font-size:12px">৳{{ number_format($item->unit_price, 2) }} × {{ (int) $item->quantity }}</span>
                                 </span>
-                                <span style="font-weight:600">৳{{ number_format($item->total_amount, 2) }}</span>
+                                <span style="font-weight:600;white-space:nowrap">৳{{ number_format($item->total_amount, 2) }}</span>
                             </div>
                         @endforeach
                     </div>
