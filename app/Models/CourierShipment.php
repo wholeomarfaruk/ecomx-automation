@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Courier\Contracts\HasPublicTrackingUrl;
 use App\Enums\Sales\CourierStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -66,5 +67,21 @@ class CourierShipment extends Model
     public function statusEnum(): CourierStatus
     {
         return CourierStatus::tryFrom($this->status) ?? CourierStatus::PENDING;
+    }
+
+    /**
+     * Customer-facing tracking page on the courier's own site, built by
+     * this shipment's driver — null when the driver has none
+     * (doesn't implement HasPublicTrackingUrl) or the shipment has no ID yet.
+     */
+    public function trackingUrl(): ?string
+    {
+        $class = config('courier.drivers')[$this->courier?->driver_key] ?? null;
+
+        if (! $class || ! is_subclass_of($class, HasPublicTrackingUrl::class)) {
+            return null;
+        }
+
+        return $class::publicTrackingUrl($this);
     }
 }

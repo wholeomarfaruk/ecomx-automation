@@ -445,6 +445,16 @@
                                     </div>
                                 </div>
 
+                                @if($trackingUrl = $shipment->trackingUrl())
+                                    <div x-data="{ copied: false }" class="flex items-center gap-2 rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 mb-3 text-xs">
+                                        <span class="text-gray-400 shrink-0">Tracking link</span>
+                                        <a href="{{ $trackingUrl }}" target="_blank" rel="noopener" class="font-mono text-indigo-600 hover:underline truncate">{{ $trackingUrl }}</a>
+                                        <button type="button" class="ml-auto shrink-0 px-2 py-0.5 rounded font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition"
+                                            @click="navigator.clipboard.writeText(@js($trackingUrl)); copied = true; setTimeout(() => copied = false, 1500)"
+                                            x-text="copied ? 'Copied' : 'Copy'">Copy</button>
+                                    </div>
+                                @endif
+
                                 @if($shipment->error_message)
                                     <p class="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2 mb-3">{{ $shipment->error_message }}</p>
                                 @endif

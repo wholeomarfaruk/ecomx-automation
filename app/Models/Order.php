@@ -2,17 +2,21 @@
 
 namespace App\Models;
 
+use App\Actions\Sales\SendOrderProcessingSms;
 use App\Enums\Sales\CourierStatus;
 use App\Enums\Sales\FulfillmentStatus;
 use App\Enums\Sales\OrderPaymentType;
 use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\OrderStatus;
 use App\Enums\Sales\PaymentStatus;
+use App\Support\PhoneNumber;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 
 class Order extends Model
 {
@@ -55,7 +59,20 @@ class Order extends Model
             'completed_at'              => 'datetime',
             'cancelled_at'              => 'datetime',
             'courier_status_updated_at' => 'datetime',
+            'processing_sms_sent_at'    => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // Every path into Processing (courier booking, manual tracking entry,
+        // the status dropdown) texts the customer — after commit, so a
+        // just-booked shipment's tracking link is already there.
+        static::updated(function (Order $order) {
+            if ($order->wasChanged('status') && $order->status === OrderStatus::PROCESSING) {
+                DB::afterCommit(fn () => app(SendOrderProcessingSms::class)->handle($order));
+            }
+        });
     }
 
     public function customer(): BelongsTo
@@ -146,6 +163,52 @@ class Order extends Model
     public function courierShipments(): HasMany
     {
         return $this->hasMany(CourierShipment::class)->latest();
+    }
+
+    /**
+     * Values for an order SMS template's {placeholders} — see the list on
+     * Admin > SMS > Templates. Courier fields come from the newest
+     * non-cancelled shipment; {tracking_url} is that courier's own public
+     * tracking page (CourierShipment::trackingUrl()), blank if it has none.
+     *
+     * @return array<string, string>
+     */
+    public function smsPlaceholders(): array
+    {
+        $shipment = $this->courierShipments
+            ->first(fn (CourierShipment $s) => ($s->tracking_number || $s->consignment_id) && $s->statusEnum() !== CourierStatus::CANCELLED);
+
+        return [
+            'order_id' => (string) $this->id,
+            'customer_name' => (string) ($this->shippingAddress?->name ?? $this->customer?->full_name ?? ''),
+            'amount' => number_format((float) $this->total_amount, 2),
+            'paid' => number_format((float) $this->paid_amount, 2),
+            'due' => number_format((float) $this->due_amount, 2),
+            'status' => $this->status->label(),
+            'courier' => (string) ($shipment?->courier?->name ?? $this->courier_provider ?? ''),
+            'tracking_number' => (string) ($shipment?->consignment_id ?: $shipment?->tracking_number ?: $this->courier_tracking_number ?? ''),
+            'tracking_url' => (string) ($shipment?->trackingUrl() ?? ''),
+            'website_tracking_url' => (string) ($this->websiteTrackingUrl() ?? ''),
+        ];
+    }
+
+    /**
+     * This store's own track page, opened straight onto this order:
+     * /track?order_id=…&phone=… (both themes accept it — see
+     * OrderTrackLookup). Uses the customer's phone, since that's what the
+     * lookup matches. Only the active theme's routes are registered, so
+     * whichever track route exists is the live one.
+     */
+    public function websiteTrackingUrl(): ?string
+    {
+        $phone = $this->customer?->phone;
+        $route = collect(['ecomx-fashion.track', 'ecomx-anyniche.track'])->first(fn ($name) => Route::has($name));
+
+        if (! $phone || ! $route) {
+            return null;
+        }
+
+        return route($route, ['order_id' => $this->id, 'phone' => PhoneNumber::local(PhoneNumber::national($phone))]);
     }
 
     public function posSale(): HasOne

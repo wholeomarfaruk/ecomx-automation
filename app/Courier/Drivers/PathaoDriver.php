@@ -3,6 +3,8 @@
 namespace App\Courier\Drivers;
 
 use App\Courier\Contracts\CourierDriverInterface;
+use App\Courier\Contracts\HasPublicTrackingUrl;
+use App\Models\CourierShipment;
 use App\Courier\CourierStatusNormalizer;
 use App\Courier\DTO\CourierResponse;
 use App\Courier\DTO\RateRequest;
@@ -34,7 +36,7 @@ use Illuminate\Support\Facades\Http;
  * The token is cached per-account (keyed by client_id) so we don't
  * re-authenticate on every single API call.
  */
-class PathaoDriver implements CourierDriverInterface
+class PathaoDriver implements CourierDriverInterface, HasPublicTrackingUrl
 {
     protected const BASE_URL = 'https://api-hermes.pathao.com';
 
@@ -387,6 +389,27 @@ class PathaoDriver implements CourierDriverInterface
             CourierCapability::BALANCE->value => false,
             CourierCapability::EXCHANGE->value => false,
         ];
+    }
+
+    /**
+     * Pathao's public tracking page needs the consignment ID plus the
+     * recipient's phone in local format, e.g.
+     * https://merchant.pathao.com/tracking?consignment_id=DS081026N7Q5Z4&phone=01714244017
+     */
+    public static function publicTrackingUrl(CourierShipment $shipment): ?string
+    {
+        $consignmentId = $shipment->consignment_id ?: $shipment->tracking_number;
+        $order = $shipment->order;
+        $rawPhone = $order?->shippingAddress?->phone ?: $order?->customer?->phone;
+
+        if (! $consignmentId || ! $rawPhone) {
+            return null;
+        }
+
+        return 'https://merchant.pathao.com/tracking?' . http_build_query([
+            'consignment_id' => $consignmentId,
+            'phone' => PhoneNumber::local(PhoneNumber::national($rawPhone)),
+        ]);
     }
 
     public static function meta(): array

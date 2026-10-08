@@ -36,6 +36,11 @@ class SmsTemplateSeeder extends Seeder
                 'body' => 'Hi {name}, your order #{order_id} has been confirmed. Total: {amount}.',
             ],
             [
+                'key' => 'order_processing',
+                'label' => 'Order Processing (auto)',
+                'body' => 'Dear {customer_name}, your order #{order_id} is being processed. Due: {due} Tk. Track: {website_tracking_url}',
+            ],
+            [
                 'key' => 'invoice',
                 'label' => 'Invoice',
                 'body' => 'Hi {name}, your invoice #{invoice_id} for {amount} is ready.',

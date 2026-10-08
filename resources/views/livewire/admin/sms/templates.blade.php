@@ -6,6 +6,17 @@
         <div class="px-6 py-5 border-b border-gray-100">
             <h2 class="text-sm font-semibold text-gray-900">{{ $editingId ? 'Edit Template' : 'New Template' }}</h2>
             <p class="text-xs text-gray-400">Use {placeholders} in the body — e.g. {code}, {order_id}, {amount}</p>
+            <p class="text-xs text-gray-400 mt-1">
+                Order templates:
+                @foreach (['order_id', 'customer_name', 'amount', 'paid', 'due', 'status', 'courier', 'tracking_number', 'tracking_url', 'website_tracking_url'] as $placeholder)
+                    <code class="font-mono text-[11px] bg-gray-100 text-gray-600 rounded px-1">{{ '{' . $placeholder . '}' }}</code>
+                @endforeach
+                — {tracking_url} is the courier's own tracking page (e.g. Pathao), blank if the courier has none;
+                {website_tracking_url} is this store's track page for the order.
+            </p>
+            <p class="text-xs text-gray-400 mt-1">
+                <code class="font-mono text-[11px]">order_processing</code> is sent automatically once when an order moves to Processing (e.g. after courier booking) — deactivate it to stop.
+            </p>
         </div>
         <form wire:submit.prevent="save" class="px-6 py-5 space-y-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
