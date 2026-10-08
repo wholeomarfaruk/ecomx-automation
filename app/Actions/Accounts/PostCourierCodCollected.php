@@ -12,6 +12,7 @@ use App\Models\AccountsCustomerInvoice;
 use App\Models\AccountsPaymentAllocation;
 use App\Models\CourierShipment;
 use App\Models\Customer;
+use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -41,7 +42,7 @@ class PostCourierCodCollected
     {
         $order = $shipment->order;
 
-        if (! $order || ! $order->customer_id || $collectedAmount <= 0) {
+        if (! $order || $collectedAmount <= 0) {
             return;
         }
 
@@ -49,21 +50,24 @@ class PostCourierCodCollected
             return;
         }
 
-        $courier = $shipment->courier;
-        $cashAccount = $courier?->cashAccount;
+        $accountsOn = (bool) Setting::get('accounts_enabled', true, 'modules');
+        $cashAccount = $shipment->courier?->cashAccount;
 
-        if (! $cashAccount) {
+        // The journal needs the courier's cash account and a customer to
+        // post against. With the Accounts module off there's no journal —
+        // the order's payment section is the only record, so it's still kept.
+        if ($accountsOn && (! $order->customer_id || ! $cashAccount)) {
             return;
         }
 
         $fee = min($collectedAmount, max(0.0, (float) $order->courier_charge));
         $netAmount = round($collectedAmount - $fee, 2);
 
-        DB::transaction(function () use ($order, $shipment, $collectedAmount, $fee, $netAmount, $entryDate, $cashAccount, $when) {
+        DB::transaction(function () use ($order, $shipment, $collectedAmount, $fee, $netAmount, $entryDate, $cashAccount, $when, $accountsOn) {
             $order->payments()->create([
                 'type'            => OrderPaymentType::PAYMENT,
                 'payment_method'  => PaymentMethod::COD,
-                'cash_account_id' => $cashAccount->id,
+                'cash_account_id' => $cashAccount?->id,
                 'amount'          => $collectedAmount,
                 'status'          => 'paid',
                 'paid_at'         => now(),
@@ -72,18 +76,26 @@ class PostCourierCodCollected
             $order->recalculateTotals();
             $order->update(['payment_status' => $order->due_amount > 0 ? PaymentStatus::PARTIAL : PaymentStatus::PAID]);
 
+            if (! $accountsOn) {
+                return;
+            }
+
             $customer = $order->customer;
             $invoice = AccountsCustomerInvoice::where('order_id', $order->id)->first();
             $description = "COD collected {$when} — Order #{$order->id} ({$shipment->tracking_number})";
 
             $creditAccountId = $invoice ? $this->accountId('1100') : $this->accountId('2160');
 
-            $lines = [
-                [
+            $lines = [];
+
+            // Zero when the courier keeps everything it collected — a paid
+            // return where the customer only paid the delivery charge.
+            if ($netAmount > 0) {
+                $lines[] = [
                     'account_id' => $cashAccount->id,
                     'debit'      => $netAmount,
-                ],
-            ];
+                ];
+            }
 
             if ($fee > 0) {
                 $lines[] = [
