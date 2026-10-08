@@ -57,7 +57,10 @@
                                 @error('otpPhone') <span class="field__error">{{ $message }}</span> @enderror
                             </div>
                             <p class="muted" style="font-size:12.5px;margin:0 0 16px">We'll send a 6-digit code to your phone.</p>
-                            <button type="submit" class="btn btn--primary btn--block">Send OTP</button>
+                            <button type="submit" class="btn btn--primary btn--block" wire:loading.attr="disabled" wire:target="sendLoginOtp">
+                                <span wire:loading.remove wire:target="sendLoginOtp">Send OTP</span>
+                                <span wire:loading wire:target="sendLoginOtp">Sending…</span>
+                            </button>
                         </form>
                     @else
                         <form wire:submit.prevent="verifyLoginOtp">
@@ -69,7 +72,20 @@
                             </div>
                             <button type="submit" class="btn btn--primary btn--block" style="margin-bottom:10px">Verify &amp; Sign in</button>
                         </form>
-                        <button type="button" wire:click="sendLoginOtp" style="border:none;background:none;font-size:12px;color:var(--ac2);font-weight:600;cursor:pointer;display:block;width:100%;text-align:center">Resend code</button>
+                        {{-- Countdown mirrors the server-side cooldown (AuthModal::OTP_RESEND_COOLDOWN); wire:key restarts it after every send. --}}
+                        <div wire:key="otp-resend-{{ $otpSends }}"
+                            x-data="{ left: {{ $this->otpResendIn() }}, t: null,
+                                init() { this.t = setInterval(() => { if (this.left > 0) this.left--; else clearInterval(this.t) }, 1000) },
+                                destroy() { clearInterval(this.t) } }"
+                            style="text-align:center">
+                            <button type="button" wire:click="sendLoginOtp" wire:loading.attr="disabled" wire:target="sendLoginOtp"
+                                :disabled="left > 0"
+                                :style="left > 0 ? 'opacity:.55;cursor:not-allowed' : 'cursor:pointer'"
+                                style="border:none;background:none;font-size:12px;color:var(--ac2);font-weight:600;display:block;width:100%;text-align:center">
+                                <span wire:loading wire:target="sendLoginOtp">Sending…</span>
+                                <span wire:loading.remove wire:target="sendLoginOtp" x-text="left > 0 ? 'Resend code in ' + left + 's' : 'Resend code'">Resend code</span>
+                            </button>
+                        </div>
                     @endif
                 @endif
 

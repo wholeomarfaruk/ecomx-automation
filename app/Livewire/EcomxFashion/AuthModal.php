@@ -44,6 +44,11 @@ class AuthModal extends Component
     public string $otpCode = '';
     public bool $otpSent = false;
 
+    /** Bumped on every send so the resend countdown (wire:key'd on it) restarts from the server's cooldown. */
+    public int $otpSends = 0;
+
+    public const OTP_RESEND_COOLDOWN = 100;
+
     // Register
     public string $registerName = '';
     public string $registerPhone = '';
@@ -191,6 +196,16 @@ class AuthModal extends Component
             return;
         }
 
+        // One code per OTP_RESEND_COOLDOWN seconds per phone — enforced here, the countdown on the button just mirrors it.
+        $cooldownKey = $this->throttleKey('otp-cooldown', PhoneNumber::national($this->otpPhone));
+
+        if (RateLimiter::tooManyAttempts($cooldownKey, 1)) {
+            $seconds = RateLimiter::availableIn($cooldownKey);
+            $this->formError = "Please wait {$seconds} seconds before requesting a new code.";
+
+            return;
+        }
+
         $key = $this->throttleKey('otp-send', $this->otpPhone);
 
         if (RateLimiter::tooManyAttempts($key, 3)) {
@@ -204,9 +219,11 @@ class AuthModal extends Component
 
         if (! $user) {
             RateLimiter::hit($key, 300);
-            // Same message whether or not the phone has an account — don't
-            // let this form be used to enumerate which phone numbers are registered.
+            // Same message (and same cooldown) whether or not the phone has an
+            // account — don't let this form be used to enumerate which phone numbers are registered.
+            RateLimiter::hit($cooldownKey, self::OTP_RESEND_COOLDOWN);
             $this->otpSent = true;
+            $this->otpSends++;
 
             return;
         }
@@ -234,7 +251,17 @@ class AuthModal extends Component
             return;
         }
 
+        RateLimiter::hit($cooldownKey, self::OTP_RESEND_COOLDOWN);
         $this->otpSent = true;
+        $this->otpSends++;
+    }
+
+    /** Seconds left before another login code can be requested for the current phone (0 = can resend now). */
+    public function otpResendIn(): int
+    {
+        $key = $this->throttleKey('otp-cooldown', PhoneNumber::national($this->otpPhone));
+
+        return RateLimiter::tooManyAttempts($key, 1) ? RateLimiter::availableIn($key) : 0;
     }
 
     public function verifyLoginOtp(): void
