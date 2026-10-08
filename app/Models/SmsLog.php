@@ -17,6 +17,7 @@ class SmsLog extends Model
         'error_message',
         'provider_response',
         'raw_response',
+        'request_payload',
         'context',
         'retry_count',
         'sent_at',
@@ -25,6 +26,7 @@ class SmsLog extends Model
     protected $casts = [
         'provider_response' => 'array',
         'raw_response' => 'array',
+        'request_payload' => 'array',
         'cost' => 'decimal:4',
         'sent_at' => 'datetime',
     ];

@@ -12,9 +12,24 @@ class MessageLogs extends Component
 
     public string $statusFilter = '';
 
+    public bool $drawerOpen = false;
+    public ?int $viewLogId = null;
+
     public function updatedStatusFilter(): void
     {
         $this->resetPage();
+    }
+
+    public function viewLog(int $id): void
+    {
+        $this->viewLogId = $id;
+        $this->drawerOpen = true;
+    }
+
+    public function closeDrawer(): void
+    {
+        $this->drawerOpen = false;
+        $this->viewLogId = null;
     }
 
     public function render()
@@ -30,6 +45,7 @@ class MessageLogs extends Component
 
         return view('livewire.admin.sms.message-logs', [
             'logs' => $logs,
+            'viewingLog' => $this->drawerOpen && $this->viewLogId ? SmsLog::find($this->viewLogId) : null,
         ])->layout('layouts.admin.admin');
     }
 }

@@ -15,6 +15,8 @@ class SmsResponse
         public ?string $errorCode = null,
         public ?string $errorMessage = null,
         public array $rawResponse = [],
+        /** What was sent to the provider (secrets masked) — shown in the SMS log details. */
+        public array $requestPayload = [],
     ) {
     }
 
@@ -68,6 +70,7 @@ class SmsResponse
             'error_code' => $this->errorCode,
             'error_message' => $this->errorMessage,
             'raw_response' => $this->rawResponse,
+            'request_payload' => $this->requestPayload,
         ];
     }
 }

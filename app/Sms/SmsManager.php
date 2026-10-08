@@ -157,6 +157,7 @@ class SmsManager extends Manager
             'error_message' => $response->errorMessage,
             'provider_response' => $response->providerResponse,
             'raw_response' => $response->rawResponse,
+            'request_payload' => $response->requestPayload ?: null,
             'context' => $message->context,
             'sent_at' => $response->success ? now() : null,
         ]);
