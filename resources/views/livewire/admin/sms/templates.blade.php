@@ -15,7 +15,7 @@
                 {website_tracking_url} is this store's track page for the order.
             </p>
             <p class="text-xs text-gray-400 mt-1">
-                <code class="font-mono text-[11px]">order_processing</code> is sent automatically once when an order moves to Processing (e.g. after courier booking) — deactivate it to stop.
+                <code class="font-mono text-[11px]">order_processing</code> is sent automatically once when an order moves to Processing (e.g. after courier booking) — turn it on/off or pick another template under Notifications &gt; Events &gt; Order Processing.
             </p>
         </div>
         <form wire:submit.prevent="save" class="px-6 py-5 space-y-4">

@@ -77,6 +77,17 @@ class NotificationEventSeeder extends Seeder
                 'sms_template_key' => 'order_confirmation',
             ],
             [
+                'event_key' => 'order_processing',
+                'label' => 'Order Processing',
+                'channel_email' => false,
+                'channel_sms' => true,
+                'channel_push' => false,
+                'channel_browser' => false,
+                'channel_database' => false,
+                'email_template_key' => null,
+                'sms_template_key' => 'order_processing',
+            ],
+            [
                 'event_key' => 'order_shipped',
                 'label' => 'Order Shipped',
                 'channel_email' => true,
