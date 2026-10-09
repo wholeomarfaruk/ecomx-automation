@@ -45,7 +45,7 @@ class StockService
      */
     public function usesOwnStock(): bool
     {
-        return ! Setting::get('inventory_enabled', true, 'modules');
+        return ! Setting::get('inventory_enabled', false, 'modules');
     }
 
     /**

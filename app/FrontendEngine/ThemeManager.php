@@ -3,16 +3,19 @@
 namespace App\FrontendEngine;
 
 use App\Support\EcomxFashion\ThemeRegistry;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use RuntimeException;
 
 /**
  * Gates ThemeRegistry::setActive() behind EngineManager::validate() so a
- * theme with missing files/classes/routes, or one that belongs to the wrong
- * engine, can never become the active theme. ThemeRegistry itself stays the
+ * theme with missing files/classes/routes can never become the active theme.
+ * Any valid theme can be activated, whatever its engine — the active theme's
+ * manifest.engine decides which route file loads (see
+ * EngineManager::loadActiveThemeRoute()), so switching theme switches engine. ThemeRegistry itself stays the
  * source of truth for discovery and for where "active" is persisted
- * (storage/app/theme.json) — this class adds the validation + engine
- * compatibility gate in front of activation, and clears theme-derived cache
+ * (storage/app/theme.json) — this class adds the validation gate in front
+ * of activation, and clears theme-derived cache
  * once activation actually succeeds. Nothing here is transactional in the
  * database sense (ThemeRegistry's store is a flat JSON file, not a DB row);
  * "transactional" means validate-then-write, never write-then-validate.
@@ -20,8 +23,7 @@ use RuntimeException;
 class ThemeManager
 {
     /**
-     * @throws RuntimeException if the theme fails validation, or belongs to
-     *         a different engine than the one currently active.
+     * @throws RuntimeException if the theme fails validation.
      */
     public static function activate(string $slug): Engine
     {
@@ -34,18 +36,7 @@ class ThemeManager
             );
         }
 
-        $manifest = EngineManager::readManifest($slug);
-        $themeEngine = $manifest['manifest']['engine'] ?? null;
-        $activeEngine = EngineManager::activeEngine();
-
-        if ($themeEngine !== $activeEngine) {
-            throw new RuntimeException(
-                "Cannot activate theme [{$slug}]: it belongs to engine [{$themeEngine}], "
-                . "but the active engine is [{$activeEngine}]. Active theme unchanged."
-            );
-        }
-
-        // Validation passed and engine matches — only now do we write.
+        // Validation passed (incl. its engine's route file existing) — only now do we write.
         ThemeRegistry::setActive($slug);
 
         static::clearCache();
@@ -66,7 +57,7 @@ class ThemeManager
     /** All themes for the given engine (or the active engine if omitted). */
     public static function all(?string $engine = null): array
     {
-        $engine ??= EngineManager::activeEngine();
+        $engine ??= EngineManager::activeThemeEngine();
         $themes = [];
 
         foreach (ThemeRegistry::all() as $slug => $meta) {
@@ -87,6 +78,12 @@ class ThemeManager
         } catch (\BadMethodCallException) {
             // Active cache store doesn't support tags (e.g. file/database driver) —
             // nothing theme-derived is cached outside the tag-scoped store today.
+        }
+
+        // The route file loaded depends on the active theme's engine, so a
+        // cached route table would keep serving the previous engine's routes.
+        if (app()->routesAreCached()) {
+            Artisan::call('route:clear');
         }
     }
 }

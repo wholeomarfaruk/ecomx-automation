@@ -121,9 +121,9 @@ class SiteSettings extends Component
     public string $queue_cron_supervisor_path = '';
 
     // Modules — dependency chain: purchase -> inventory -> accounts
-    public bool $purchase_enabled  = true;
-    public bool $inventory_enabled = true;
-    public bool $accounts_enabled  = true;
+    public bool $purchase_enabled  = false;
+    public bool $inventory_enabled = false;
+    public bool $accounts_enabled  = false;
 
     // Media — thumbnail generation (see App\Services\Media\ThumbnailService)
     public bool $thumbnail_enabled = true;
@@ -564,9 +564,9 @@ class SiteSettings extends Component
             }
 
             $old = [
-                'purchase_enabled'  => (bool) Setting::get('purchase_enabled',  '1', 'modules'),
-                'inventory_enabled' => (bool) Setting::get('inventory_enabled', '1', 'modules'),
-                'accounts_enabled'  => (bool) Setting::get('accounts_enabled',  '1', 'modules'),
+                'purchase_enabled'  => (bool) Setting::get('purchase_enabled',  '0', 'modules'),
+                'inventory_enabled' => (bool) Setting::get('inventory_enabled', '0', 'modules'),
+                'accounts_enabled'  => (bool) Setting::get('accounts_enabled',  '0', 'modules'),
             ];
 
             Setting::set('purchase_enabled',  $this->purchase_enabled  ? '1' : '0', 'modules');
@@ -747,8 +747,8 @@ class SiteSettings extends Component
         $this->thumbnail_format  = Setting::get('thumbnail_format',        config('media.thumbnail.format'),  'media');
         $this->thumbnail_quality = (int) Setting::get('thumbnail_quality', config('media.thumbnail.quality'), 'media');
 
-        $this->purchase_enabled  = (bool) Setting::get('purchase_enabled',  '1', 'modules');
-        $this->inventory_enabled = (bool) Setting::get('inventory_enabled', '1', 'modules');
-        $this->accounts_enabled  = (bool) Setting::get('accounts_enabled',  '1', 'modules');
+        $this->purchase_enabled  = (bool) Setting::get('purchase_enabled',  '0', 'modules');
+        $this->inventory_enabled = (bool) Setting::get('inventory_enabled', '0', 'modules');
+        $this->accounts_enabled  = (bool) Setting::get('accounts_enabled',  '0', 'modules');
     }
 }

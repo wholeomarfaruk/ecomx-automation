@@ -301,7 +301,7 @@ class OrderDetail extends Component
 
     protected function accountsEnabled(): bool
     {
-        return (bool) Setting::get('accounts_enabled', true, 'modules');
+        return (bool) Setting::get('accounts_enabled', false, 'modules');
     }
 
     public function openPaymentModal(): void

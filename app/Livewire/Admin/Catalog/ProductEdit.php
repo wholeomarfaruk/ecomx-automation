@@ -336,7 +336,7 @@ class ProductEdit extends Component
 
         // Inventory module is off — a simple product's own stock_quantity is
         // the balance, managed directly (no inventory service or ledger).
-        if ($this->productType === 'simple' && ! Setting::get('inventory_enabled', true, 'modules')) {
+        if ($this->productType === 'simple' && ! Setting::get('inventory_enabled', false, 'modules')) {
             $product->update(['stock_quantity' => $this->stockQuantity]);
         }
 
@@ -416,7 +416,7 @@ class ProductEdit extends Component
             'comboProductOptions'  => $comboProductOptions,
             'comboVariantOptions'  => $comboVariantOptions,
             'giftProductOptions'   => $giftProductOptions,
-            'inventoryEnabled'     => Setting::get('inventory_enabled', true, 'modules'),
+            'inventoryEnabled'     => Setting::get('inventory_enabled', false, 'modules'),
         ])->layout('layouts.admin.admin');
     }
 }

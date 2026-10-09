@@ -50,7 +50,7 @@ class PostCourierCodCollected
             return;
         }
 
-        $accountsOn = (bool) Setting::get('accounts_enabled', true, 'modules');
+        $accountsOn = (bool) Setting::get('accounts_enabled', false, 'modules');
         $cashAccount = $shipment->courier?->cashAccount;
 
         // The journal needs the courier's cash account and a customer to

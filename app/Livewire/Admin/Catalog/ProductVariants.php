@@ -374,7 +374,7 @@ class ProductVariants extends Component
         ]);
 
         if ((float) $this->variantStockQuantity !== (float) $variant->stock_quantity) {
-            if (Setting::get('inventory_enabled', true, 'modules')) {
+            if (Setting::get('inventory_enabled', false, 'modules')) {
                 app(StockService::class)->setAbsolute(
                     $variant->product,
                     $variant,
@@ -479,7 +479,7 @@ class ProductVariants extends Component
             'variants'             => $product->variants,
             'editingVariant'       => $editingVariant,
             'linkableProducts'     => $linkableProducts,
-            'inventoryEnabled'     => Setting::get('inventory_enabled', true, 'modules'),
+            'inventoryEnabled'     => Setting::get('inventory_enabled', false, 'modules'),
         ]);
     }
 }

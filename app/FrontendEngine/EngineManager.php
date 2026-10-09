@@ -63,7 +63,7 @@ class EngineManager
     /** The single configured active engine. Only one engine's routes load per request. */
     public static function activeEngine(): string
     {
-        return config('frontend-engine.active_engine', 'ecomxFashion');
+        return config('frontend-engine.active_engine', 'ecomxAnyniche');
     }
 
     /**

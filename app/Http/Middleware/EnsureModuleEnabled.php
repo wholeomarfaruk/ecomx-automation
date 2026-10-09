@@ -16,7 +16,7 @@ class EnsureModuleEnabled
      */
     public function handle(Request $request, Closure $next, string $module): Response
     {
-        if (! Setting::get("{$module}_enabled", true, 'modules')) {
+        if (! Setting::get("{$module}_enabled", false, 'modules')) {
             abort(403, 'This feature is not enabled. Please enable it from settings.');
         }
 

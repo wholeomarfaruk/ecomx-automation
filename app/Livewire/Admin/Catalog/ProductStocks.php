@@ -179,7 +179,7 @@ class ProductStocks extends Component
 
     protected function inventoryEnabled(): bool
     {
-        return (bool) Setting::get('inventory_enabled', true, 'modules');
+        return (bool) Setting::get('inventory_enabled', false, 'modules');
     }
 
     /**

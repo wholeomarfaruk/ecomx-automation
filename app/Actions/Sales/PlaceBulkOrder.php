@@ -282,7 +282,7 @@ class PlaceBulkOrder
             throw new InvalidArgumentException('Advance is larger than the order total.');
         }
 
-        $accountsOn = (bool) Setting::get('accounts_enabled', true, 'modules');
+        $accountsOn = (bool) Setting::get('accounts_enabled', false, 'modules');
         $account = $accountId ? Account::find($accountId) : null;
 
         if ($accountsOn && ! $account) {

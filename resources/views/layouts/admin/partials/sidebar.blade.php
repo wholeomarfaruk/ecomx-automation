@@ -435,7 +435,7 @@
                 </div>
                 @endif
 
-                @if (\App\Models\Setting::get('accounts_enabled', true, 'modules'))
+                @if (\App\Models\Setting::get('accounts_enabled', false, 'modules'))
                 @if ($canSee('accounts_cash_account.view', 'accounts_dashboard.view', 'accounts_expense.view', 'accounts_fixed_asset.view', 'accounts_loan.view', 'accounts_owner_equity.manage', 'accounts_payable.view', 'accounts_receivable.view', 'accounts_report.view', 'accounts_transaction.view', 'opening_balance.manage'))
                 @php
                     $accountsActive = str_starts_with(Route::currentRouteName(), 'admin.accounts.');
@@ -537,7 +537,7 @@
                 @endif
                 @endif
 
-                @if (\App\Models\Setting::get('purchase_enabled', true, 'modules'))
+                @if (\App\Models\Setting::get('purchase_enabled', false, 'modules'))
                 @if ($canSee('purchase_order.view', 'supplier.view', 'supplier_invoice.view'))
                 @php
                     $purchaseActive = str_starts_with(Route::currentRouteName(), 'admin.purchase.');
@@ -591,7 +591,7 @@
                 @endif
                 @endif
 
-                @if (\App\Models\Setting::get('inventory_enabled', true, 'modules'))
+                @if (\App\Models\Setting::get('inventory_enabled', false, 'modules'))
                 @if ($canSee('batch.view', 'inventory_settings.manage', 'stock.view', 'stock_in.create', 'stock_movement.view', 'warehouse.view'))
                 @php
                     $inventoryActive = str_starts_with(Route::currentRouteName(), 'admin.inventory.');

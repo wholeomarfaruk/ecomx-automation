@@ -3,7 +3,7 @@
 return [
     // Active theme slug — matches storage/app/private/themes/{theme}/page-sections.json
     // and the theme's identity in resources/{theme}/theme.json.
-    'active_theme' => 'ecomx-fashion',
+    'active_theme' => 'ecomx-anyniche',
 
     'brand' => 'Seldom Fashion',
     'domain' => 'seldomfashion.com',

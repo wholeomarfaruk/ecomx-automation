@@ -90,7 +90,7 @@ class ThemeRegistry
             return $stored;
         }
 
-        $fallback = config('ecomx-fashion.active_theme', 'ecomx-fashion');
+        $fallback = config('ecomx-fashion.active_theme', 'ecomx-anyniche');
 
         return array_key_exists($fallback, $installed) ? $fallback : (array_key_first($installed) ?? $fallback);
     }

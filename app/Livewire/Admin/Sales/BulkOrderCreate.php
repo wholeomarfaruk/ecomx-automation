@@ -384,7 +384,7 @@ class BulkOrderCreate extends Component
 
     public function render(): mixed
     {
-        $accountsOn = (bool) Setting::get('accounts_enabled', true, 'modules');
+        $accountsOn = (bool) Setting::get('accounts_enabled', false, 'modules');
 
         $methods = ShippingMethod::query()
             ->where('is_active', true)
