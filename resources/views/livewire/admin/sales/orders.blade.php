@@ -137,7 +137,13 @@
                         <tr class="hover:bg-gray-50/50 transition group">
                             <td class="px-5 py-3 cursor-pointer" onclick="window.location.href='{{ route('admin.sales.orders.show', $order->id) }}'">
                                 <span class="text-sm font-medium text-gray-800">#{{ $order->id }}</span>
-                                <span class="block text-xs text-gray-400">{{ $order->created_at->format('d M, Y') }}</span>
+                                @php $placedAt = local_time($order->created_at); @endphp
+                                <span class="block text-xs text-gray-400 whitespace-nowrap">{{ $placedAt?->format('d M, Y h:i A') }}</span>
+                                @if ($placedAt && $placedAt->isToday())
+                                    <span class="block text-[11px] text-indigo-500">{{ $placedAt->diffForHumans() }}</span>
+                                @elseif ($placedAt && $placedAt->isYesterday())
+                                    <span class="block text-[11px] text-indigo-500">Yesterday</span>
+                                @endif
                             </td>
                             <td class="px-5 py-3 cursor-pointer" onclick="window.location.href='{{ route('admin.sales.orders.show', $order->id) }}'">
                                 <span class="block text-sm text-gray-600">{{ $order->customer?->full_name ?? 'Guest' }}</span>
