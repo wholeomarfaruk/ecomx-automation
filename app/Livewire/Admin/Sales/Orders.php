@@ -11,10 +11,14 @@ use App\Exceptions\Inventory\InsufficientStockException;
 use App\Livewire\Concerns\BooksCourierShipments;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\FraudCheck;
 use App\Models\Setting;
+use App\Services\FraudShield\FraudShield;
+use App\Services\FraudShield\FraudShieldSettings;
 use App\Services\StockService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Common\Entity\Style\Style;
@@ -319,10 +323,16 @@ class Orders extends Component
         // Re-render is all that's needed.
     }
 
+    /** The Fraud Check modal saved a result — re-render so the row badge shows it. */
+    #[On('fraud-checked')]
+    public function refreshFraudBadges(): void
+    {
+    }
+
     public function render(): mixed
     {
         $orders = $this->filteredOrders()
-            ->with('customer')
+            ->with('customer', 'shippingAddress')
             ->withCount('items')
             ->orderByDesc('id')
             ->paginate(20);
@@ -397,8 +407,23 @@ class Orders extends Component
 
         $canManageCourier = auth()->user()->can('courier_configuration.manage');
 
+        // Stored FraudShield results for this page's phones — no API calls
+        // here; unchecked/stale rows are checked one by one by the list's
+        // script after the page has loaded (OrderFraudCheckController).
+        $fraudSettings = app(FraudShieldSettings::class);
+        $fraudEnabled = $fraudSettings->ready();
+        $fraudChecks = $fraudEnabled
+            ? FraudCheck::whereIn('phone', $orders->getCollection()
+                ->map(fn ($o) => FraudShield::orderPhone($o))
+                ->filter()->unique()->values())
+                ->get()->keyBy('phone')
+            : collect();
+
         return view('livewire.admin.sales.orders', [
             'orders'          => $orders,
+            'fraudEnabled'    => $fraudEnabled,
+            'fraudChecks'     => $fraudChecks,
+            'fraudAutoCheck'  => $fraudEnabled && $fraudSettings->autoCheckList(),
             'orderedProducts' => $orderedProducts,
             'packedOrders'    => $packedOrders,
             'statuses'        => OrderStatus::cases(),

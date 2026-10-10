@@ -49,7 +49,7 @@ class OrderQuickView extends Component
                     'billingAddress',
                     'shippingAddress',
                     'items.product',
-                    'items.variant',
+                    'items.variant.media',
                     'payments',
                     'courierShipments.courier',
                 ])->find($this->viewOrderId)

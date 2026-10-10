@@ -1080,10 +1080,10 @@
                 </a>
                 @endif
 
-                @if ($canSee('courier_configuration.view', 'developer_tools.view', 'email_configuration.view', 'license_configuration.view', 'marketing_integration.manage', 'notification_configuration.view', 'sms_configuration.view', 'system_health.view'))
+                @if ($canSee('courier_configuration.view', 'developer_tools.view', 'email_configuration.view', 'fraud_checker.manage', 'license_configuration.view', 'marketing_integration.manage', 'notification_configuration.view', 'sms_configuration.view', 'system_health.view'))
                 @php
                     $advanceActive = in_array(Route::currentRouteName(), [
-                        'admin.settings.advance.developer-tools', 'admin.settings.advance.system-health', 'admin.settings.advance.license-configuration'
+                        'admin.settings.advance.developer-tools', 'admin.settings.advance.system-health', 'admin.settings.advance.license-configuration', 'admin.settings.advance.fraud-checker'
                     ]) || str_starts_with(Route::currentRouteName(), 'admin.settings.advance.sms-configuration.')
                         || str_starts_with(Route::currentRouteName(), 'admin.settings.advance.email-configuration.')
                         || str_starts_with(Route::currentRouteName(), 'admin.settings.advance.notification-configuration.')
@@ -1157,6 +1157,12 @@
                             Courier
                         </a>
                         @endcan
+                        @if ($canSee('fraud_checker.manage'))
+                        <a href="{{ route('admin.settings.advance.fraud-checker') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.settings.advance.fraud-checker' ? 'text-gray-200' : '' }}">
+                            Fraud Checker
+                        </a>
+                        @endif
                         @if ($canSee('marketing_integration.manage'))
                         <a href="{{ route('admin.site-settings', ['group' => 'marketing']) }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.site-settings' && request()->query('group') === 'marketing' ? 'text-gray-200' : '' }}">

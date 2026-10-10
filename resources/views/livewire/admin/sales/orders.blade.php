@@ -167,6 +167,22 @@
                             <td class="px-5 py-3 cursor-pointer" onclick="window.location.href='{{ route('admin.sales.orders.show', $order->id) }}'">
                                 <span class="block text-sm text-gray-600">{{ $order->customer?->full_name ?? 'Guest' }}</span>
                                 <span class="block text-xs text-gray-400">{{ $order->customer?->phone ?? '' }}</span>
+                                @if ($fraudEnabled && ($fraudPhone = \App\Services\FraudShield\FraudShield::orderPhone($order)))
+                                    @php
+                                        $fc = $fraudChecks[$fraudPhone] ?? null;
+                                        $fraudPending = $fraudAutoCheck && ! app(\App\Services\FraudShield\FraudShield::class)->isFresh($fc);
+                                    @endphp
+                                    <span class="block mt-1" data-fraud-order="{{ $order->id }}" @if($fraudPending) data-fraud-pending @endif>
+                                        @if ($fc)
+                                            @include('livewire.admin.sales.partials.fraud-badge', ['fc' => $fc, 'orderId' => $order->id])
+                                        @elseif ($fraudPending)
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] text-gray-400 ring-1 ring-gray-100">
+                                                <svg class="h-2.5 w-2.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                                                Checking…
+                                            </span>
+                                        @endif
+                                    </span>
+                                @endif
                             </td>
                             <td class="px-5 py-3" @click.stop>
                                 <select wire:change="updateOrderSource({{ $order->id }}, $event.target.value)" title="Change source"
@@ -293,6 +309,15 @@
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 0h-12"/>
                                                     </svg>
                                                     Book Courier
+                                                </button>
+                                            @endif
+                                            @if($fraudEnabled)
+                                                <button @click="open = false; $dispatch('open-fraud-check', { orderId: {{ $order->id }} })" type="button"
+                                                    class="flex items-center gap-2.5 w-full px-4 py-2 text-gray-700 hover:bg-gray-50 transition">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/>
+                                                    </svg>
+                                                    Fraud Check
                                                 </button>
                                             @endif
                                             @if(auth()->user()?->hasRole('superadmin') || auth()->user()?->can('order.edit'))
@@ -537,4 +562,75 @@
     {{-- Courier booking: its own component, so it doesn't re-render this whole page. --}}
     <livewire:admin.sales.courier-booking-modal />
     <livewire:admin.sales.send-order-notification-modal />
+    @if ($fraudEnabled)
+        <livewire:admin.sales.fraud-check-modal />
+    @endif
 </div>
+
+@script
+<script>
+    // Fraud badges: the list renders first, then unchecked rows are checked
+    // one at a time over a plain POST (not through Livewire, so filters and
+    // clicks never wait on FraudShield). Results are kept per order so a
+    // Livewire re-render (filter, status change) puts them straight back.
+    const done = new Map();
+    let running = false;
+    let stopped = false;
+    const url = (id) => @js(route('admin.sales.orders.fraud-check', ['id' => '__ID__'])).replace('__ID__', id);
+
+    const pending = () => [...document.querySelectorAll('[data-fraud-pending]')]
+        .filter((el) => $wire.$el.contains(el));
+
+    async function run() {
+        if (running) return;
+        running = true;
+
+        for (const el of pending()) {
+            const id = el.dataset.fraudOrder;
+
+            if (done.has(id)) {
+                el.innerHTML = done.get(id);
+                el.removeAttribute('data-fraud-pending');
+                continue;
+            }
+            if (!el.isConnected) continue;
+            if (stopped) {
+                // Limit hit / key rejected: drop the spinner, keep any saved badge.
+                if (!el.querySelector('button')) el.innerHTML = '';
+                el.removeAttribute('data-fraud-pending');
+                continue;
+            }
+
+            try {
+                const res = await fetch(url(id), {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+                    },
+                });
+                if (!res.ok) { stopped = res.status === 429 || res.status === 403; continue; }
+                const data = await res.json();
+                done.set(id, data.html);
+                if (data.stop) stopped = true;
+
+                document.querySelectorAll(`[data-fraud-order="${id}"]`).forEach((target) => {
+                    target.innerHTML = data.html;
+                    target.removeAttribute('data-fraud-pending');
+                });
+            } catch (e) {
+                // Network hiccup — leave the row as is; it is retried on the next render.
+            }
+        }
+
+        running = false;
+        if (!stopped && pending().some((el) => !done.has(el.dataset.fraudOrder))) run();
+    }
+
+    run();
+    Livewire.hook('commit', ({ component, succeed }) => {
+        if (component.id !== $wire.$id) return;
+        succeed(() => queueMicrotask(run));
+    });
+</script>
+@endscript

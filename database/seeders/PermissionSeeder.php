@@ -308,6 +308,9 @@ class PermissionSeeder extends Seeder
             ['id' => 199, 'name' => 'marketing_attribution.view'],
             ['id' => 200, 'name' => 'marketing_integration.manage'],
 
+            //fraud checker
+            ['id' => 201, 'name' => 'fraud_checker.manage'],
+
         ];
         foreach ($permissions as $permission) {
             // Permission::create(['name' => $permission]);

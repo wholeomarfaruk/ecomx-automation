@@ -58,6 +58,15 @@
                     @foreach($order->items as $item)
                         <div class="rounded-lg border border-gray-200 px-4 py-3">
                             <div class="flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-3 min-w-0">
+                                        @php $thumb = $item->variant?->display_image ?? $item->product?->featured_image; @endphp
+                                        <div class="w-12 h-12 shrink-0 rounded-md border border-gray-100 bg-gray-50 overflow-hidden flex items-center justify-center">
+                                            @if($thumb)
+                                                <img src="{{ $thumb }}" alt="" class="w-full h-full object-cover" loading="lazy">
+                                            @else
+                                                <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A1.5 1.5 0 0 0 21.75 19.5V4.5A1.5 1.5 0 0 0 20.25 3H3.75A1.5 1.5 0 0 0 2.25 4.5v15A1.5 1.5 0 0 0 3.75 21Z"/></svg>
+                                            @endif
+                                        </div>
                                 <div class="min-w-0">
                                     <div class="flex items-center gap-1.5">
                                         <span class="text-sm font-medium text-gray-800">{{ $item->product_name }}</span>
@@ -71,6 +80,7 @@
                                     @if($item->variant_name)
                                         <span class="text-xs text-gray-400 font-mono">{{ $item->variant_name }}</span>
                                     @endif
+                                </div>
                                 </div>
                                 <div class="text-right shrink-0">
                                     <p class="text-sm font-medium text-gray-800">{{ number_format($item->unit_price, 2) }} × {{ rtrim(rtrim(number_format($item->quantity, 3), '0'), '.') }}</p>
@@ -353,6 +363,34 @@
                 </div>
                 <p class="text-sm font-medium text-gray-800">{{ $order->customer?->full_name ?? 'Guest' }}</p>
                 <p class="text-xs text-gray-400">{{ $order->customer?->phone ?? '' }}</p>
+
+                @if($fraudEnabled)
+                    <div class="mt-4 pt-4 border-t border-gray-100">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-xs font-medium text-gray-500">Fraud Check</p>
+                            <button type="button" @click="$dispatch('open-fraud-check', { orderId: {{ $order->id }} })"
+                                class="text-xs font-medium text-indigo-600 hover:text-indigo-700 transition">
+                                {{ $fraudCheck ? 'Details →' : 'Check now →' }}
+                            </button>
+                        </div>
+                        @if($fraudCheck)
+                            <div class="flex items-center gap-2">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ring-1 {{ $fraudCheck->badgeClass() }}">{{ $fraudCheck->levelLabel() }}</span>
+                                <span class="text-sm font-semibold text-gray-800">{{ rtrim(rtrim(number_format($fraudCheck->success_ratio, 1), '0'), '.') }}%</span>
+                                <span class="text-xs text-gray-400">success</span>
+                            </div>
+                            <div class="mt-2 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                                <div class="h-full rounded-full {{ $fraudCheck->barClass() }}" style="width: {{ max(0, min(100, $fraudCheck->success_ratio)) }}%"></div>
+                            </div>
+                            <p class="text-[11px] text-gray-500 mt-1.5">
+                                {{ $fraudCheck->success_parcel }} delivered · <span class="text-red-500">{{ $fraudCheck->cancelled_parcel }} cancelled</span> · {{ $fraudCheck->total_parcel }} total
+                            </p>
+                            <p class="text-[11px] text-gray-400">Checked {{ local_time($fraudCheck->checked_at)?->diffForHumans() }}</p>
+                        @else
+                            <p class="text-xs text-gray-400">Not checked yet.</p>
+                        @endif
+                    </div>
+                @endif
 
                 @if($order->shippingAddress)
                     <div class="mt-4 pt-4 border-t border-gray-100">
@@ -786,4 +824,7 @@
     {{-- Courier booking: its own component, so it doesn't re-render this whole page. --}}
     <livewire:admin.sales.courier-booking-modal />
     <livewire:admin.sales.send-order-notification-modal />
+    @if ($fraudEnabled)
+        <livewire:admin.sales.fraud-check-modal />
+    @endif
 </div>

@@ -29,6 +29,8 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderPayment;
 use App\Models\Setting;
+use App\Services\FraudShield\FraudShield;
+use App\Services\FraudShield\FraudShieldSettings;
 use App\Services\StockService;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
@@ -107,6 +109,12 @@ class OrderDetail extends Component
      * OrderEditor (embedded on this page) saved a change — pick up new/removed
      * lines in the per-item quantity inputs; the rest re-renders from the DB.
      */
+    /** The Fraud Check modal saved a result — re-render the Customer card. */
+    #[On('fraud-checked')]
+    public function refreshFraudCard(): void
+    {
+    }
+
     #[On('order-updated')]
     public function refreshAfterEdit(): void
     {
@@ -868,7 +876,7 @@ class OrderDetail extends Component
             'billingAddress',
             'shippingAddress',
             'items.product',
-            'items.variant',
+            'items.variant.media',
             'items.combo.items.product',
             'items.combo.items.variant',
             'items.batchAllocations.batch',
@@ -881,9 +889,14 @@ class OrderDetail extends Component
         ])->findOrFail($this->orderId);
 
         $canManageCourier = auth()->user()->can('courier_configuration.manage');
+        $fraudEnabled = app(FraudShieldSettings::class)->ready();
 
         return view('livewire.admin.sales.order-detail', [
             'order'               => $order,
+            'fraudEnabled'        => $fraudEnabled,
+            'fraudCheck'          => $fraudEnabled
+                ? app(FraudShield::class)->stored(FraudShield::orderPhone($order))
+                : null,
             'statuses'            => OrderStatus::cases(),
             'paymentStatuses'     => PaymentStatus::cases(),
             'fulfillmentStatuses' => FulfillmentStatus::cases(),

@@ -155,6 +155,8 @@ Route::prefix('sales')->name('sales.')->group(function () {
     Route::get('/orders/{id}',App\Livewire\Admin\Sales\OrderDetail::class)->name('orders.show');
     Route::get('/orders/{id}/print/{type?}', OrderPrintController::class)
         ->whereNumber('id')->whereIn('type', ['invoice', 'packing-slip'])->name('orders.print');
+    Route::post('/orders/{id}/fraud-check', App\Http\Controllers\Admin\OrderFraudCheckController::class)
+        ->whereNumber('id')->middleware('throttle:60,1')->name('orders.fraud-check');
 
     Route::get('/coupons', App\Livewire\Admin\Sales\Coupons::class)->name('coupons');
     Route::get('/coupons/create', App\Livewire\Admin\Sales\CouponCreate::class)->name('coupons.create');
@@ -221,6 +223,7 @@ Route::prefix('inventory')->name('inventory.')->middleware('module:inventory')->
 Route::get('/settings/advance/developer-tools', App\Livewire\Admin\DeveloperTools\DeveloperTools::class)->name('settings.advance.developer-tools');
 Route::get('/settings/advance/system-health', App\Livewire\Admin\Advance\SystemHealth::class)->name('settings.advance.system-health');
 Route::get('/settings/advance/license-configuration', App\Livewire\Admin\Advance\LicenseConfiguration::class)->name('settings.advance.license-configuration');
+Route::get('/settings/advance/fraud-checker', App\Livewire\Admin\Advance\FraudChecker::class)->name('settings.advance.fraud-checker');
 
 Route::prefix('settings/advance/sms-configuration')->name('settings.advance.sms-configuration.')->group(function () {
     Route::get('/', App\Livewire\Admin\Sms\Dashboard::class)->name('dashboard');
