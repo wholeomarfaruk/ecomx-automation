@@ -66,6 +66,16 @@
                     <option value="{{ $s->value }}">{{ $s->label() }}</option>
                 @endforeach
             </select>
+            <select wire:model.live="filterSource" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                <option value="">All sources</option>
+                @foreach ($sources as $src)
+                    <option value="{{ $src->value }}">{{ $src->label() }}</option>
+                @endforeach
+            </select>
+            @if ($search !== '' || $filterStatus !== '' || $filterSource !== '')
+                <button type="button" wire:click="clearFilters"
+                    class="px-2 py-2 text-xs font-medium text-gray-500 hover:text-indigo-600">Clear</button>
+            @endif
             @php
                 $addable = $orders->getCollection()
                     ->reject(fn ($o) => in_array($o->id, $sheetOrderIds, true) || $lockedByOthers->has($o->id))
@@ -86,9 +96,11 @@
                         <th class="px-4 py-2.5 text-left">Order</th>
                         <th class="px-4 py-2.5 text-left">Customer</th>
                         <th class="px-4 py-2.5 text-left">Address</th>
+                        <th class="px-4 py-2.5 text-left">Source</th>
                         <th class="px-4 py-2.5 text-center">Items</th>
                         <th class="px-4 py-2.5 text-right">Due (COD)</th>
                         <th class="px-4 py-2.5 text-center">Status</th>
+                        <th class="w-14 px-4 py-2.5"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -130,6 +142,9 @@
                             <td class="px-4 py-2.5 max-w-xs">
                                 <span class="block text-xs text-gray-500 line-clamp-2">{{ $order->shippingAddress?->full_address }}</span>
                             </td>
+                            <td class="px-4 py-2.5 whitespace-nowrap">
+                                <span class="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-600">{{ $order->source?->label() ?? '—' }}</span>
+                            </td>
                             <td class="px-4 py-2.5 text-center text-gray-600">{{ $order->items_count }}</td>
                             <td class="px-4 py-2.5 text-right font-medium text-gray-800 tabular-nums">{{ number_format((float) $order->due_amount, 2) }}</td>
                             <td class="px-4 py-2.5 text-center">
@@ -138,9 +153,40 @@
                                     <span class="block text-[10px] text-gray-400 mt-0.5">on {{ $lockedBy }}'s sheet</span>
                                 @endif
                             </td>
+                            <td class="px-4 py-2.5 text-right">
+                                {{-- Menu is teleported to <body> so the scrolling table can't clip it. --}}
+                                <div x-data="{ open: false, top: 0, right: 0,
+                                        toggle() { const r = this.$refs.btn.getBoundingClientRect(); this.top = r.bottom + window.scrollY + 4; this.right = window.innerWidth - r.right; this.open = !this.open; } }"
+                                    class="flex justify-end">
+                                    <button x-ref="btn" @click="toggle()" type="button" title="Actions"
+                                        class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z"/></svg>
+                                    </button>
+                                    <template x-teleport="body">
+                                        <div x-show="open" x-cloak @click.outside="open = false" @keydown.escape.window="open = false" @scroll.window="open = false"
+                                            x-transition.opacity.duration.100ms
+                                            :style="`position: absolute; top: ${top}px; right: ${right}px; z-index: 9999;`"
+                                            class="w-52 bg-white rounded-xl shadow-xl border border-gray-200 py-1 text-sm">
+                                            <button type="button" @click="open = false; $dispatch('open-order-view', { orderId: {{ $order->id }} })"
+                                                class="flex items-center gap-2.5 w-full px-4 py-2 text-gray-700 hover:bg-gray-50 transition"><svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg> View details</button>
+                                            @if ($fraudEnabled)
+                                                <button type="button" @click="open = false; $dispatch('open-fraud-check', { orderId: {{ $order->id }} })"
+                                                    class="flex items-center gap-2.5 w-full px-4 py-2 text-gray-700 hover:bg-gray-50 transition"><svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg> Fraud Check</button>
+                                            @endif
+                                            @if (! $inSheet && ! $lockedBy)
+                                                <button type="button" @click="open = false" wire:click="addOrder({{ $order->id }})"
+                                                    class="flex items-center gap-2.5 w-full px-4 py-2 text-indigo-700 hover:bg-indigo-50 transition"><svg class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg> Add to sheet</button>
+                                            @endif
+                                            <div class="my-1 border-t border-gray-100"></div>
+                                            <a href="{{ route('admin.sales.orders.show', $order->id) }}" target="_blank"
+                                                class="flex items-center gap-2.5 w-full px-4 py-2 text-gray-700 hover:bg-gray-50 transition"><svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg> Open order page</a>
+                                        </div>
+                                    </template>
+                                </div>
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="px-5 py-12 text-center text-sm text-gray-400">No orders waiting for a courier.</td></tr>
+                        <tr><td colspan="9" class="px-5 py-12 text-center text-sm text-gray-400">No orders waiting for a courier.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -220,62 +266,91 @@
             </div>
         </div>
 
-        <div class="overflow-x-auto">
-            <table class="min-w-full text-sm">
-                <thead class="bg-gray-50">
-                    <tr class="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        <th class="px-3 py-2.5 text-left">#</th>
-                        <th class="px-3 py-2.5 text-left">Order</th>
-                        <th class="px-3 py-2.5 text-left min-w-[190px]">Recipient</th>
-                        <th class="px-3 py-2.5 text-left min-w-[240px]">Address</th>
-                        <th class="px-3 py-2.5 text-left w-28">COD</th>
-                        <th class="px-3 py-2.5 text-left w-36">Parcel</th>
-                        <th class="px-3 py-2.5 text-left min-w-[150px]">Courier</th>
-                        <th class="px-3 py-2.5 text-left min-w-[220px]">Items / Note</th>
-                        <th class="px-3 py-2.5 text-left min-w-[160px]">Result</th>
-                        <th class="px-3 py-2.5"></th>
+        {{-- Grid: fixed column widths (table-fixed + colgroup) — wider than the screen and
+             scrolls sideways instead of squeezing cells; # + Order stay pinned left, actions right. --}}
+        <div class="courier-sheet overflow-auto max-h-[70vh] overscroll-x-contain">
+            <table class="table-fixed text-sm border-separate border-spacing-0" style="width: 2044px">
+                <colgroup>
+                    <col style="width: 44px">  {{-- # --}}
+                    <col style="width: 92px">  {{-- order --}}
+                    <col style="width: 170px"> {{-- name --}}
+                    <col style="width: 140px"> {{-- phone --}}
+                    <col style="width: 92px">  {{-- fraud --}}
+                    <col style="width: 300px"> {{-- address --}}
+                    <col style="width: 100px"> {{-- cod --}}
+                    <col style="width: 80px">  {{-- weight --}}
+                    <col style="width: 66px">  {{-- qty --}}
+                    <col style="width: 150px"> {{-- courier --}}
+                    <col style="width: 280px"> {{-- items --}}
+                    <col style="width: 200px"> {{-- note --}}
+                    <col style="width: 166px"> {{-- result --}}
+                    <col style="width: 164px"> {{-- actions --}}
+                </colgroup>
+                <thead class="sticky top-0 z-20">
+                    <tr class="text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">
+                        <th class="sticky left-0 z-30 bg-gray-50 border-b border-gray-200 px-3 py-2.5">#</th>
+                        <th class="sticky z-30 bg-gray-50 border-b border-r border-gray-200 px-3 py-2.5 shadow-[4px_0_6px_-4px_rgba(0,0,0,0.12)]" style="left: 44px">Order</th>
+                        <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5">Name <span class="text-red-400">*</span></th>
+                        <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5">Phone <span class="text-red-400">*</span></th>
+                        <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5">Fraud</th>
+                        <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5">Address <span class="text-red-400">*</span></th>
+                        <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5 text-right">COD</th>
+                        <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5 text-right">Kg</th>
+                        <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5 text-right">Qty</th>
+                        <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5">Courier <span class="text-red-400">*</span></th>
+                        <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5">Items</th>
+                        <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5">Note for courier</th>
+                        <th class="bg-gray-50 border-b border-gray-200 px-3 py-2.5">Result</th>
+                        <th class="sticky right-0 z-30 bg-gray-50 border-b border-l border-gray-200 px-3 py-2.5 shadow-[-4px_0_6px_-4px_rgba(0,0,0,0.12)]"></th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
+                <tbody>
                     @forelse ($items as $item)
                         @php
                             $key = 'r' . $item->id;
                             $booked = $item->isBooked();
+                            $failed = $item->status === 'failed';
                             $fc = $fraudEnabled ? $fraudChecks->get(\App\Services\FraudShield\FraudShield::normalizePhone($item->recipient_phone)) : null;
-                            $input = 'w-full rounded-md border border-gray-200 px-2 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-500';
+                            $rowBg = $booked ? 'bg-emerald-50' : ($failed ? 'bg-red-50' : 'bg-white');
+                            $td = 'border-b border-gray-100 px-1.5 py-1.5';
                         @endphp
-                        <tr wire:key="sheet-{{ $item->id }}" class="align-top transition"
-                            :class="current === {{ $item->id }} ? 'bg-indigo-50' : '{{ $booked ? 'bg-emerald-50/40' : ($item->status === 'failed' ? 'bg-red-50/40' : '') }}'">
-                            <td class="px-3 py-2.5 text-xs text-gray-400 tabular-nums">{{ $loop->iteration }}</td>
-                            <td class="px-3 py-2.5 whitespace-nowrap">
+                        <tr wire:key="sheet-{{ $item->id }}" class="group">
+                            <td class="sticky left-0 z-10 border-b border-gray-100 px-3 py-1.5 text-xs text-gray-400 tabular-nums {{ $rowBg }}"
+                                :class="current === {{ $item->id }} && '!bg-indigo-50'">{{ $loop->iteration }}</td>
+                            <td class="sticky z-10 border-b border-r border-gray-100 px-3 py-1.5 whitespace-nowrap shadow-[4px_0_6px_-4px_rgba(0,0,0,0.12)] {{ $rowBg }}" style="left: 44px"
+                                :class="current === {{ $item->id }} && '!bg-indigo-50'">
                                 <a href="{{ route('admin.sales.orders.show', $item->order_id) }}" wire:navigate class="font-medium text-gray-800 hover:text-indigo-600">#{{ $item->order_id }}</a>
                                 @if ($item->order)
-                                    <span class="block text-[10px] text-gray-400">{{ $item->order->status->label() }}</span>
+                                    <span class="block text-[10px] leading-tight text-gray-400">{{ $item->order->status->label() }}</span>
                                 @endif
                             </td>
-                            <td class="px-3 py-2.5 space-y-1">
-                                <input wire:model.blur="rows.{{ $key }}.recipient_name" type="text" placeholder="Name" @disabled($booked) class="{{ $input }}">
-                                <input wire:model.blur="rows.{{ $key }}.recipient_phone" type="text" inputmode="tel" placeholder="01XXXXXXXXX" @disabled($booked) class="{{ $input }} font-mono">
+                            <td class="{{ $td }} {{ $rowBg }}">
+                                <input wire:model.blur="rows.{{ $key }}.recipient_name" type="text" placeholder="Name" title="{{ $item->recipient_name }}" @disabled($booked) class="cell">
+                            </td>
+                            <td class="{{ $td }} {{ $rowBg }}">
+                                <input wire:model.blur="rows.{{ $key }}.recipient_phone" type="text" inputmode="tel" placeholder="01XXXXXXXXX" @disabled($booked) class="cell font-mono">
+                            </td>
+                            <td class="{{ $td }} {{ $rowBg }}">
                                 @if ($fc)
                                     @include('livewire.admin.sales.partials.fraud-badge', ['fc' => $fc, 'orderId' => $item->order_id])
+                                @else
+                                    <span class="text-xs text-gray-300 px-1">—</span>
                                 @endif
                             </td>
-                            <td class="px-3 py-2.5">
-                                <textarea wire:model.blur="rows.{{ $key }}.recipient_address" rows="3" placeholder="Full address" @disabled($booked) class="{{ $input }} resize-y"></textarea>
+                            <td class="{{ $td }} {{ $rowBg }}">
+                                <input wire:model.blur="rows.{{ $key }}.recipient_address" type="text" placeholder="Full address" title="{{ $item->recipient_address }}" @disabled($booked) class="cell">
                             </td>
-                            <td class="px-3 py-2.5">
-                                <input wire:model.blur="rows.{{ $key }}.cod_amount" type="number" min="0" step="0.01" @disabled($booked) class="{{ $input }} tabular-nums">
+                            <td class="{{ $td }} {{ $rowBg }}">
+                                <input wire:model.blur="rows.{{ $key }}.cod_amount" type="number" min="0" step="0.01" @disabled($booked) class="cell text-right tabular-nums">
                             </td>
-                            <td class="px-3 py-2.5 space-y-1">
-                                <label class="flex items-center gap-1 text-[11px] text-gray-400">
-                                    <input wire:model.blur="rows.{{ $key }}.weight" type="number" min="0.01" step="0.01" @disabled($booked) class="{{ $input }} tabular-nums"> kg
-                                </label>
-                                <label class="flex items-center gap-1 text-[11px] text-gray-400">
-                                    <input wire:model.blur="rows.{{ $key }}.quantity" type="number" min="1" step="1" @disabled($booked) class="{{ $input }} tabular-nums"> pcs
-                                </label>
+                            <td class="{{ $td }} {{ $rowBg }}">
+                                <input wire:model.blur="rows.{{ $key }}.weight" type="number" min="0.01" step="0.01" @disabled($booked) class="cell text-right tabular-nums">
                             </td>
-                            <td class="px-3 py-2.5">
-                                <select wire:model.live="rows.{{ $key }}.courier_id" @disabled($booked) class="{{ $input }}">
+                            <td class="{{ $td }} {{ $rowBg }}">
+                                <input wire:model.blur="rows.{{ $key }}.quantity" type="number" min="1" step="1" @disabled($booked) class="cell text-right tabular-nums">
+                            </td>
+                            <td class="{{ $td }} {{ $rowBg }}">
+                                <select wire:model.live="rows.{{ $key }}.courier_id" @disabled($booked) class="cell {{ $item->courier_id ? '' : '!border-amber-300' }}">
                                     <option value="">— Pick —</option>
                                     @foreach ($couriers as $courier)
                                         <option value="{{ $courier->id }}">{{ $courier->name }}</option>
@@ -285,54 +360,65 @@
                                     @endif
                                 </select>
                             </td>
-                            <td class="px-3 py-2.5 space-y-1">
-                                <textarea wire:model.blur="rows.{{ $key }}.description" rows="2" placeholder="Item description" @disabled($booked) class="{{ $input }} text-xs resize-y"></textarea>
-                                <input wire:model.blur="rows.{{ $key }}.instruction" type="text" placeholder="Note for courier (optional)" @disabled($booked) class="{{ $input }} text-xs">
+                            <td class="{{ $td }} {{ $rowBg }}">
+                                <input wire:model.blur="rows.{{ $key }}.description" type="text" placeholder="Item description" title="{{ $item->description }}" @disabled($booked) class="cell text-xs">
                             </td>
-                            <td class="px-3 py-2.5">
+                            <td class="{{ $td }} {{ $rowBg }}">
+                                <input wire:model.blur="rows.{{ $key }}.instruction" type="text" placeholder="Optional" @disabled($booked) class="cell text-xs">
+                            </td>
+                            <td class="border-b border-gray-100 px-3 py-1.5 {{ $rowBg }}">
                                 <template x-if="current === {{ $item->id }}">
                                     <span class="inline-flex items-center gap-1.5 text-xs text-indigo-600">
                                         <svg class="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
                                         Booking…
                                     </span>
                                 </template>
-                                <div x-show="current !== {{ $item->id }}">
+                                <div x-show="current !== {{ $item->id }}" class="min-w-0">
                                     @if ($booked)
-                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
-                                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
-                                            Booked
+                                        <div class="flex items-center gap-1.5">
+                                            <svg class="h-3.5 w-3.5 shrink-0 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
+                                            <span class="text-xs font-mono font-medium text-gray-800 truncate select-all" title="{{ $item->tracking_number }}">{{ $item->tracking_number }}</span>
+                                        </div>
+                                        <span class="block text-[10px] leading-tight truncate {{ $item->error_message ? 'text-amber-600' : 'text-gray-400' }}" title="{{ $item->error_message }}">
+                                            {{ $item->error_message ?: ($item->courier?->name . ' · ' . local_time($item->booked_at)?->format('h:i A')) }}
                                         </span>
-                                        <span class="block mt-1 text-xs font-mono text-gray-700 select-all">{{ $item->tracking_number }}</span>
-                                        <span class="block text-[10px] text-gray-400">{{ $item->courier?->name }} · {{ local_time($item->booked_at)?->format('h:i A') }}</span>
-                                        @if ($item->error_message)
-                                            <span class="block text-[10px] text-amber-600 mt-0.5">{{ $item->error_message }}</span>
-                                        @endif
-                                    @elseif ($item->status === 'failed')
-                                        <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Failed</span>
-                                        <span class="block mt-1 text-xs text-red-600 break-words">{{ $item->error_message }}</span>
+                                    @elseif ($failed)
+                                        <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase bg-red-100 text-red-700">Failed</span>
+                                        <span class="block text-[11px] leading-tight text-red-600 truncate" title="{{ $item->error_message }}">{{ $item->error_message }}</span>
                                     @else
-                                        <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">Ready</span>
+                                        <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase bg-gray-100 text-gray-500">Ready</span>
                                     @endif
                                 </div>
                             </td>
-                            <td class="px-3 py-2.5 whitespace-nowrap text-right">
+                            <td class="sticky right-0 z-10 border-b border-l border-gray-100 px-2 py-1.5 shadow-[-4px_0_6px_-4px_rgba(0,0,0,0.12)] {{ $rowBg }}"
+                                :class="current === {{ $item->id }} && '!bg-indigo-50'">
                                 @unless ($booked)
-                                    <div class="flex flex-col items-end gap-1">
-                                        <button type="button" @click="bookOne({{ $item->id }})" :disabled="booking"
-                                            class="px-2.5 py-1 rounded-md text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 transition">
-                                            {{ $item->status === 'failed' ? 'Retry' : 'Book' }}
+                                    <div class="flex items-center justify-end gap-1">
+                                        <button type="button" @click="$dispatch('open-order-view', { orderId: {{ $item->order_id }} })" title="View order details"
+                                            class="w-7 h-7 inline-flex items-center justify-center rounded-md text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
                                         </button>
-                                        <button type="button" wire:click="resetItem({{ $item->id }})" wire:confirm="Re-fill this row from the order? Your edits on it are lost." :disabled="booking"
-                                            class="text-[11px] text-gray-400 hover:text-indigo-600 disabled:opacity-40">Reset</button>
-                                        <button type="button" wire:click="removeItem({{ $item->id }})" :disabled="booking"
-                                            class="text-[11px] text-gray-400 hover:text-red-600 disabled:opacity-40">Remove</button>
+                                        <button type="button" @click="bookOne({{ $item->id }})" :disabled="booking"
+                                            class="px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 transition">
+                                            {{ $failed ? 'Retry' : 'Book' }}
+                                        </button>
+                                        <button type="button" wire:click="resetItem({{ $item->id }})" wire:confirm="Re-fill this row from the order? Your edits on it are lost." :disabled="booking" title="Reset from order"
+                                            class="w-7 h-7 inline-flex items-center justify-center rounded-md text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 disabled:opacity-40 transition">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+                                        </button>
+                                        <button type="button" wire:click="removeItem({{ $item->id }})" :disabled="booking" title="Remove from sheet"
+                                            class="w-7 h-7 inline-flex items-center justify-center rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-40 transition">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+                                        </button>
                                     </div>
+                                @else
+                                    <a href="{{ route('admin.sales.orders.show', $item->order_id) }}" wire:navigate class="block text-right text-xs font-medium text-emerald-700 hover:underline">View order →</a>
                                 @endunless
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="px-5 py-14 text-center">
+                            <td colspan="14" class="px-5 py-14 text-center">
                                 <p class="text-sm text-gray-500">The sheet is empty.</p>
                                 <p class="text-xs text-gray-400 mt-1">Click <span class="font-semibold text-indigo-600">+</span> on an order above to add it here.</p>
                             </td>
@@ -342,6 +428,21 @@
             </table>
         </div>
     </div>
+
+    <style>
+        .courier-sheet .cell { display: block; width: 100%; height: 2.25rem; border: 1px solid #eceef1; border-radius: .5rem; background: rgba(255,255,255,.85); padding: .4375rem .625rem; font-size: .8125rem; line-height: 1.25rem; color: #1f2937; text-overflow: ellipsis; white-space: nowrap; transition: border-color .12s, box-shadow .12s; }
+        .courier-sheet select.cell { padding-right: 1.75rem; }
+        .courier-sheet .cell:hover { border-color: #d1d5db; }
+        .courier-sheet .cell:focus { outline: none; border-color: #6366f1; background: #fff; box-shadow: 0 0 0 1px #6366f1; }
+        .courier-sheet .cell:disabled { color: #6b7280; background: transparent; border-color: transparent; cursor: default; }
+        .courier-sheet .cell::placeholder { color: #c4c8cf; }
+        /* Always-visible scrollbars on the sheet (both axes). */
+        .courier-sheet { scrollbar-width: auto; scrollbar-color: #cbd5e1 #f1f5f9; }
+        .courier-sheet::-webkit-scrollbar { width: 12px; height: 12px; }
+        .courier-sheet::-webkit-scrollbar-track { background: #f1f5f9; }
+        .courier-sheet::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; border: 3px solid #f1f5f9; }
+        .courier-sheet::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
 
     {{-- ══════════ History ══════════ --}}
     @if ($history->isNotEmpty())
@@ -391,6 +492,8 @@
         </div>
     @endif
 
+    {{-- Own components: opening them never re-renders this page; they show a loader at once and fill in. --}}
+    <livewire:admin.sales.order-quick-view />
     @if ($fraudEnabled)
         <livewire:admin.sales.fraud-check-modal />
     @endif

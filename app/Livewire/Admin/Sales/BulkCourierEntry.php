@@ -6,6 +6,7 @@ use App\Courier\CourierManager;
 use App\Courier\DTO\ShipmentRequest;
 use App\Courier\Exceptions\CourierException;
 use App\Enums\Sales\CourierStatus;
+use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\OrderStatus;
 use App\Livewire\Concerns\BooksCourierShipments;
 use App\Models\Courier;
@@ -54,6 +55,9 @@ class BulkCourierEntry extends Component
     #[Url(except: '')]
     public string $filterStatus = '';
 
+    #[Url(except: '')]
+    public string $filterSource = '';
+
     /** "Set courier for all rows" picker. */
     public ?int $bulkCourierId = null;
 
@@ -78,6 +82,17 @@ class BulkCourierEntry extends Component
 
     public function updatingFilterStatus(): void
     {
+        $this->resetPage();
+    }
+
+    public function updatingFilterSource(): void
+    {
+        $this->resetPage();
+    }
+
+    public function clearFilters(): void
+    {
+        $this->reset(['search', 'filterStatus', 'filterSource']);
         $this->resetPage();
     }
 
@@ -486,6 +501,7 @@ class BulkCourierEntry extends Component
             ->with(['customer', 'shippingAddress'])
             ->withCount('items')
             ->when($this->filterStatus !== '', fn ($q) => $q->where('status', $this->filterStatus))
+            ->when($this->filterSource !== '', fn ($q) => $q->where('source', $this->filterSource))
             ->when($this->search !== '', function ($q) {
                 $term = trim($this->search);
                 $q->where(fn ($w) => $w
@@ -514,6 +530,7 @@ class BulkCourierEntry extends Component
             'lockedByOthers' => $this->lockedByOthers($orders->getCollection()->pluck('id')->all()),
             'couriers' => $couriers,
             'statuses' => [OrderStatus::PENDING, OrderStatus::CONFIRMED, OrderStatus::PROCESSING],
+            'sources' => OrderSource::cases(),
             'fraudEnabled' => $fraudEnabled,
             'fraudChecks' => $fraudChecks,
             'stats' => [
