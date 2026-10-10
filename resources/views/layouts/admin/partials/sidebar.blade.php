@@ -705,6 +705,12 @@
                             Bulk Order
                         </a>
                         @endif
+                        @if ($canSee('courier_configuration.manage'))
+                        <a href="{{ route('admin.sales.courier-entry') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.sales.courier-entry' ? 'text-gray-200' : '' }}">
+                            Bulk Courier
+                        </a>
+                        @endif
                         @if ($canSee('coupon.view'))
                         <a href="{{ route('admin.sales.coupons') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ str_starts_with(Route::currentRouteName(), 'admin.sales.coupons') ? 'text-gray-200' : '' }}">
