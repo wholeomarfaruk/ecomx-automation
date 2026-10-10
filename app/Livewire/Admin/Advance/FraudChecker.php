@@ -19,7 +19,7 @@ class FraudChecker extends Component
     public bool $autoCheckList = true;
     public string $apiKey = '';
     public string $baseUrl = '';
-    public int $cacheHours = 24;
+    public int $cacheHours = 72;
     public int $timeout = 20;
 
     public ?array $usage = null;
@@ -53,7 +53,7 @@ class FraudChecker extends Component
         $this->validate([
             'apiKey' => 'nullable|string|max:255',
             'baseUrl' => 'required|url|max:255',
-            'cacheHours' => 'required|integer|min:0|max:720',
+            'cacheHours' => 'required|integer|min:1|max:720',
             'timeout' => 'required|integer|min:5|max:60',
         ]);
 
@@ -66,6 +66,7 @@ class FraudChecker extends Component
 
         if (trim($this->apiKey) !== '') {
             FraudShieldSettings::storeApiKey(trim($this->apiKey));
+            FraudShield::clearBlock();
             $this->apiKey = '';
         }
 
@@ -101,7 +102,8 @@ class FraudChecker extends Component
         $this->validate(['lookupPhone' => 'required|string|max:20']);
 
         try {
-            $this->lookupId = $fraudShield->check($this->lookupPhone, true)->id;
+            // Re-uses a stored result like everywhere else — the quota is low.
+            $this->lookupId = $fraudShield->check($this->lookupPhone)->id;
         } catch (FraudShieldException $e) {
             $this->lookupId = null;
             $this->addError('lookupPhone', $e->getMessage());
@@ -113,6 +115,7 @@ class FraudChecker extends Component
         return view('livewire.admin.advance.fraud-checker', [
             'maskedKey' => $settings->maskedKey(),
             'ready' => $settings->ready(),
+            'blockedReason' => app(FraudShield::class)->blockedReason(),
             'lookupResult' => $this->lookupId ? FraudCheck::find($this->lookupId) : null,
             'recentChecks' => FraudCheck::latest('checked_at')->limit(10)->get(),
         ])->layout('layouts.admin.admin');

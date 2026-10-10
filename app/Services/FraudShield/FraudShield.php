@@ -4,20 +4,33 @@ namespace App\Services\FraudShield;
 
 use App\Models\FraudCheck;
 use App\Models\Order;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 /**
  * FraudShield (fraudshield.bd) courier fraud check — POST /api/customer/check
  * with a BD mobile number returns the customer's parcel history across
- * couriers, reviews and a risk score. Results are kept in `fraud_checks`
- * (one row per phone) and re-used for FraudShieldSettings::cacheHours(),
- * so opening the modal again doesn't spend the daily quota.
+ * couriers, reviews and a risk score.
+ *
+ * The plan's daily limit is low, so every path guards the quota:
+ *  - one stored result per phone (`fraud_checks`), re-used for
+ *    FraudShieldSettings::cacheHours(); the same phone on many orders is
+ *    one call;
+ *  - a per-phone lock, so two tabs/admins never pay for the same number;
+ *  - a forced re-check is refused within RECHECK_COOLDOWN_MINUTES;
+ *  - after a 429 (limit hit) no call is made until the limit resets, and
+ *    after a 401 none until the key is changed (see block()).
  */
 class FraudShield
 {
+    public const RECHECK_COOLDOWN_MINUTES = 30;
+
+    private const BLOCK_KEY = 'fraudshield:blocked';
+
     public function __construct(private FraudShieldSettings $settings)
     {
     }
@@ -49,6 +62,13 @@ class FraudShield
             && $check->checked_at->gt(now()->subHours($this->settings->cacheHours()));
     }
 
+    /** Checked so recently that a forced re-check would only waste quota. */
+    public function inCooldown(?FraudCheck $check): bool
+    {
+        return (bool) $check?->checked_at
+            && $check->checked_at->gt(now()->subMinutes(self::RECHECK_COOLDOWN_MINUTES));
+    }
+
     /** Stored result for a phone, without calling the API. */
     public function stored(?string $phone): ?FraudCheck
     {
@@ -57,8 +77,33 @@ class FraudShield
         return $phone === '' ? null : FraudCheck::where('phone', $phone)->first();
     }
 
+    /** Why calls are paused right now (limit hit / key rejected), or null. */
+    public function blockedReason(): ?string
+    {
+        $block = Cache::get(self::BLOCK_KEY);
+
+        if (! is_array($block)) {
+            return null;
+        }
+
+        // A 401 block only holds for the key that was rejected.
+        if (($block['key'] ?? null) && $block['key'] !== $this->keyFingerprint()) {
+            Cache::forget(self::BLOCK_KEY);
+
+            return null;
+        }
+
+        return $block['reason'] ?? null;
+    }
+
+    public static function clearBlock(): void
+    {
+        Cache::forget(self::BLOCK_KEY);
+    }
+
     /**
-     * Stored result when still fresh, otherwise a new API call.
+     * Stored result when still fresh, otherwise one API call. $fresh forces
+     * the call, except within the re-check cooldown.
      *
      * @throws FraudShieldException
      */
@@ -70,14 +115,43 @@ class FraudShield
             throw new FraudShieldException('Not a valid Bangladeshi mobile number (01XXXXXXXXX).');
         }
 
+        $reuse = fn (?FraudCheck $existing) => $existing
+            && ($fresh ? $this->inCooldown($existing) : $this->isFresh($existing));
+
         $existing = FraudCheck::where('phone', $phone)->first();
 
-        if (! $fresh && $this->isFresh($existing)) {
+        if ($reuse($existing)) {
             return $existing;
         }
 
-        $data = $this->send('post', '/api/customer/check', ['phone' => $phone]);
+        try {
+            return Cache::lock("fraudshield:check:{$phone}", 30)->block(25, function () use ($phone, $reuse) {
+                // Another request may have just checked this number while we waited.
+                $existing = FraudCheck::where('phone', $phone)->first();
 
+                if ($reuse($existing)) {
+                    return $existing;
+                }
+
+                return $this->store($phone, $this->send('post', '/api/customer/check', ['phone' => $phone]));
+            });
+        } catch (LockTimeoutException) {
+            throw new FraudShieldException('This number is already being checked — try again in a moment.');
+        }
+    }
+
+    /**
+     * Today's limit and package (GET /api/usage/daily-limit).
+     *
+     * @throws FraudShieldException
+     */
+    public function dailyLimit(): array
+    {
+        return $this->send('get', '/api/usage/daily-limit', [], false)['data'] ?? [];
+    }
+
+    private function store(string $phone, array $data): FraudCheck
+    {
         $summary = $data['courierData']['summary'] ?? [];
         $risk = $data['fraudRiskScore'] ?? [];
 
@@ -97,17 +171,12 @@ class FraudShield
     }
 
     /**
-     * Today's limit and package (GET /api/usage/daily-limit).
+     * $honourBlock: the usage endpoint is still allowed while blocked, so
+     * "Test connection" can show when the limit resets.
      *
      * @throws FraudShieldException
      */
-    public function dailyLimit(): array
-    {
-        return $this->send('get', '/api/usage/daily-limit')['data'] ?? [];
-    }
-
-    /** @throws FraudShieldException */
-    private function send(string $method, string $path, array $body = []): array
+    private function send(string $method, string $path, array $body = [], bool $honourBlock = true): array
     {
         if (! $this->settings->enabled()) {
             throw new FraudShieldException('Fraud Checker is turned off (Advance → Fraud Checker).');
@@ -115,6 +184,10 @@ class FraudShield
 
         if ($this->settings->apiKey() === '') {
             throw new FraudShieldException('No FraudShield API key saved (Advance → Fraud Checker).');
+        }
+
+        if ($honourBlock && ($reason = $this->blockedReason())) {
+            throw new FraudShieldException($reason, 429, blocked: true);
         }
 
         try {
@@ -126,7 +199,10 @@ class FraudShield
         }
 
         if (! $response->successful()) {
-            throw new FraudShieldException($this->errorMessage($response));
+            $this->block($response);
+
+            throw new FraudShieldException($this->errorMessage($response), $response->status(),
+                blocked: in_array($response->status(), [401, 429], true));
         }
 
         $json = $response->json();
@@ -136,6 +212,29 @@ class FraudShield
         }
 
         return $json;
+    }
+
+    /** Stop calling after "limit reached" (until it resets) or "bad key" (until the key changes). */
+    private function block(Response $response): void
+    {
+        if ($response->status() === 429) {
+            // FraudShield resets the daily limit at midnight Bangladesh time.
+            $resetsAt = now('Asia/Dhaka')->endOfDay();
+
+            Cache::put(self::BLOCK_KEY, [
+                'reason' => 'FraudShield daily limit reached — checks resume after midnight (' . $resetsAt->format('d M') . ').',
+            ], $resetsAt);
+        } elseif ($response->status() === 401) {
+            Cache::put(self::BLOCK_KEY, [
+                'reason' => 'FraudShield rejected the API key — save a valid key under Advance → Fraud Checker.',
+                'key' => $this->keyFingerprint(),
+            ], now()->addDay());
+        }
+    }
+
+    private function keyFingerprint(): string
+    {
+        return hash('sha256', $this->settings->apiKey());
     }
 
     private function client(): PendingRequest
@@ -153,7 +252,7 @@ class FraudShield
 
         return match ($response->status()) {
             401 => 'FraudShield rejected the API key (401). Check it under Advance → Fraud Checker.',
-            429 => 'FraudShield daily limit reached (429). Try again after the limit resets.',
+            429 => 'FraudShield daily limit reached (429). Checks resume after the limit resets.',
             default => 'FraudShield error (' . $response->status() . ')' . ($message ? ': ' . $message : '.'),
         };
     }

@@ -32,14 +32,17 @@ class FraudCheck extends Model
     /** safe / warning / danger / neutral (no parcel history) — drives colours. */
     public function tone(): string
     {
+        $level = strtolower((string) $this->level);
+
+        if (in_array($level, ['high', 'danger', 'risky', 'fraud', 'blacklisted'], true)) {
+            return 'danger';
+        }
+
         if ($this->total_parcel === 0) {
             return 'neutral';
         }
 
-        $level = strtolower((string) $this->level);
-
         return match (true) {
-            in_array($level, ['high', 'danger', 'risky', 'fraud', 'blacklisted'], true) => 'danger',
             in_array($level, ['medium', 'moderate', 'warning', 'caution'], true) => 'warning',
             in_array($level, ['safe', 'low', 'trusted'], true) => 'safe',
             $this->score !== null && $this->score >= 60 => 'danger',

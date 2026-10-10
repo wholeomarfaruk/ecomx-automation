@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
 
 return new class extends Migration
@@ -34,14 +34,23 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Permission::firstOrCreate(['name' => 'fraud_checker.manage', 'guard_name' => 'web']);
+        // Same id as PermissionSeeder, which upserts by id — a different id
+        // here would make the seeder insert a duplicate name.
+        if (! DB::table('permissions')->where('name', 'fraud_checker.manage')->exists()) {
+            $row = ['name' => 'fraud_checker.manage', 'guard_name' => 'web', 'created_at' => now(), 'updated_at' => now()];
+
+            DB::table('permissions')->where('id', 201)->exists()
+                ? DB::table('permissions')->insert($row)
+                : DB::table('permissions')->insert(['id' => 201] + $row);
+        }
+
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 
     public function down(): void
     {
         Schema::dropIfExists('fraud_checks');
-        Permission::where('name', 'fraud_checker.manage')->delete();
+        DB::table('permissions')->where('name', 'fraud_checker.manage')->delete();
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 };

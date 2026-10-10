@@ -19,6 +19,9 @@
             </div>
 
             <div class="px-6 py-5 space-y-5">
+                @if ($blockedReason)
+                    <div class="rounded-lg bg-amber-50 border border-amber-100 px-4 py-3 text-sm text-amber-800">{{ $blockedReason }}</div>
+                @endif
                 <label class="flex items-center justify-between gap-4 cursor-pointer">
                     <span>
                         <span class="block text-sm font-medium text-gray-800">Enable Fraud Checker</span>
@@ -30,7 +33,7 @@
                 <label class="flex items-center justify-between gap-4 cursor-pointer">
                     <span>
                         <span class="block text-sm font-medium text-gray-800">Auto-check on Orders list</span>
-                        <span class="block text-xs text-gray-400">After the list loads, unchecked rows are checked one by one in the background. Uses your daily quota.</span>
+                        <span class="block text-xs text-gray-400">After the list loads, numbers never checked before (Pending / Confirmed / Processing orders only) are checked one by one in the background.</span>
                     </span>
                     <input type="checkbox" wire:model="autoCheckList" class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                 </label>
@@ -57,8 +60,8 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1.5">Re-use result for (hours)</label>
-                        <input wire:model="cacheHours" type="number" min="0" max="720" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                        <p class="text-[11px] text-gray-400 mt-1">Saves your daily quota. 0 = always call.</p>
+                        <input wire:model="cacheHours" type="number" min="1" max="720" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                        <p class="text-[11px] text-gray-400 mt-1">A number is not sent to the API again within this time.</p>
                         @error('cacheHours') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>

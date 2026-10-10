@@ -70,7 +70,11 @@ class FraudCheckModal extends Component
         try {
             $check = app(FraudShield::class)->check($this->phone, $fresh);
             $this->checkId = $check->id;
-            $this->dispatch('fraud-checked', phone: $check->phone);
+
+            // Only a new API result changes anything on the page behind.
+            if ($check->wasRecentlyCreated || $check->wasChanged()) {
+                $this->dispatch('fraud-checked', phone: $check->phone);
+            }
         } catch (FraudShieldException $e) {
             $this->checkId = app(FraudShield::class)->stored($this->phone)?->id;
             $this->error = $e->getMessage();
@@ -79,8 +83,13 @@ class FraudCheckModal extends Component
 
     public function render()
     {
+        $check = $this->checkId ? FraudCheck::find($this->checkId) : null;
+        $fraudShield = app(FraudShield::class);
+
         return view('livewire.admin.sales.fraud-check-modal', [
-            'check' => $this->checkId ? FraudCheck::find($this->checkId) : null,
+            'check' => $check,
+            'inCooldown' => $fraudShield->inCooldown($check),
+            'blockedReason' => $fraudShield->blockedReason(),
             'canManage' => auth()->user()?->hasRole('superadmin') || auth()->user()?->can('fraud_checker.manage'),
             'ready' => app(FraudShieldSettings::class)->ready(),
         ]);

@@ -31,10 +31,8 @@ class OrderFraudCheckController extends Controller
             $check = $fraudShield->check(FraudShield::orderPhone($order));
         } catch (FraudShieldException $e) {
             // Key rejected / daily limit hit — every other row would fail the same way.
-            $stop = str_contains($e->getMessage(), '(401)') || str_contains($e->getMessage(), '(429)');
-
             return response()->json([
-                'stop' => $stop,
+                'stop' => $e->blocked,
                 'html' => view('livewire.admin.sales.partials.fraud-badge', [
                     'fc' => $fraudShield->stored(FraudShield::orderPhone($order)),
                     'orderId' => $order->id,

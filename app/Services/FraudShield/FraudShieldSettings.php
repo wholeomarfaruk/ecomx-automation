@@ -69,7 +69,7 @@ class FraudShieldSettings
     /** How long a stored result is re-used before the API is called again. */
     public function cacheHours(): int
     {
-        return max(0, min(720, (int) Setting::get('cache_hours', '24', self::GROUP)));
+        return max(1, min(720, (int) Setting::get('cache_hours', '72', self::GROUP)));
     }
 
     public function timeout(): int

@@ -56,7 +56,10 @@
 
             <div class="flex items-center justify-end gap-2 px-6 py-3 border-t border-gray-100 bg-gray-50/60">
                 <button wire:click="close" @click="open = false" type="button" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition">Close</button>
-                @if ($ready)
+                @if ($ready && $check && $inCooldown)
+                    <span class="text-[11px] text-gray-400 mr-auto">Checked {{ local_time($check->checked_at)?->diffForHumans() }} — re-check available after {{ \App\Services\FraudShield\FraudShield::RECHECK_COOLDOWN_MINUTES }} min.</span>
+                @endif
+                @if ($ready && ! $blockedReason && ! $inCooldown)
                     <button wire:click="recheck" wire:loading.attr="disabled" wire:target="recheck" type="button"
                         class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 transition">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

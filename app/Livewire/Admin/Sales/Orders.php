@@ -423,7 +423,8 @@ class Orders extends Component
             'orders'          => $orders,
             'fraudEnabled'    => $fraudEnabled,
             'fraudChecks'     => $fraudChecks,
-            'fraudAutoCheck'  => $fraudEnabled && $fraudSettings->autoCheckList(),
+            'fraudAutoCheck'  => $fraudEnabled && $fraudSettings->autoCheckList()
+                && ! app(FraudShield::class)->blockedReason(),
             'orderedProducts' => $orderedProducts,
             'packedOrders'    => $packedOrders,
             'statuses'        => OrderStatus::cases(),
