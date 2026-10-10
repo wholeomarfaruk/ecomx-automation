@@ -114,11 +114,29 @@
             </div>
         </div>
 
+        {{-- Result count --}}
+        @php $isFiltered = $search || $filterStatus || $filterPaymentStatus || $filterSource || $dateFrom || $dateTo; @endphp
+        <div class="flex flex-wrap items-center justify-between gap-2 px-5 py-2.5 border-b border-gray-100 {{ $isFiltered ? 'bg-indigo-50/60' : 'bg-white' }}">
+            <p class="text-sm text-gray-600">
+                @if ($orders->total() > 0)
+                    <span class="font-semibold text-gray-900">{{ number_format($orders->total()) }}</span>
+                    {{ $isFiltered ? 'matching' : 'total' }} {{ Str::plural('order', $orders->total()) }}
+                    <span class="text-gray-400">· showing {{ $orders->firstItem() }}–{{ $orders->lastItem() }}</span>
+                @else
+                    <span class="font-semibold text-gray-900">0</span> orders found
+                @endif
+            </p>
+            @if ($isFiltered)
+                <button type="button" wire:click="resetFilters" class="text-xs font-medium text-indigo-600 hover:text-indigo-800">Clear filters</button>
+            @endif
+        </div>
+
         {{-- Table --}}
         <div class="overflow-x-auto">
             <table class="min-w-full">
                 <thead>
                     <tr class="border-b border-gray-100 bg-gray-50/40">
+                        <th class="pl-5 pr-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">SL</th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Order</th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Customer</th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Source</th>
@@ -135,6 +153,7 @@
                 <tbody class="divide-y divide-gray-100">
                     @forelse($orders as $order)
                         <tr class="hover:bg-gray-50/50 transition group">
+                            <td class="pl-5 pr-2 py-3 text-sm text-gray-400 tabular-nums">{{ $orders->firstItem() + $loop->index }}</td>
                             <td class="px-5 py-3 cursor-pointer" onclick="window.location.href='{{ route('admin.sales.orders.show', $order->id) }}'">
                                 <span class="text-sm font-medium text-gray-800">#{{ $order->id }}</span>
                                 @php $placedAt = local_time($order->created_at); @endphp
@@ -310,7 +329,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="11" class="px-5 py-16 text-center">
+                            <td colspan="12" class="px-5 py-16 text-center">
                                 <div class="flex flex-col items-center gap-3">
                                     <div class="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
