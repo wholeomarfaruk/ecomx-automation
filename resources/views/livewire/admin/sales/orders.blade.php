@@ -571,16 +571,25 @@
     @endif
 </div>
 
+{{-- Fraud badges: the list renders first, then never-checked rows are checked
+     one at a time over a plain POST (not through Livewire, so filters and
+     clicks never wait on FraudShield). Each order is tried at most once per
+     page view; results are kept so a Livewire re-render puts them back.
+     The body is one IIFE: Livewire evaluates @script as an Alpine
+     expression, and a leading comment/statement there is a syntax error. --}}
 @script
 <script>
-    // Fraud badges: the list renders first, then unchecked rows are checked
-    // one at a time over a plain POST (not through Livewire, so filters and
-    // clicks never wait on FraudShield). Results are kept per order so a
-    // Livewire re-render (filter, status change) puts them straight back.
-    const done = new Map();
+(() => {
+    const results = new Map();
+    const tried = new Set();
     let running = false;
     let stopped = false;
     const url = (id) => @js(route('admin.sales.orders.fraud-check', ['id' => '__ID__'])).replace('__ID__', id);
+
+    const settle = (el, html) => {
+        el.innerHTML = html;
+        el.removeAttribute('data-fraud-pending');
+    };
 
     const pending = () => [...document.querySelectorAll('[data-fraud-pending]')]
         .filter((el) => $wire.$el.contains(el));
@@ -592,18 +601,16 @@
         for (const el of pending()) {
             const id = el.dataset.fraudOrder;
 
-            if (done.has(id)) {
-                el.innerHTML = done.get(id);
-                el.removeAttribute('data-fraud-pending');
+            if (results.has(id)) { settle(el, results.get(id)); continue; }
+            if (tried.has(id) || stopped) {
+                if (!el.querySelector('button')) settle(el, '');
+                else el.removeAttribute('data-fraud-pending');
                 continue;
             }
             if (!el.isConnected) continue;
-            if (stopped) {
-                // Limit hit / key rejected: drop the spinner, keep any saved badge.
-                if (!el.querySelector('button')) el.innerHTML = '';
-                el.removeAttribute('data-fraud-pending');
-                continue;
-            }
+
+            tried.add(id);
+            let html = '';
 
             try {
                 const res = await fetch(url(id), {
@@ -613,22 +620,26 @@
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
                     },
                 });
-                if (!res.ok) { stopped = res.status === 429 || res.status === 403; continue; }
-                const data = await res.json();
-                done.set(id, data.html);
-                if (data.stop) stopped = true;
 
-                document.querySelectorAll(`[data-fraud-order="${id}"]`).forEach((target) => {
-                    target.innerHTML = data.html;
-                    target.removeAttribute('data-fraud-pending');
-                });
+                if (res.ok) {
+                    const data = await res.json();
+                    html = data.html ?? '';
+                    if (data.stop) stopped = true;
+                } else if ([401, 403, 419, 429].includes(res.status)) {
+                    stopped = true;
+                }
             } catch (e) {
-                // Network hiccup — leave the row as is; it is retried on the next render.
+                // Network hiccup — this row just shows no badge until the next page load.
             }
+
+            results.set(id, html);
+            document.querySelectorAll(`[data-fraud-order="${id}"]`).forEach((target) => settle(target, html));
         }
 
         running = false;
-        if (!stopped && pending().some((el) => !done.has(el.dataset.fraudOrder))) run();
+
+        // Rows re-rendered while this pass was running (each id is fetched once, so this ends).
+        if (pending().length) run();
     }
 
     run();
@@ -636,5 +647,6 @@
         if (component.id !== $wire.$id) return;
         succeed(() => queueMicrotask(run));
     });
+})();
 </script>
 @endscript
