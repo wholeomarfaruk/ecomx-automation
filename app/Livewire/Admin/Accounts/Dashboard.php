@@ -2,12 +2,11 @@
 
 namespace App\Livewire\Admin\Accounts;
 
+use App\Actions\Accounts\CalculateStockValue;
 use App\Models\Account;
 use App\Models\AccountsCustomerInvoice;
 use App\Models\AccountsSupplierAdvance;
 use App\Models\AccountsSupplierBill;
-use App\Models\InventoryBatch;
-use App\Models\InventoryStock;
 use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
 use App\Models\LoanRepaymentSchedule;
@@ -64,52 +63,10 @@ class Dashboard extends Component
         return $income - $expense;
     }
 
-    /**
-     * Total purchase-cost value of everything in stock, priced lot-by-lot
-     * from inventory_batches (quantity × that batch's own purchase_price) —
-     * the same product bought at ৳1000 one time and ৳1500 another must value
-     * each remaining unit at what was actually paid for it, not one
-     * overwritten "latest price" field on the product/variant. Any stock
-     * quantity not covered by an active batch (e.g. an opening balance
-     * entered before batch tracking, or without a batch at all) falls back
-     * to the product/variant's own stored purchase_price for just that
-     * uncovered remainder, so total valued quantity never exceeds what's
-     * actually on hand per inventory_stocks.
-     */
+    /** See CalculateStockValue for how each remaining unit is priced. */
     protected function stockValue(): float
     {
-        $batchValue = (float) InventoryBatch::query()
-            ->active()
-            ->selectRaw('COALESCE(SUM(quantity * purchase_price), 0) as total')
-            ->value('total');
-
-        $batchedQtyByKey = InventoryBatch::query()
-            ->active()
-            ->selectRaw('warehouse_id, product_id, variant_id, SUM(quantity) as qty')
-            ->groupBy('warehouse_id', 'product_id', 'variant_id')
-            ->get()
-            ->keyBy(fn ($row) => "{$row->warehouse_id}:{$row->product_id}:{$row->variant_id}");
-
-        $fallbackValue = 0.0;
-
-        InventoryStock::query()
-            ->with(['variant:id,purchase_price', 'product:id,purchase_price'])
-            ->where('quantity', '>', 0)
-            ->get(['id', 'warehouse_id', 'product_id', 'variant_id', 'quantity'])
-            ->each(function (InventoryStock $stock) use ($batchedQtyByKey, &$fallbackValue) {
-                $key = "{$stock->warehouse_id}:{$stock->product_id}:{$stock->variant_id}";
-                $batchedQty = (float) ($batchedQtyByKey->get($key)->qty ?? 0);
-                $uncovered = max(0, (float) $stock->quantity - $batchedQty);
-
-                if ($uncovered <= 0) {
-                    return;
-                }
-
-                $price = (float) ($stock->variant?->purchase_price ?? $stock->product?->purchase_price ?? 0);
-                $fallbackValue += $uncovered * $price;
-            });
-
-        return $batchValue + $fallbackValue;
+        return app(CalculateStockValue::class)->handle();
     }
 
     public function render(): mixed

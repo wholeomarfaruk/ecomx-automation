@@ -41,5 +41,24 @@ class PanelSeeder extends Seeder
         foreach ($panels as $panel) {
             \App\Models\Panel::updateOrCreate(['id' => $panel['id']], $panel);
         }
+
+        // Keyed by slug, not id — on existing sites the next free id may
+        // already be taken, so it isn't fixed like the panels above.
+        $accounts = \App\Models\Panel::updateOrCreate(['slug' => 'accounts'], [
+            'name'        => 'Accounts Panel',
+            'description' => 'Accounts home — cash, due, payable, loans and EMI.',
+            'route_name'  => 'accounts.dashboard',
+            'is_active'   => true,
+            'sort_order'  => 4,
+        ]);
+
+        // Superadmins get the Accounts Panel so someone can reach it right
+        // away; everyone else is assigned from Admin > Users. On a fresh
+        // db:seed this runs before roles exist — the role() scope would throw.
+        if (\Spatie\Permission\Models\Role::where('name', 'superadmin')->exists()) {
+            \App\Models\User::role('superadmin')->each(
+                fn ($user) => $user->panels()->syncWithoutDetaching([$accounts->id])
+            );
+        }
     }
 }

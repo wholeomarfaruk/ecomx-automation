@@ -159,7 +159,9 @@ class LogRequest
     {
         $path = $request->path();
 
-        if ($path === 'admin' || str_starts_with($path, 'admin/') || str_starts_with((string) $livewireAction, 'admin.')) {
+        // Accounts Panel (/accounts, Livewire "accounts.*") is staff traffic too.
+        if ($path === 'admin' || str_starts_with($path, 'admin/') || str_starts_with((string) $livewireAction, 'admin.')
+            || $path === 'accounts' || str_starts_with($path, 'accounts/') || str_starts_with((string) $livewireAction, 'accounts.')) {
             return 'admin';
         }
 

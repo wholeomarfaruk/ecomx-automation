@@ -26,6 +26,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->name('admin.')
                 ->group(base_path('routes/admin.php'));
 
+            // 2. Accounts Panel: accessible via /accounts — its own shell
+            // (layouts.accounts.app) for staff who only work the books.
+            Route::middleware(['web', 'auth', 'panel:accounts', 'module:accounts', 'block.scope:account_panel'])
+                ->prefix('accounts')
+                ->name('accounts.')
+                ->group(base_path('routes/accounts.php'));
+
             // Meta catalog feed — deliberately without the `web` group: a
             // feed fetcher must not get a session or be tracked as a
             // visitor (DeviceTracker / MarketingTracker live in `web`).
@@ -71,7 +78,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // /admin/* redirects unauthenticated visitors to the admin-branded login
         // page (admin.login) instead of Fortify's generic /login.
-        $middleware->redirectGuestsTo(fn ($request) => $request->is('admin/*')
+        // /accounts (Accounts Panel) is staff-only too, so it gets the same page.
+        $middleware->redirectGuestsTo(fn ($request) => $request->is('admin/*', 'accounts', 'accounts/*')
             ? route('admin.login')
             : route('login'));
 

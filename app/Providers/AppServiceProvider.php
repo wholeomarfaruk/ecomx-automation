@@ -117,7 +117,7 @@ class AppServiceProvider extends ServiceProvider
         // in App\Http\Middleware\PreventPublicMaintenanceForStaff (routes/web.php),
         // which runs later, after sessions/auth are resolved.
         PreventRequestsDuringMaintenance::except([
-            'admin/*', 'livewire/*', 'login', 'two-factor-challenge', '/',
+            'admin/*', 'accounts', 'accounts/*', 'livewire/*', 'login', 'two-factor-challenge', '/',
         ]);
     }
 

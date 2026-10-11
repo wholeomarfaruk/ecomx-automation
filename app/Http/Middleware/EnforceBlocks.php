@@ -30,7 +30,8 @@ class EnforceBlocks
         // Storefront only — an IP/device/customer block must never lock
         // staff out of /admin, even if they share the blocked network or
         // happen to browse from the blocked device/browser profile.
-        if ($request->is('admin') || $request->is('admin/*')) {
+        // Same for the Accounts Panel (/accounts).
+        if ($request->is('admin', 'admin/*', 'accounts', 'accounts/*')) {
             return $next($request);
         }
 

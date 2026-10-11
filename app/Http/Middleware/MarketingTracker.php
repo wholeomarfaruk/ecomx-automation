@@ -144,7 +144,7 @@ class MarketingTracker
             return false;
         }
 
-        if (str_starts_with($request->path(), 'admin')) {
+        if (str_starts_with($request->path(), 'admin') || $request->is('accounts', 'accounts/*')) {
             return false;
         }
 
