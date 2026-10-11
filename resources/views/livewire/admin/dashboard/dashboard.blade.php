@@ -97,8 +97,7 @@
                 Sales & Orders Trend
             </h2>
             <div class="h-64" wire:ignore
-                x-data="salesTrendChart(@js($trend))"
-                x-init="init()">
+                x-data="salesTrendChart(@js($trend))">
                 <canvas x-ref="canvas"></canvas>
             </div>
         </div>
@@ -516,6 +515,7 @@
 
     Alpine.data('salesTrendChart', (trend) => ({
         init() {
+            window.Chart.getChart(this.$refs.canvas)?.destroy();
             new window.Chart(this.$refs.canvas, {
                 type: 'line',
                 data: {
