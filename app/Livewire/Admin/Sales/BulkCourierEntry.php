@@ -515,8 +515,11 @@ class BulkCourierEntry extends Component
 
         // Stored fraud results only — never an API call while rendering.
         $fraudEnabled = app(FraudShieldSettings::class)->ready();
-        $phones = $orders->getCollection()->map(fn ($o) => FraudShield::orderPhone($o))
-            ->merge($items->map(fn ($i) => FraudShield::normalizePhone($i->recipient_phone)))
+        // toBase(): mapping an EMPTY Eloquent collection stays Eloquent, and its
+        // merge() would call getKey() on the phone strings — crashed once every
+        // eligible order had been moved into the sheet.
+        $phones = $orders->getCollection()->toBase()->map(fn ($o) => FraudShield::orderPhone($o))
+            ->merge($items->toBase()->map(fn ($i) => FraudShield::normalizePhone($i->recipient_phone)))
             ->filter()->unique()->values();
         $fraudChecks = $fraudEnabled ? FraudCheck::whereIn('phone', $phones)->get()->keyBy('phone') : collect();
 
