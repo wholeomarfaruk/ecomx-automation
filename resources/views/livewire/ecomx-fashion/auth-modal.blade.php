@@ -1,4 +1,4 @@
-<div x-data="{ showPass: false }" x-show="$store.ui.authOpen" x-cloak class="modal" @click.self="$store.ui.authOpen=false">
+<div x-data="{ showPass: false, scrimDown: false }" x-show="$store.ui.authOpen" x-cloak class="modal" @mousedown="scrimDown = $event.target === $el" @click.self="if (scrimDown) $store.ui.authOpen=false; scrimDown=false">
 @guest
     <div class="modal__box modal__box--md">
         <div class="modal__head">

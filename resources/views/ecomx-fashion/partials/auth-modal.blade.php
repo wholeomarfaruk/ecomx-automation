@@ -1,11 +1,11 @@
 <div x-data="{
-        mode:'login', showPass:false, tab:'password', agree:false,
+        mode:'login', showPass:false, scrimDown:false, tab:'password', agree:false,
         fpStep:'select', fpChannel:'phone', fpIdentifier:'',
         fpOtp:['','','','','',''], showNewPass:false, showConfirmPass:false,
         resetAuthModal(){ this.mode='login'; this.fpStep='select'; this.fpChannel='phone'; this.fpIdentifier=''; this.fpOtp=['','','','','','']; },
         fpOtpInput(i,e){ let v=e.target.value.replace(/[^0-9]/g,'').slice(0,1); this.fpOtp[i]=v; if(v && e.target.nextElementSibling) e.target.nextElementSibling.focus(); },
         fpOtpBackspace(i,e){ if(e.key==='Backspace' && !this.fpOtp[i] && e.target.previousElementSibling) e.target.previousElementSibling.focus(); }
-    }" x-show="$store.ui.authOpen" x-cloak class="modal" @click.self="$store.ui.authOpen=false">
+    }" x-show="$store.ui.authOpen" x-cloak class="modal" @mousedown="scrimDown = $event.target === $el" @click.self="if (scrimDown) $store.ui.authOpen=false; scrimDown=false">
     <div class="modal__box modal__box--md">
         <div class="modal__head">
             <p class="modal__title" x-text="mode==='login' ? 'Sign in' : mode==='register' ? 'Register' : 'Reset password'"></p>

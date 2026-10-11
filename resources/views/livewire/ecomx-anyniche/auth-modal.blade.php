@@ -9,7 +9,7 @@
     }
     $authLogoUrl ??= asset('logo/ecomx-square-logo.png');
 @endphp
-<div x-data="{ showPass: false }" x-show="$store.ui.authOpen" x-cloak class="jtc-modal-scrim" :class="$store.ui.authOpen && 'is-open'" @click.self="$store.ui.authOpen=false">
+<div x-data="{ showPass: false, scrimDown: false }" x-show="$store.ui.authOpen" x-cloak class="jtc-modal-scrim" :class="$store.ui.authOpen && 'is-open'" @mousedown="scrimDown = $event.target === $el" @click.self="if (scrimDown) $store.ui.authOpen=false; scrimDown=false">
 @guest
     <div class="jtc-modal">
         <div class="jtc-modal__head">

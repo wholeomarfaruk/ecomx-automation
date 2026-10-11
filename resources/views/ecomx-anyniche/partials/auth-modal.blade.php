@@ -12,6 +12,7 @@
 <div x-data="{
         authMode: 'login',
         authSuccess: false,
+        scrimDown: false,
         authOtpSent: false,
         authLoading: false,
         authError: '',
@@ -31,7 +32,7 @@
         sendAuthOtp() { this.authOtpSent = true; },
         verifyAuthOtp() { this.authSuccess = true; },
         resetAuthModal() { this.authMode = 'login'; this.authSuccess = false; this.authOtpSent = false; this.authError = ''; },
-    }" x-show="$store.ui.authOpen" x-cloak class="jtc-modal-scrim" :class="$store.ui.authOpen && 'is-open'" @click="$store.ui.authOpen = false; resetAuthModal()">
+    }" x-show="$store.ui.authOpen" x-cloak class="jtc-modal-scrim" :class="$store.ui.authOpen && 'is-open'" @mousedown="scrimDown = $event.target === $el" @click.self="if (scrimDown) { $store.ui.authOpen = false; resetAuthModal() } scrimDown = false">
     <div class="jtc-modal" @click.stop>
         <div class="jtc-modal__head">
             <button class="jtc-modal__close" aria-label="Close" @click="$store.ui.authOpen = false; resetAuthModal()">
