@@ -178,6 +178,10 @@ class LoanKisti
 
     protected function carrySupport(Loan $loan, LoanRepaymentSchedule $paid, float $extra): void
     {
+        if ($loan->support_rule === 'advance') {
+            return; // kept as support / advance on the paid kisti
+        }
+
         $later = $loan->schedules()->where('status', '!=', 'paid')->where('due_date', '>=', $paid->due_date)
             ->whereKeyNot($paid->id)->orderBy('due_date')->get();
 

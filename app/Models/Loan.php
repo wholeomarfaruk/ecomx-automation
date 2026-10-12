@@ -12,7 +12,7 @@ class Loan extends Model
         'name', 'lender', 'principal', 'interest_rate', 'start_date',
         'term_months', 'loan_payable_account_id', 'status',
         'master_profile_id', 'lender_type', 'total_payable', 'rate_type', 'frequency',
-        'installments', 'custom_offsets', 'support_rule', 'note',
+        'installments', 'custom_offsets', 'support_rule', 'note', 'late_rule',
     ];
 
     protected function casts(): array

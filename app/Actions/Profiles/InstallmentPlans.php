@@ -120,6 +120,10 @@ class InstallmentPlans
     /** Move a support (over)payment onto later kisti per the plan's rule. */
     protected function carrySupport(InstallmentPlan $plan, Installment $paid, float $extra): float
     {
+        if ($plan->support_rule === 'advance') {
+            return 0.0; // kept on the kisti as support / advance, adjusted later by hand
+        }
+
         $later = $plan->installments()->where('no', '>', $paid->no)->where('status', '!=', 'paid')->orderBy('no')->get();
 
         if ($plan->support_rule === 'principal') {

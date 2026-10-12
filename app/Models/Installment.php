@@ -9,7 +9,7 @@ class Installment extends Model
 {
     protected $fillable = [
         'installment_plan_id', 'no', 'due_date', 'amount', 'adjusted_amount', 'paid_amount',
-        'support_amount', 'status', 'paid_at', 'journal_entry_id',
+        'support_amount', 'status', 'paid_at', 'journal_entry_id', 'late_fee_at',
     ];
 
     protected function casts(): array
@@ -21,6 +21,7 @@ class Installment extends Model
             'paid_amount'     => 'decimal:2',
             'support_amount'  => 'decimal:2',
             'paid_at'         => 'datetime',
+            'late_fee_at'     => 'datetime',
         ];
     }
 

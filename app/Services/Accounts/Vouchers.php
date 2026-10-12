@@ -782,6 +782,11 @@ class Vouchers
     {
         $meta = (array) ($entry->meta ?? []);
 
+        // A loan from the Loans & EMI builder turns active once its money is received.
+        if ($entry->source_type === \App\Models\Loan::class && $entry->purpose === 'loan_received') {
+            \App\Models\Loan::whereKey($entry->source_id)->where('status', 'pending')->update(['status' => 'active']);
+        }
+
         if ($entry->source_type === \App\Models\LoanRepaymentSchedule::class && ($s = \App\Models\LoanRepaymentSchedule::with('loan')->find($entry->source_id))) {
             $paid = round((float) $s->paid_amount + (float) $entry->amount, 2);
             \App\Models\LoanRepayment::create([

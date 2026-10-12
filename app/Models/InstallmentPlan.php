@@ -11,6 +11,7 @@ class InstallmentPlan extends Model
     protected $fillable = [
         'master_profile_id', 'role', 'reference', 'frequency', 'count', 'amount', 'total',
         'start_date', 'custom_offsets', 'support_rule', 'status', 'created_by',
+        'rate_type', 'rate', 'interest', 'late_rule',
     ];
 
     protected function casts(): array
@@ -18,6 +19,7 @@ class InstallmentPlan extends Model
         return [
             'amount'         => 'decimal:2',
             'total'          => 'decimal:2',
+            'interest'       => 'decimal:2',
             'start_date'     => 'date',
             'custom_offsets' => 'array',
         ];

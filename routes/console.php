@@ -80,3 +80,12 @@ Artisan::command('accounts:recurring-drafts', function () {
 })->purpose('Create Accounts Panel drafts for recurring bills that are due')
     ->dailyAt('06:00')
     ->withoutOverlapping();
+
+// Accounts Panel: kisti reminders (1 day before + on the due date) and the
+// late rule of overdue customer kisti (late fee draft / block new credit).
+Artisan::command('accounts:kisti-daily', function () {
+    $r = app(\App\Services\Accounts\KistiPlans::class)->runDaily();
+    $this->info("Kisti: {$r['sms']} SMS, {$r['fees']} late fee draft(s), {$r['blocked']} blocked.");
+})->purpose('Kisti reminders and late rules for the Accounts Panel')
+    ->dailyAt('09:00')
+    ->withoutOverlapping();
