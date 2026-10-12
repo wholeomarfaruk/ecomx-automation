@@ -5,7 +5,7 @@
 --}}
 @php
     $hasAdmin = $this->hasAdminPanel;
-    $link = fn (?string $name, array $params = []) => $name && $hasAdmin && Route::has($name) ? route($name, $params) : '#';
+    $link = fn (?string $name, array $params = []) => $name && Route::has($name) && ($hasAdmin || str_starts_with($name, 'accounts.')) ? route($name, $params) : '#';
 
     $s  = $this->summary;
     $st = $this->stock;
@@ -169,7 +169,7 @@
     <div class="grid grid-cols-1 items-start gap-4 xl:grid-cols-3">
 
         {{-- Checkbox selection lives in Alpine — ticking boxes never hits the server. --}}
-        <section x-data="{ selected: [] }"
+        <section id="posting-pending" x-data="{ selected: [] }"
                  x-init="$wire.$hook('commit', ({ succeed }) => succeed(() => $nextTick(() => {
                      selected = selected.filter(id => $root.querySelector(`[data-voucher][value='${id}']`));
                  })))"
@@ -239,7 +239,7 @@
         <section class="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white px-[18px] py-4">
             <div class="flex items-center justify-between">
                 <h2 class="text-[15px] font-bold">Master Profiles</h2>
-                <a href="{{ $link('admin.master-profile') }}" class="text-[13px] font-semibold text-indigo-700 hover:text-indigo-900">+ New profile</a>
+                <a href="{{ $link('accounts.profiles.create') }}" class="text-[13px] font-semibold text-indigo-700 hover:text-indigo-900">+ New profile</a>
             </div>
             <p class="text-[12.5px] leading-relaxed text-gray-600">একজন ব্যক্তি বা প্রতিষ্ঠান = একটি profile। একই profile একাধিক role নিতে পারে: Customer, Supplier, Lender, Owner, Login.</p>
             @foreach ($this->masters as $m)

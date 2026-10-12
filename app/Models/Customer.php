@@ -35,6 +35,17 @@ class Customer extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        // Keep the Master Profiles role list in sync wherever a customer is
+        // created or re-linked (storefront, POS, bulk orders, admin).
+        static::saved(function (Customer $customer) {
+            if ($customer->wasRecentlyCreated || $customer->wasChanged('master_profile_id')) {
+                MasterProfileRole::ensure($customer->master_profile_id, 'customer');
+            }
+        });
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

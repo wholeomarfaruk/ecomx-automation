@@ -4,6 +4,7 @@ namespace App\Actions\Accounts;
 
 use App\Enums\Accounts\TransactionType;
 use App\Models\JournalEntry;
+use App\Models\MasterProfile;
 
 /**
  * Cases 8.1 (cash investment) and 8.2 (asset contribution) — money or
@@ -22,6 +23,7 @@ class PostOwnerInvestment
         float $amount,
         string $entryDate,
         ?string $description = null,
+        ?int $ownerProfileId = null,
     ): JournalEntry {
         return $this->postJournalEntry->handle([
             'entry_date'       => $entryDate,
@@ -29,7 +31,13 @@ class PostOwnerInvestment
             'transaction_type' => TransactionType::OWNER_INVESTMENT->value,
         ], [
             ['account_id' => $assetAccountId, 'debit' => $amount],
-            ['account_id' => $ownerCapitalAccountId, 'credit' => $amount],
+            ['account_id' => $ownerCapitalAccountId, 'credit' => $amount] + $this->owner($ownerProfileId),
         ]);
+    }
+
+    /** Per-owner capital / drawings: tagged with the owner's Master Profile. */
+    protected function owner(?int $profileId): array
+    {
+        return $profileId ? ['subledger_type' => MasterProfile::class, 'subledger_id' => $profileId] : [];
     }
 }

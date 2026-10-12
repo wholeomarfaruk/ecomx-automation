@@ -9,7 +9,6 @@ use App\Enums\Accounts\TransactionType;
 use App\Exceptions\Accounts\LockedFiscalPeriodException;
 use App\Models\Account;
 use App\Models\AccountsSupplierBill;
-use App\Models\Customer;
 use App\Models\FiscalPeriod;
 use App\Models\JournalEntry;
 use App\Models\Loan;
@@ -18,7 +17,6 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\RecurringExpense;
 use App\Models\Setting;
-use App\Models\Supplier;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
@@ -401,9 +399,12 @@ class Dashboard extends Component
     #[Computed(persist: true, seconds: 60)]
     public function profileCounts(): array
     {
+        $roles = \App\Services\Profiles\ProfileCounts::all();
+
         return [
-            'customers' => Customer::count(),
-            'suppliers' => Supplier::count(),
+            'customers' => $roles['customers'],
+            'suppliers' => $roles['suppliers'],
+            'owners'    => $roles['owners'],
             'logins'    => DB::table('panel_user')
                 ->join('panels', 'panels.id', '=', 'panel_user.panel_id')
                 ->where('panels.slug', 'accounts')
@@ -580,11 +581,10 @@ class Dashboard extends Component
         $c = $this->profileCounts;
 
         return [
-            ['route' => 'admin.customers.index',      'label' => 'Customers', 'count' => $c['customers'],    'sub' => 'পাবো (due)',     'amount' => $s['receivable'],       'initial' => 'C', 'tone' => 'green'],
-            ['route' => 'admin.purchase.suppliers',   'label' => 'Suppliers', 'count' => $c['suppliers'],    'sub' => 'দিবো (payable)', 'amount' => $s['payable'],          'initial' => 'S', 'tone' => 'red'],
-            ['route' => 'admin.accounts.loans.index', 'label' => 'Lenders',   'count' => $s['lender_count'], 'sub' => 'ঋণ বাকি',        'amount' => $s['loan_outstanding'], 'initial' => 'L', 'tone' => 'indigo'],
-            // SAMPLE count — owners aren't a profile type yet; capital/drawings are real.
-            ['route' => 'admin.accounts.owner-equity.index', 'label' => 'Owners', 'count' => 2, 'sub' => 'Capital · drawings ' . $this->money($this->balances['drawings_month']) . ' this month', 'amount' => $this->balances['capital'], 'initial' => 'O', 'tone' => 'amber'],
+            ['route' => 'accounts.profiles.customers', 'label' => 'Customers', 'count' => $c['customers'],    'sub' => 'পাবো (due)',     'amount' => $s['receivable'],       'initial' => 'C', 'tone' => 'green'],
+            ['route' => 'accounts.profiles.suppliers', 'label' => 'Suppliers', 'count' => $c['suppliers'],    'sub' => 'দিবো (payable)', 'amount' => $s['payable'],          'initial' => 'S', 'tone' => 'red'],
+            ['route' => 'accounts.profiles.lenders',   'label' => 'Lenders',   'count' => $s['lender_count'], 'sub' => 'ঋণ বাকি',        'amount' => $s['loan_outstanding'], 'initial' => 'L', 'tone' => 'indigo'],
+            ['route' => 'accounts.profiles.owners',    'label' => 'Owners',    'count' => $c['owners'], 'sub' => 'Capital · drawings ' . $this->money($this->balances['drawings_month']) . ' this month', 'amount' => $this->balances['capital'], 'initial' => 'O', 'tone' => 'amber'],
             ['route' => 'admin.users', 'label' => 'Login Profiles', 'count' => $c['logins'], 'sub' => $c['logins'] . ' can post vouchers', 'amount' => null, 'initial' => 'U', 'tone' => 'gray'],
         ];
     }

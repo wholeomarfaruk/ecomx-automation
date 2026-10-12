@@ -23,46 +23,12 @@
         @csrf
     </form>
 
-    @php
-        $siteName     = \App\Models\Setting::get('site_name', config('app.name'), 'general') ?: config('app.name');
-        $logoWhite    = \App\Models\Setting::get('site_logo_white', null, 'general');
-        $logoWhiteUrl = $logoWhite ? file_path($logoWhite) : null;
-        $initial      = strtoupper(mb_substr($siteName, 0, 1));
-        $pendingCount = \App\Models\JournalEntry::where('status', \App\Enums\Accounts\JournalEntryStatus::DRAFT)->count();
-    @endphp
-
     <div class="flex min-h-screen">
 
-        {{-- Sidebar --}}
-        <aside class="fixed inset-y-0 left-0 z-30 flex w-64 -translate-x-full flex-col bg-[#0f172a] transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0"
+        {{-- Sidebar — shared with the profile pages (design: Main.dc.html / Sidebar.dc.html) --}}
+        <aside class="fixed inset-y-0 left-0 z-30 flex w-[248px] -translate-x-full flex-col overflow-y-auto bg-[#0f172a] transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0"
                :class="{ 'translate-x-0!': navOpen }">
-            <div class="flex h-16 shrink-0 items-center gap-3 border-b border-white/5 px-4">
-                @if ($logoWhiteUrl)
-                    <img src="{{ $logoWhiteUrl }}" alt="{{ $siteName }}" class="h-9 w-9 shrink-0 object-contain">
-                @else
-                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-600">
-                        <span class="select-none text-base font-black leading-none text-white">{{ $initial }}</span>
-                    </div>
-                @endif
-                <div class="min-w-0">
-                    <div class="truncate text-[15px] font-bold leading-tight text-white">{{ $siteName }}</div>
-                    <div class="text-[11.5px] text-slate-400">Accounts Panel</div>
-                </div>
-            </div>
-
-            <nav class="flex-1 overflow-y-auto px-3 py-4 text-sm">
-                @include('layouts.accounts.partials.menu', ['pendingCount' => $pendingCount])
-            </nav>
-
-            @if (auth()->user()->hasPanel('admin'))
-                <div class="border-t border-white/5 p-3">
-                    <a href="{{ route('admin.dashboard') }}"
-                       class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] text-slate-400 hover:bg-slate-800 hover:text-white">
-                        <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
-                        Back to Admin
-                    </a>
-                </div>
-            @endif
+            <x-accounts.sidebar active="dashboard" />
         </aside>
 
         {{-- Mobile sidebar backdrop --}}

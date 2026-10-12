@@ -34,6 +34,9 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(LoginResponse::class, \App\Http\Responses\LoginResponse::class);
 
+        // Chart-of-accounts ids by code, looked up once per request.
+        $this->app->scoped(\App\Services\Profiles\LedgerAccounts::class);
+
         $this->app->scoped(
             MarketingContextBuilder::class,
             fn ($app) => new MarketingContextBuilder($app['request'])

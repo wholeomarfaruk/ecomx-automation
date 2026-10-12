@@ -24,6 +24,17 @@ class Supplier extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        // Keep the Master Profiles role list in sync wherever a supplier is
+        // created or re-linked (Purchase module, Accounts Panel).
+        static::saved(function (Supplier $supplier) {
+            if ($supplier->wasRecentlyCreated || $supplier->wasChanged('master_profile_id')) {
+                MasterProfileRole::ensure($supplier->master_profile_id, 'supplier');
+            }
+        });
+    }
+
     public function masterProfile(): BelongsTo
     {
         return $this->belongsTo(MasterProfile::class);

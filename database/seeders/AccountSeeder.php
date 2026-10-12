@@ -31,6 +31,7 @@ class AccountSeeder extends Seeder
             ['code' => '1060', 'name' => 'Gateway Receivable',         'type' => 'asset',     'subtype' => 'receivable', 'is_control_account' => true],
             ['code' => '1100', 'name' => 'Accounts Receivable',        'type' => 'asset',     'subtype' => 'receivable', 'is_control_account' => true],
             ['code' => '1150', 'name' => 'Supplier Advance',           'type' => 'asset',     'subtype' => 'receivable', 'is_control_account' => true],
+            ['code' => '1160', 'name' => 'Salary Advance',             'type' => 'asset',     'subtype' => 'receivable', 'is_control_account' => true],
             ['code' => '1200', 'name' => 'Inventory',                  'type' => 'asset',     'subtype' => null],
             ['code' => '1500', 'name' => 'Fixed Assets',                'type' => 'asset',     'subtype' => 'fixed_asset'],
             ['code' => '1510', 'name' => 'Accumulated Depreciation',   'type' => 'asset',     'subtype' => 'contra_asset', 'normal_balance' => 'credit'],
@@ -41,6 +42,7 @@ class AccountSeeder extends Seeder
             ['code' => '2160', 'name' => 'Customer Advance',            'type' => 'liability', 'subtype' => 'payable', 'is_control_account' => true],
             ['code' => '2200', 'name' => 'Loan Payable',                'type' => 'liability', 'subtype' => 'payable', 'is_control_account' => true],
             ['code' => '2300', 'name' => 'VAT Payable',                 'type' => 'liability', 'subtype' => 'tax'],
+            ['code' => '2400', 'name' => 'Salary Payable',              'type' => 'liability', 'subtype' => 'payable', 'is_control_account' => true],
 
             // Equity
             ['code' => '3000', 'name' => 'Owner Capital',               'type' => 'equity',    'subtype' => null],

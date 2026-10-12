@@ -41,6 +41,10 @@ enum TransactionType: string
     case GATEWAY_SETTLEMENT  = 'gateway_settlement';      // Case 11.1
     case VAT_SALE            = 'vat_sale';                 // Case 12.1
     case BANK_RECONCILIATION = 'bank_reconciliation';    // Case 2.2
+    case SET_OFF             = 'set_off';                // Accounts Panel: receivable vs payable of one profile
+    case SALARY              = 'salary';                 // Payroll accrual
+    case SALARY_PAYMENT      = 'salary_payment';
+    case SALARY_ADVANCE      = 'salary_advance';
 
     public function label(): string
     {
@@ -76,6 +80,10 @@ enum TransactionType: string
             self::GATEWAY_SETTLEMENT  => 'Gateway Settlement',
             self::VAT_SALE            => 'VAT Sale',
             self::BANK_RECONCILIATION => 'Bank Reconciliation',
+            self::SET_OFF             => 'Set-off',
+            self::SALARY              => 'Salary',
+            self::SALARY_PAYMENT      => 'Salary Payment',
+            self::SALARY_ADVANCE      => 'Salary Advance',
         };
     }
 
@@ -86,16 +94,16 @@ enum TransactionType: string
             self::LOAN_RECEIVED, self::OWNER_INVESTMENT, self::VAT_SALE => 'bg-emerald-50 text-emerald-600',
 
             self::MANUAL_EXPENSE, self::COGS, self::SUPPLIER_PAYMENT,
-            self::LOAN_REPAYMENT, self::RECURRING_EXPENSE, self::DEPRECIATION,
+            self::LOAN_REPAYMENT, self::RECURRING_EXPENSE, self::DEPRECIATION, self::SALARY, self::SALARY_PAYMENT,
             self::OWNER_WITHDRAWAL, self::BAD_DEBT => 'bg-orange-50 text-orange-600',
 
             self::TRANSFER, self::CURRENCY_CONVERSION, self::COD_SETTLEMENT,
-            self::GATEWAY_SETTLEMENT, self::BANK_RECONCILIATION => 'bg-blue-50 text-blue-600',
+            self::GATEWAY_SETTLEMENT, self::BANK_RECONCILIATION, self::SET_OFF => 'bg-blue-50 text-blue-600',
 
             self::SALES_RETURN, self::REFUND, self::PURCHASE_RETURN,
             self::VOID, self::REVERSAL => 'bg-red-50 text-red-500',
 
-            self::CREDIT_NOTE, self::SUPPLIER_ADVANCE, self::CUSTOMER_ADVANCE => 'bg-indigo-50 text-indigo-600',
+            self::CREDIT_NOTE, self::SUPPLIER_ADVANCE, self::CUSTOMER_ADVANCE, self::SALARY_ADVANCE => 'bg-indigo-50 text-indigo-600',
 
             self::SUPPLIER_BILL, self::ASSET_PURCHASE, self::ASSET_DISPOSAL,
             self::OPENING_BALANCE => 'bg-gray-100 text-gray-600',
