@@ -10,7 +10,7 @@ use App\Models\PayrollItem;
 use App\Models\PayrollRun;
 use App\Services\Profiles\LedgerAccounts;
 use App\Support\Bdt;
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -82,7 +82,7 @@ class Payroll
         })->filter(fn ($r) => $r['salary'] > 0)->values();
     }
 
-    public function prepare(Carbon $month, float $bonusPercent = 0, ?string $bonusNote = null, ?string $dueOn = null): PayrollRun
+    public function prepare(CarbonInterface $month, float $bonusPercent = 0, ?string $bonusNote = null, ?string $dueOn = null): PayrollRun
     {
         $month = $month->copy()->startOfMonth();
 

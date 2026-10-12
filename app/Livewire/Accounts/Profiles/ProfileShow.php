@@ -21,6 +21,7 @@ use App\Services\Profiles\ProfileLedger;
 use App\Support\Bdt;
 use App\Support\BdPhone;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -250,7 +251,7 @@ class ProfileShow extends Component
         return $plans->concat($loans)->all();
     }
 
-    protected function kistiBox(int $no, Carbon $date, float $amount, float $adjusted, float $paid, float $support, bool $isPaid, bool $isNext): array
+    protected function kistiBox(int $no, CarbonInterface $date, float $amount, float $adjusted, float $paid, float $support, bool $isPaid, bool $isNext): array
     {
         return [
             'no'     => $no,

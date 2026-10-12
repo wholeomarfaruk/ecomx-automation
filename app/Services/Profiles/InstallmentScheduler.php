@@ -3,6 +3,7 @@
 namespace App\Services\Profiles;
 
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use InvalidArgumentException;
 
 /**
@@ -98,8 +99,8 @@ class InstallmentScheduler
         return $rows;
     }
 
-    /** @return list<Carbon> */
-    protected function dates(string $frequency, int $count, Carbon $start, array $offsets): array
+    /** @return list<CarbonInterface> */
+    protected function dates(string $frequency, int $count, CarbonInterface $start, array $offsets): array
     {
         if ($frequency === 'custom') {
             return array_map(fn ($d) => $start->copy()->addDays($d), $offsets);

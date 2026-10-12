@@ -11,6 +11,7 @@ use App\Models\PayrollRun;
 use App\Models\User;
 use App\Support\Bdt;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -54,7 +55,7 @@ class Employees extends Component
         $this->st = array_key_exists($st, self::CHIPS) ? $st : 'all';
     }
 
-    protected function lastMonth(): Carbon
+    protected function lastMonth(): CarbonInterface
     {
         return now()->subMonthNoOverflow()->startOfMonth();
     }
