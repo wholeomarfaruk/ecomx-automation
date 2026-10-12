@@ -68,6 +68,14 @@ class AccountSeeder extends Seeder
             ['code' => '5500', 'name' => 'Depreciation Expense',         'type' => 'expense',   'subtype' => null],
             ['code' => '5600', 'name' => 'Bad Debt Expense',             'type' => 'expense',   'subtype' => null],
             ['code' => '5700', 'name' => 'Loss on Disposal',             'type' => 'expense',   'subtype' => null],
+            ['code' => '5810', 'name' => 'Commission Expense',           'type' => 'expense',   'subtype' => null],
+            ['code' => '5900', 'name' => 'Cash Short / Excess',          'type' => 'expense',   'subtype' => null],
+            ['code' => '5910', 'name' => 'Stock Loss',                   'type' => 'expense',   'subtype' => null],
+
+            // Accounts Panel: commission & rebate, late fees
+            ['code' => '4950', 'name' => 'Sales Rebate',                 'type' => 'income',    'subtype' => 'contra_income', 'normal_balance' => 'debit'],
+            ['code' => '4150', 'name' => 'Late Fee Income',              'type' => 'income',    'subtype' => null],
+            ['code' => '2450', 'name' => 'Rebate Payable',               'type' => 'liability', 'subtype' => 'payable', 'is_control_account' => true],
         ];
 
         $expenseSubCategories = [
@@ -75,6 +83,10 @@ class AccountSeeder extends Seeder
             ['code' => '5120', 'name' => 'Courier Expense',   'parent_code' => '5100'],
             ['code' => '5130', 'name' => 'Salary',             'parent_code' => '5100'],
             ['code' => '5140', 'name' => 'Rent',               'parent_code' => '5100'],
+            ['code' => '5150', 'name' => 'Packaging',          'parent_code' => '5100'],
+            ['code' => '5160', 'name' => 'Repairs & maintenance', 'parent_code' => '5100'],
+            ['code' => '5170', 'name' => 'Utilities',          'parent_code' => '5100'],
+            ['code' => '5180', 'name' => 'Office & misc',      'parent_code' => '5100'],
         ];
 
         $codeToId = [];

@@ -18,6 +18,7 @@ class Account extends Model
         'code', 'name', 'type', 'subtype', 'normal_balance', 'parent_id',
         'is_control_account', 'is_system', 'is_active', 'currency_id',
         'opening_balance', 'description', 'courier_id',
+        'account_number', 'monthly_budget', 'receipt_required_above', 'last_reconciled_at', 'last_reconciled_balance',
     ];
 
     protected function casts(): array
@@ -29,6 +30,10 @@ class Account extends Model
             'is_system'           => 'boolean',
             'is_active'           => 'boolean',
             'opening_balance'     => 'decimal:2',
+            'monthly_budget'      => 'decimal:2',
+            'receipt_required_above' => 'decimal:2',
+            'last_reconciled_at'  => 'date',
+            'last_reconciled_balance' => 'decimal:2',
         ];
     }
 

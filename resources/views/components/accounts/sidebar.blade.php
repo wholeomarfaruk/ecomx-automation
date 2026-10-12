@@ -66,40 +66,34 @@
             @endforeach
         </div>
     </div>
-    <a href="{{ $href('admin.accounts.transactions') }}" class="{{ $item }}">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4 3 8l4 4"></path><path d="M3 8h14"></path><path d="m17 20 4-4-4-4"></path><path d="M21 16H7"></path></svg>
-        Transactions</a>
-    <a href="{{ route('accounts.dashboard') }}#posting-pending" class="{{ $item }}">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
-        <span class="flex-1">Posting Pending</span>
-        @if ($pending)
-            <span class="rounded-[10px] bg-[#f59e0b] px-[8px] py-[1px] text-[11px] font-bold text-[#1f2937]">{{ $pending }}</span>
-        @endif
-    </a>
-    <a href="{{ $href('admin.accounts.cash-accounts.index') }}" class="{{ $item }}">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="13" rx="2"></rect><path d="M2.5 10h19"></path><path d="M6 15h4"></path></svg>
-        Cash &amp; Bank</a>
-    <a href="{{ $href('admin.accounts.receivables.index') }}" class="{{ $item }}">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 7 7 17"></path><path d="M7 8v9h9"></path></svg>
-        Receivables (Due)</a>
-    <a href="{{ $href('admin.accounts.payables.index') }}" class="{{ $item }}">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"></path><path d="M8 7h9v9"></path></svg>
-        Payables</a>
-    <a href="{{ route('accounts.profiles.lenders') }}" wire:navigate class="{{ $item }}">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10 12 4l9 6"></path><path d="M5 10v8"></path><path d="M10 10v8"></path><path d="M14 10v8"></path><path d="M19 10v8"></path><path d="M3 20h18"></path></svg>
-        Loans &amp; EMI</a>
-    <a href="{{ $href('admin.accounts.fixed-assets.index') }}" class="{{ $item }}">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1.5"></rect><path d="M8 20h8"></path><path d="M12 16v4"></path></svg>
-        Fixed Assets</a>
-    <a href="{{ $href('admin.accounts.expenses.index') }}" class="{{ $item }}">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"></path><path d="M9 12h7"></path><path d="M9 16h7"></path></svg>
-        Expenses</a>
-    <a href="{{ $href('admin.accounts.reports.index') }}" class="{{ $item }}">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-7"></path><path d="M21 20H3"></path></svg>
-        Reports</a>
-    <a href="{{ $href('admin.accounts.settings.chart-of-accounts') }}" class="{{ $item }}">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"></path></svg>
-        Settings</a>
+    @php
+        $nav = [
+            ['transactions', 'accounts.transactions', 'Transactions', '<path d="M7 4 3 8l4 4"></path><path d="M3 8h14"></path><path d="m17 20 4-4-4-4"></path><path d="M21 16H7"></path>'],
+            ['posting', 'accounts.posting', 'Posting Pending', '<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>'],
+            ['cash', 'accounts.cash-bank', 'Cash &amp; Bank', '<rect x="2.5" y="6" width="19" height="13" rx="2"></rect><path d="M2.5 10h19"></path><path d="M6 15h4"></path>'],
+            ['receivables', 'accounts.receivables', 'Receivables (Due)', '<path d="M17 7 7 17"></path><path d="M7 8v9h9"></path>'],
+            ['commission', 'accounts.commission', 'Commission', '<path d="M19 5 5 19"></path><circle cx="7" cy="7" r="2.5"></circle><circle cx="17" cy="17" r="2.5"></circle>'],
+            ['payables', 'accounts.payables', 'Payables', '<path d="M7 17 17 7"></path><path d="M8 7h9v9"></path>'],
+            ['loans', 'accounts.loans', 'Loans &amp; EMI', '<path d="M3 10 12 4l9 6"></path><path d="M5 10v8"></path><path d="M10 10v8"></path><path d="M14 10v8"></path><path d="M19 10v8"></path><path d="M3 20h18"></path>'],
+            ['assets', 'accounts.fixed-assets', 'Fixed Assets', '<rect x="3" y="4" width="18" height="12" rx="1.5"></rect><path d="M8 20h8"></path><path d="M12 16v4"></path>'],
+            ['expenses', 'accounts.expenses', 'Expenses', '<path d="M6 3h9l4 4v14H6z"></path><path d="M9 12h7"></path><path d="M9 16h7"></path>'],
+            ['reports', 'accounts.reports', 'Reports', '<path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-7"></path><path d="M21 20H3"></path>'],
+            ['settings', 'accounts.settings', 'Settings', '<circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"></path>'],
+        ];
+    @endphp
+    @foreach ($nav as [$key, $routeName, $text, $icon])
+        <a href="{{ $href($routeName) }}" @if (Route::has($routeName)) wire:navigate @endif class="{{ $active === $key ? $on : $item }}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{!! $icon !!}</svg>
+            @if ($key === 'posting')
+                <span class="flex-1">{{ $text }}</span>
+                @if ($pending)
+                    <span class="rounded-[10px] bg-[#f59e0b] px-[8px] py-[1px] text-[11px] font-bold text-[#1f2937]">{{ $pending }}</span>
+                @endif
+            @else
+                {!! $text !!}
+            @endif
+        </a>
+    @endforeach
 
     <div class="{{ $label }} pt-[18px]">Operations</div>
     <a href="{{ $href('admin.purchase.orders') }}" class="{{ $item }}">Purchase</a>

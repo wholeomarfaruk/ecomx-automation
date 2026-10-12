@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 // prefix "accounts.", behind panel:accounts + module:accounts.
 Route::redirect('/', '/accounts/dashboard');
 Route::get('/dashboard', App\Livewire\Accounts\Dashboard::class)->name('dashboard');
+Route::get('/settings', App\Livewire\Accounts\Settings::class)->name('settings');
 
 // Master Profiles — one profile per person/business, with roles.
 Route::prefix('profiles')->name('profiles.')->group(function () {

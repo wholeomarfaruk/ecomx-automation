@@ -32,7 +32,7 @@
 
 {{-- Accounts Panel shell (/accounts) — dark slate sidebar with the Accounts
      menu, white top bar, page content on gray-50. --}}
-<body x-data="{ navOpen: false }" class="min-h-screen bg-gray-50 font-['Plus_Jakarta_Sans','Hind_Siliguri',sans-serif] antialiased">
+<body x-data="{ navOpen: false }" class="min-h-screen bg-[#f1f3f7] text-[#111827] font-['Plus_Jakarta_Sans','Hind_Siliguri',sans-serif] antialiased">
 
     <form method="POST" action="{{ route('logout') }}" x-ref="logoutForm" class="hidden">
         @csrf
@@ -58,17 +58,24 @@
                         class="text-gray-500 hover:text-gray-700 lg:hidden">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16m-7 6h7"/></svg>
                 </button>
-                <div class="hidden text-[13px] text-gray-500 lg:block">{{ now()->format('l, d M Y') }}</div>
+                {{-- Page title + "Accounts / …" breadcrumb (pages pass heading/crumb via layoutData). --}}
+                @if (! empty($heading))
+                    <div class="mr-auto min-w-0">
+                        <div class="truncate text-[16px] font-bold text-[#111827]">{{ $heading }}</div>
+                        <div class="truncate text-[12px] text-[#6b7280]">{{ $crumb ?? 'Accounts' }}</div>
+                    </div>
+                @else
+                    <div class="hidden text-[13px] text-gray-500 lg:block">{{ now()->format('l, d M Y') }}</div>
+                @endif
 
-                <div class="flex items-center gap-2">
-                @livewire('admin.topbar.notifications')
+                <div class="flex items-center gap-[14px]">
+                @livewire('admin.topbar.notifications', ['variant' => 'accounts'])
 
                 <div x-data="{ open: false }" class="relative">
                     <button type="button" @click="open = !open" @click.outside="open = false"
-                            class="flex items-center gap-2 rounded-full p-1 pr-2 hover:bg-gray-100">
-                        <img src="{{ 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) . '&background=111827&color=ffffff&bold=true' }}"
-                             alt="Profile" class="h-8 w-8 rounded-full border border-gray-200 object-cover">
-                        <span class="hidden max-w-[10rem] truncate text-sm font-medium text-gray-700 sm:block">{{ auth()->user()->name }}</span>
+                            class="flex items-center gap-[8px] rounded-full pr-1">
+                        <span class="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[#0f172a] text-[12px] font-bold text-white">{{ \App\Models\MasterProfile::initialsOf(auth()->user()->name) }}</span>
+                        <span class="hidden max-w-[10rem] truncate text-[13px] font-semibold text-[#111827] sm:block">{{ auth()->user()->name }}</span>
                         <svg class="hidden h-4 w-4 text-gray-400 transition-transform sm:block" :class="{ 'rotate-180': open }" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </button>
                     <div x-cloak x-show="open" x-transition
@@ -93,7 +100,7 @@
                 </div>
             @endif
 
-            <main class="min-w-0 flex-1 p-4 sm:p-6">
+            <main class="min-w-0 flex-1 px-4 pb-10 pt-4 sm:px-[28px] sm:pt-[24px]">
                 {{ $slot }}
             </main>
         </div>

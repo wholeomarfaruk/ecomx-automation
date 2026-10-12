@@ -21,7 +21,9 @@ class Bdt
         $negative = $amount < -0.004;
         $digits   = (string) (int) round(abs($amount));
 
-        if (strlen($digits) > 3) {
+        if (static::international()) {
+            $digits = number_format((int) $digits);
+        } elseif (strlen($digits) > 3) {
             $last3  = substr($digits, -3);
             $rest   = preg_replace('/\B(?=(\d{2})+(?!\d))/', ',', substr($digits, 0, -3));
             $digits = $rest . ',' . $last3;
@@ -30,6 +32,14 @@ class Bdt
         $prefix = $negative ? '− ' : ($signed ? '+ ' : '');
 
         return $prefix . '৳' . $digits;
+    }
+
+    /** Settings › General › Currency & format: lakh (default) or international grouping. */
+    protected static function international(): bool
+    {
+        static $intl = null;
+
+        return $intl ??= AccountsSettings::get('currency_format', 'lakh') === 'international';
     }
 
     /** Today / Yesterday / 3 days ago / 1 week ago / 3 weeks ago / 05 Oct */
