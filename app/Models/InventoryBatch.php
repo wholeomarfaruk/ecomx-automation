@@ -11,9 +11,9 @@ class InventoryBatch extends Model
 {
     protected $fillable = [
         'warehouse_id', 'product_id', 'variant_id',
-        'supplier_id', 'purchase_order_id',
-        'batch_no', 'manufacture_date', 'expiry_date',
-        'quantity', 'purchase_price', 'status',
+        'supplier_id', 'purchase_order_id', 'stock_receiving_id',
+        'batch_no', 'manufacture_date', 'expiry_date', 'received_at',
+        'quantity', 'received_quantity', 'purchase_price', 'status',
     ];
 
     protected function casts(): array
@@ -22,6 +22,8 @@ class InventoryBatch extends Model
             'manufacture_date' => 'date',
             'expiry_date' => 'date',
             'quantity' => 'decimal:3',
+            'received_quantity' => 'decimal:3',
+            'received_at' => 'datetime',
             'purchase_price' => 'decimal:4',
         ];
     }

@@ -619,15 +619,16 @@ class StockService
      * How much of one PO line item has already been stocked in, across all
      * previous deliveries — a purchase order can arrive in several partial
      * shipments (e.g. 100 ordered, delivered as 20 + 50 + 30), each its own
-     * Stock In against the same item.
+     * Stock In against the same item. A cancelled receiving logs a negative
+     * movement against the same item, so this is the net received.
      */
     public function receivedQuantityForPurchaseOrderItem(PurchaseOrderItem $item): float
     {
-        return (float) InventoryStockMovement::query()
+        return max(0.0, (float) InventoryStockMovement::query()
             ->where('reference_type', PurchaseOrderItem::class)
             ->where('reference_id', $item->id)
-            ->where('quantity', '>', 0)
-            ->sum('quantity');
+            ->whereIn('type', ['purchase', 'receiving_cancelled'])
+            ->sum('quantity'));
     }
 
     /**

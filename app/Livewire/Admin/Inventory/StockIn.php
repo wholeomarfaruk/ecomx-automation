@@ -2,283 +2,317 @@
 
 namespace App\Livewire\Admin\Inventory;
 
-use App\Exceptions\Inventory\InsufficientStockException;
 use App\Models\InventoryBatch;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
+use App\Models\Supplier;
 use App\Models\Warehouse;
+use App\Services\Inventory\StockReceivingService;
 use App\Services\StockService;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Livewire\Component;
 
+/**
+ * Stock In = goods receiving. One delivery (optionally against a purchase
+ * order) is received in one go: many products / variants, each line with
+ * its own batch. Saving creates one receiving (GRN) and one batch per line.
+ */
 class StockIn extends Component
 {
-    /** Sentinel value for the batch dropdown meaning "create a new batch" rather than an existing batch id. */
-    const NEW_BATCH = '__new__';
-
     public $purchaseOrderId = '';
-    public $purchaseOrderItemId = '';
-
-    public $productId = '';
-    public $variantId = '';
-    public $quantity = '';
-
-    /** Either an existing InventoryBatch id, or self::NEW_BATCH to create one. */
-    public string $batchSelection = self::NEW_BATCH;
-    public $batchNo = '';
-    public $manufactureDate = '';
-    public $expiryDate = '';
-    public $purchasePrice = '';
-
+    public $supplierId = '';
+    public $warehouseId = '';
+    public $receivedAt = '';
+    public $reference = '';
     public $note = '';
 
-    /**
-     * Deep-links here from a Purchase Order's Receiving link (?purchase_order=X&item=Y)
-     * so "Receive" on a PO item lands on this page with the PO, item,
-     * product/variant, remaining quantity, and suggested price already
-     * filled in — rather than duplicating batch-aware receiving logic
-     * inline on the PO page.
-     */
+    /** @var list<array{uid: string, product_id: string, variant_id: string, purchase_order_item_id: ?int, quantity: string, unit_cost: string, batch_id: string, batch_no: string, manufacture_date: string, expiry_date: string}> */
+    public array $lines = [];
+
+    /** Product picked in "Add product" — adds one line per variant. */
+    public $addProductId = '';
+
+    /** SKU / barcode scan box. */
+    public string $scan = '';
+
     public function mount(): void
     {
-        $poId = request()->query('purchase_order');
-        $itemId = request()->query('item');
+        $this->warehouseId = (string) Warehouse::default()->id;
+        $this->receivedAt = now()->format('Y-m-d H:i:s');
 
-        if ($poId) {
+        // Deep link from a PO: ?purchase_order=X (all remaining lines) or &item=Y (just that line).
+        if ($poId = request()->query('purchase_order')) {
             $this->purchaseOrderId = (string) $poId;
-            $this->updatedPurchaseOrderId();
-        }
-
-        if ($itemId) {
-            $this->purchaseOrderItemId = (string) $itemId;
-            $this->updatedPurchaseOrderItemId();
+            $this->loadPurchaseOrder(request()->query('item') ? (int) request()->query('item') : null);
         }
     }
 
-    public function updatedProductId(): void
+    protected function blankLine(array $over = []): array
     {
-        $this->variantId = '';
-        $this->resetBatchSelection();
+        return array_merge([
+            'uid' => (string) Str::uuid(), 'product_id' => '', 'variant_id' => '', 'purchase_order_item_id' => null,
+            'quantity' => '', 'unit_cost' => '', 'batch_id' => '', 'batch_no' => '', 'manufacture_date' => '', 'expiry_date' => '',
+        ], $over);
     }
 
-    public function updatedVariantId(): void
+    protected function defaultCost(?int $productId, ?int $variantId): string
     {
-        $this->resetBatchSelection();
+        $c = $variantId ? ProductVariant::whereKey($variantId)->value('purchase_price') : null;
+        $c ??= $productId ? Product::whereKey($productId)->value('purchase_price') : null;
+
+        return $c !== null ? (string) (float) $c : '';
     }
 
-    protected function resetBatchSelection(): void
-    {
-        $this->batchSelection = self::NEW_BATCH;
-        $this->batchNo = '';
-        $this->manufactureDate = '';
-        $this->expiryDate = '';
-        $this->purchasePrice = '';
-    }
-
-    /**
-     * Generates the next batch code for today (BATCH-YYYYMMDD-NNN), checked
-     * against existing batch_no values so re-clicking never collides even if
-     * an earlier generated code was never submitted.
-     */
-    public function generateBatchNo(): void
-    {
-        $prefix = 'BATCH-' . now()->format('Ymd') . '-';
-
-        $usedToday = InventoryBatch::where('batch_no', 'like', $prefix . '%')
-            ->pluck('batch_no')
-            ->map(fn (string $no) => (int) substr($no, strlen($prefix)))
-            ->max();
-
-        $this->batchNo = $prefix . str_pad((string) (($usedToday ?? 0) + 1), 3, '0', STR_PAD_LEFT);
-    }
-
-    /**
-     * When the admin picks an existing batch from the dropdown, prefill the
-     * (now read-only) batch_no/date/price fields from it so the summary is
-     * accurate and submit() has a concrete batch_no to match against.
-     */
-    public function updatedBatchSelection(): void
-    {
-        if ($this->batchSelection === self::NEW_BATCH) {
-            $this->batchNo = '';
-            $this->manufactureDate = '';
-            $this->expiryDate = '';
-            $this->purchasePrice = '';
-            return;
-        }
-
-        $batch = InventoryBatch::find($this->batchSelection);
-
-        if (! $batch) {
-            $this->batchSelection = self::NEW_BATCH;
-            return;
-        }
-
-        $this->batchNo = $batch->batch_no;
-        $this->manufactureDate = $batch->manufacture_date?->format('Y-m-d') ?? '';
-        $this->expiryDate = $batch->expiry_date?->format('Y-m-d') ?? '';
-        $this->purchasePrice = $batch->purchase_price !== null ? (string) $batch->purchase_price : '';
-    }
+    /* ---------------- purchase order ---------------- */
 
     public function updatedPurchaseOrderId(): void
     {
-        $this->purchaseOrderItemId = '';
-        $this->productId = '';
-        $this->variantId = '';
-        $this->quantity = '';
-        $this->purchasePrice = '';
-
-        if ($this->purchaseOrderId === '') {
-            $this->note = '';
-            return;
-        }
-
-        $po = PurchaseOrder::find($this->purchaseOrderId);
-        $this->note = $po ? "Received from PO #{$po->order_number}" : '';
+        $this->loadPurchaseOrder();
     }
 
-    public function updatedPurchaseOrderItemId(): void
+    /** Replace PO lines with every line that still has quantity left (or just one line). */
+    public function loadPurchaseOrder(?int $onlyItem = null): void
     {
-        if ($this->purchaseOrderItemId === '') {
+        // Drop lines that came from a PO; keep anything typed by hand.
+        $this->lines = array_values(array_filter($this->lines, fn ($l) => empty($l['purchase_order_item_id'])));
+
+        $po = $this->purchaseOrderId !== '' ? PurchaseOrder::with('items')->find($this->purchaseOrderId) : null;
+        if (! $po) {
+            $this->purchaseOrderId = '';
+
             return;
         }
 
-        $item = PurchaseOrderItem::with('product', 'variant')->find($this->purchaseOrderItemId);
-
-        if (! $item) {
-            return;
+        $this->supplierId = (string) ($po->supplier_id ?? '');
+        $stock = app(StockService::class);
+        foreach ($po->items as $item) {
+            if ($onlyItem && (int) $item->id !== $onlyItem) {
+                continue;
+            }
+            $left = max(0, (float) $item->quantity - $stock->receivedQuantityForPurchaseOrderItem($item));
+            if ($left <= 0) {
+                continue;
+            }
+            $this->lines[] = $this->blankLine([
+                'product_id' => (string) $item->product_id, 'variant_id' => $item->product_variant_id ? (string) $item->product_variant_id : '',
+                'purchase_order_item_id' => $item->id, 'quantity' => (string) $left,
+                'unit_cost' => $item->unit_price !== null ? (string) (float) $item->unit_price : $this->defaultCost($item->product_id, $item->product_variant_id),
+            ]);
         }
 
-        $remaining = max(0, (float) $item->quantity - app(StockService::class)->receivedQuantityForPurchaseOrderItem($item));
-
-        $this->productId = (string) $item->product_id;
-        $this->variantId = $item->product_variant_id ? (string) $item->product_variant_id : '';
-        $this->quantity = $remaining > 0 ? (string) $remaining : '';
-        $this->resetBatchSelection();
-        $this->purchasePrice = $item->unit_price !== null ? (string) $item->unit_price : '';
+        if (! $this->lines) {
+            $this->dispatch('toast', ['type' => 'info', 'message' => "PO #{$po->order_number} is already fully received."]);
+        }
     }
 
-    public function submit(): void
+    /* ---------------- lines ---------------- */
+
+    /** "Add product": one line per active variant (or one line for a simple product). */
+    public function updatedAddProductId(): void
     {
-        $this->validate([
-            'productId' => 'required|integer|exists:products,id',
-            'variantId' => 'nullable|integer|exists:product_variants,id',
-            'quantity' => 'required|numeric|min:0.001',
-            'batchNo' => $this->batchSelection === self::NEW_BATCH ? 'required|string|max:100' : 'nullable|string|max:100',
-            'manufactureDate' => 'nullable|date',
-            'expiryDate' => 'nullable|date|after_or_equal:manufactureDate',
-            'purchasePrice' => 'nullable|numeric|min:0',
-        ]);
-
-        if (! $this->variantId && ProductVariant::where('product_id', $this->productId)->exists()) {
-            $this->addError('variantId', 'This product has variants — please select one.');
+        $pid = (int) $this->addProductId;
+        if (! $pid || ! Product::whereKey($pid)->exists()) {
             return;
         }
 
-        if ($this->batchSelection !== self::NEW_BATCH && ! InventoryBatch::whereKey($this->batchSelection)->exists()) {
-            $this->addError('batchSelection', 'Please choose a batch or create a new one.');
+        $variants = ProductVariant::where('product_id', $pid)->where('status', 'active')->orderBy('sort_order')->get(['id', 'purchase_price']);
+        $have = collect($this->lines)->filter(fn ($l) => (int) $l['product_id'] === $pid && $l['batch_id'] === '' && empty($l['purchase_order_item_id']))->pluck('variant_id')->map(fn ($v) => (string) $v)->all();
+
+        if ($variants->isEmpty()) {
+            if (! in_array('', $have, true)) {
+                $this->lines[] = $this->blankLine(['product_id' => (string) $pid, 'unit_cost' => $this->defaultCost($pid, null)]);
+            }
+        } else {
+            $productCost = Product::whereKey($pid)->value('purchase_price');
+            foreach ($variants as $v) {
+                if (in_array((string) $v->id, $have, true)) {
+                    continue;
+                }
+                $c = $v->purchase_price ?? $productCost;
+                $this->lines[] = $this->blankLine(['product_id' => (string) $pid, 'variant_id' => (string) $v->id, 'unit_cost' => $c !== null ? (string) (float) $c : '']);
+            }
+        }
+
+        $this->addProductId = '';
+    }
+
+    public function addLine(): void
+    {
+        $this->lines[] = $this->blankLine();
+    }
+
+    public function removeLine(int $i): void
+    {
+        unset($this->lines[$i]);
+        $this->lines = array_values($this->lines);
+        $this->resetErrorBag();
+    }
+
+    public function duplicateLine(int $i): void
+    {
+        if (isset($this->lines[$i])) {
+            // Same item into a second (new) batch, e.g. a different expiry.
+            array_splice($this->lines, $i + 1, 0, [array_merge($this->lines[$i], ['uid' => (string) Str::uuid(), 'quantity' => '', 'batch_id' => '', 'batch_no' => '', 'purchase_order_item_id' => null])]);
+        }
+    }
+
+    /** Copy this line's cost / dates to every other line of the same product. */
+    public function applyToProduct(int $i, string $field): void
+    {
+        if (! isset($this->lines[$i]) || ! in_array($field, ['unit_cost', 'manufacture_date', 'expiry_date'], true)) {
+            return;
+        }
+        $src = $this->lines[$i];
+        foreach ($this->lines as $k => $l) {
+            if ($l['product_id'] === $src['product_id'] && $l['batch_id'] === '') {
+                $this->lines[$k][$field] = $src[$field];
+            }
+        }
+    }
+
+    public function updatedLines($value, string $key): void
+    {
+        [$i, $field] = array_pad(explode('.', $key, 2), 2, null);
+        if (! isset($this->lines[$i])) {
             return;
         }
 
-        $product = Product::findOrFail($this->productId);
-        $variant = $this->variantId ? ProductVariant::findOrFail($this->variantId) : null;
-        $purchaseOrder = $this->purchaseOrderId ? PurchaseOrder::find($this->purchaseOrderId) : null;
-        $purchaseOrderItem = $this->purchaseOrderItemId ? PurchaseOrderItem::find($this->purchaseOrderItemId) : null;
+        if ($field === 'product_id') {
+            $this->lines[$i]['variant_id'] = '';
+            $this->lines[$i]['batch_id'] = '';
+            $this->lines[$i]['purchase_order_item_id'] = null;
+            $this->lines[$i]['unit_cost'] = $this->defaultCost((int) $value ?: null, null);
+        }
+        if ($field === 'variant_id') {
+            $this->lines[$i]['batch_id'] = '';
+            $this->lines[$i]['unit_cost'] = $this->defaultCost((int) $this->lines[$i]['product_id'] ?: null, (int) $value ?: null);
+        }
+        if ($field === 'batch_id' && $value !== '' && ($b = InventoryBatch::find($value))) {
+            // Topping up an existing batch: it keeps its own number and dates.
+            $this->lines[$i]['batch_no'] = '';
+            $this->lines[$i]['manufacture_date'] = $b->manufacture_date?->format('Y-m-d') ?? '';
+            $this->lines[$i]['expiry_date'] = $b->expiry_date?->format('Y-m-d') ?? '';
+        }
+    }
 
-        $stockService = app(StockService::class);
+    /** Scan / type a variant SKU: adds the variant, or +1 on its open line. */
+    public function scanSku(): void
+    {
+        $sku = trim($this->scan);
+        $this->scan = '';
+        if ($sku === '') {
+            return;
+        }
 
-        if ($purchaseOrderItem) {
-            $remaining = max(0, (float) $purchaseOrderItem->quantity - $stockService->receivedQuantityForPurchaseOrderItem($purchaseOrderItem));
+        $v = ProductVariant::where('sku', $sku)->first(['id', 'product_id', 'purchase_price']);
+        if (! $v) {
+            $this->dispatch('toast', ['type' => 'error', 'message' => "No variant with SKU {$sku}."]);
 
-            if ((float) $this->quantity > $remaining) {
-                $this->addError('quantity', "This exceeds what's left on this item ({$remaining} remaining of {$purchaseOrderItem->quantity} ordered).");
+            return;
+        }
+
+        foreach ($this->lines as $k => $l) {
+            if ((int) $l['variant_id'] === $v->id && $l['batch_id'] === '') {
+                $this->lines[$k]['quantity'] = (string) ((float) $l['quantity'] + 1);
+
                 return;
             }
         }
+        $this->lines[] = $this->blankLine(['product_id' => (string) $v->product_id, 'variant_id' => (string) $v->id, 'quantity' => '1',
+            'unit_cost' => $this->defaultCost($v->product_id, $v->id)]);
+    }
 
-        try {
-            $stockService->stockInBatch(
-                $product,
-                $variant,
-                $this->batchNo,
-                (float) $this->quantity,
-                expiryDate: $this->expiryDate ?: null,
-                manufactureDate: $this->manufactureDate ?: null,
-                purchasePrice: $this->purchasePrice !== '' ? (float) $this->purchasePrice : null,
-                reference: $purchaseOrderItem,
-                note: $this->note ?: 'Stock in from Inventory',
-                purchaseOrder: $purchaseOrder,
-            );
+    /* ---------------- save ---------------- */
 
-            if ($purchaseOrderItem) {
-                // The movement above is now logged against the PO item
-                // (reference_type = PurchaseOrderItem), so received-so-far
-                // tracking sees it — check if the whole PO is now complete.
-                $stockService->markPurchaseOrderReceivedIfComplete($purchaseOrder);
-            }
-        } catch (InsufficientStockException $e) {
-            $this->addError('quantity', $e->getMessage());
-            return;
-        }
-
-        $toastMessage = 'Stock added';
-
-        if ($purchaseOrderItem) {
-            $totalReceived = $stockService->receivedQuantityForPurchaseOrderItem($purchaseOrderItem->fresh());
-            $toastMessage = "Stock added — {$totalReceived} of {$purchaseOrderItem->quantity} received for this item so far";
-        }
-
-        $this->reset([
-            'purchaseOrderId', 'purchaseOrderItemId', 'variantId', 'quantity',
-            'batchSelection', 'batchNo', 'manufactureDate', 'expiryDate', 'purchasePrice', 'note',
+    public function save(): void
+    {
+        $this->validate([
+            'warehouseId' => 'required|integer|exists:warehouses,id',
+            'supplierId' => 'nullable|integer|exists:suppliers,id',
+            'purchaseOrderId' => 'nullable|integer|exists:purchase_orders,id',
+            'receivedAt' => 'required|date',
+            'reference' => 'nullable|string|max:100',
+            'note' => 'nullable|string|max:1000',
+            'lines' => 'required|array|min:1',
+            'lines.*.product_id' => 'required|integer|exists:products,id',
+            'lines.*.variant_id' => 'nullable|integer',
+            'lines.*.quantity' => 'required|numeric|min:0.001',
+            'lines.*.unit_cost' => 'nullable|numeric|min:0',
+            'lines.*.batch_no' => 'nullable|string|max:100',
+            'lines.*.manufacture_date' => 'nullable|date',
+            'lines.*.expiry_date' => 'nullable|date',
+        ], [
+            'lines.required' => 'Add at least one product.',
+            'lines.*.product_id.required' => 'Choose a product.',
+            'lines.*.quantity.required' => 'Quantity?',
+            'lines.*.quantity.min' => 'Must be more than 0.',
         ]);
-        $this->batchSelection = self::NEW_BATCH;
-        $this->dispatch('toast', ['type' => 'success', 'message' => $toastMessage]);
+
+        $grn = app(StockReceivingService::class)->receive([
+            'warehouse_id' => (int) $this->warehouseId, 'supplier_id' => $this->supplierId !== '' ? (int) $this->supplierId : null,
+            'purchase_order_id' => $this->purchaseOrderId !== '' ? (int) $this->purchaseOrderId : null,
+            'received_at' => $this->receivedAt, 'reference' => trim((string) $this->reference), 'note' => trim((string) $this->note),
+        ], array_map(fn ($l) => [
+            'product_id' => (int) $l['product_id'], 'variant_id' => $l['variant_id'] !== '' ? (int) $l['variant_id'] : null,
+            'purchase_order_item_id' => $l['purchase_order_item_id'] ?: null, 'quantity' => (float) $l['quantity'],
+            'unit_cost' => $l['unit_cost'] !== '' ? (float) $l['unit_cost'] : null, 'batch_id' => $l['batch_id'] !== '' ? (int) $l['batch_id'] : null,
+            'batch_no' => $l['batch_no'], 'manufacture_date' => $l['manufacture_date'], 'expiry_date' => $l['expiry_date'],
+        ], $this->lines));
+
+        session()->flash('toast', ['type' => 'success', 'message' => "{$grn->grn_number} saved — {$grn->line_count} lines, " . rtrim(rtrim(number_format((float) $grn->total_quantity, 3), '0'), '.') . ' pcs received.']);
+        $this->redirectRoute('admin.inventory.receivings.show', $grn, navigate: true);
+    }
+
+    /* ---------------- render ---------------- */
+
+    /** "SKU · Black / M" for each variant of the products on the lines (one query). */
+    protected function variantOptions(array $productIds): Collection
+    {
+        if (! $productIds) {
+            return collect();
+        }
+
+        return ProductVariant::with('values.productAttributeValue.attributeValue.attribute')
+            ->whereIn('product_id', $productIds)->orderBy('sort_order')
+            ->get(['id', 'product_id', 'sku', 'stock_quantity', 'status'])
+            ->groupBy('product_id')
+            ->map(fn ($vs) => $vs->mapWithKeys(fn ($v) => [(string) $v->id => trim(($v->sku ?: '#' . $v->id) . ($v->options_map ? ' · ' . implode(' / ', $v->options_map) : '')
+                . ' — stock ' . rtrim(rtrim(number_format((float) $v->stock_quantity, 3), '0'), '.') . ($v->status !== 'active' ? ' (inactive)' : ''))]));
     }
 
     public function render(): mixed
     {
-        $variants = $this->productId
-            ? ProductVariant::where('product_id', $this->productId)->orderBy('sort_order')->get(['id', 'sku', 'stock_quantity'])
-            : collect();
+        $productIds = collect($this->lines)->pluck('product_id')->filter()->map(fn ($v) => (int) $v)->unique()->values()->all();
+        $variantOptions = $this->variantOptions($productIds);
 
-        $stockService = app(StockService::class);
+        // Existing batches, item-wise: only batches of the line's own product + variant at this warehouse.
+        $batches = $productIds ? InventoryBatch::where('warehouse_id', (int) $this->warehouseId)->whereIn('product_id', $productIds)
+            ->where('status', 'active')->orderByDesc('id')->get(['id', 'product_id', 'variant_id', 'batch_no', 'quantity', 'expiry_date'])
+            ->groupBy(fn ($b) => $b->product_id . '|' . ($b->variant_id ?? '')) : collect();
 
-        $purchaseOrders = PurchaseOrder::with('supplier')
-            ->where('status', 'pending')
-            ->orderByDesc('id')
-            ->get();
-
-        $purchaseOrderItems = collect();
+        $poItems = collect();
         if ($this->purchaseOrderId !== '') {
-            $purchaseOrderItems = PurchaseOrderItem::with('product', 'variant')
-                ->where('purchase_order_id', $this->purchaseOrderId)
-                ->get()
-                ->map(function (PurchaseOrderItem $item) use ($stockService) {
-                    $item->received_so_far = $stockService->receivedQuantityForPurchaseOrderItem($item);
-                    $item->remaining = max(0, (float) $item->quantity - $item->received_so_far);
-                    return $item;
-                });
+            $stock = app(StockService::class);
+            $poItems = PurchaseOrderItem::where('purchase_order_id', $this->purchaseOrderId)->get()
+                ->mapWithKeys(fn ($it) => [$it->id => ['ordered' => (float) $it->quantity, 'received' => $stock->receivedQuantityForPurchaseOrderItem($it)]]);
         }
 
-        $existingBatches = collect();
-        if ($this->productId) {
-            $existingBatches = InventoryBatch::query()
-                ->where('warehouse_id', Warehouse::default()->id)
-                ->where('product_id', $this->productId)
-                ->where('variant_id', $this->variantId ?: null)
-                ->where('status', 'active')
-                ->orderByDesc('id')
-                ->get();
-        }
+        $qty = collect($this->lines)->sum(fn ($l) => (float) $l['quantity']);
+        $cost = collect($this->lines)->sum(fn ($l) => (float) $l['quantity'] * (float) $l['unit_cost']);
 
         return view('livewire.admin.inventory.stock-in', [
-            'products' => Product::orderBy('name')->get(['id', 'name']),
-            'variants' => $variants,
-            'purchaseOrders' => $purchaseOrders,
-            'purchaseOrderItems' => $purchaseOrderItems,
-            'existingBatches' => $existingBatches,
+            'products' => Product::orderBy('name')->pluck('name', 'id'),
+            'productNames' => Product::whereIn('id', $productIds)->pluck('name', 'id'),
+            'variantOptions' => $variantOptions,
+            'batches' => $batches,
+            'poItems' => $poItems,
+            'purchaseOrders' => PurchaseOrder::with('supplier:id,name')->where('status', 'pending')->orderByDesc('id')->get(['id', 'order_number', 'supplier_id']),
+            'suppliers' => Supplier::orderBy('name')->pluck('name', 'id'),
+            'warehouses' => Warehouse::where('status', 'active')->orderByDesc('is_default')->orderBy('name')->pluck('name', 'id'),
+            'totals' => ['lines' => count($this->lines), 'qty' => $qty, 'cost' => $cost],
         ])->layout('layouts.admin.admin');
     }
 }

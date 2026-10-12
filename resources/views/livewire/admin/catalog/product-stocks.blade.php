@@ -163,6 +163,7 @@
                             'import' => 'bg-gray-100 text-gray-500',
                             'sale' => 'bg-red-50 text-red-500',
                             'sale_cancelled' => 'bg-emerald-50 text-emerald-600',
+                            'receiving_cancelled' => 'bg-red-50 text-red-600',
                             'adjustment' => 'bg-indigo-50 text-indigo-600',
                             'purchase' => 'bg-emerald-50 text-emerald-600',
                         ];

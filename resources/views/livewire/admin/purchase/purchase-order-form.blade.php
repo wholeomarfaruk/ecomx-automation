@@ -251,9 +251,17 @@
     {{-- Receiving --}}
     @if($order)
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mt-6">
-            <div class="px-6 py-4 border-b border-gray-100">
-                <h2 class="text-sm font-semibold text-gray-800">Receiving</h2>
-                <p class="text-xs text-gray-400 mt-0.5">A purchase order can arrive in several partial shipments — click Receive to record a delivery for an item, with its batch/lot and cost.</p>
+            <div class="px-6 py-4 border-b border-gray-100 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h2 class="text-sm font-semibold text-gray-800">Receiving</h2>
+                    <p class="text-xs text-gray-400 mt-0.5">A purchase order can arrive in several partial shipments — receive the whole delivery at once, or one item with Receive.</p>
+                </div>
+                @if($receivingItems->contains(fn ($i) => $i->remaining > 0))
+                    <a href="{{ route('admin.inventory.stock-in') }}?purchase_order={{ $order->id }}" wire:navigate
+                        class="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition shrink-0">
+                        Receive all remaining
+                    </a>
+                @endif
             </div>
             <div class="divide-y divide-gray-100">
                 @forelse($receivingItems as $item)

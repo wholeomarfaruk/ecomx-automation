@@ -634,6 +634,12 @@
                             Stock In
                         </a>
                         @endif
+                        @if ($canSee('stock_in.create'))
+                        <a href="{{ route('admin.inventory.receivings') }}"
+                            class="block hover:text-gray-200 cursor-pointer {{ str_starts_with((string) Route::currentRouteName(), 'admin.inventory.receivings') ? 'text-gray-200' : '' }}">
+                            Receiving History
+                        </a>
+                        @endif
                         @if ($canSee('batch.view'))
                         <a href="{{ route('admin.inventory.batches') }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.inventory.batches' ? 'text-gray-200' : '' }}">
