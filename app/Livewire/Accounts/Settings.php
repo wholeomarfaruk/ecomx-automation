@@ -86,6 +86,7 @@ class Settings extends Component
             'currency_format' => (string) AccountsSettings::get('currency_format', 'lakh'),
             'books_start'     => AccountsSettings::booksStart()?->toDateString() ?? '',
             'lock_date'       => AccountsSettings::lockDate()?->toDateString() ?? '',
+            'collection_target' => AccountsSettings::collectionTarget() ?: '',
         ];
 
         $this->rules = collect(AccountsSettings::RULES)->keys()
@@ -156,6 +157,7 @@ class Settings extends Component
             'general.currency_format' => 'required|in:lakh,international',
             'general.books_start'     => 'nullable|date',
             'general.lock_date'       => 'nullable|date',
+            'general.collection_target' => 'nullable|numeric|min:0',
             'rules.*.amount'          => 'nullable|numeric|min:0',
             'numbering.*.prefix'      => 'required|string|max:10',
             'numbering.*.next'        => 'required|integer|min:1',
@@ -172,6 +174,7 @@ class Settings extends Component
         }
         AccountsSettings::set('fy_start_month', (int) $g['fy_start_month']);
         AccountsSettings::set('week_start', (int) $g['week_start']);
+        AccountsSettings::set('collection_target', (float) ($g['collection_target'] ?: 0));
 
         AccountsSettings::set('rules', collect($this->rules)->map(fn ($r) => ['on' => (bool) $r['on'], 'amount' => (float) ($r['amount'] ?: 0)])->all());
         AccountsSettings::set('numbering', collect($this->numbering)->map(fn ($n) => ['prefix' => trim($n['prefix']), 'next' => (int) $n['next']])->all());

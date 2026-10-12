@@ -50,6 +50,8 @@
                         <span class="text-[12px] text-[#6b7280]">এর আগের হিসাব opening balance হিসেবে আসবে</span></div>
                     <div class="{{ $field }}"><label for="g-lock" class="{{ $lbl }}">Books locked up to</label><input id="g-lock" type="date" wire:model="general.lock_date" class="{{ $input }} py-[9px]">
                         <span class="text-[12px] text-[#6b7280]">এই তারিখ পর্যন্ত কিছু post বা edit করা যাবে না</span></div>
+                    <div class="{{ $field }}"><label for="g-target" class="{{ $lbl }}">Monthly collection target (৳)</label><input id="g-target" type="number" min="0" wire:model="general.collection_target" placeholder="180000" class="{{ $input }}">
+                        <span class="text-[12px] text-[#6b7280]">Receivables-এ "এই মাসে আদায়" এর সাথে তুলনা হবে</span></div>
                 </div>
             @endif
 

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class CourierCodSettlement extends Model
 {
     protected $fillable = [
-        'courier_id', 'settled_at', 'gross_amount', 'fee_amount', 'net_amount', 'journal_entry_id',
+        'courier_id', 'settled_at', 'gross_amount', 'fee_amount', 'net_amount', 'journal_entry_id', 'parcels',
     ];
 
     protected function casts(): array

@@ -12,6 +12,7 @@ Route::get('/settings', App\Livewire\Accounts\Settings::class)->name('settings')
 Route::get('/posting', App\Livewire\Accounts\PostingPending::class)->name('posting');
 Route::get('/transactions', App\Livewire\Accounts\Transactions::class)->name('transactions');
 Route::get('/cash-bank', App\Livewire\Accounts\CashBank::class)->name('cash-bank');
+Route::get('/receivables', App\Livewire\Accounts\Receivables::class)->name('receivables');
 Route::get('/vouchers/{entry}/print', [App\Http\Controllers\Accounts\VoucherController::class, 'print'])->name('vouchers.print');
 Route::get('/vouchers/attachments/{attachment}', [App\Http\Controllers\Accounts\VoucherController::class, 'attachment'])->name('vouchers.attachment');
 
