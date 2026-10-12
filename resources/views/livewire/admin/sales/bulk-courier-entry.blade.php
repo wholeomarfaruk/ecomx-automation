@@ -398,6 +398,14 @@
                                             class="w-7 h-7 inline-flex items-center justify-center rounded-md text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition">
                                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
                                         </button>
+                                        @if ($inventoryOn && ($pk = $packing->get($item->order_id)) && (float) $pk->packable > 0)
+                                            @php $full = (float) $pk->packed + 0.0005 >= (float) $pk->packable; @endphp
+                                            <button type="button" @click="$dispatch('open-pack-order', { orderId: {{ $item->order_id }} })" :disabled="booking"
+                                                title="{{ $full ? 'Packed — click to change batches' : 'Pick the batch for each product' }}"
+                                                class="px-2 py-1.5 rounded-md text-xs font-semibold border disabled:opacity-40 transition {{ $full ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100' }}">
+                                                {{ $full ? '✓ Packed' : 'Pack ' . rtrim(rtrim(number_format((float) $pk->packed, 3), '0'), '.') . '/' . rtrim(rtrim(number_format((float) $pk->packable, 3), '0'), '.') }}
+                                            </button>
+                                        @endif
                                         <button type="button" @click="bookOne({{ $item->id }})" :disabled="booking"
                                             class="px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 transition">
                                             {{ $failed ? 'Retry' : 'Book' }}
@@ -412,6 +420,9 @@
                                         </button>
                                     </div>
                                 @else
+                                    @if ($inventoryOn && ($pk = $packing->get($item->order_id)) && (float) $pk->packable > 0 && (float) $pk->packed + 0.0005 < (float) $pk->packable)
+                                        <button type="button" @click="$dispatch('open-pack-order', { orderId: {{ $item->order_id }} })" class="mb-1 block w-full text-right text-xs font-semibold text-amber-700 hover:underline">Pack {{ rtrim(rtrim(number_format((float) $pk->packed, 3), '0'), '.') }}/{{ rtrim(rtrim(number_format((float) $pk->packable, 3), '0'), '.') }}</button>
+                                    @endif
                                     <a href="{{ route('admin.sales.orders.show', $item->order_id) }}" wire:navigate class="block text-right text-xs font-medium text-emerald-700 hover:underline">View order →</a>
                                 @endunless
                             </td>
@@ -496,5 +507,8 @@
     <livewire:admin.sales.order-quick-view />
     @if ($fraudEnabled)
         <livewire:admin.sales.fraud-check-modal />
+    @endif
+    @if ($inventoryOn)
+        <livewire:admin.sales.pack-order-modal />
     @endif
 </div>

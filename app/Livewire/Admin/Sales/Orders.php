@@ -323,6 +323,12 @@ class Orders extends Component
         // Re-render is all that's needed.
     }
 
+    /** The Pack modal packed an order — re-render so its packed count / posting state update. */
+    #[On('order-packed')]
+    public function refreshAfterPacking(): void
+    {
+    }
+
     /** The Fraud Check modal saved a result — re-render so the row badge shows it. */
     #[On('fraud-checked')]
     public function refreshFraudBadges(): void
@@ -336,6 +342,10 @@ class Orders extends Component
             ->withCount('items')
             // Accounts: is this order's sale in the books yet? (badge under Fulfillment)
             ->withExists(['journalEntries as sale_posted' => fn ($q) => $q->where('purpose', 'like', 'sale%')->where('status', 'posted')])
+            // Inventory: packed vs packable units, for the row menu's "Pack items".
+            ->when(! app(StockService::class)->usesOwnStock(), fn ($q) => $q
+                ->selectRaw('(SELECT COALESCE(SUM(oib.quantity), 0) FROM order_item_batches oib JOIN order_items oi ON oi.id = oib.order_item_id WHERE oi.order_id = orders.id AND oi.product_id IS NOT NULL AND oi.is_gift = 0) as packed_qty')
+                ->selectRaw('(SELECT COALESCE(SUM(oi.quantity), 0) FROM order_items oi WHERE oi.order_id = orders.id AND oi.product_id IS NOT NULL AND oi.is_gift = 0) as packable_qty'))
             ->orderByDesc('id')
             ->paginate(20);
 
@@ -424,6 +434,7 @@ class Orders extends Component
         return view('livewire.admin.sales.orders', [
             'orders'          => $orders,
             'accountsOn'      => \App\Services\Accounts\OrderPosting::accountsOn(),
+            'inventoryOn'     => ! app(StockService::class)->usesOwnStock(),
             'fraudEnabled'    => $fraudEnabled,
             'fraudChecks'     => $fraudChecks,
             'fraudAutoCheck'  => $fraudEnabled && $fraudSettings->autoCheckList()

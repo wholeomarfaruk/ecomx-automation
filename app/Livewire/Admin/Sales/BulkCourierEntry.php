@@ -491,6 +491,12 @@ class BulkCourierEntry extends Component
         $this->historyBatchId = $batchId;
     }
 
+    /** The Pack modal packed an order on the sheet — re-render so its packed count updates. */
+    #[\Livewire\Attributes\On('order-packed')]
+    public function refreshAfterPacking(): void
+    {
+    }
+
     public function render()
     {
         $couriers = $this->bookableCouriers();
@@ -523,6 +529,16 @@ class BulkCourierEntry extends Component
             ->filter()->unique()->values();
         $fraudChecks = $fraudEnabled ? FraudCheck::whereIn('phone', $phones)->get()->keyBy('phone') : collect();
 
+        // Inventory: packed vs packable units per order on the sheet (one query), for the row's Pack button.
+        $inventoryOn = ! app(\App\Services\StockService::class)->usesOwnStock();
+        $packing = $inventoryOn && $sheetOrderIds
+            ? \Illuminate\Support\Facades\DB::table('order_items as oi')->whereIn('oi.order_id', $sheetOrderIds)
+                ->whereNotNull('oi.product_id')->where('oi.is_gift', false)
+                ->groupBy('oi.order_id')
+                ->selectRaw('oi.order_id, SUM(oi.quantity) as packable, (SELECT COALESCE(SUM(oib.quantity), 0) FROM order_item_batches oib JOIN order_items x ON x.id = oib.order_item_id WHERE x.order_id = oi.order_id AND x.product_id IS NOT NULL AND x.is_gift = 0) as packed')
+                ->get()->keyBy('order_id')
+            : collect();
+
         $open = $items->where('status', '!=', CourierBatchItem::BOOKED);
         $risky = $open->filter(fn ($i) => $fraudChecks->get(FraudShield::normalizePhone($i->recipient_phone))?->tone() === 'danger');
 
@@ -530,6 +546,8 @@ class BulkCourierEntry extends Component
             'orders' => $orders,
             'items' => $items,
             'sheetOrderIds' => $sheetOrderIds,
+            'inventoryOn' => $inventoryOn,
+            'packing' => $packing,
             'lockedByOthers' => $this->lockedByOthers($orders->getCollection()->pluck('id')->all()),
             'couriers' => $couriers,
             'statuses' => [OrderStatus::PENDING, OrderStatus::CONFIRMED, OrderStatus::PROCESSING],

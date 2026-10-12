@@ -373,9 +373,13 @@
                                     {{-- Status --}}
                                     <td class="border-b border-gray-100 px-3 py-2.5 text-[11px] leading-snug">
                                         <template x-if="row.result?.ok">
-                                            <a :href="row.result.url" target="_blank" class="inline-flex items-center gap-1 font-semibold text-emerald-600 hover:underline">
-                                                ✓ Placed <span x-text="`#${row.result.id}`"></span>
-                                            </a>
+                                            <span class="inline-flex flex-wrap items-center gap-1.5">
+                                                <a :href="row.result.url" target="_blank" class="inline-flex items-center gap-1 font-semibold text-emerald-600 hover:underline">
+                                                    ✓ Placed <span x-text="`#${row.result.id}`"></span>
+                                                </a>
+                                                <button type="button" x-show="config.inventoryOn" @click="$dispatch('open-pack-order', { orderId: row.result.id })"
+                                                    class="rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 font-semibold text-amber-700 hover:bg-amber-100">Pack</button>
+                                            </span>
                                         </template>
                                         <template x-if="!row.result?.ok">
                                             <div class="space-y-0.5">
@@ -576,6 +580,9 @@
         .cell[readonly], .cell:disabled { color: #6b7280; cursor: default; }
         .cell::placeholder { color: #c4c8cf; }
     </style>
+    @if ($config['inventoryOn'])
+        <livewire:admin.sales.pack-order-modal />
+    @endif
 </div>
 
 @script

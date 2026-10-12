@@ -414,6 +414,7 @@ class BulkOrderCreate extends Component
                         ->map(fn ($a) => ['id' => $a->id, 'label' => "{$a->code} · {$a->name}"])->all()
                     : [],
                 'ordersUrl' => route('admin.sales.orders'),
+                'inventoryOn' => ! app(\App\Services\StockService::class)->usesOwnStock(),
                 'intake'    => $this->intakeConfig(),
             ],
         ])->layout('layouts.admin.admin');

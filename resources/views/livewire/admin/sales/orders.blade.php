@@ -315,6 +315,15 @@
                                                 </svg>
                                                 Full Details
                                             </a>
+                                            @if($inventoryOn && ! in_array($order->status, [\App\Enums\Sales\OrderStatus::CANCELLED, \App\Enums\Sales\OrderStatus::RETURNED, \App\Enums\Sales\OrderStatus::REFUNDED], true) && (float) ($order->packable_qty ?? 0) > 0)
+                                                @php $pk = (float) $order->packed_qty; $pa = (float) $order->packable_qty; @endphp
+                                                <button @click="open = false; $dispatch('open-pack-order', { orderId: {{ $order->id }} })" type="button"
+                                                    class="flex items-center gap-2.5 w-full px-4 py-2 text-gray-700 hover:bg-gray-50 transition">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"/></svg>
+                                                    <span class="flex-1 text-left">{{ $pk + 0.0005 >= $pa ? 'Re-pack items' : 'Pack items' }}</span>
+                                                    <span class="text-[11px] {{ $pk + 0.0005 >= $pa ? 'text-emerald-600' : 'text-amber-600' }}">{{ rtrim(rtrim(number_format($pk, 3), '0'), '.') }}/{{ rtrim(rtrim(number_format($pa, 3), '0'), '.') }}</span>
+                                                </button>
+                                            @endif
                                             @if($order->courier_status)
                                                 <a href="{{ route('admin.sales.orders.show', $order->id) }}#courier" wire:navigate
                                                     class="flex items-center gap-2.5 w-full px-4 py-2 text-gray-700 hover:bg-gray-50 transition">
@@ -541,6 +550,7 @@
                             </td>
                             <td class="px-5 py-3 text-right whitespace-nowrap">
                                 <a href="{{ route('admin.sales.orders.print', [$packed->id, 'packing-slip']) }}" target="_blank" class="text-xs font-medium text-gray-500 hover:text-gray-700">Packing slip</a>
+                                <button type="button" x-on:click="$dispatch('open-pack-order', { orderId: {{ $packed->id }} })" class="ml-3 text-xs font-medium text-indigo-600 hover:text-indigo-700">Pack</button>
                                 <a href="{{ route('admin.sales.orders.show', $packed->id) }}" wire:navigate class="ml-3 text-xs font-medium text-indigo-600 hover:text-indigo-700">Open</a>
                             </td>
                         </tr>
@@ -579,6 +589,9 @@
 
     {{-- View details: its own component, so it doesn't re-render this whole page. --}}
     <livewire:admin.sales.order-quick-view />
+    @if ($inventoryOn)
+        <livewire:admin.sales.pack-order-modal />
+    @endif
 
     {{-- Courier booking: its own component, so it doesn't re-render this whole page. --}}
     <livewire:admin.sales.courier-booking-modal />
