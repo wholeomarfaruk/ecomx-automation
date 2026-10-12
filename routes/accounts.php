@@ -18,6 +18,11 @@ Route::get('/payables', App\Livewire\Accounts\Payables::class)->name('payables')
 Route::get('/loans', App\Livewire\Accounts\LoansEmi::class)->name('loans');
 Route::get('/expenses', App\Livewire\Accounts\Expenses::class)->name('expenses');
 Route::get('/fixed-assets', App\Livewire\Accounts\FixedAssets::class)->name('fixed-assets');
+Route::get('/reports', App\Livewire\Accounts\Reports::class)->name('reports');
+Route::get('/reports/{key}/print', [App\Http\Controllers\Accounts\ReportController::class, 'print'])->name('reports.print');
+Route::get('/reports/{key}/export', [App\Http\Controllers\Accounts\ReportController::class, 'export'])->name('reports.export');
+Route::get('/reports/archive/{archive}', [App\Http\Controllers\Accounts\ReportController::class, 'archive'])->name('reports.archive');
+Route::get('/reports/closing/{closing}', [App\Http\Controllers\Accounts\ReportController::class, 'closing'])->name('reports.closing');
 Route::get('/vouchers/{entry}/print', [App\Http\Controllers\Accounts\VoucherController::class, 'print'])->name('vouchers.print');
 Route::get('/vouchers/attachments/{attachment}', [App\Http\Controllers\Accounts\VoucherController::class, 'attachment'])->name('vouchers.attachment');
 

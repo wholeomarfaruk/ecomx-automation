@@ -507,7 +507,7 @@ class Commission extends Component
                 continue;
             }
             $p = MasterProfile::find($r['profile_id']);
-            $sent += (int) rescue(fn () => $sms->send($p, $engine->statementText($this->scheme, $r), 'sms'), false, false);
+            $sent += (int) rescue(fn () => $sms->send($p, $engine->statementText($this->scheme, $r), 'Commission statement SMS'), false, false);
         }
 
         $this->dispatch('toast', type: $sent ? 'success' : 'warning', message: $sent ? "Statement SMS sent to {$sent} customer(s)." : 'No SMS sent — check phone numbers / SMS settings.');

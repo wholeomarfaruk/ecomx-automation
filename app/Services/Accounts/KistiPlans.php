@@ -160,7 +160,7 @@ class KistiPlans
 
             if ($k->due_date->gte(today())) {
                 $when = $k->due_date->isToday() ? 'আজ' : 'আগামীকাল';
-                $out['sms'] += (int) rescue(fn () => $sms->send($p, "{$p->display_name}, আপনার কিস্তি {$k->no}/{$plan->count} " . Bdt::money($left) . " {$when} দেওয়ার কথা। — " . \App\Support\AccountsSettings::businessName(), 'kisti'), false, false);
+                $out['sms'] += (int) rescue(fn () => $sms->send($p, "{$p->display_name}, আপনার কিস্তি {$k->no}/{$plan->count} " . Bdt::money($left) . " {$when} দেওয়ার কথা। — " . \App\Support\AccountsSettings::businessName(), 'Kisti reminder SMS'), false, false);
 
                 continue;
             }

@@ -114,3 +114,20 @@ Artisan::command('accounts:commission-accrual', function () {
 })->purpose('Month-end commission accrual drafts for the Accounts Panel')
     ->lastDayOfMonth('22:30')
     ->withoutOverlapping();
+
+// Accounts Panel: saved reports on their schedule (queued: archive + delivery).
+foreach (['daily' => fn ($e) => $e->dailyAt('21:00'), 'weekly' => fn ($e) => $e->weeklyOn(6, '10:00'), 'monthly' => fn ($e) => $e->monthlyOn(1, '10:00'), 'month_end' => fn ($e) => $e->lastDayOfMonth('23:55')] as $slot => $when) {
+    $when(Schedule::call(fn () => app(\App\Services\Accounts\SavedReportRunner::class)->dispatchDue($slot))->name("accounts:saved-reports-{$slot}")->withoutOverlapping());
+}
+
+// Accounts Panel: an open day closes itself at 23:59 (status "auto").
+Artisan::command('accounts:auto-close-day', function () {
+    try {
+        app(\App\Services\Accounts\DailyReport::class)->close(\Carbon\CarbonImmutable::today(), null, true);
+        $this->info('Day auto-closed.');
+    } catch (\RuntimeException $e) {
+        $this->info($e->getMessage());
+    }
+})->purpose('Auto-close the Accounts Panel day at 23:59')
+    ->dailyAt('23:59')
+    ->withoutOverlapping();

@@ -44,4 +44,5 @@ applies it to open invoices / bills oldest-first.
 - 8 Expenses: month view, categories vs budget (posted + draft), list with receipt status, quick add (draft / post, receipt above threshold, monthly repeat), recurring list.
 - 9 Fixed Assets: register (code, category, location, assignee, warranty, reminders), detail panel, monthly depreciation draft (+ `accounts:depreciation-draft` month end), repair / dispose drafts; asset updates on post.
 - 10 Commission & Rebate: schemes (tiers whole/slab, exclusion rules, eligibility, settlement method, accounting), live recalculation while editing, exclusions with reasons, settlement + advance drafts, statements SMS, `accounts:commission-accrual` month end.
-- Next: Reports, dashboard links, remaining scheduler jobs, tests.
+- 11 Reports: 15 reports (P&L vs previous, BS with balanced check, TB, cash flow, cash/bank/day book, party ledger, sales, stock, aging x2, expense, loan schedule, payroll) with Excel (CSV) / PDF (print copy) / print; daily report with checklist, close & save (snapshot + archived copy, versioned reopen), auto-close 23:59; saved reports (schedule, recipients, channels; queued runs; archive).
+- Next: dashboard links, remaining scheduler jobs, tests.
