@@ -201,7 +201,7 @@
                 <x-accounts.chip :on="$promise['kind'] === 'callback'" wire:click="$set('promise.kind', 'callback')">আবার call · Call back</x-accounts.chip>
             </div>
             <div class="grid grid-cols-1 gap-[12px] sm:grid-cols-2">
-                <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Date</label><input type="date" wire:model="promise.date" class="{{ $input }}">@error('promise.date')<span class="text-[12px] text-[#b91c1c]">{{ $message }}</span>@enderror</div>
+                <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Date</label><input type="text" readonly placeholder="YYYY-MM-DD" wire:model="promise.date" class="flatpickr-only-date cursor-pointer bg-white {{ $input }}">@error('promise.date')<span class="text-[12px] text-[#b91c1c]">{{ $message }}</span>@enderror</div>
                 @if ($promise['kind'] === 'promise')
                     <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Amount (৳)</label><input type="number" min="0" wire:model="promise.amount" class="{{ $input }}">@error('promise.amount')<span class="text-[12px] text-[#b91c1c]">{{ $message }}</span>@enderror</div>
                 @endif
@@ -234,7 +234,7 @@
                 <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Courier charge (৳)</label><input type="number" min="0" wire:model="settle.fee" placeholder="0" class="{{ $input }}"></div>
                 <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Received in</label>
                     <select wire:model="settle.account_id" class="{{ $input }}">@foreach (app(\App\Services\Profiles\LedgerAccounts::class)->cashAccounts() as $a)<option value="{{ $a['id'] }}">{{ $a['name'] }}</option>@endforeach</select></div>
-                <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Date</label><input type="date" wire:model="settle.date" class="{{ $input }}"></div>
+                <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Date</label><input type="text" readonly placeholder="YYYY-MM-DD" wire:model="settle.date" class="flatpickr-only-date cursor-pointer bg-white {{ $input }}"></div>
                 <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Parcels</label><input type="number" min="0" wire:model="settle.parcels" class="{{ $input }}"></div>
             </div>
             <div class="text-[12.5px] text-[#6b7280]">Draft receipt হবে: Dr bank (net) + Dr Courier expense (charge) / Cr courier-এর কাছে থাকা COD।</div>

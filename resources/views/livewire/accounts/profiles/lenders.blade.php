@@ -223,7 +223,7 @@
                 @endif
                 <div class="flex flex-col gap-[6px]">
                     <label for="ln-start" class="{{ $lbl }}">Start date</label>
-                    <input id="ln-start" type="date" wire:model.live="loanForm.start_date" class="{{ $input }}">
+                    <input id="ln-start" type="text" readonly placeholder="YYYY-MM-DD" wire:model.live="loanForm.start_date" class="flatpickr-only-date cursor-pointer bg-white {{ $input }}">
                 </div>
                 <div class="flex flex-col gap-[6px] {{ $loanForm['frequency'] === 'custom' ? 'sm:col-span-3' : '' }}">
                     <label for="ln-support" class="{{ $lbl }}">বেশি দিলে (support)</label>

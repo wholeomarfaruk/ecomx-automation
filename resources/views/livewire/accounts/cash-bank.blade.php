@@ -70,7 +70,7 @@
                     <label for="led-range" class="text-[13px] text-[#4b5563]">Period</label>
                     <select id="led-range" wire:model.live="ledgerPeriod" class="rounded-[9px] border border-[#d1d5db] bg-white py-[8px] pl-[10px] pr-[30px] text-[13px]"><option value="week">This week</option><option value="today">Today</option><option value="month">This month</option><option value="custom">Custom</option></select>
                     @if ($ledgerPeriod === 'custom')
-                        <input type="date" wire:model.live="from" class="rounded-[8px] border border-[#d1d5db] px-[8px] py-[6px] text-[12.5px]"><input type="date" wire:model.live="to" class="rounded-[8px] border border-[#d1d5db] px-[8px] py-[6px] text-[12.5px]">
+                        <input type="text" readonly placeholder="YYYY-MM-DD" wire:model.live="from" class="flatpickr-only-date cursor-pointer bg-white rounded-[8px] border border-[#d1d5db] px-[8px] py-[6px] text-[12.5px]"><input type="text" readonly placeholder="YYYY-MM-DD" wire:model.live="to" class="flatpickr-only-date cursor-pointer bg-white rounded-[8px] border border-[#d1d5db] px-[8px] py-[6px] text-[12.5px]">
                     @endif
                     <button type="button" onclick="window.print()" class="rounded-[8px] border border-[#e5e7eb] bg-white px-[12px] py-[8px] text-[13px] text-[#374151]">Print</button>
                     <a href="{{ route('accounts.transactions', ['account' => $a['id'], 'period' => 'month']) }}" wire:navigate class="text-[13px]">All transactions</a>
@@ -188,7 +188,7 @@
                     <div class="flex flex-col gap-[6px]"><label for="tr-to" class="text-[13px] font-semibold">To</label><select id="tr-to" x-model.number="t.to" class="{{ $input }}">@foreach ($names as $id => $n)<option value="{{ $id }}">{{ $n }}</option>@endforeach</select></div>
                     <div class="flex flex-col gap-[6px]"><label for="tr-amt" class="text-[13px] font-semibold">Amount (৳)</label><input id="tr-amt" type="number" min="0" x-model="t.amount" class="{{ $input }}"></div>
                     <div class="flex flex-col gap-[6px]"><label for="tr-fee" class="text-[13px] font-semibold">Charge (৳)</label><input id="tr-fee" type="number" min="0" x-model="t.charge" class="{{ $input }}"></div>
-                    <div class="flex flex-col gap-[6px]"><label for="tr-date" class="text-[13px] font-semibold">Date</label><input id="tr-date" type="date" x-model="t.date" class="{{ $input }} py-[8px]"></div>
+                    <div class="flex flex-col gap-[6px]"><label for="tr-date" class="text-[13px] font-semibold">Date</label><input id="tr-date" type="text" readonly placeholder="YYYY-MM-DD" x-model="t.date" class="flatpickr-only-date cursor-pointer bg-white {{ $input }} py-[8px]"></div>
                     <div class="flex flex-col gap-[6px]"><label for="tr-note" class="text-[13px] font-semibold">Note</label><input id="tr-note" type="text" x-model="t.note" placeholder="যেমন: cash out" class="{{ $input }}"></div>
                 </div>
                 @error('transfer.*') <span class="text-[12px] text-[#b91c1c]">{{ $message }}</span> @enderror

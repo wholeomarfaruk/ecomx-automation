@@ -110,7 +110,7 @@
                 @if ($type === 'contra')
                     <div class="flex flex-col gap-[6px]"><label for="vf-charge" class="{{ $lbl }}">Charge (৳)</label><input id="vf-charge" type="number" min="0" step="0.01" wire:model="f.charge" placeholder="0" class="{{ $input }}"></div>
                 @endif
-                <div class="flex flex-col gap-[6px]"><label for="vf-date" class="{{ $lbl }}">Date</label><input id="vf-date" type="date" wire:model="f.date" class="{{ $input }}"></div>
+                <div class="flex flex-col gap-[6px]"><label for="vf-date" class="{{ $lbl }}">Date</label><input id="vf-date" type="text" readonly placeholder="YYYY-MM-DD" wire:model="f.date" class="flatpickr-only-date cursor-pointer bg-white {{ $input }}"></div>
             </div>
         @endif
 

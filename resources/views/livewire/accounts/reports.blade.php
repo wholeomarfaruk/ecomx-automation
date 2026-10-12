@@ -82,15 +82,15 @@
                         @endif
                         @if ($asOf)
                             <label for="rp-asof" class="text-[13px] text-[#4b5563]">As of</label>
-                            <input id="rp-asof" type="date" wire:model.live="asOf" class="rounded-[9px] border border-[#d1d5db] bg-white px-[10px] py-[7px] text-[13px]">
+                            <input id="rp-asof" type="text" readonly placeholder="YYYY-MM-DD" wire:model.live="asOf" class="flatpickr-only-date cursor-pointer bg-white rounded-[9px] border border-[#d1d5db] bg-white px-[10px] py-[7px] text-[13px]">
                         @else
                             <label for="rp-period" class="text-[13px] text-[#4b5563]">Period</label>
                             <select id="rp-period" wire:model.live="period" class="rounded-[9px] border border-[#d1d5db] bg-white py-[8px] pl-[10px] pr-[30px] text-[13px]">
                                 @foreach (Engine::PERIODS as $k => $l)<option value="{{ $k }}">{{ $l }}</option>@endforeach
                             </select>
                             @if ($period === 'custom')
-                                <input type="date" wire:model.live="from" aria-label="From" class="rounded-[9px] border border-[#d1d5db] bg-white px-[10px] py-[7px] text-[13px]">
-                                <input type="date" wire:model.live="to" aria-label="To" class="rounded-[9px] border border-[#d1d5db] bg-white px-[10px] py-[7px] text-[13px]">
+                                <input type="text" readonly placeholder="YYYY-MM-DD" wire:model.live="from" aria-label="From" class="flatpickr-only-date cursor-pointer bg-white rounded-[9px] border border-[#d1d5db] bg-white px-[10px] py-[7px] text-[13px]">
+                                <input type="text" readonly placeholder="YYYY-MM-DD" wire:model.live="to" aria-label="To" class="flatpickr-only-date cursor-pointer bg-white rounded-[9px] border border-[#d1d5db] bg-white px-[10px] py-[7px] text-[13px]">
                             @endif
                         @endif
                         <a href="{{ $this->exportUrl('excel') }}" class="rounded-[8px] border border-[#e5e7eb] bg-white px-[12px] py-[8px] text-[13px] !text-[#374151]">Excel</a>
@@ -112,7 +112,7 @@
                 @php $d = $this->daily; $cl = $this->closing; $closed = $cl && $cl->status !== 'open'; @endphp
                 <div class="flex flex-wrap items-center gap-[10px] border-b border-[#f0f1f4] px-[20px] py-[16px]">
                     <label for="dr-date" class="text-[13px] font-semibold">তারিখ</label>
-                    <input id="dr-date" type="date" wire:model.live="date" max="{{ today()->toDateString() }}" class="rounded-[8px] border border-[#d1d5db] px-[10px] py-[8px] text-[13px]">
+                    <input class="flatpickr-only-date cursor-pointer bg-white rounded-[8px] border border-[#d1d5db] px-[10px] py-[8px] text-[13px]" id="dr-date" type="text" readonly placeholder="YYYY-MM-DD" wire:model.live="date" data-max-date="{{ today()->toDateString() }}">
                     @if ($closed)
                         <span class="rounded-[6px] bg-[#d1fae5] px-[9px] py-[3px] text-[12px] font-semibold text-[#065f46]">{{ $cl->status === 'auto' ? 'Auto-closed' : 'Closed' }} · {{ $cl->closed_at?->format('g:i A') }}{{ $cl->closedBy ? ' by ' . $cl->closedBy->name : '' }}{{ $cl->version > 1 ? ' · v' . $cl->version : '' }}</span>
                         @if ($cl->pdf_path)<a href="{{ route('accounts.reports.closing', $cl) }}" target="_blank" class="text-[12.5px]">PDF</a>@endif

@@ -116,7 +116,7 @@
                     </div>
                     <div class="flex flex-col gap-[6px]">
                         <label for="pl-start" class="text-[13px] font-semibold">প্রথম কিস্তি · First due</label>
-                        <input id="pl-start" type="date" wire:model.live="plan.first_due" class="{{ $input }} py-[8px]">
+                        <input id="pl-start" type="text" readonly placeholder="YYYY-MM-DD" wire:model.live="plan.first_due" class="flatpickr-only-date cursor-pointer bg-white {{ $input }} py-[8px]">
                         @error('plan.first_due')<span class="{{ $err }}">{{ $message }}</span>@enderror
                     </div>
                     @if ($plan['type'] === 'loan')

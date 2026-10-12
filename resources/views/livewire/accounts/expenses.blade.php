@@ -137,7 +137,7 @@
                     @error('qa.account_id')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
                 <div class="grid grid-cols-2 gap-[10px]">
                     <div class="flex flex-col gap-[6px]"><label for="qa-amt" class="text-[13px] font-semibold">Amount (৳)</label><input id="qa-amt" type="number" min="0" step="0.01" wire:model.blur="qa.amount" placeholder="0" class="{{ $field }}">@error('qa.amount')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
-                    <div class="flex flex-col gap-[6px]"><label for="qa-date" class="text-[13px] font-semibold">Date</label><input id="qa-date" type="date" wire:model="qa.date" class="{{ $field }} py-[8px]">@error('qa.date')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
+                    <div class="flex flex-col gap-[6px]"><label for="qa-date" class="text-[13px] font-semibold">Date</label><input id="qa-date" type="text" readonly placeholder="YYYY-MM-DD" wire:model="qa.date" class="flatpickr-only-date cursor-pointer bg-white {{ $field }} py-[8px]">@error('qa.date')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
                 </div>
                 <div class="flex flex-col gap-[6px]"><label for="qa-acc" class="text-[13px] font-semibold">Paid from</label>
                     <select id="qa-acc" wire:model="qa.from" class="{{ $field }}">@foreach ($this->cashAccounts as $a)<option value="{{ $a['id'] }}">{{ $a['name'] }} · {{ $money($a['balance']) }}</option>@endforeach</select>

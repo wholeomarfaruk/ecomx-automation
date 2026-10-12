@@ -176,7 +176,7 @@
                 </div>
                 <div class="flex flex-col gap-[6px]">
                     <label for="pr-due" class="text-[13px] font-semibold">Due date</label>
-                    <input id="pr-due" type="date" wire:model="prepare.due_on" class="{{ $input }}">
+                    <input id="pr-due" type="text" readonly placeholder="YYYY-MM-DD" wire:model="prepare.due_on" class="flatpickr-only-date cursor-pointer bg-white {{ $input }}">
                 </div>
                 <div class="flex flex-col gap-[6px]">
                     <label for="pr-bonus" class="text-[13px] font-semibold">Bonus (% of salary)</label>

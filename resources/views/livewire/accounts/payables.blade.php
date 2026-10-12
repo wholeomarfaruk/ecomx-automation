@@ -186,7 +186,7 @@
                 <div class="flex flex-col gap-[6px] sm:col-span-2"><label class="text-[13px] font-semibold">Pay from</label>
                     <select wire:model="pay.account_id" class="{{ $input }}">@foreach ($this->cashAccounts as $a)<option value="{{ $a['id'] }}">{{ $a['name'] }} · {{ $money($a['balance']) }}</option>@endforeach</select>@error('pay.account_id')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
                 <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Amount (৳)</label><input type="number" min="0" step="0.01" wire:model="pay.amount" class="{{ $input }}">@error('pay.amount')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
-                <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Date</label><input type="date" wire:model="pay.date" class="{{ $input }}">@error('pay.date')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
+                <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Date</label><input type="text" readonly placeholder="YYYY-MM-DD" wire:model="pay.date" class="flatpickr-only-date cursor-pointer bg-white {{ $input }}">@error('pay.date')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
             </div>
             <x-slot:footer>
                 <button type="button" wire:click="$set('payKey', null)" class="rounded-[9px] border border-[#e5e7eb] bg-white px-[16px] py-[10px] text-[14px] text-[#374151]">Cancel</button>
@@ -201,7 +201,7 @@
     {{-- Reschedule --}}
     @if ($rescheduleKey)
         <x-accounts.modal title="Reschedule" close="$set('rescheduleKey', null)">
-            <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">New due date</label><input type="date" wire:model="rescheduleDate" class="{{ $input }}">@error('rescheduleDate')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
+            <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">New due date</label><input type="text" readonly placeholder="YYYY-MM-DD" wire:model="rescheduleDate" class="flatpickr-only-date cursor-pointer bg-white {{ $input }}">@error('rescheduleDate')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
             <x-slot:footer>
                 <button type="button" wire:click="$set('rescheduleKey', null)" class="rounded-[9px] border border-[#e5e7eb] bg-white px-[16px] py-[10px] text-[14px] text-[#374151]">Cancel</button>
                 <button type="button" wire:click="reschedule" class="rounded-[9px] border-0 bg-[#4f46e5] px-[20px] py-[10px] text-[14px] font-bold text-white">Save</button>
@@ -218,8 +218,8 @@
                 <div class="flex flex-col gap-[6px] sm:col-span-2"><label class="text-[13px] font-semibold">For</label>
                     <select wire:model="bill.ledger_id" class="{{ $input }}">@foreach ($this->billLedgers as $id => $name)<option value="{{ $id }}">{{ $name }}</option>@endforeach</select></div>
                 <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Amount (৳)</label><input type="number" min="0" step="0.01" wire:model="bill.amount" class="{{ $input }}">@error('bill.amount')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
-                <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Bill date</label><input type="date" wire:model="bill.date" class="{{ $input }}"></div>
-                <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Due date</label><input type="date" wire:model="bill.due" class="{{ $input }}">@error('bill.due')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
+                <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Bill date</label><input type="text" readonly placeholder="YYYY-MM-DD" wire:model="bill.date" class="flatpickr-only-date cursor-pointer bg-white {{ $input }}"></div>
+                <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Due date</label><input type="text" readonly placeholder="YYYY-MM-DD" wire:model="bill.due" class="flatpickr-only-date cursor-pointer bg-white {{ $input }}">@error('bill.due')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
                 <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Note</label><input type="text" wire:model="bill.note" placeholder="যেমন: fabric 160 m" class="{{ $input }}"></div>
             </div>
             <div class="text-[12.5px] text-[#6b7280]">Draft journal হবে: Dr inventory / expense, Cr supplier payable। Post হলে due date সহ bill এই list-এ আসবে।</div>

@@ -66,11 +66,11 @@
             @if ($period === 'custom')
                 <form wire:submit="applyCustom" class="flex flex-wrap items-center gap-2 text-[13px]">
                     <label for="from-date" class="text-gray-600">From</label>
-                    <input id="from-date" type="date" wire:model="from"
-                           class="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-[13px] focus:border-indigo-500 focus:ring-indigo-500">
+                    <input id="from-date" type="text" readonly placeholder="YYYY-MM-DD" wire:model="from"
+                           class="flatpickr-only-date cursor-pointer rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-[13px] focus:border-indigo-500 focus:ring-indigo-500">
                     <label for="to-date" class="text-gray-600">To</label>
-                    <input id="to-date" type="date" wire:model="to"
-                           class="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-[13px] focus:border-indigo-500 focus:ring-indigo-500">
+                    <input id="to-date" type="text" readonly placeholder="YYYY-MM-DD" wire:model="to"
+                           class="flatpickr-only-date cursor-pointer rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-[13px] focus:border-indigo-500 focus:ring-indigo-500">
                     <button type="submit" class="rounded-lg bg-indigo-600 px-3.5 py-2 font-semibold text-white hover:bg-indigo-700">Apply</button>
                 </form>
                 @error('to') <p class="text-xs text-red-700">{{ $message }}</p> @enderror

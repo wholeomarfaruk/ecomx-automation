@@ -161,7 +161,7 @@
                         <select id="e-dept" wire:model="employee.department" class="{{ $roleSel }}">
                             @foreach (\App\Livewire\Accounts\Profiles\Employees::DEPARTMENTS as $d)<option>{{ $d }}</option>@endforeach
                         </select></div>
-                    <div class="flex flex-col gap-[6px]"><label for="e-join" class="{{ $lbl }}">Joining date</label><input id="e-join" type="date" wire:model="employee.joined_on" class="{{ $roleIn }} py-[8px]"></div>
+                    <div class="flex flex-col gap-[6px]"><label for="e-join" class="{{ $lbl }}">Joining date</label><input id="e-join" type="text" readonly placeholder="YYYY-MM-DD" wire:model="employee.joined_on" class="flatpickr-only-date cursor-pointer bg-white {{ $roleIn }} py-[8px]"></div>
                     <div class="flex flex-col gap-[6px]"><label for="e-sal" class="{{ $lbl }}">Monthly salary (৳)</label><input id="e-sal" type="number" min="0" wire:model="employee.salary" placeholder="16000" class="{{ $roleIn }}"></div>
                     <div class="flex flex-col gap-[6px]"><label for="e-pay" class="{{ $lbl }}">Salary paid via</label>
                         <select id="e-pay" wire:model="employee.pay_via" class="{{ $roleSel }}"><option value="cash">Cash</option><option value="bkash">bKash</option><option value="nagad">Nagad</option><option value="bank">Bank</option></select></div>
@@ -210,7 +210,7 @@
                     <button type="button" wire:click="$set('ob_direction', 'receive')" class="{{ $seg($ob_direction === 'receive') }} flex-1">আমি পাবো</button>
                     <button type="button" wire:click="$set('ob_direction', 'pay')" class="{{ $seg($ob_direction === 'pay') }} flex-1">আমি দিবো</button>
                 </div>
-                <div class="flex flex-col gap-[6px]"><label for="ob-date" class="{{ $lbl }}">As of date</label><input id="ob-date" type="date" wire:model="ob_date" class="{{ $input }} py-[9px]"></div>
+                <div class="flex flex-col gap-[6px]"><label for="ob-date" class="{{ $lbl }}">As of date</label><input id="ob-date" type="text" readonly placeholder="YYYY-MM-DD" wire:model="ob_date" class="flatpickr-only-date cursor-pointer bg-white {{ $input }} py-[9px]"></div>
             </div>
         @endif
     </section>

@@ -160,20 +160,20 @@
                 <div class="flex flex-col gap-[6px] sm:col-span-2"><label class="text-[13px] font-semibold">Name</label><input type="text" wire:model="form.name" placeholder="যেমন: Juki sewing machines ×3" class="{{ $input }}">@error('form.name')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
                 <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Category</label><select wire:model="form.category" class="{{ $input }}">@foreach (AssetBook::CATEGORIES as $cc)<option value="{{ $cc }}">{{ $cc }}</option>@endforeach</select></div>
                 <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Cost (৳)</label><input type="number" min="0" step="0.01" wire:model="form.cost" class="{{ $input }}">@error('form.cost')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
-                <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Bought on</label><input type="date" wire:model="form.purchase_date" class="{{ $input }}">@error('form.purchase_date')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
+                <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Bought on</label><input type="text" readonly placeholder="YYYY-MM-DD" wire:model="form.purchase_date" class="flatpickr-only-date cursor-pointer bg-white {{ $input }}">@error('form.purchase_date')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
                 <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Life (years)</label><input type="number" min="0.5" step="0.5" wire:model="form.life_years" class="{{ $input }}">@error('form.life_years')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
                 <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Salvage (৳)</label><input type="number" min="0" wire:model="form.salvage" placeholder="0" class="{{ $input }}">@error('form.salvage')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
                 <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Bought from</label><input type="text" wire:model="form.vendor" class="{{ $input }}"></div>
                 <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Location</label><input type="text" wire:model="form.location" placeholder="যেমন: Mirpur showroom" class="{{ $input }}"></div>
                 <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Assigned to</label><select wire:model="form.assigned_profile_id" class="{{ $input }}"><option value="">—</option>@foreach ($this->people as $id => $n)<option value="{{ $id }}">{{ $n }}</option>@endforeach</select></div>
-                <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Warranty until</label><input type="date" wire:model="form.warranty_until" class="{{ $input }}"></div>
+                <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Warranty until</label><input type="text" readonly placeholder="YYYY-MM-DD" wire:model="form.warranty_until" class="flatpickr-only-date cursor-pointer bg-white {{ $input }}"></div>
             </div>
             <div class="flex flex-col gap-[8px]">
                 <span class="text-[13px] font-semibold">Reminders (service, tax token, fitness…)</span>
                 @foreach ($form['reminders'] ?? [] as $i => $rm)
                     <div class="flex gap-[8px]" wire:key="rm-{{ $i }}">
                         <input type="text" wire:model="form.reminders.{{ $i }}.label" placeholder="যেমন: AC service" class="{{ $input }} flex-1">
-                        <input type="date" wire:model="form.reminders.{{ $i }}.date" class="{{ $input }} w-[170px]">
+                        <input type="text" readonly placeholder="YYYY-MM-DD" wire:model="form.reminders.{{ $i }}.date" class="flatpickr-only-date cursor-pointer bg-white {{ $input }} w-[170px]">
                         <button type="button" wire:click="removeReminder({{ $i }})" class="px-[6px] text-[#9ca3af]" aria-label="Remove">×</button>
                     </div>
                 @endforeach
@@ -209,7 +209,7 @@
         <x-accounts.modal title="Record repair" close="$set('showRepair', false)">
             <div class="grid grid-cols-1 gap-[12px] sm:grid-cols-2">
                 <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Cost (৳)</label><input type="number" min="0" step="0.01" wire:model="repair.amount" class="{{ $input }}">@error('repair.amount')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
-                <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Date</label><input type="date" wire:model="repair.date" class="{{ $input }}"></div>
+                <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Date</label><input type="text" readonly placeholder="YYYY-MM-DD" wire:model="repair.date" class="flatpickr-only-date cursor-pointer bg-white {{ $input }}"></div>
                 <div class="flex flex-col gap-[6px] sm:col-span-2"><label class="text-[13px] font-semibold">Paid from</label><select wire:model="repair.account_id" class="{{ $input }}">@foreach ($this->cashAccounts as $acc)<option value="{{ $acc['id'] }}">{{ $acc['name'] }} · {{ $money($acc['balance']) }}</option>@endforeach</select></div>
                 <div class="flex flex-col gap-[6px] sm:col-span-2"><label class="text-[13px] font-semibold">Note</label><input type="text" wire:model="repair.note" placeholder="কী ঠিক করা হলো" class="{{ $input }}"></div>
             </div>
@@ -228,7 +228,7 @@
         <x-accounts.modal title="Sell / dispose · {{ $da?->name }}" close="$set('showDispose', false)">
             <div class="grid grid-cols-1 gap-[12px] sm:grid-cols-2">
                 <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Sold for (৳) · 0 = scrapped</label><input type="number" min="0" step="0.01" wire:model.live.debounce.400ms="dispose.proceeds" class="{{ $input }}">@error('dispose.proceeds')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
-                <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Date</label><input type="date" wire:model="dispose.date" class="{{ $input }}"></div>
+                <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Date</label><input type="text" readonly placeholder="YYYY-MM-DD" wire:model="dispose.date" class="flatpickr-only-date cursor-pointer bg-white {{ $input }}"></div>
                 @if ((float) ($dispose['proceeds'] ?: 0) > 0)
                     <div class="flex flex-col gap-[6px] sm:col-span-2"><label class="text-[13px] font-semibold">Received in</label><select wire:model="dispose.account_id" class="{{ $input }}">@foreach ($this->cashAccounts as $acc)<option value="{{ $acc['id'] }}">{{ $acc['name'] }}</option>@endforeach</select>@error('dispose.account_id')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
                 @endif

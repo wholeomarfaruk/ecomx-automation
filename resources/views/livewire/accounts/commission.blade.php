@@ -208,8 +208,8 @@
                     </div>
                     @if ($edit['period'] === 'custom')
                         <div class="grid grid-cols-2 gap-[12px]">
-                            <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">From</label><input type="date" wire:model.live="edit.starts_on" class="{{ $field }}">@error('edit.starts_on')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
-                            <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">To</label><input type="date" wire:model.live="edit.ends_on" class="{{ $field }}">@error('edit.ends_on')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
+                            <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">From</label><input type="text" readonly placeholder="YYYY-MM-DD" wire:model.live="edit.starts_on" class="flatpickr-only-date cursor-pointer bg-white {{ $field }}">@error('edit.starts_on')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
+                            <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">To</label><input type="text" readonly placeholder="YYYY-MM-DD" wire:model.live="edit.ends_on" class="flatpickr-only-date cursor-pointer bg-white {{ $field }}">@error('edit.ends_on')<span class="{{ $err }}">{{ $message }}</span>@enderror</div>
                         </div>
                     @endif
                     @if ($edit['who'] === 'group')

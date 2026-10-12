@@ -104,9 +104,9 @@
                 <div class="acc-no-print flex flex-wrap items-center justify-between gap-[10px] px-[18px] py-[14px]">
                     <div class="flex flex-wrap items-center gap-[8px]">
                         <label for="led-from" class="text-[13px] text-[#4b5563]">From</label>
-                        <input id="led-from" type="date" wire:model.live="from" class="{{ $small }}">
+                        <input id="led-from" type="text" readonly placeholder="YYYY-MM-DD" wire:model.live="from" class="flatpickr-only-date cursor-pointer bg-white {{ $small }}">
                         <label for="led-to" class="text-[13px] text-[#4b5563]">To</label>
-                        <input id="led-to" type="date" wire:model.live="to" class="{{ $small }}">
+                        <input id="led-to" type="text" readonly placeholder="YYYY-MM-DD" wire:model.live="to" class="flatpickr-only-date cursor-pointer bg-white {{ $small }}">
                         <label for="led-role" class="text-[13px] text-[#4b5563]">Role</label>
                         <select id="led-role" wire:model.live="ledgerRole" class="{{ $small }} bg-white py-[8px] pr-[30px]">
                             <option value="">All roles</option>
@@ -269,7 +269,7 @@
                         <button type="button" @click="open = !open" class="self-start rounded-[8px] border border-dashed border-[#c7d2fe] bg-white px-[12px] py-[8px] text-[13px] font-semibold text-[#4338ca]">+ Upload document</button>
                         <div x-show="open" x-cloak class="grid gap-[10px] rounded-[10px] border border-[#eef0f3] p-[12px] [grid-template-columns:repeat(auto-fit,minmax(180px,1fr))]">
                             <input type="text" wire:model="docTitle" placeholder="Title (e.g. Trade license)" class="{{ $input }}">
-                            <input type="date" wire:model="docExpires" title="Expires on" class="{{ $input }}">
+                            <input type="text" readonly placeholder="YYYY-MM-DD" wire:model="docExpires" title="Expires on" class="flatpickr-only-date cursor-pointer bg-white {{ $input }}">
                             <input type="file" wire:model="docFile" accept=".pdf,image/*" class="text-[13px]">
                             <button type="button" wire:click="uploadDocument" wire:loading.attr="disabled" class="rounded-[9px] bg-[#4f46e5] px-[16px] py-[9px] text-[13px] font-semibold text-white">Upload</button>
                             @error('docFile') <span class="text-[12px] text-[#b91c1c]">{{ $message }}</span> @enderror
@@ -416,7 +416,7 @@
                     <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Number of kisti</label><input type="number" min="1" wire:model="plan.count" class="{{ $input }}">
                         @error('plan.count') <span class="text-[12px] text-[#b91c1c]">{{ $message }}</span> @enderror</div>
                 @endif
-                <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Start date</label><input type="date" wire:model="plan.start_date" class="{{ $input }}"></div>
+                <div class="flex flex-col gap-[6px]"><label class="text-[13px] font-semibold">Start date</label><input type="text" readonly placeholder="YYYY-MM-DD" wire:model="plan.start_date" class="flatpickr-only-date cursor-pointer bg-white {{ $input }}"></div>
                 <div class="flex flex-col gap-[6px] {{ $plan['frequency'] === 'custom' ? 'sm:col-span-3' : '' }}"><label class="text-[13px] font-semibold">বেশি দিলে (support)</label>
                     <select wire:model="plan.support_rule" class="{{ $input }}"><option value="next_kisti">পরের কিস্তি কমবে</option><option value="principal">শেষের কিস্তি কমবে</option></select></div>
             </div>

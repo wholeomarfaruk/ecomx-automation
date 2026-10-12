@@ -58,7 +58,7 @@
             </div>
             <div class="flex flex-col gap-[6px]">
                 <label for="v-date" class="{{ $lbl }}">Date</label>
-                <input id="v-date" type="date" wire:model="voucher.date" class="{{ $input }}">
+                <input id="v-date" type="text" readonly placeholder="YYYY-MM-DD" wire:model="voucher.date" class="flatpickr-only-date cursor-pointer bg-white {{ $input }}">
             </div>
             <div class="flex flex-col gap-[6px] {{ $voucherType === 'salary_advance' ? '' : 'sm:col-span-2' }}">
                 <label for="v-account" class="{{ $lbl }}">{{ in_array($voucherType, ['collect', 'capital']) ? 'Received in' : 'Paid from' }}</label>

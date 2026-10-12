@@ -150,15 +150,38 @@ import "flatpickr/dist/flatpickr.min.css";
 
 window.flatpickr = flatpickr;
 
+// Optional limits on any picker: data-min-date / data-max-date ("Y-m-d" or "today").
+const flatpickrLimits = (el) => {
+    const opts = {};
+    if (el.dataset.minDate) opts.minDate = el.dataset.minDate;
+    if (el.dataset.maxDate) opts.maxDate = el.dataset.maxDate;
+    return opts;
+};
+
+// Tell wire:model / x-model (any modifier: live, blur, change) the value changed.
+const flatpickrNotify = (el) => {
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+};
+
 window.initFlatpickr = () => {
     document.querySelectorAll(".flatpickr-only-date").forEach((el) => {
-        if (el._flatpickr) el._flatpickr.destroy();
+        // Already set up (same element after a Livewire morph): just follow
+        // the server value, so an open calendar isn't torn down mid-pick.
+        if (el._flatpickr) {
+            const fp = el._flatpickr;
+            const current = fp.selectedDates[0] ? fp.formatDate(fp.selectedDates[0], "Y-m-d") : "";
+            if (current !== (el.value || "")) fp.setDate(el.value || null, false);
+            return;
+        }
         flatpickr(el, {
             enableTime: false,
             dateFormat: "Y-m-d",
             defaultDate: el.value || null,
+            disableMobile: true,
+            ...flatpickrLimits(el),
             onChange: function () {
-                el.dispatchEvent(new Event("input", { bubbles: true }));
+                flatpickrNotify(el);
             },
         });
     });
@@ -179,6 +202,7 @@ window.initFlatpickr = () => {
             enableSeconds: true,
             defaultDate: defaultDate || new Date(),
             minuteIncrement: 1,
+            ...flatpickrLimits(el),
             onChange: function () {
                 el.dispatchEvent(new Event("input", { bubbles: true }));
             },
@@ -188,8 +212,17 @@ window.initFlatpickr = () => {
 
 document.addEventListener("DOMContentLoaded", () => window.initFlatpickr());
 document.addEventListener("livewire:navigated", () => window.initFlatpickr());
+// morph.updated fires once per changed element — re-init once per frame, not per element.
+let flatpickrQueued = false;
 document.addEventListener("livewire:initialized", () => {
-    Livewire.hook("morph.updated", () => window.initFlatpickr());
+    Livewire.hook("morph.updated", () => {
+        if (flatpickrQueued) return;
+        flatpickrQueued = true;
+        requestAnimationFrame(() => {
+            flatpickrQueued = false;
+            window.initFlatpickr();
+        });
+    });
 });
 
 // wire:navigate swaps the page via fetch/morph instead of a real browser

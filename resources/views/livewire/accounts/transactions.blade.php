@@ -30,9 +30,9 @@
         </div>
         <div class="flex flex-wrap items-center gap-[6px] text-[12.5px] text-[#4b5563]">
             @if ($period === 'custom')
-                <input type="date" wire:model.live="from" class="rounded-[8px] border border-[#d1d5db] px-[8px] py-[5px] text-[12.5px]">
+                <input type="text" readonly placeholder="YYYY-MM-DD" wire:model.live="from" class="flatpickr-only-date cursor-pointer bg-white rounded-[8px] border border-[#d1d5db] px-[8px] py-[5px] text-[12.5px]">
                 <span>–</span>
-                <input type="date" wire:model.live="to" class="rounded-[8px] border border-[#d1d5db] px-[8px] py-[5px] text-[12.5px]">
+                <input type="text" readonly placeholder="YYYY-MM-DD" wire:model.live="to" class="flatpickr-only-date cursor-pointer bg-white rounded-[8px] border border-[#d1d5db] px-[8px] py-[5px] text-[12.5px]">
             @else
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18"></path><path d="M8 3v4"></path><path d="M16 3v4"></path></svg>
                 <span>{{ $rangeText }}</span>

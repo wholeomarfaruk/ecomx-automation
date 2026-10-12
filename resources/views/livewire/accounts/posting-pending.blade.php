@@ -226,7 +226,7 @@
 
                     @if ($st === 'scheduled' && $newDate !== null)
                         <div class="flex flex-wrap items-center gap-[8px] rounded-[10px] border border-[#e5e7eb] p-[10px]">
-                            <input type="date" wire:model="newDate" class="rounded-[8px] border border-[#d1d5db] px-[10px] py-[7px] text-[13px]">
+                            <input type="text" readonly placeholder="YYYY-MM-DD" wire:model="newDate" class="flatpickr-only-date cursor-pointer bg-white rounded-[8px] border border-[#d1d5db] px-[10px] py-[7px] text-[13px]">
                             <button type="button" wire:click="reschedule({{ $e->id }})" class="rounded-[8px] bg-[#4f46e5] px-[12px] py-[7px] text-[13px] font-semibold text-white">Save date</button>
                             @error('newDate') <span class="text-[12px] text-[#b91c1c]">{{ $message }}</span> @enderror
                         </div>
