@@ -16,7 +16,7 @@ class JournalEntry extends Model
         'source_type', 'source_id', 'purpose', 'reversed_journal_entry_id',
         'fiscal_period_id', 'created_by', 'posted_by', 'posted_at', 'voided_by', 'voided_at',
         'voucher_ref', 'voucher_type', 'source', 'amount', 'master_profile_id', 'party_label', 'money_account_id',
-        'scheduled_for', 'approved_by', 'approved_at', 'rejected_by', 'rejected_at', 'reject_reason',
+        'scheduled_for', 'approved_by', 'approved_at', 'rejected_by', 'rejected_at', 'reject_reason', 'meta',
     ];
 
     protected function casts(): array
@@ -31,6 +31,7 @@ class JournalEntry extends Model
             'approved_at'      => 'datetime',
             'rejected_at'      => 'datetime',
             'amount'           => 'decimal:2',
+            'meta'             => 'array',
         ];
     }
 

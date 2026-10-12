@@ -71,3 +71,12 @@ Artisan::command('accounts:post-scheduled', function () {
 })->purpose('Post scheduled Accounts Panel vouchers whose date has come')
     ->hourlyAt(5)
     ->withoutOverlapping();
+
+// Accounts Panel: recurring bills (rent, electricity…) become expense drafts
+// on their day; they wait in Posting Pending for approval.
+Artisan::command('accounts:recurring-drafts', function () {
+    $made = app(\App\Services\Accounts\PayablesSchedule::class)->draftDueRecurring();
+    $this->info("Recurring bills: {$made} draft(s) created.");
+})->purpose('Create Accounts Panel drafts for recurring bills that are due')
+    ->dailyAt('06:00')
+    ->withoutOverlapping();

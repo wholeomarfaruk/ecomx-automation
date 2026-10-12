@@ -38,7 +38,6 @@ Lock date · maker-checker · approval threshold · attachment threshold · post
 reject needs a reason · scheduled auto-post · every change writes `voucher_events` · posting a receipt / payment
 applies it to open invoices / bills oldest-first.
 
-## Progress (paused 2026-10-12)
-- Done & committed locally (not pushed): 1–2 Settings/sidebar/helpers (968474f), 3 vouchers + Posting Pending + Transactions (2ca1eb1), 4 Cash & Bank (07ba14f).
-- In progress, uncommitted: Receivables — `app/Livewire/Accounts/Receivables.php`, `Services/Accounts/Aging.php`, `PromiseToPay` model + migration 2026_10_13_100400. Still needed: view `livewire/accounts/receivables.blade.php`, route `accounts.receivables`, collection target field in Settings › General.
-- Next: Payables, Loans & EMI, Expenses, Fixed Assets, Commission, Reports, dashboard links, scheduler jobs, tests.
+## Progress
+- Done & committed locally (not pushed): 1–2 Settings/sidebar/helpers, 3 vouchers + Posting Pending + Transactions, 4 Cash & Bank, 5 Receivables, 6 Payables (PayablesSchedule, + Bill draft → bill with due date on post, bulk payment drafts, reschedule, recurring bills + `accounts:recurring-drafts` daily 06:00; posting a receipt/payment for a party on a kisti plan settles the kisti).
+- Next: Loans & EMI, Expenses, Fixed Assets, Commission, Reports, dashboard links, remaining scheduler jobs, tests.

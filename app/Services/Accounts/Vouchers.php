@@ -110,6 +110,7 @@ class Vouchers
                 'status'           => $future ? JournalEntryStatus::SCHEDULED : JournalEntryStatus::DRAFT,
                 'scheduled_for'    => $future ? $data['date'] : null,
                 'created_by'       => ($by ?? auth()->user())?->id,
+                'meta'             => $data['meta'] ?? null,
             ]);
 
             foreach ($files as $file) {
@@ -278,6 +279,7 @@ class Vouchers
             }
 
             $this->applyOpenItems($entry);
+            $this->afterPost($entry);
             $this->event($entry, 'posted', $system ? 'Auto-posted' : null, $system ? null : $user);
 
             activity('accounts')->causedBy($system ? null : $user)->performedOn($entry)->event('posted')
@@ -768,6 +770,60 @@ class Vouchers
                         'notes'          => $entry->description,
                     ]);
                 }
+            }
+        }
+    }
+
+    /**
+     * What a posted draft settles, by its source: a loan kisti, a payroll
+     * item, or a supplier bill to open (with its due date).
+     */
+    protected function afterPost(JournalEntry $entry): void
+    {
+        $meta = (array) ($entry->meta ?? []);
+
+        if ($entry->source_type === \App\Models\LoanRepaymentSchedule::class && ($s = \App\Models\LoanRepaymentSchedule::with('loan')->find($entry->source_id))) {
+            $paid = round((float) $s->paid_amount + (float) $entry->amount, 2);
+            \App\Models\LoanRepayment::create([
+                'loan_id' => $s->loan_id, 'schedule_id' => $s->id,
+                'principal_amount' => (float) ($meta['principal'] ?? $entry->amount), 'interest_amount' => (float) ($meta['interest'] ?? 0),
+                'journal_entry_id' => $entry->id, 'paid_at' => $entry->entry_date->toDateString(),
+            ]);
+            $s->update(['paid_amount' => $paid, 'status' => $paid + 0.005 >= $s->payable() ? 'paid' : $s->status]);
+            if ($s->loan && $s->loan->outstandingPrincipal() <= 0.01) {
+                $s->loan->update(['status' => 'closed']);
+            }
+        }
+
+        if ($entry->source_type === \App\Models\PayrollItem::class && ($item = \App\Models\PayrollItem::with('run')->find($entry->source_id))) {
+            $paid = round((float) $item->paid_amount + (float) $entry->amount, 2);
+            $item->update(['paid_amount' => $paid, 'status' => $paid + 0.005 >= (float) $item->net ? 'paid' : 'partial']);
+            $runPaid = round((float) $item->run->items()->sum('paid_amount'), 2);
+            $item->run->update(['paid' => $runPaid, 'status' => $runPaid + 0.005 >= (float) $item->run->net ? 'paid' : 'partial']);
+        }
+
+        // A receipt / payment from a party on a kisti plan settles that plan's kisti.
+        foreach ($entry->lines as $line) {
+            $role = match (true) {
+                $line->subledger_type === Customer::class && (float) $line->credit > 0 && $line->account_id === $this->ledgers->id(LedgerAccounts::RECEIVABLE) => 'customer',
+                $line->subledger_type === Supplier::class && (float) $line->debit > 0 && $line->account_id === $this->ledgers->id(LedgerAccounts::PAYABLE) => 'supplier',
+                default => null,
+            };
+            $pid = $role === 'customer' ? Customer::whereKey($line->subledger_id)->value('master_profile_id')
+                : ($role === 'supplier' ? Supplier::whereKey($line->subledger_id)->value('master_profile_id') : null);
+
+            if ($pid && in_array($entry->voucher_type, ['receipt', 'payment'], true) && ($profile = MasterProfile::find($pid))) {
+                app(\App\Actions\Profiles\InstallmentPlans::class)->applyPayment($profile, $role, (float) ($line->credit ?: $line->debit), $entry->id);
+            }
+        }
+
+        if (! empty($meta['supplier_bill'])) {
+            $line = $entry->lines->first(fn ($l) => $l->subledger_type === Supplier::class && (float) $l->credit > 0);
+            if ($line && ! AccountsSupplierBill::where('journal_entry_id', $entry->id)->exists()) {
+                AccountsSupplierBill::create([
+                    'supplier_id' => $line->subledger_id, 'amount' => (float) $line->credit, 'amount_allocated' => 0,
+                    'status' => 'open', 'journal_entry_id' => $entry->id, 'due_date' => $meta['due_date'] ?? null,
+                ]);
             }
         }
     }

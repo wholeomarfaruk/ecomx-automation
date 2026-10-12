@@ -10,7 +10,7 @@ class AccountsSupplierBill extends Model
 {
     protected $fillable = [
         'supplier_id', 'supplier_invoice_id', 'amount',
-        'amount_allocated', 'status', 'journal_entry_id',
+        'amount_allocated', 'status', 'journal_entry_id', 'due_date',
     ];
 
     protected function casts(): array
@@ -18,6 +18,7 @@ class AccountsSupplierBill extends Model
         return [
             'amount'            => 'decimal:2',
             'amount_allocated'  => 'decimal:2',
+            'due_date'          => 'date',
         ];
     }
 

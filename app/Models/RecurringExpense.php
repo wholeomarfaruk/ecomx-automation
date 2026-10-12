@@ -10,7 +10,7 @@ use Illuminate\Support\Carbon;
 class RecurringExpense extends Model
 {
     protected $fillable = [
-        'name', 'account_id', 'from_account_id', 'amount', 'cadence',
+        'name', 'payee', 'account_id', 'from_account_id', 'amount', 'varies', 'cadence', 'day_of_month',
         'next_run_date', 'is_active',
     ];
 
@@ -20,6 +20,7 @@ class RecurringExpense extends Model
             'amount'        => 'decimal:2',
             'next_run_date' => 'date',
             'is_active'     => 'boolean',
+            'varies'        => 'boolean',
         ];
     }
 
