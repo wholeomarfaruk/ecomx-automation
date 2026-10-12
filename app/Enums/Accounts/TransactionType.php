@@ -45,6 +45,9 @@ enum TransactionType: string
     case SALARY              = 'salary';                 // Payroll accrual
     case SALARY_PAYMENT      = 'salary_payment';
     case SALARY_ADVANCE      = 'salary_advance';
+    case JOURNAL             = 'journal';                // Accounts Panel manual journal
+    case COMMISSION          = 'commission';             // Commission & rebate accrual / settlement
+    case CASH_ADJUSTMENT     = 'cash_adjustment';        // Cash count shortage / excess
 
     public function label(): string
     {
@@ -84,6 +87,9 @@ enum TransactionType: string
             self::SALARY              => 'Salary',
             self::SALARY_PAYMENT      => 'Salary Payment',
             self::SALARY_ADVANCE      => 'Salary Advance',
+            self::JOURNAL             => 'Journal',
+            self::COMMISSION          => 'Commission & Rebate',
+            self::CASH_ADJUSTMENT     => 'Cash Adjustment',
         };
     }
 
@@ -98,12 +104,12 @@ enum TransactionType: string
             self::OWNER_WITHDRAWAL, self::BAD_DEBT => 'bg-orange-50 text-orange-600',
 
             self::TRANSFER, self::CURRENCY_CONVERSION, self::COD_SETTLEMENT,
-            self::GATEWAY_SETTLEMENT, self::BANK_RECONCILIATION, self::SET_OFF => 'bg-blue-50 text-blue-600',
+            self::GATEWAY_SETTLEMENT, self::BANK_RECONCILIATION, self::SET_OFF, self::JOURNAL, self::CASH_ADJUSTMENT => 'bg-blue-50 text-blue-600',
 
             self::SALES_RETURN, self::REFUND, self::PURCHASE_RETURN,
             self::VOID, self::REVERSAL => 'bg-red-50 text-red-500',
 
-            self::CREDIT_NOTE, self::SUPPLIER_ADVANCE, self::CUSTOMER_ADVANCE, self::SALARY_ADVANCE => 'bg-indigo-50 text-indigo-600',
+            self::CREDIT_NOTE, self::SUPPLIER_ADVANCE, self::CUSTOMER_ADVANCE, self::SALARY_ADVANCE, self::COMMISSION => 'bg-indigo-50 text-indigo-600',
 
             self::SUPPLIER_BILL, self::ASSET_PURCHASE, self::ASSET_DISPOSAL,
             self::OPENING_BALANCE => 'bg-gray-100 text-gray-600',

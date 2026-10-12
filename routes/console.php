@@ -62,3 +62,12 @@ Artisan::command('request-logs:prune', function () {
 })->purpose('Delete request_logs rows past their retention window')
     ->daily()
     ->withoutOverlapping();
+
+// Accounts Panel: post-dated vouchers post themselves on their date
+// (when every check passes; otherwise they wait in Posting Pending).
+Artisan::command('accounts:post-scheduled', function () {
+    [$posted, $skipped] = app(\App\Services\Accounts\Vouchers::class)->runScheduled();
+    $this->info("Scheduled vouchers: {$posted} posted, {$skipped} waiting.");
+})->purpose('Post scheduled Accounts Panel vouchers whose date has come')
+    ->hourlyAt(5)
+    ->withoutOverlapping();

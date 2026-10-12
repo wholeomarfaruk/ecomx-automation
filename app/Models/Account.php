@@ -81,7 +81,8 @@ class Account extends Model
     public function balance(): float
     {
         $totals = $this->lines()
-            ->whereHas('journalEntry', fn (Builder $q) => $q->where('status', '!=', 'void'))
+            // Only posted entries count — drafts / scheduled / rejected wait in Posting Pending.
+            ->whereHas('journalEntry', fn (Builder $q) => $q->where('status', 'posted'))
             ->selectRaw('COALESCE(SUM(debit), 0) as total_debit, COALESCE(SUM(credit), 0) as total_credit')
             ->first();
 

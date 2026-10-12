@@ -4,25 +4,37 @@ namespace App\Enums\Accounts;
 
 enum JournalEntryStatus: string
 {
-    case DRAFT  = 'draft';
-    case POSTED = 'posted';
-    case VOID   = 'void';
+    case DRAFT     = 'draft';
+    case POSTED    = 'posted';
+    case VOID      = 'void';
+    case REJECTED  = 'rejected';   // sent back to the maker with a reason
+    case SCHEDULED = 'scheduled';  // post-dated; auto-posts on its date
 
     public function label(): string
     {
         return match ($this) {
-            self::DRAFT  => 'Draft',
-            self::POSTED => 'Posted',
-            self::VOID   => 'Void',
+            self::DRAFT     => 'Draft',
+            self::POSTED    => 'Posted',
+            self::VOID      => 'Void',
+            self::REJECTED  => 'Rejected',
+            self::SCHEDULED => 'Scheduled',
         };
     }
 
     public function badgeClass(): string
     {
         return match ($this) {
-            self::DRAFT  => 'bg-gray-100 text-gray-600',
-            self::POSTED => 'bg-emerald-50 text-emerald-600',
-            self::VOID   => 'bg-red-50 text-red-500',
+            self::DRAFT     => 'bg-gray-100 text-gray-600',
+            self::POSTED    => 'bg-emerald-50 text-emerald-600',
+            self::VOID      => 'bg-red-50 text-red-500',
+            self::REJECTED  => 'bg-red-50 text-red-600',
+            self::SCHEDULED => 'bg-gray-100 text-gray-700',
         };
+    }
+
+    /** Not posted yet — waiting in Posting Pending. */
+    public function isPending(): bool
+    {
+        return in_array($this, [self::DRAFT, self::SCHEDULED, self::REJECTED], true);
     }
 }

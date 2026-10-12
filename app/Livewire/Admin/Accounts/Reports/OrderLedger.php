@@ -30,7 +30,7 @@ class OrderLedger extends Component
 
         $entries = $order->journalEntries()
             ->with(['lines.account'])
-            ->where('status', '!=', 'void')
+            ->where('status', 'posted')
             ->orderBy('entry_date')
             ->orderBy('id')
             ->get();

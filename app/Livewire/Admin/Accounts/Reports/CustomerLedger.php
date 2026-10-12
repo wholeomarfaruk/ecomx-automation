@@ -39,7 +39,7 @@ class CustomerLedger extends Component
         $lines = JournalEntryLine::query()
             ->where('subledger_type', Customer::class)
             ->where('subledger_id', $customer->id)
-            ->whereHas('journalEntry', fn ($q) => $q->where('status', '!=', 'void'))
+            ->whereHas('journalEntry', fn ($q) => $q->where('status', 'posted'))
             ->with(['journalEntry', 'account'])
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
             ->orderBy('journal_entries.entry_date')

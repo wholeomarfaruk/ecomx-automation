@@ -35,7 +35,7 @@ class CashBankLedger extends Component
 
         $lines = JournalEntryLine::query()
             ->where('account_id', $account->id)
-            ->whereHas('journalEntry', fn ($q) => $q->where('status', '!=', 'void'))
+            ->whereHas('journalEntry', fn ($q) => $q->where('status', 'posted'))
             ->with('journalEntry')
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
             ->orderBy('journal_entries.entry_date')

@@ -30,7 +30,7 @@ class OrderLedgers extends Component
     {
         $orderIds = JournalEntry::query()
             ->where('source_type', Order::class)
-            ->where('status', '!=', 'void')
+            ->where('status', 'posted')
             ->distinct()
             ->pluck('source_id');
 

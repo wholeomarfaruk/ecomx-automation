@@ -34,7 +34,7 @@ class Dashboard extends Component
 
         $lines = JournalEntryLine::query()
             ->whereHas('journalEntry', fn ($q) => $q
-                ->where('status', '!=', 'void')
+                ->where('status', 'posted')
                 ->whereBetween('entry_date', [$start, $end]))
             ->whereHas('account', fn ($q) => $q->whereIn('subtype', ['cash', 'bank', 'mobile_banking']))
             ->selectRaw('COALESCE(SUM(debit), 0) as total_debit, COALESCE(SUM(credit), 0) as total_credit')
@@ -75,7 +75,7 @@ class Dashboard extends Component
         [$start, $end] = $this->todayRange();
 
         $todaysTransactions = JournalEntry::query()
-            ->where('status', '!=', 'void')
+            ->where('status', 'posted')
             ->whereBetween('entry_date', [$start, $end])
             ->with('lines.account')
             ->latest('id')

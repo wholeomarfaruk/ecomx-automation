@@ -6,10 +6,8 @@ use App\Actions\Accounts\CalculateStockValue;
 use App\Enums\Accounts\AccountType;
 use App\Enums\Accounts\JournalEntryStatus;
 use App\Enums\Accounts\TransactionType;
-use App\Exceptions\Accounts\LockedFiscalPeriodException;
 use App\Models\Account;
 use App\Models\AccountsSupplierBill;
-use App\Models\FiscalPeriod;
 use App\Models\JournalEntry;
 use App\Models\Loan;
 use App\Models\LoanRepaymentSchedule;
@@ -111,7 +109,7 @@ class Dashboard extends Component
             return;
         }
 
-        session()->now('accounts.status', "Voucher {$entry->entry_number} posted.");
+        session()->now('accounts.status', "Voucher {$entry->ref()} posted.");
     }
 
     /** @param  list<int|string>  $ids  checkbox selection, held client-side in Alpine */
@@ -133,8 +131,8 @@ class Dashboard extends Component
                 try {
                     $this->postDraft($entry);
                     $posted++;
-                } catch (\RuntimeException) {
-                    $skipped[] = $entry->entry_number;
+                } catch (\RuntimeException $e) {
+                    $skipped[] = $entry->ref() . ' (' . $e->getMessage() . ')';
                 }
             });
 
@@ -147,44 +145,13 @@ class Dashboard extends Component
     }
 
     /**
-     * Draft → posted. Same guards PostJournalEntry applies when an entry is
-     * posted directly: lines must balance and the period must be open.
+     * Draft → posted through the voucher workflow, so the dashboard enforces
+     * the same rules as Posting Pending (lock date, maker-checker, approval,
+     * attachment, balanced lines, open fiscal period).
      */
     protected function postDraft(JournalEntry $entry): void
     {
-        $entry->loadMissing('lines');
-
-        if (abs($entry->totalDebit() - $entry->totalCredit()) > 0.01 || $entry->lines->count() < 2) {
-            throw new \RuntimeException("{$entry->entry_number} is not balanced.");
-        }
-
-        $period = FiscalPeriod::query()->containingDate($entry->entry_date->toDateString())->first();
-
-        if ($period?->is_locked) {
-            throw LockedFiscalPeriodException::forDate($entry->entry_date->toDateString());
-        }
-
-        DB::transaction(function () use ($entry, $period) {
-            // Re-read under a row lock so two people posting the same draft can't both succeed.
-            $stillDraft = JournalEntry::whereKey($entry->id)->lockForUpdate()->value('status') === JournalEntryStatus::DRAFT;
-
-            if (! $stillDraft) {
-                throw new \RuntimeException("{$entry->entry_number} was already posted.");
-            }
-
-            $entry->update([
-                'status'           => JournalEntryStatus::POSTED,
-                'fiscal_period_id' => $entry->fiscal_period_id ?? $period?->id,
-                'posted_by'        => auth()->id(),
-                'posted_at'        => now(),
-            ]);
-
-            activity('accounts')
-                ->causedBy(auth()->user())
-                ->performedOn($entry)
-                ->event('posted')
-                ->log("Journal entry {$entry->entry_number} was posted from the Accounts Panel");
-        });
+        app(\App\Services\Accounts\Vouchers::class)->post($entry);
     }
 
     /* ------------------------------------------------------------------
@@ -245,7 +212,7 @@ class Dashboard extends Component
 
         $totals = DB::table('journal_entry_lines as l')
             ->join('journal_entries as je', 'je.id', '=', 'l.journal_entry_id')
-            ->where('je.status', '!=', JournalEntryStatus::VOID->value)
+            ->where('je.status', JournalEntryStatus::POSTED->value)
             ->whereIn('l.account_id', $accounts->pluck('id'))
             ->groupBy('l.account_id')
             ->selectRaw('l.account_id,
@@ -446,7 +413,7 @@ class Dashboard extends Component
         $flow = DB::table('journal_entry_lines as l')
             ->join('journal_entries as je', 'je.id', '=', 'l.journal_entry_id')
             ->whereIn('l.account_id', $this->balances['cash_ids'])
-            ->where('je.status', '!=', JournalEntryStatus::VOID->value)
+            ->where('je.status', JournalEntryStatus::POSTED->value)
             ->whereBetween('je.entry_date', [$start, $end])
             ->selectRaw('
                 COALESCE(SUM(l.debit), 0) as cash_in,
@@ -511,7 +478,7 @@ class Dashboard extends Component
 
         $cogs = (float) DB::table('journal_entry_lines as l')
             ->join('journal_entries as je', 'je.id', '=', 'l.journal_entry_id')
-            ->where('je.status', '!=', JournalEntryStatus::VOID->value)
+            ->where('je.status', JournalEntryStatus::POSTED->value)
             ->where('je.transaction_type', TransactionType::COGS->value)
             ->whereBetween('je.entry_date', [$start->toDateString(), $end->toDateString()])
             ->sum('l.debit');
@@ -732,7 +699,7 @@ class Dashboard extends Component
         $timeFormat = $start === $end ? 'g:i A' : 'd M, g:i A';
 
         return JournalEntry::query()
-            ->where('status', '!=', JournalEntryStatus::VOID)
+            ->whereIn('status', [JournalEntryStatus::POSTED->value, JournalEntryStatus::DRAFT->value, JournalEntryStatus::SCHEDULED->value])
             ->whereBetween('entry_date', [$start, $end])
             ->whereHas('lines', fn ($q) => $q->whereIn('account_id', $cashIds))
             ->with(['lines' => fn ($q) => $q->whereIn('account_id', $cashIds)->with('account:id,name')])

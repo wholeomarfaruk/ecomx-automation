@@ -28,7 +28,7 @@ class ProfitAndLoss extends Component
         $totals = JournalEntryLine::query()
             ->where('account_id', $account->id)
             ->whereHas('journalEntry', fn ($q) => $q
-                ->where('status', '!=', 'void')
+                ->where('status', 'posted')
                 ->whereBetween('entry_date', [$this->startDate, $this->endDate]))
             ->selectRaw('COALESCE(SUM(debit), 0) as total_debit, COALESCE(SUM(credit), 0) as total_credit')
             ->first();

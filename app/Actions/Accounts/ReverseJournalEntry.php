@@ -28,11 +28,15 @@ class ReverseJournalEntry
         $original->loadMissing('lines');
 
         return DB::transaction(function () use ($original, $reason) {
+            // Keep each line's party (subledger) so the reversal also undoes the
+            // customer / supplier / profile balance, not just the control account.
             $lines = $original->lines->map(fn ($line) => [
-                'account_id' => $line->account_id,
-                'debit'      => (float) $line->credit,
-                'credit'     => (float) $line->debit,
-                'memo'       => $line->memo,
+                'account_id'     => $line->account_id,
+                'debit'          => (float) $line->credit,
+                'credit'         => (float) $line->debit,
+                'memo'           => $line->memo,
+                'subledger_type' => $line->subledger_type,
+                'subledger_id'   => $line->subledger_id,
             ])->all();
 
             $reversal = $this->postJournalEntry->handle([

@@ -31,7 +31,7 @@ class CustomerLedgers extends Component
     {
         $customerIds = JournalEntryLine::query()
             ->where('subledger_type', Customer::class)
-            ->whereHas('journalEntry', fn ($q) => $q->where('status', '!=', 'void'))
+            ->whereHas('journalEntry', fn ($q) => $q->where('status', 'posted'))
             ->distinct()
             ->pluck('subledger_id');
 
@@ -47,7 +47,7 @@ class CustomerLedgers extends Component
             $totals = JournalEntryLine::query()
                 ->where('subledger_type', Customer::class)
                 ->where('subledger_id', $customer->id)
-                ->whereHas('journalEntry', fn ($q) => $q->where('status', '!=', 'void'))
+                ->whereHas('journalEntry', fn ($q) => $q->where('status', 'posted'))
                 ->selectRaw('COALESCE(SUM(debit), 0) as total_debit, COALESCE(SUM(credit), 0) as total_credit')
                 ->first();
 
