@@ -94,6 +94,47 @@ class Dashboard extends Component
         $this->period = 'custom';
     }
 
+    /** Voucher open in the details modal (Posting Pending card). */
+    public ?int $previewId = null;
+
+    public function openPreview(int $id): void
+    {
+        $this->previewId = $id;
+        unset($this->preview);
+    }
+
+    /** Everything the details modal shows: header, journal lines, attachments and the posting checks. */
+    #[Computed]
+    public function preview(): ?array
+    {
+        $e = $this->previewId ? JournalEntry::with(['lines.account:id,name', 'attachments', 'createdBy:id,name', 'moneyAccount:id,name'])->find($this->previewId) : null;
+        if (! $e) {
+            return null;
+        }
+        $v = app(\App\Services\Accounts\Vouchers::class);
+
+        return [
+            'entry' => $e, 'type' => $v->typeLabel($e), 'party' => $v->partyOf($e),
+            'lines' => $e->lines->map(fn ($l) => [
+                'account' => $l->account?->name ?? '—', 'party' => $l->subledger_type ? $v->partyName($l->subledger_type, $l->subledger_id) : null,
+                'memo' => $l->memo, 'debit' => (float) $l->debit, 'credit' => (float) $l->credit,
+            ])->all(),
+            'checks' => $v->checks($e, auth()->user()),
+            'pending' => $e->status->isPending(),
+        ];
+    }
+
+    public function postPreview(): void
+    {
+        $id = $this->previewId;
+        $this->postVoucher((int) $id);
+        // Close only when it actually posted; on an error the toast explains and the modal stays.
+        if (! JournalEntry::whereKey($id)->whereIn('status', [JournalEntryStatus::DRAFT, JournalEntryStatus::SCHEDULED])->exists()) {
+            $this->previewId = null;
+        }
+        unset($this->preview);
+    }
+
     public function postVoucher(int $id): void
     {
         $entry = JournalEntry::where('status', JournalEntryStatus::DRAFT)->find($id);

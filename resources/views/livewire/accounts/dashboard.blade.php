@@ -211,8 +211,8 @@
                     </thead>
                     <tbody>
                         @forelse ($pending as $v)
-                            <tr wire:key="voucher-{{ $v['id'] }}" class="border-t border-gray-100">
-                                <td class="py-3 pl-[18px]">
+                            <tr wire:key="voucher-{{ $v['id'] }}" wire:click="openPreview({{ $v['id'] }})" class="cursor-pointer border-t border-gray-100 hover:bg-gray-50">
+                                <td class="py-3 pl-[18px]" x-on:click.stop>
                                     <input type="checkbox" value="{{ $v['id'] }}" x-model="selected" data-voucher
                                            aria-label="Select {{ $v['ref'] }}"
                                            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
@@ -223,8 +223,7 @@
                                 <td class="whitespace-nowrap px-2 py-3 text-right font-semibold">{{ $this->money($v['amount']) }}</td>
                                 <td class="whitespace-nowrap px-2 py-3 text-gray-500">{{ $v['by'] }}</td>
                                 <td class="whitespace-nowrap py-3 pr-[18px] text-right">
-                                    <button type="button" wire:click="postVoucher({{ $v['id'] }})"
-                                            wire:confirm="Post {{ $v['ref'] }}? Posted entries can't be edited."
+                                    <button type="button" wire:click.stop="openPreview({{ $v['id'] }})"
                                             class="font-semibold text-indigo-700 hover:text-indigo-900">Post</button>
                                 </td>
                             </tr>
@@ -402,4 +401,72 @@
             @endforelse
         </section>
     </div>
+
+    {{-- Voucher details (Posting Pending) --}}
+    @if ($previewId && ($pv = $this->preview))
+        @php
+            $pe = $pv['entry'];
+            $dot = ['ok' => ['✓', 'bg-[#d1fae5] text-[#065f46]'], 'warn' => ['!', 'bg-[#fef3c7] text-[#92400e]'], 'bad' => ['×', 'bg-[#fee2e2] text-[#991b1b]']];
+            $blocked = collect($pv['checks'])->contains('state', 'bad');
+        @endphp
+        <x-accounts.modal :title="$pe->ref() . ' · ' . $pv['type']" close="$set('previewId', null)" width="max-w-[640px]">
+            <div class="flex items-start justify-between gap-3">
+                <div class="grid grid-cols-[90px_1fr] gap-x-[10px] gap-y-[5px] text-[13px]">
+                    <span class="text-[#6b7280]">Party</span><span class="font-semibold">{{ $pv['party'] }}</span>
+                    <span class="text-[#6b7280]">Date</span><span>{{ $pe->entry_date->format('d M Y') }}</span>
+                    <span class="text-[#6b7280]">Account</span><span>{{ $pe->moneyAccount?->name ?? '—' }}</span>
+                    <span class="text-[#6b7280]">Note</span><span>{{ $pe->description ?: '—' }}</span>
+                    <span class="text-[#6b7280]">Created</span><span>{{ $pe->createdBy?->name ?? 'System' }} · {{ $pe->created_at->format('d M, g:i A') }}</span>
+                </div>
+                <div class="text-right"><div class="text-[11.5px] text-[#6b7280]">Amount</div><div class="text-[20px] font-bold">{{ $this->money((float) $pe->amount) }}</div></div>
+            </div>
+
+            <div>
+                <div class="mb-[6px] text-[12px] font-bold uppercase tracking-[0.04em] text-[#374151]">Journal lines</div>
+                <table class="w-full border border-[#eef0f3] text-[12.5px]">
+                    <thead><tr class="bg-[#f9fafb] text-left text-[#6b7280]"><th class="px-[10px] py-[7px] font-semibold">Account</th><th class="px-[10px] py-[7px] text-right font-semibold">Debit</th><th class="px-[10px] py-[7px] text-right font-semibold">Credit</th></tr></thead>
+                    <tbody>
+                        @foreach ($pv['lines'] as $l)
+                            <tr class="border-t border-[#f0f1f4]">
+                                <td class="px-[10px] py-[7px]">{{ $l['account'] }}{{ $l['party'] ? ' — ' . $l['party'] : '' }}@if ($l['memo'])<div class="text-[11px] text-[#6b7280]">{{ $l['memo'] }}</div>@endif</td>
+                                <td class="px-[10px] py-[7px] text-right">{{ $l['debit'] > 0 ? $this->money($l['debit']) : '' }}</td>
+                                <td class="px-[10px] py-[7px] text-right">{{ $l['credit'] > 0 ? $this->money($l['credit']) : '' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            @if ($pe->attachments->isNotEmpty())
+                <div>
+                    <div class="mb-[6px] text-[12px] font-bold uppercase tracking-[0.04em] text-[#374151]">Attachment</div>
+                    @foreach ($pe->attachments as $a)
+                        <a href="{{ route('accounts.vouchers.attachment', $a) }}" target="_blank" class="mr-3 text-[13px]">{{ $a->name }}</a>
+                    @endforeach
+                </div>
+            @endif
+
+            @if ($pv['pending'])
+                <div class="flex flex-col gap-[6px]">
+                    <div class="text-[12px] font-bold uppercase tracking-[0.04em] text-[#374151]">Post করার আগে</div>
+                    @foreach ($pv['checks'] as $c)
+                        <div class="flex items-center gap-[8px] rounded-[8px] bg-[#f9fafb] px-[10px] py-[7px] text-[13px]">
+                            <span class="flex h-[18px] w-[18px] flex-none items-center justify-center rounded-full text-[11px] font-bold {{ $dot[$c['state']][1] }}">{{ $dot[$c['state']][0] }}</span>{{ $c['text'] }}
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="rounded-[10px] bg-[#ecfdf5] px-[12px] py-[9px] text-[13px] text-[#065f46]">এই voucher ইতিমধ্যে {{ strtolower($pe->status->label()) }}।</div>
+            @endif
+
+            <x-slot:footer>
+                <a href="{{ route('accounts.posting', ['v' => $pe->id]) }}" wire:navigate class="mr-auto rounded-[9px] border border-[#e5e7eb] bg-white px-[14px] py-[10px] text-[13px] !text-[#374151]">Open in Posting Pending</a>
+                <button type="button" wire:click="$set('previewId', null)" class="rounded-[9px] border border-[#e5e7eb] bg-white px-[16px] py-[10px] text-[14px] text-[#374151]">Close</button>
+                @if ($pv['pending'])
+                    <button type="button" wire:click="postPreview" wire:loading.attr="disabled" @disabled($blocked)
+                        class="rounded-[9px] border-0 px-[20px] py-[10px] text-[14px] font-bold text-white {{ $blocked ? 'cursor-not-allowed bg-[#c7d2fe]' : 'bg-[#4f46e5]' }}">Post</button>
+                @endif
+            </x-slot:footer>
+        </x-accounts.modal>
+    @endif
 </div>
