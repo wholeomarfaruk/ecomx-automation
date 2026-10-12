@@ -41,4 +41,5 @@ applies it to open invoices / bills oldest-first.
 ## Progress
 - Done & committed locally (not pushed): 1–2 Settings/sidebar/helpers, 3 vouchers + Posting Pending + Transactions, 4 Cash & Bank, 5 Receivables, 6 Payables (PayablesSchedule, + Bill draft → bill with due date on post, bulk payment drafts, reschedule, recurring bills + `accounts:recurring-drafts` daily 06:00; posting a receipt/payment for a party on a kisti plan settles the kisti).
 - 7 Loans & EMI: plans table (loans, kisti sales, supplier kisti, staff advances), builder (KistiBuilder: ৳10 round-up, last absorbs), loan → draft receipt and active on post, support rule advance, late rules + `accounts:kisti-daily` 09:00.
-- Next: Expenses, Fixed Assets, Commission, Reports, dashboard links, remaining scheduler jobs, tests.
+- 8 Expenses: month view, categories vs budget (posted + draft), list with receipt status, quick add (draft / post, receipt above threshold, monthly repeat), recurring list.
+- Next: Fixed Assets, Commission, Reports, dashboard links, remaining scheduler jobs, tests.
