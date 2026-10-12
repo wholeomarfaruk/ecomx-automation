@@ -42,6 +42,20 @@ class Bdt
         return $intl ??= AccountsSettings::get('currency_format', 'lakh') === 'international';
     }
 
+    /** 5L, 1.5Cr, 20K — for tier labels. */
+    public static function short(int|float|null $amount): string
+    {
+        $a = abs((float) $amount);
+        $f = fn ($v) => rtrim(rtrim(number_format($v, 1), '0'), '.');
+
+        return match (true) {
+            $a >= 10000000 => $f($a / 10000000) . 'Cr',
+            $a >= 100000   => $f($a / 100000) . 'L',
+            $a >= 1000     => $f($a / 1000) . 'K',
+            default        => $f($a),
+        };
+    }
+
     /** Today / Yesterday / 3 days ago / 1 week ago / 3 weeks ago / 05 Oct */
     public static function relative(?CarbonInterface $at): string
     {

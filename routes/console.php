@@ -102,3 +102,15 @@ Artisan::command('accounts:depreciation-draft', function () {
 })->purpose('Create the monthly depreciation draft for the Accounts Panel')
     ->lastDayOfMonth('22:00')
     ->withoutOverlapping();
+
+// Accounts Panel: month-end commission / rebate accrual drafts
+// (Dr Sales rebate or Commission expense / Cr Rebate payable).
+Artisan::command('accounts:commission-accrual', function () {
+    $made = 0;
+    foreach (\App\Models\CommissionScheme::with('tiers')->where('status', 'active')->get() as $scheme) {
+        $made += (int) (bool) rescue(fn () => app(\App\Services\Accounts\Commission::class)->accrue($scheme, \Carbon\CarbonImmutable::today(), true));
+    }
+    $this->info("Commission accrual: {$made} draft(s).");
+})->purpose('Month-end commission accrual drafts for the Accounts Panel')
+    ->lastDayOfMonth('22:30')
+    ->withoutOverlapping();

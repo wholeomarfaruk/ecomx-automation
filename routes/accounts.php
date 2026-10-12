@@ -13,6 +13,7 @@ Route::get('/posting', App\Livewire\Accounts\PostingPending::class)->name('posti
 Route::get('/transactions', App\Livewire\Accounts\Transactions::class)->name('transactions');
 Route::get('/cash-bank', App\Livewire\Accounts\CashBank::class)->name('cash-bank');
 Route::get('/receivables', App\Livewire\Accounts\Receivables::class)->name('receivables');
+Route::get('/commission', App\Livewire\Accounts\Commission::class)->name('commission');
 Route::get('/payables', App\Livewire\Accounts\Payables::class)->name('payables');
 Route::get('/loans', App\Livewire\Accounts\LoansEmi::class)->name('loans');
 Route::get('/expenses', App\Livewire\Accounts\Expenses::class)->name('expenses');

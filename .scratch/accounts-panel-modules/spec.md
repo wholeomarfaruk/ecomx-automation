@@ -43,4 +43,5 @@ applies it to open invoices / bills oldest-first.
 - 7 Loans & EMI: plans table (loans, kisti sales, supplier kisti, staff advances), builder (KistiBuilder: ৳10 round-up, last absorbs), loan → draft receipt and active on post, support rule advance, late rules + `accounts:kisti-daily` 09:00.
 - 8 Expenses: month view, categories vs budget (posted + draft), list with receipt status, quick add (draft / post, receipt above threshold, monthly repeat), recurring list.
 - 9 Fixed Assets: register (code, category, location, assignee, warranty, reminders), detail panel, monthly depreciation draft (+ `accounts:depreciation-draft` month end), repair / dispose drafts; asset updates on post.
-- Next: Commission, Reports, dashboard links, remaining scheduler jobs, tests.
+- 10 Commission & Rebate: schemes (tiers whole/slab, exclusion rules, eligibility, settlement method, accounting), live recalculation while editing, exclusions with reasons, settlement + advance drafts, statements SMS, `accounts:commission-accrual` month end.
+- Next: Reports, dashboard links, remaining scheduler jobs, tests.
