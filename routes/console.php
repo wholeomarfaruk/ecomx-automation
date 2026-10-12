@@ -131,3 +131,12 @@ Artisan::command('accounts:auto-close-day', function () {
 })->purpose('Auto-close the Accounts Panel day at 23:59')
     ->dailyAt('23:59')
     ->withoutOverlapping();
+
+// Accounts Panel: delivered / returned orders post themselves every hour when
+// "Auto-post" is on (Posting Pending › Orders). Blocked orders are left alone.
+Artisan::command('accounts:post-orders', function () {
+    [$posted, $skipped] = app(\App\Services\Accounts\OrderPosting::class)->runAuto();
+    $this->info("Orders posted: {$posted}" . ($skipped ? ' · skipped ' . count($skipped) : ''));
+})->purpose('Auto-post delivered / returned orders to the Accounts Panel')
+    ->hourlyAt(15)
+    ->withoutOverlapping();

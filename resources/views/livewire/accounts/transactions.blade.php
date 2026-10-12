@@ -164,6 +164,12 @@
                 <div class="flex flex-col gap-[16px] px-[18px] py-[14px]">
                     <div class="grid grid-cols-[96px_1fr] gap-x-[10px] gap-y-[6px] text-[13px]">
                         <span class="text-[#6b7280]">Party</span><span class="font-semibold">{{ $p['party'] }}</span>
+                        @if ($cur->source_type === \App\Models\Order::class && $cur->source_id)
+                            <span class="text-[#6b7280]">Order</span>
+                            <span><a href="{{ route('admin.sales.orders.show', $cur->source_id) }}" target="_blank" class="font-semibold">#{{ $cur->source_id }}</a>
+                                <span class="text-[#d1d5db]"> · </span><a href="#" wire:click.prevent="$set('q', '#{{ $cur->source_id }}')">All entries of this order</a>
+                                @if (Route::has('admin.accounts.reports.order-ledger'))<span class="text-[#d1d5db]"> · </span><a href="{{ route('admin.accounts.reports.order-ledger', $cur->source_id) }}" target="_blank">Order ledger</a>@endif</span>
+                        @endif
                         <span class="text-[#6b7280]">Account</span><span>{{ $p['account'] }}</span>
                         <span class="text-[#6b7280]">Note</span><span>{{ $cur->description ?: '—' }}</span>
                         <span class="text-[#6b7280]">Created</span><span>{{ $cur->createdBy?->name ?? 'System' }} · {{ $cur->created_at->format('g:i A') }}</span>

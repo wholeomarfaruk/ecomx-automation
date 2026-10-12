@@ -293,7 +293,7 @@ class PostOrderReturn
     /**
      * @return array{0: float, 1: float}
      */
-    protected function newlyReturnedAmounts(Order $order): array
+    public function newlyReturnedAmounts(Order $order): array
     {
         $saleAmount = 0.0;
         $costAmount = 0.0;

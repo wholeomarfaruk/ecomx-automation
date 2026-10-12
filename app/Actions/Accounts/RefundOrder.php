@@ -52,6 +52,9 @@ class RefundOrder
                 'entry_date'       => $entryDate,
                 'description'      => $description ?? "Refund for Order #{$order->id}" . ($asStoreCredit ? ' (store credit)' : ''),
                 'transaction_type' => ($asStoreCredit ? TransactionType::CREDIT_NOTE : TransactionType::REFUND)->value,
+                // Linked to the order so its ledger, reversal and lookups find it.
+                'source_type'      => Order::class,
+                'source_id'        => $order->id,
             ], [
                 [
                     'account_id'     => $salesReturnAccountId,

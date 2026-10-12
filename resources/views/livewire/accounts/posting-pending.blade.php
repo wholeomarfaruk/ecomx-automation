@@ -22,6 +22,8 @@
      class="acc-profiles box-border flex w-full max-w-[1480px] flex-col gap-[18px]">
 
     <x-accounts.page-head title="পোস্টিং বাকি · Posting Pending" subtitle="Draft entry balance, লাভ বা report-এ ধরা হয় না। Review করে post করুন।">
+        @php $oc = app(\App\Services\Accounts\OrderPosting::class)->counts(); @endphp
+        <a href="{{ route('accounts.posting.orders') }}" wire:navigate class="rounded-[8px] border px-[14px] py-[9px] text-[13px] {{ $oc['sales'] + $oc['returns'] ? 'border-[#fde68a] bg-[#fffbeb] font-semibold !text-[#92400e]' : 'border-[#e5e7eb] bg-white !text-[#374151]' }}">Orders to post · {{ $oc['sales'] + $oc['returns'] }}</a>
         <a href="#rules" class="rounded-[8px] border border-[#e5e7eb] bg-white px-[14px] py-[9px] text-[13px] !text-[#374151]">Posting rules</a>
         <button type="button" wire:click="$dispatch('voucher-form', { type: 'receipt' })" class="rounded-[8px] bg-[#4f46e5] px-[16px] py-[9px] text-[13px] font-semibold text-white">+ New voucher</button>
     </x-accounts.page-head>

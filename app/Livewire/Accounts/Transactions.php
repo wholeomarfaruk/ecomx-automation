@@ -157,7 +157,9 @@ class Transactions extends Component
             $q->where(fn ($w) => $w->where('voucher_ref', 'like', "%{$s}%")->orWhere('entry_number', 'like', "%{$s}%")
                 ->orWhere('description', 'like', "%{$s}%")->orWhere('party_label', 'like', "%{$s}%")
                 ->orWhereHas('profile', fn ($p) => $p->where('display_name', 'like', "%{$s}%"))
-                ->when(is_numeric($s), fn ($w) => $w->orWhere('amount', (float) $s)));
+                ->when(is_numeric($s), fn ($w) => $w->orWhere('amount', (float) $s))
+                // "#123" or "order 123" finds every journal of that order.
+                ->when(preg_match('/^(?:#|order\s*#?)\s*(\d+)$/i', $s, $m), fn ($w) => $w->orWhere(fn ($o) => $o->where('source_type', \App\Models\Order::class)->where('source_id', (int) $m[1]))));
         }
 
         return $q;

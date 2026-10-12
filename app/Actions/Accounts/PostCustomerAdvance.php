@@ -34,6 +34,8 @@ class PostCustomerAdvance
                 'entry_date'       => $entryDate,
                 'description'      => $description ?? "Advance received — Order #{$order->id}",
                 'transaction_type' => TransactionType::CUSTOMER_ADVANCE->value,
+                'source_type'      => Order::class,
+                'source_id'        => $order->id,
             ], [
                 ['account_id' => $cashAccountId, 'debit' => $amount],
                 [

@@ -777,6 +777,12 @@ class Dashboard extends Component
             $alerts[] = ['title' => "{$drafts} vouchers waiting to post", 'text' => $stale ? "{$stale}টা ২ দিনের বেশি পুরনো — Not counted in profit until posted" : 'Not counted in profit until posted', 'tone' => $stale ? 'red' : 'amber'];
         }
 
+        // Delivered / returned orders not in the books yet.
+        $oc = app(\App\Services\Accounts\OrderPosting::class)->counts();
+        if ($oc['sales'] + $oc['returns'] > 0) {
+            $alerts[] = ['title' => ($oc['sales'] + $oc['returns']) . ' order post বাকি', 'text' => "{$oc['sales']} delivered sale · {$oc['returns']} return — Posting Pending › Orders", 'tone' => 'amber'];
+        }
+
         // Yesterday's day not closed.
         $yesterday = $today->copy()->subDay()->toDateString();
         $closing = \App\Models\DayClosing::latestFor($yesterday);

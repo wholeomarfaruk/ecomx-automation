@@ -235,6 +235,11 @@
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{ $order->fulfillment_status->badgeClass() }}">
                                     {{ $order->fulfillment_status->label() }}
                                 </span>
+                                @if($accountsOn && $order->customer_id && $order->status === \App\Enums\Sales\OrderStatus::DELIVERED)
+                                    <div class="mt-1 text-[11px] font-medium {{ $order->sale_posted ? 'text-emerald-600' : 'text-amber-600' }}" title="{{ $order->sale_posted ? 'Sale is in the books' : 'Delivered — sale not posted yet (Accounts › Orders to post)' }}">
+                                        {{ $order->sale_posted ? '✓ Posted' : '● Not posted' }}
+                                    </div>
+                                @endif
                             </td>
                             <td class="px-5 py-3 text-center">
                                 @if($order->courier_status)

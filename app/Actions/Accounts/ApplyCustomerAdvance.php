@@ -52,6 +52,8 @@ class ApplyCustomerAdvance
                 'entry_date'       => $entryDate,
                 'description'      => $description ?? "Advance applied — Order #{$invoice->order_id}",
                 'transaction_type' => TransactionType::CUSTOMER_ADVANCE->value,
+                'source_type'      => $invoice->order_id ? \App\Models\Order::class : null,
+                'source_id'        => $invoice->order_id,
             ], [
                 [
                     'account_id'     => $advanceAccountId,

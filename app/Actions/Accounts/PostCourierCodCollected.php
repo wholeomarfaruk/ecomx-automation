@@ -12,6 +12,7 @@ use App\Models\AccountsCustomerInvoice;
 use App\Models\AccountsPaymentAllocation;
 use App\Models\CourierShipment;
 use App\Models\Customer;
+use App\Models\Order;
 use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 
@@ -115,6 +116,8 @@ class PostCourierCodCollected
                 'entry_date'       => $entryDate,
                 'description'      => $description,
                 'transaction_type' => TransactionType::COD_SETTLEMENT->value,
+                'source_type'      => Order::class,
+                'source_id'        => $order->id,
             ], $lines);
 
             if ($invoice) {

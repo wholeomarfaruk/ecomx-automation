@@ -10,6 +10,7 @@ Route::redirect('/', '/accounts/dashboard');
 Route::get('/dashboard', App\Livewire\Accounts\Dashboard::class)->name('dashboard');
 Route::get('/settings', App\Livewire\Accounts\Settings::class)->name('settings');
 Route::get('/posting', App\Livewire\Accounts\PostingPending::class)->name('posting');
+Route::get('/posting/orders', App\Livewire\Accounts\OrderPostings::class)->name('posting.orders');
 Route::get('/transactions', App\Livewire\Accounts\Transactions::class)->name('transactions');
 Route::get('/cash-bank', App\Livewire\Accounts\CashBank::class)->name('cash-bank');
 Route::get('/receivables', App\Livewire\Accounts\Receivables::class)->name('receivables');

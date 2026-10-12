@@ -334,6 +334,8 @@ class Orders extends Component
         $orders = $this->filteredOrders()
             ->with('customer', 'shippingAddress')
             ->withCount('items')
+            // Accounts: is this order's sale in the books yet? (badge under Fulfillment)
+            ->withExists(['journalEntries as sale_posted' => fn ($q) => $q->where('purpose', 'like', 'sale%')->where('status', 'posted')])
             ->orderByDesc('id')
             ->paginate(20);
 
@@ -421,6 +423,7 @@ class Orders extends Component
 
         return view('livewire.admin.sales.orders', [
             'orders'          => $orders,
+            'accountsOn'      => \App\Services\Accounts\OrderPosting::accountsOn(),
             'fraudEnabled'    => $fraudEnabled,
             'fraudChecks'     => $fraudChecks,
             'fraudAutoCheck'  => $fraudEnabled && $fraudSettings->autoCheckList()
