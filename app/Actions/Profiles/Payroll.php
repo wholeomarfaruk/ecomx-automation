@@ -4,6 +4,7 @@ namespace App\Actions\Profiles;
 
 use App\Actions\Accounts\PostJournalEntry;
 use App\Enums\Accounts\TransactionType;
+use App\Models\JournalEntry;
 use App\Models\EmployeeAdvance;
 use App\Models\MasterProfile;
 use App\Models\PayrollItem;
@@ -159,7 +160,8 @@ class Payroll
     public function pay(MasterProfile $employee, float $amount, int $cashAccountId, string $date): void
     {
         DB::transaction(function () use ($employee, $amount, $cashAccountId, $date) {
-            $items = PayrollItem::where('master_profile_id', $employee->id)->where('status', '!=', 'paid')
+            // Both tables have status / ids — qualify every column of the join.
+            $items = PayrollItem::where('payroll_items.master_profile_id', $employee->id)->where('payroll_items.status', '!=', 'paid')
                 ->join('payroll_runs', 'payroll_runs.id', '=', 'payroll_items.payroll_run_id')
                 ->orderBy('payroll_runs.month')->select('payroll_items.*')->get();
 
@@ -200,6 +202,67 @@ class Payroll
             }
 
             $employee->logActivity('salary', 'Salary paid ' . Bdt::money($amount), ['entry_id' => $entry->id]);
+        });
+    }
+
+    /**
+     * Change one employee's salary / bonus on a prepared payroll. The advance
+     * deduction stays; the difference in what's owed is posted as an
+     * adjustment (Dr Salary expense / Cr Salary payable, or the reverse), and
+     * the net can't go below what's already been paid.
+     */
+    public function updateItem(PayrollItem $item, float $salary, float $bonus, ?string $note = null): ?JournalEntry
+    {
+        return DB::transaction(function () use ($item, $salary, $bonus, $note) {
+            $item = PayrollItem::with(['run', 'profile'])->lockForUpdate()->findOrFail($item->id);
+            $salary = round(max(0, $salary), 2);
+            $bonus = round(max(0, $bonus), 2);
+            $net = round($salary + $bonus - (float) $item->advance_deduction, 2);
+
+            if ($net + 0.005 < (float) $item->paid_amount) {
+                throw new RuntimeException('Net ' . Bdt::money($net) . ' would be less than the ' . Bdt::money($item->paid_amount) . ' already paid.');
+            }
+            if ($net < -0.005) {
+                throw new RuntimeException('Salary + bonus must be at least the advance deducted (' . Bdt::money($item->advance_deduction) . ').');
+            }
+
+            $delta = round($net - (float) $item->net, 2);
+            $entry = null;
+            if (abs($delta) >= 0.01) {
+                $emp = $item->profile;
+                $sub = ['subledger_type' => MasterProfile::class, 'subledger_id' => $item->master_profile_id];
+                $expense = $this->accounts->require(LedgerAccounts::SALARY_EXPENSE);
+                $payable = $this->accounts->require(LedgerAccounts::SALARY_PAYABLE);
+                $entry = $this->postJournalEntry->handle([
+                    'entry_date'       => today()->toDateString(),
+                    'description'      => $item->run->month->format('F Y') . ' payroll adjustment — ' . ($emp?->display_name ?? 'Employee') . ($note ? " · {$note}" : ''),
+                    'transaction_type' => TransactionType::SALARY->value,
+                    'source_type'      => PayrollRun::class,
+                    'source_id'        => $item->payroll_run_id,
+                    'purpose'          => 'payroll_adjust_' . $item->id . '_' . now()->format('YmdHisv'),
+                ], $delta > 0
+                    ? [['account_id' => $expense, 'debit' => $delta, 'memo' => $emp?->display_name], ['account_id' => $payable, 'credit' => $delta] + $sub]
+                    : [['account_id' => $payable, 'debit' => abs($delta)] + $sub, ['account_id' => $expense, 'credit' => abs($delta), 'memo' => $emp?->display_name]]);
+            }
+
+            $item->update([
+                'salary' => $salary, 'bonus' => $bonus, 'net' => $net,
+                'status' => (float) $item->paid_amount + 0.005 >= $net ? 'paid' : ((float) $item->paid_amount > 0 ? 'partial' : 'unpaid'),
+            ]);
+
+            $run = $item->run;
+            $items = $run->items()->get();
+            $runNet = round((float) $items->sum('net'), 2);
+            $runPaid = round((float) $items->sum('paid_amount'), 2);
+            $run->update([
+                'gross' => round((float) $items->sum('salary'), 2), 'bonus' => round((float) $items->sum('bonus'), 2), 'net' => $runNet, 'paid' => $runPaid,
+                'status' => $runPaid + 0.005 >= $runNet ? 'paid' : ($runPaid > 0 ? 'partial' : 'prepared'),
+            ]);
+
+            $item->profile?->logActivity('salary', $run->month->format('F Y') . ' payroll changed: salary ' . Bdt::money($salary) . ', bonus ' . Bdt::money($bonus)
+                . ($entry ? " · adjustment {$entry->entry_number}" : ''));
+
+            return $entry;
         });
     }
 
