@@ -15,6 +15,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\RecurringExpense;
 use App\Models\Setting;
+use App\Support\AccountsSettings;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
@@ -731,10 +732,34 @@ class Dashboard extends Component
         }
 
         if ($drafts = JournalEntry::where('status', JournalEntryStatus::DRAFT)->count()) {
-            $alerts[] = ['title' => "{$drafts} vouchers waiting to post", 'text' => 'Not counted in profit until posted', 'tone' => 'amber'];
+            $stale = AccountsSettings::alert('stale_voucher') ? JournalEntry::where('status', JournalEntryStatus::DRAFT)->where('created_at', '<', now()->subDays(2))->count() : 0;
+            $alerts[] = ['title' => "{$drafts} vouchers waiting to post", 'text' => $stale ? "{$stale}টা ২ দিনের বেশি পুরনো — Not counted in profit until posted" : 'Not counted in profit until posted', 'tone' => $stale ? 'red' : 'amber'];
         }
 
-        if ($next = $this->loans['next_week']) {
+        // Yesterday's day not closed.
+        $yesterday = $today->copy()->subDay()->toDateString();
+        $closing = \App\Models\DayClosing::latestFor($yesterday);
+        if (! $closing || $closing->status === 'open') {
+            $alerts[] = ['title' => 'গতকালের হিসাব close হয়নি', 'text' => 'Reports › Daily report থেকে checklist দেখে close করুন', 'tone' => 'amber'];
+        }
+
+        // Cash counted short / over and not recorded.
+        $diff = (float) \App\Models\CashCount::whereNull('adjustment_journal_entry_id')->where('count_date', '>=', $today->copy()->subDays(7)->toDateString())->sum('difference');
+        if (abs($diff) >= 1) {
+            $alerts[] = ['title' => 'Cash count-এ ' . $this->money(abs($diff)) . ($diff < 0 ? ' কম' : ' বেশি'), 'text' => 'Cash & Bank থেকে adjustment record করুন', 'tone' => 'amber'];
+        }
+
+        // Expense categories over budget this month.
+        $over = \App\Services\Accounts\ExpenseCategories::all()->filter(fn ($c) => (float) $c->monthly_budget > 0)->filter(function ($c) use ($today) {
+            $spent = (float) \App\Models\JournalEntryLine::where('account_id', $c->id)->whereHas('journalEntry', fn ($q) => $q->where('status', 'posted')->where('entry_date', '>=', $today->copy()->startOfMonth()->toDateString()))->sum(DB::raw('debit - credit'));
+
+            return $spent > (float) $c->monthly_budget;
+        });
+        if ($over->isNotEmpty()) {
+            $alerts[] = ['title' => $over->count() . ' category budget পার', 'text' => $over->pluck('name')->take(3)->implode(', '), 'tone' => 'amber'];
+        }
+
+        if (AccountsSettings::alert('emi_3_days') && ($next = $this->loans['next_week'])) {
             $days = (int) $today->diffInDays(Carbon::parse($next['due']));
             $alerts[] = [
                 'title' => $next['party'] . ' EMI ' . ($days === 0 ? 'today' : "in {$days} days"),
@@ -751,7 +776,7 @@ class Dashboard extends Component
             $alerts[] = ['title' => 'Old customer due', 'text' => $this->money($overdue) . ' unpaid for 60+ days', 'tone' => 'red'];
         }
 
-        return array_slice($alerts, 0, 5);
+        return array_slice($alerts, 0, 6);
     }
 
     /* ------------------------------------------------------------------

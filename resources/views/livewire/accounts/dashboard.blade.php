@@ -183,7 +183,7 @@
                     </span>
                 </div>
                 <div class="flex gap-2">
-                    <a href="{{ $link('admin.accounts.settings.journal-entries') }}" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] text-gray-700 hover:bg-gray-50">Review all</a>
+                    <a href="{{ $link('accounts.posting') }}" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] text-gray-700 hover:bg-gray-50">Review all</a>
                     <button type="button" @click="$wire.postSelected(selected); selected = []" wire:loading.attr="disabled"
                             disabled :disabled="selected.length === 0"
                             class="rounded-lg bg-indigo-600 px-3.5 py-2 text-[13px] font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50">
@@ -261,7 +261,7 @@
         <div class="flex flex-col gap-3 border-b border-gray-100 px-[18px] py-3.5">
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <h2 class="text-[15px] font-bold">কিস্তি ও EMI · Installments</h2>
-                <a href="{{ $link('admin.accounts.loans.index') }}" class="text-[13px] font-semibold text-indigo-700 hover:text-indigo-900">+ New EMI rule</a>
+                <a href="{{ $link('accounts.loans') . '#new-plan' }}" class="text-[13px] font-semibold text-indigo-700 hover:text-indigo-900">+ New EMI rule</a>
             </div>
             <div role="group" aria-label="Frequency" class="flex flex-wrap gap-1.5">
                 @foreach (\App\Livewire\Accounts\Dashboard::FREQUENCIES as $f)
@@ -316,7 +316,7 @@
         <section class="flex flex-col gap-3.5 rounded-2xl border border-gray-200 bg-white px-[18px] py-4">
             <div class="flex items-center justify-between">
                 <h2 class="text-[15px] font-bold">বাকি কত দিনের · Due Aging</h2>
-                <a href="{{ $link('admin.accounts.receivables.index') }}" class="text-[13px] text-indigo-700 hover:text-indigo-900">View all</a>
+                <a href="{{ $link('accounts.receivables') }}" class="text-[13px] text-indigo-700 hover:text-indigo-900">View all</a>
             </div>
             @foreach ($this->aging as $g)
                 <div class="flex flex-col gap-1.5">
@@ -329,7 +329,7 @@
         <section class="flex flex-col rounded-2xl border border-gray-200 bg-white px-[18px] py-4">
             <div class="flex items-center justify-between pb-2">
                 <h2 class="text-[15px] font-bold">দিতে হবে শীঘ্রই · Payables</h2>
-                <a href="{{ $link('admin.accounts.payables.index') }}" class="text-[13px] text-indigo-700 hover:text-indigo-900">View all</a>
+                <a href="{{ $link('accounts.payables') }}" class="text-[13px] text-indigo-700 hover:text-indigo-900">View all</a>
             </div>
             @foreach ($this->payables as $p)
                 <div class="flex items-center justify-between border-t border-gray-100 py-2.5">
@@ -345,7 +345,7 @@
         <section class="flex flex-col rounded-2xl border border-gray-200 bg-white px-[18px] py-4">
             <div class="flex items-center justify-between pb-2">
                 <h2 class="text-[15px] font-bold">Cash &amp; Bank</h2>
-                <a href="{{ $link('admin.accounts.cash-accounts.index') }}" class="text-[13px] text-indigo-700 hover:text-indigo-900">Transfer</a>
+                <a href="{{ $link('accounts.cash-bank') . '#transfer' }}" class="text-[13px] text-indigo-700 hover:text-indigo-900">Transfer</a>
             </div>
             @foreach ($this->accounts as $a)
                 <div class="flex items-center justify-between border-t border-gray-100 py-2.5">
@@ -362,7 +362,7 @@
         <section class="min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white xl:col-span-2">
             <div class="flex items-center justify-between border-b border-gray-100 px-[18px] py-3.5">
                 <h2 class="text-[15px] font-bold">আজকের লেনদেন</h2>
-                <a href="{{ $link('admin.accounts.transactions') }}" class="text-[13px] text-indigo-700 hover:text-indigo-900">সব দেখুন</a>
+                <a href="{{ $link('accounts.transactions') }}" class="text-[13px] text-indigo-700 hover:text-indigo-900">সব দেখুন</a>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full min-w-[560px] border-collapse text-[13px]">
