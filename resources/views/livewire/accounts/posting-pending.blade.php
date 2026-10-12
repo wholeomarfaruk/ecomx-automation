@@ -44,6 +44,9 @@
         </div>
     @endif
 
+    {{-- Delivered / returned orders waiting to post --}}
+    @livewire('accounts.order-postings-card', ['limit' => 10], key('pp-orders'))
+
     <div class="flex flex-wrap items-start gap-[16px]">
 
         {{-- Queue --}}

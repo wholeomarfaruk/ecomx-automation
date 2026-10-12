@@ -236,9 +236,11 @@
                                     {{ $order->fulfillment_status->label() }}
                                 </span>
                                 @if($accountsOn && $order->customer_id && $order->status === \App\Enums\Sales\OrderStatus::DELIVERED)
-                                    <div class="mt-1 text-[11px] font-medium {{ $order->sale_posted ? 'text-emerald-600' : 'text-amber-600' }}" title="{{ $order->sale_posted ? 'Sale is in the books' : 'Delivered — sale not posted yet (Accounts › Orders to post)' }}">
-                                        {{ $order->sale_posted ? '✓ Posted' : '● Not posted' }}
-                                    </div>
+                                    @if($order->sale_posted)
+                                        <div class="mt-1 text-[11px] font-medium text-emerald-600" title="Sale is in the books">✓ Posted</div>
+                                    @else
+                                        <a href="{{ route('accounts.posting.orders') }}" class="mt-1 block text-[11px] font-medium text-amber-600 hover:text-amber-800 hover:underline" title="Delivered — sale not posted yet. Click to post.">● Not posted</a>
+                                    @endif
                                 @endif
                             </td>
                             <td class="px-5 py-3 text-center">

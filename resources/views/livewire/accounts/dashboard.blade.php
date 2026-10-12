@@ -165,6 +165,9 @@
         </div>
     </section>
 
+    {{-- Delivered / returned orders waiting to post (hidden when none) --}}
+    @livewire('accounts.order-postings-card', ['limit' => 5], key('dash-orders'))
+
     {{-- Posting pending + Master profiles --}}
     <div class="grid grid-cols-1 items-start gap-4 xl:grid-cols-3">
 
