@@ -16,6 +16,7 @@ Route::get('/receivables', App\Livewire\Accounts\Receivables::class)->name('rece
 Route::get('/payables', App\Livewire\Accounts\Payables::class)->name('payables');
 Route::get('/loans', App\Livewire\Accounts\LoansEmi::class)->name('loans');
 Route::get('/expenses', App\Livewire\Accounts\Expenses::class)->name('expenses');
+Route::get('/fixed-assets', App\Livewire\Accounts\FixedAssets::class)->name('fixed-assets');
 Route::get('/vouchers/{entry}/print', [App\Http\Controllers\Accounts\VoucherController::class, 'print'])->name('vouchers.print');
 Route::get('/vouchers/attachments/{attachment}', [App\Http\Controllers\Accounts\VoucherController::class, 'attachment'])->name('vouchers.attachment');
 

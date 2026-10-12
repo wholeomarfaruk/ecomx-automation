@@ -782,6 +782,10 @@ class Vouchers
     {
         $meta = (array) ($entry->meta ?? []);
 
+        if (! empty($meta['depreciation']) || ! empty($meta['disposal'])) {
+            FixedAssets::afterPost($entry, $meta);
+        }
+
         // A loan from the Loans & EMI builder turns active once its money is received.
         if ($entry->source_type === \App\Models\Loan::class && $entry->purpose === 'loan_received') {
             \App\Models\Loan::whereKey($entry->source_id)->where('status', 'pending')->update(['status' => 'active']);

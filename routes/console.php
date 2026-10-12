@@ -89,3 +89,16 @@ Artisan::command('accounts:kisti-daily', function () {
 })->purpose('Kisti reminders and late rules for the Accounts Panel')
     ->dailyAt('09:00')
     ->withoutOverlapping();
+
+// Accounts Panel: month-end depreciation draft for assets in use (skipped
+// when the month's run already exists).
+Artisan::command('accounts:depreciation-draft', function () {
+    try {
+        $entry = app(\App\Services\Accounts\FixedAssets::class)->run(\Carbon\CarbonImmutable::today(), true);
+        $this->info("Depreciation draft {$entry->ref()} created.");
+    } catch (\RuntimeException $e) {
+        $this->info($e->getMessage());
+    }
+})->purpose('Create the monthly depreciation draft for the Accounts Panel')
+    ->lastDayOfMonth('22:00')
+    ->withoutOverlapping();

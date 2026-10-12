@@ -13,6 +13,7 @@ class FixedAsset extends Model
         'name', 'category_account_id', 'cost', 'purchase_date',
         'useful_life_months', 'salvage_value', 'method',
         'accumulated_depreciation', 'status', 'journal_entry_id',
+        'code', 'category', 'location', 'assigned_profile_id', 'vendor', 'warranty_until', 'in_repair_since', 'reminders',
     ];
 
     protected function casts(): array
@@ -22,12 +23,20 @@ class FixedAsset extends Model
             'purchase_date'             => 'date',
             'salvage_value'             => 'decimal:2',
             'accumulated_depreciation'  => 'decimal:2',
+            'warranty_until'            => 'date',
+            'in_repair_since'           => 'date',
+            'reminders'                 => 'array',
         ];
     }
 
     public function categoryAccount(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'category_account_id');
+    }
+
+    public function assignee(): BelongsTo
+    {
+        return $this->belongsTo(MasterProfile::class, 'assigned_profile_id');
     }
 
     public function purchaseJournalEntry(): BelongsTo
