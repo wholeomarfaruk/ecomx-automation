@@ -45,4 +45,5 @@ applies it to open invoices / bills oldest-first.
 - 9 Fixed Assets: register (code, category, location, assignee, warranty, reminders), detail panel, monthly depreciation draft (+ `accounts:depreciation-draft` month end), repair / dispose drafts; asset updates on post.
 - 10 Commission & Rebate: schemes (tiers whole/slab, exclusion rules, eligibility, settlement method, accounting), live recalculation while editing, exclusions with reasons, settlement + advance drafts, statements SMS, `accounts:commission-accrual` month end.
 - 11 Reports: 15 reports (P&L vs previous, BS with balanced check, TB, cash flow, cash/bank/day book, party ledger, sales, stock, aging x2, expense, loan schedule, payroll) with Excel (CSV) / PDF (print copy) / print; daily report with checklist, close & save (snapshot + archived copy, versioned reopen), auto-close 23:59; saved reports (schedule, recipients, channels; queued runs; archive).
-- Next: dashboard links, remaining scheduler jobs, tests.
+- 12 Dashboard links + rule-based alerts; unit tests for kisti / commission / report periods (tests/Unit/Accounts, pass); assets rebuilt.
+- Not done: DB feature tests (no local MySQL), credit-limit blocking in POS / sales flows.
