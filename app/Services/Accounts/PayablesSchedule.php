@@ -42,7 +42,7 @@ class PayablesSchedule
             ->merge($this->supplierRows($drafts))
             ->merge($this->loanRows($until, $drafts))
             ->merge($this->salaryRows($drafts))
-            ->merge($this->billRows($until))
+            ->merge($this->billRows($until, $drafts))
             ->filter(fn ($r) => $r['amount'] > 0.5 && $r['due']->lte($until))
             ->sortBy(fn ($r) => $r['due']->timestamp)
             ->values();
@@ -67,7 +67,7 @@ class PayablesSchedule
         foreach (AccountsSupplierBill::with('supplierInvoice:id,invoice_number,serial_number,notes,invoice_date')
             ->whereIn('status', ['open', 'partial'])->get() as $bill) {
             $pid = $supplierIds[$bill->supplier_id] ?? null;
-            if (! $pid || in_array($pid, $kistiProfiles, true)) {
+            if (! $pid || in_array($pid, $kistiProfiles)) {
                 continue;
             }
             $p = $profiles[$pid] ?? null;
@@ -79,7 +79,7 @@ class PayablesSchedule
                 'key' => "bill-{$bill->id}", 'src' => 'supplier', 'payee' => $p?->display_name ?? 'Supplier', 'profile_id' => $pid,
                 'due' => $bill->due_date ? CarbonImmutable::parse($bill->due_date) : $billDate->addDays(is_numeric($terms) ? (int) $terms : 0),
                 'for' => trim(($inv ? ($inv->invoice_number ?: 'PUR-' . str_pad((string) $inv->serial_number, 4, '0', STR_PAD_LEFT)) : 'Bill #' . $bill->id) . ($inv?->notes ? ' · ' . \Illuminate\Support\Str::limit($inv->notes, 28) : '')),
-                'amount' => $bill->amountDue(), 'ref' => ['type' => 'bill', 'id' => $bill->id], 'draft' => null,
+                'amount' => $bill->amountDue(), 'ref' => ['type' => 'bill', 'id' => $bill->id], 'draft' => $drafts[AccountsSupplierBill::class . '|' . $bill->id] ?? null,
             ]);
         }
 
@@ -90,7 +90,7 @@ class PayablesSchedule
                 $out->push([
                     'key' => "kisti-{$k->id}", 'src' => 'supplier', 'payee' => $plan->profile?->display_name ?? 'Supplier', 'profile_id' => $plan->master_profile_id,
                     'due' => CarbonImmutable::parse($k->due_date), 'for' => "Kisti {$k->no}/{$plan->count}" . ($plan->reference ? " · {$plan->reference}" : ''),
-                    'amount' => round((float) $k->adjusted_amount - (float) $k->paid_amount, 2), 'ref' => ['type' => 'kisti', 'id' => $k->id], 'draft' => null,
+                    'amount' => round((float) $k->adjusted_amount - (float) $k->paid_amount, 2), 'ref' => ['type' => 'kisti', 'id' => $k->id], 'draft' => $drafts[\App\Models\Installment::class . '|' . $k->id] ?? null,
                 ]);
             }
         }
@@ -100,10 +100,10 @@ class PayablesSchedule
         $balances = app(ProfileBalances::class)->forProfiles($profiles->keys()->all());
         foreach ($balances as $pid => $b) {
             $rest = round((float) $b->payable - (float) ($billed[$pid] ?? 0), 2);
-            if ($rest > 0.5 && ! in_array($pid, $kistiProfiles, true)) {
+            if ($rest > 0.5 && ! in_array($pid, $kistiProfiles)) {
                 $out->push([
                     'key' => "bal-{$pid}", 'src' => 'supplier', 'payee' => $profiles[$pid]->display_name, 'profile_id' => $pid,
-                    'due' => CarbonImmutable::today(), 'for' => 'Balance without a bill', 'amount' => $rest, 'ref' => ['type' => 'balance', 'id' => $pid], 'draft' => null,
+                    'due' => CarbonImmutable::today(), 'for' => 'Balance without a bill', 'amount' => $rest, 'ref' => ['type' => 'balance', 'id' => $pid], 'draft' => $drafts[MasterProfile::class . '|' . $pid] ?? null,
                 ]);
             }
         }
@@ -158,7 +158,7 @@ class PayablesSchedule
         return $out;
     }
 
-    protected function billRows(CarbonImmutable $until): Collection
+    protected function billRows(CarbonImmutable $until, Collection $drafts): Collection
     {
         return RecurringExpense::with('account:id,name')->where('is_active', true)->where('next_run_date', '<=', $until->toDateString())->get()
             ->map(fn ($r) => [

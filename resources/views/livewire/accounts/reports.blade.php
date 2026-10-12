@@ -112,7 +112,7 @@
                 @php $d = $this->daily; $cl = $this->closing; $closed = $cl && $cl->status !== 'open'; @endphp
                 <div class="flex flex-wrap items-center gap-[10px] border-b border-[#f0f1f4] px-[20px] py-[16px]">
                     <label for="dr-date" class="text-[13px] font-semibold">তারিখ</label>
-                    <input id="dr-date" type="date" wire:model.live="date" value="{{ $this->day()->toDateString() }}" max="{{ today()->toDateString() }}" class="rounded-[8px] border border-[#d1d5db] px-[10px] py-[8px] text-[13px]">
+                    <input id="dr-date" type="date" wire:model.live="date" max="{{ today()->toDateString() }}" class="rounded-[8px] border border-[#d1d5db] px-[10px] py-[8px] text-[13px]">
                     @if ($closed)
                         <span class="rounded-[6px] bg-[#d1fae5] px-[9px] py-[3px] text-[12px] font-semibold text-[#065f46]">{{ $cl->status === 'auto' ? 'Auto-closed' : 'Closed' }} · {{ $cl->closed_at?->format('g:i A') }}{{ $cl->closedBy ? ' by ' . $cl->closedBy->name : '' }}{{ $cl->version > 1 ? ' · v' . $cl->version : '' }}</span>
                         @if ($cl->pdf_path)<a href="{{ route('accounts.reports.closing', $cl) }}" target="_blank" class="text-[12.5px]">PDF</a>@endif

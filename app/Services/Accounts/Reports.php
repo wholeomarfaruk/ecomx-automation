@@ -600,15 +600,15 @@ class Reports
                 ->get(['p.name', 'v.sku', 'v.stock_quantity as q', DB::raw('COALESCE(v.purchase_price, p.purchase_price, 0) as cost')])
                 ->concat(DB::table('products as p')->whereNull('p.deleted_at')->where('p.stock_quantity', '!=', 0)
                     ->whereNotExists(fn ($q) => $q->from('product_variants')->whereColumn('product_variants.product_id', 'p.id'))
-                    ->get(['p.name', 'p.sku', 'p.stock_quantity as q', DB::raw('COALESCE(p.purchase_price, 0) as cost')]));
+                    ->get(['p.name', DB::raw('NULL as sku'), 'p.stock_quantity as q', DB::raw('COALESCE(p.purchase_price, 0) as cost')]));
         } else {
             $avg = DB::table('inventory_batches')->groupBy('product_id', 'variant_id')
                 ->selectRaw('product_id, variant_id, SUM(quantity * purchase_price) / NULLIF(SUM(quantity), 0) as avg_cost');
             $items = DB::table('inventory_stocks as s')->join('products as p', 'p.id', '=', 's.product_id')->leftJoin('product_variants as v', 'v.id', '=', 's.variant_id')
                 ->leftJoinSub($avg, 'b', fn ($j) => $j->on('b.product_id', '=', 's.product_id')->whereRaw('COALESCE(b.variant_id, 0) = COALESCE(s.variant_id, 0)'))
-                ->groupBy('s.product_id', 's.variant_id', 'p.name', 'v.sku', 'p.sku', 'b.avg_cost', 'v.purchase_price', 'p.purchase_price')
+                ->groupBy('s.product_id', 's.variant_id', 'p.name', 'v.sku', 'b.avg_cost', 'v.purchase_price', 'p.purchase_price')
                 ->havingRaw('SUM(s.quantity) <> 0')
-                ->get(['p.name', DB::raw('COALESCE(v.sku, p.sku) as sku'), DB::raw('SUM(s.quantity) as q'), DB::raw('COALESCE(b.avg_cost, v.purchase_price, p.purchase_price, 0) as cost')]);
+                ->get(['p.name', 'v.sku', DB::raw('SUM(s.quantity) as q'), DB::raw('COALESCE(b.avg_cost, v.purchase_price, p.purchase_price, 0) as cost')]);
         }
 
         $rows = $items->sortByDesc(fn ($i) => (float) $i->q * (float) $i->cost)->map(fn ($i) => self::row('plain', [$i->name, $i->sku, (float) $i->q, (float) $i->cost, round((float) $i->q * (float) $i->cost, 2)]))->values()->all();

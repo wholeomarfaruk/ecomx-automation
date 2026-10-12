@@ -70,6 +70,7 @@ class Reports extends Component
         if (! $this->validKey($this->rep)) {
             $this->rep = 'daily';
         }
+        $this->date = $this->day()->toDateString();
         $this->dayNote = (string) ($this->closing?->note ?? '');
     }
 

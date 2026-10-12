@@ -56,8 +56,13 @@ class KistiPlans
         $name = $lender->display_name;
         $principal = round((float) $d['amount'], 2);
 
+        $code = (int) Account::withTrashed()->selectRaw('MAX(CAST(code AS UNSIGNED)) as m')->value('m') + 1;
+        while (Account::withTrashed()->where('code', (string) $code)->exists()) {
+            $code++;
+        }
+
         $account = Account::create([
-            'code' => (string) ((int) Account::max('code') + 1), 'name' => "Loan Payable — {$name}",
+            'code' => (string) $code, 'name' => "Loan Payable — {$name}",
             'type' => $parent->type, 'subtype' => $parent->subtype, 'normal_balance' => $parent->normal_balance,
             'parent_id' => $parent->id, 'is_control_account' => true, 'is_system' => false, 'is_active' => true,
         ]);
@@ -166,14 +171,15 @@ class KistiPlans
             }
 
             if ($plan->late_rule === 'fee' && ! $k->late_fee_at && $ar && $fee) {
-                $this->vouchers->draft([
+                // One kisti failing (e.g. a duplicate) must not stop the rest of the run.
+                $ok = rescue(fn () => $this->vouchers->draft([
                     'type' => 'journal', 'date' => today()->toDateString(), 'profile_id' => $p->id, 'source' => 'system',
                     'description' => "Late fee — kisti {$k->no}/{$plan->count} · {$p->display_name}",
                     'source_type' => Installment::class, 'source_id' => $k->id, 'purpose' => 'late_fee',
                     'lines' => [['account_id' => $ar, 'debit' => self::LATE_FEE] + $this->vouchers->partyFields($ar, $p), ['account_id' => $fee, 'credit' => self::LATE_FEE]],
-                ]);
+                ]), null);
                 $k->update(['late_fee_at' => now()]);
-                $out['fees']++;
+                $out['fees'] += $ok ? 1 : 0;
             }
 
             if ($plan->late_rule === 'block' && ! ($p->roleSettings('customer')['credit_blocked'] ?? false)) {

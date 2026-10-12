@@ -752,12 +752,15 @@ class Vouchers
         $ap = $this->ledgers->id(LedgerAccounts::PAYABLE);
 
         foreach ($entry->lines as $line) {
-            if ($line->account_id === $ar && (float) $line->credit > 0 && $line->subledger_type === Customer::class) {
+            if ((int) $line->account_id === $ar && (float) $line->credit > 0 && $line->subledger_type === Customer::class) {
                 $this->allocate(AccountsCustomerInvoice::where('customer_id', $line->subledger_id), $entry, (float) $line->credit);
             }
 
-            if ($line->account_id === $ap && (float) $line->debit > 0 && $line->subledger_type === Supplier::class) {
-                $this->allocate(AccountsSupplierBill::where('supplier_id', $line->subledger_id), $entry, (float) $line->debit);
+            if ((int) $line->account_id === $ap && (float) $line->debit > 0 && $line->subledger_type === Supplier::class) {
+                // A payment drafted for one bill (Payables › Pay) settles that bill first, then the oldest.
+                $bills = AccountsSupplierBill::where('supplier_id', $line->subledger_id)
+                    ->when($entry->source_type === AccountsSupplierBill::class, fn ($q) => $q->orderByRaw('id = ? desc', [(int) $entry->source_id]));
+                $this->allocate($bills, $entry, (float) $line->debit);
 
                 if ($entry->voucher_type === 'payment' && ($supplier = Supplier::find($line->subledger_id))) {
                     SupplierInvoice::create([
@@ -814,8 +817,8 @@ class Vouchers
         // A receipt / payment from a party on a kisti plan settles that plan's kisti.
         foreach ($entry->lines as $line) {
             $role = match (true) {
-                $line->subledger_type === Customer::class && (float) $line->credit > 0 && $line->account_id === $this->ledgers->id(LedgerAccounts::RECEIVABLE) => 'customer',
-                $line->subledger_type === Supplier::class && (float) $line->debit > 0 && $line->account_id === $this->ledgers->id(LedgerAccounts::PAYABLE) => 'supplier',
+                $line->subledger_type === Customer::class && (float) $line->credit > 0 && (int) $line->account_id === $this->ledgers->id(LedgerAccounts::RECEIVABLE) => 'customer',
+                $line->subledger_type === Supplier::class && (float) $line->debit > 0 && (int) $line->account_id === $this->ledgers->id(LedgerAccounts::PAYABLE) => 'supplier',
                 default => null,
             };
             $pid = $role === 'customer' ? Customer::whereKey($line->subledger_id)->value('master_profile_id')

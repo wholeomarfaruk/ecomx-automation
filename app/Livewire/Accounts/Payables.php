@@ -173,6 +173,11 @@ class Payables extends Component
     public function createPayments(array $keys): void
     {
         AccountsAccess::authorize('create');
+        if (! collect($this->cashAccounts)->contains('id', (int) $this->payFrom)) {
+            $this->dispatch('toast', type: 'warning', message: 'Pay from account বেছে নিন।');
+
+            return;
+        }
         $made = [];
         $skipped = [];
 
@@ -207,6 +212,11 @@ class Payables extends Component
         AccountsAccess::authorize('create');
         $this->validate(['pay.account_id' => 'required|integer|exists:accounts,id', 'pay.amount' => 'required|numeric|min:1', 'pay.date' => 'required|date'], [], ['pay.amount' => 'amount', 'pay.account_id' => 'pay from']);
         $row = $this->all->firstWhere('key', $this->payKey);
+        if (! $row) {
+            $this->payKey = null;
+
+            return;
+        }
 
         try {
             $entry = $this->draftFor($row, (int) $this->pay['account_id'], round((float) $this->pay['amount'], 2), $this->pay['date']);
@@ -245,6 +255,7 @@ class Payables extends Component
             'bill', 'kisti', 'balance' => $v->draft([
                 'type' => 'payment', 'date' => $date, 'description' => "{$row['for']} — {$row['payee']}", 'profile_id' => $profile?->id,
                 'money_account_id' => $accountId,
+                'source_type' => ['bill' => AccountsSupplierBill::class, 'kisti' => Installment::class, 'balance' => MasterProfile::class][$ref['type']], 'source_id' => $ref['id'],
                 'lines' => [
                     ['account_id' => $ledgers->require(LedgerAccounts::PAYABLE), 'debit' => $amount] + $v->partyFields($ledgers->require(LedgerAccounts::PAYABLE), $profile),
                     ['account_id' => $accountId, 'credit' => $amount],
@@ -304,6 +315,11 @@ class Payables extends Component
         AccountsAccess::authorize('create');
         $this->validate(['rescheduleDate' => 'required|date'], [], ['rescheduleDate' => 'date']);
         $row = $this->all->firstWhere('key', $this->rescheduleKey);
+        if (! $row) {
+            $this->rescheduleKey = null;
+
+            return;
+        }
         $d = $this->rescheduleDate;
 
         match ($row['ref']['type']) {
