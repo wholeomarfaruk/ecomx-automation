@@ -216,7 +216,12 @@ class ProfileVouchers
     }
 
     /** Owner's opening capital from the form: Dr Opening Balance Equity / Cr Owner Capital. */
-    public function openingCapital(MasterProfile $owner, float $amount, string $date): ?JournalEntry
+    /**
+     * Owner's starting capital. With a cash / bank account the money comes
+     * into it (Dr that account); without one it is already counted in the
+     * opening balances (Dr Opening Balance Equity). Cr the owner's capital.
+     */
+    public function openingCapital(MasterProfile $owner, float $amount, string $date, ?int $cashAccountId = null): ?JournalEntry
     {
         if ($amount <= 0) {
             return null;
@@ -230,7 +235,7 @@ class ProfileVouchers
             'source_id'        => $owner->id,
             'purpose'          => 'opening_capital',
         ], [
-            ['account_id' => $this->accounts->require(LedgerAccounts::OPENING_EQUITY), 'debit' => $amount],
+            ['account_id' => $cashAccountId ?: $this->accounts->require(LedgerAccounts::OPENING_EQUITY), 'debit' => $amount],
             ['account_id' => $this->accounts->require(LedgerAccounts::CAPITAL), 'credit' => $amount, 'subledger_type' => MasterProfile::class, 'subledger_id' => $owner->id],
         ]);
     }

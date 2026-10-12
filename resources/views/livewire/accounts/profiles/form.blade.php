@@ -148,6 +148,12 @@
                     <div class="flex flex-col gap-[6px]"><label for="o-share" class="{{ $lbl }}">Profit share (%)</label><input id="o-share" type="number" min="0" max="100" step="0.01" wire:model="owner.share_percent" placeholder="40" class="{{ $roleIn }}">
                         @if ($err('owner.share_percent')) <span class="text-[12px] text-[#b91c1c]">{{ $err('owner.share_percent') }}</span> @endif</div>
                     <div class="flex flex-col gap-[6px]"><label for="o-cap" class="{{ $lbl }}">Opening capital (৳)</label><input id="o-cap" type="number" min="0" wire:model="owner.opening_capital" placeholder="500000" class="{{ $roleIn }}"></div>
+                    <div class="flex flex-col gap-[6px]"><label for="o-into" class="{{ $lbl }}">টাকা কোথায় এসেছে</label>
+                        <select id="o-into" wire:model="owner.capital_into" class="{{ $roleIn }}">
+                            @foreach (app(\App\Services\Profiles\LedgerAccounts::class)->cashAccounts() as $acc)<option value="{{ $acc['id'] }}">{{ $acc['name'] }}</option>@endforeach
+                            <option value="books">আগেই হিসাবে আছে (opening balance)</option>
+                        </select>
+                        <span class="text-[11.5px] text-[#6b7280]">Cash / bank বাছলে ঐ account-এর balance বাড়বে।</span></div>
                 </div>
             </div>
         @endif

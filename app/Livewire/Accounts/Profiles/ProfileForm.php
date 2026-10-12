@@ -57,7 +57,7 @@ class ProfileForm extends Component
     public array $customer = ['credit_limit' => null, 'terms_days' => '15', 'price_group' => 'wholesale', 'allow_kisti' => true];
     public array $supplier = ['category' => 'Fabric', 'terms' => '15', 'payout_account' => ''];
     public array $lender = ['lender_type' => 'bank'];
-    public array $owner = ['share_percent' => null, 'opening_capital' => null];
+    public array $owner = ['share_percent' => null, 'opening_capital' => null, 'capital_into' => ''];
     public array $employee = [
         'designation' => '', 'department' => 'Accounts', 'joined_on' => null, 'salary' => null, 'pay_via' => 'cash', 'pay_account' => '',
         'give_login' => false, 'login_role' => '', 'login_email' => '', 'login_password' => '',
@@ -85,6 +85,7 @@ class ProfileForm extends Component
     public function mount(?MasterProfile $profile = null): void
     {
         $this->ob_date = today()->toDateString();
+        $this->owner['capital_into'] = (string) (app(\App\Services\Profiles\LedgerAccounts::class)->cashAccounts()[0]['id'] ?? 'books');
 
         if ($profile?->exists) {
             $this->profile = $profile->load('roles');
@@ -237,7 +238,8 @@ class ProfileForm extends Component
             $rules += ['lender.lender_type' => 'required|in:bank,business,personal'];
         }
         if ($this->roles['owner']) {
-            $rules += ['owner.share_percent' => 'nullable|numeric|min:0|max:100', 'owner.opening_capital' => 'nullable|numeric|min:0'];
+            $rules += ['owner.share_percent' => 'nullable|numeric|min:0|max:100', 'owner.opening_capital' => 'nullable|numeric|min:0',
+                'owner.capital_into' => ['nullable', 'string', 'regex:/^(books|\d+)$/']];
         }
         if ($this->roles['employee']) {
             $rules += [
@@ -351,7 +353,10 @@ class ProfileForm extends Component
         }
         if ($this->roles['owner'] && (float) ($this->owner['opening_capital'] ?? 0) > 0
             && ! JournalEntry::where('source_type', MasterProfile::class)->where('source_id', $profile->id)->where('purpose', 'opening_capital')->exists()) {
-            $vouchers->openingCapital($profile, round((float) $this->owner['opening_capital'], 2), $this->ob_date ?: today()->toDateString());
+            // Money brought in goes to the chosen cash / bank account; "books" = already counted in the opening balances.
+            $into = (string) ($this->owner['capital_into'] ?? '');
+            $vouchers->openingCapital($profile, round((float) $this->owner['opening_capital'], 2), $this->ob_date ?: today()->toDateString(),
+                ctype_digit($into) ? (int) $into : null);
         }
 
         return $profile;
