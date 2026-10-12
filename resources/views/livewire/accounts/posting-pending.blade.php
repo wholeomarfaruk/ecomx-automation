@@ -92,10 +92,10 @@
                     <tbody>
                         @foreach ($rows as $r)
                             @php $e = $r['entry']; [$wait, $old] = $vouchers->waiting($e); $isSel = $cur && $cur['entry']->id === $e->id; @endphp
-                            <tr wire:key="pp-{{ $e->id }}" @class(['border-t border-[#f0f1f4]', 'bg-[#eef2ff] shadow-[inset_3px_0_0_#4f46e5]' => $isSel])>
-                                <td class="py-[11px] pl-[18px] pr-0"><input type="checkbox" value="{{ $e->id }}" x-model.number="checked" aria-label="Select voucher" class="rounded text-[#4f46e5]"></td>
+                            <tr wire:key="pp-{{ $e->id }}" wire:click="open({{ $e->id }})" @class(['cursor-pointer border-t border-[#f0f1f4]', 'bg-[#eef2ff] shadow-[inset_3px_0_0_#4f46e5]' => $isSel, 'hover:bg-[#f9fafb]' => ! $isSel])>
+                                <td class="py-[11px] pl-[18px] pr-0" x-on:click.stop><input type="checkbox" value="{{ $e->id }}" x-model.number="checked" aria-label="Select voucher" class="rounded text-[#4f46e5]"></td>
                                 <td class="whitespace-nowrap px-[8px] py-[11px]">
-                                    <button type="button" wire:click="open({{ $e->id }})" class="border-0 bg-transparent p-0 text-left text-[13px] font-bold text-[#4338ca]">{{ $e->ref() }}</button>
+                                    <span class="text-[13px] font-bold text-[#4338ca]">{{ $e->ref() }}</span>
                                     <div class="text-[11.5px] text-[#6b7280]">{{ $vouchers->typeLabel($e) }} · {{ ($e->scheduled_for ?? $e->entry_date)->format('d M') }}</div>
                                 </td>
                                 <td class="px-[8px] py-[11px]"><div class="font-semibold">{{ $vouchers->partyOf($e) }}</div><div class="text-[11.5px] text-[#6b7280]">{{ $e->description }}</div></td>

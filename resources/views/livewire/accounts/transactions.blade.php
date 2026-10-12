@@ -109,10 +109,10 @@
                                     $outCls = $dead ? 'text-[#9ca3af] line-through' : ($p['dir'] === 'transfer' ? 'text-[#6b7280]' : ($draft ? 'font-semibold text-[#b91c1c] opacity-60' : 'font-bold text-[#b91c1c]'));
                                     $isSel = $cur && $cur->id === $e->id;
                                 @endphp
-                                <tr wire:key="tx-{{ $e->id }}" @class(['border-t border-[#f0f1f4]', 'bg-[#eef2ff] shadow-[inset_3px_0_0_#4f46e5]' => $isSel])>
+                                <tr wire:key="tx-{{ $e->id }}" wire:click="open({{ $e->id }})" @class(['cursor-pointer border-t border-[#f0f1f4]', 'bg-[#eef2ff] shadow-[inset_3px_0_0_#4f46e5]' => $isSel, 'hover:bg-[#f9fafb]' => ! $isSel])>
                                     <td class="whitespace-nowrap py-[11px] pl-[18px] pr-[8px] text-[#6b7280]">{{ $e->created_at->format('g:i A') }}</td>
                                     <td class="whitespace-nowrap px-[8px] py-[11px]">
-                                        <button type="button" wire:click="open({{ $e->id }})" @class(['border-0 bg-transparent p-0 text-left text-[13px] font-bold', 'text-[#6b7280] line-through' => $dead, 'text-[#4338ca]' => ! $dead])>{{ $e->ref() }}</button>
+                                        <span @class(['text-[13px] font-bold', 'text-[#6b7280] line-through' => $dead, 'text-[#4338ca]' => ! $dead])>{{ $e->ref() }}</span>
                                         <div class="text-[11.5px] text-[#6b7280]">{{ $p['type'] }}</div>
                                     </td>
                                     <td class="px-[8px] py-[11px]"><div class="font-semibold">{{ $p['party'] }}</div><div class="text-[11.5px] text-[#6b7280]">{{ $e->description }}</div></td>
