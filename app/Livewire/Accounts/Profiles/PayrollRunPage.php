@@ -13,7 +13,7 @@ use Livewire\Component;
 
 /** Accounts Panel › Employees › one month's payroll run (spec §9, not designed). */
 #[Title('Payroll')]
-#[Layout('layouts.accounts.profiles')]
+#[Layout('layouts.accounts.app')]
 class PayrollRunPage extends Component
 {
     use HandlesVoucherModals;

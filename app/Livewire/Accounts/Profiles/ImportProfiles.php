@@ -23,7 +23,7 @@ use OpenSpout\Reader\XLSX\Reader as XlsxReader;
  * import never creates duplicates.
  */
 #[Title('Import profiles')]
-#[Layout('layouts.accounts.profiles')]
+#[Layout('layouts.accounts.app')]
 class ImportProfiles extends Component
 {
     use WithFileUploads;

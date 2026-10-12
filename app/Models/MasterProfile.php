@@ -167,9 +167,12 @@ class MasterProfile extends Model
 
     public static function initialsOf(?string $name): string
     {
-        $words = preg_split('/\s+/u', trim((string) $name)) ?: [];
+        $words = array_values(array_filter(preg_split('/\s+/u', trim((string) $name)) ?: []));
 
-        return mb_strtoupper(collect($words)->filter()->take(2)->map(fn ($w) => mb_substr($w, 0, 1))->implode(''));
+        // One word ("superadmin") → first two letters ("SU"), like the dashboard avatar.
+        return mb_strtoupper(count($words) === 1
+            ? mb_substr($words[0], 0, 2)
+            : collect($words)->take(2)->map(fn ($w) => mb_substr($w, 0, 1))->implode(''));
     }
 
     public function hasRole(string $role): bool

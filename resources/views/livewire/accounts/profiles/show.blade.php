@@ -13,7 +13,8 @@
     $roleColor = ['customer' => '#065f46', 'supplier' => '#075985', 'lender' => '#3730a3', 'owner' => '#92400e', 'employee' => '#115e59'];
 @endphp
 
-<div class="box-border flex w-full max-w-[1400px] flex-col gap-[16px] px-[28px] pb-[40px] pt-[20px]">
+<div class="acc-profiles box-border flex w-full max-w-[1400px] flex-col gap-[16px]">
+    <x-accounts.profile-tabs active="profiles" />
 
     @if (session('accounts.status'))
         <div class="acc-no-print rounded-[10px] border border-[#a7f3d0] bg-[#ecfdf5] px-[14px] py-[10px] text-[13px] text-[#065f46]">{{ session('accounts.status') }}</div>

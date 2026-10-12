@@ -24,7 +24,7 @@ use Livewire\Component;
  * EMI rule form (spec §9) with a live schedule preview.
  */
 #[Title('Lenders')]
-#[Layout('layouts.accounts.profiles')]
+#[Layout('layouts.accounts.app')]
 class Lenders extends Component
 {
     use HandlesVoucherModals;

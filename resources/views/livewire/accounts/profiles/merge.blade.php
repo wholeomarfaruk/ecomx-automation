@@ -1,5 +1,6 @@
 {{-- Review & merge duplicates — same design language as the profile pages. --}}
-<div class="box-border flex w-full max-w-[1400px] flex-col gap-[18px] px-[28px] pb-[40px] pt-[20px]">
+<div class="acc-profiles box-border flex w-full max-w-[1400px] flex-col gap-[18px]">
+    <x-accounts.profile-tabs active="profiles" />
     <a href="{{ route('accounts.profiles.index') }}" wire:navigate class="flex w-max items-center gap-[6px] text-[13px]">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
         Master Profiles</a>

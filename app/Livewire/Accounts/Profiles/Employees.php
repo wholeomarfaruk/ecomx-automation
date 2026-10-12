@@ -26,7 +26,7 @@ use Livewire\Component;
  * Payable, and paying clears it.
  */
 #[Title('Employees')]
-#[Layout('layouts.accounts.profiles')]
+#[Layout('layouts.accounts.app')]
 class Employees extends Component
 {
     use HandlesVoucherModals;

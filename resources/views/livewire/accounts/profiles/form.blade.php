@@ -22,7 +22,8 @@
     $opening = $this->openingEntry;
 @endphp
 
-<form wire:submit="save" class="box-border flex w-full max-w-[960px] flex-col gap-[16px] px-[28px] pb-[40px] pt-[20px]">
+<form wire:submit="save" class="acc-profiles box-border flex w-full max-w-[960px] flex-col gap-[16px]">
+    <x-accounts.profile-tabs active="profiles" />
 
     <a href="{{ $profile ? route('accounts.profiles.show', $profile) : route('accounts.profiles.index') }}" wire:navigate class="flex w-max items-center gap-[6px] text-[13px]">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>

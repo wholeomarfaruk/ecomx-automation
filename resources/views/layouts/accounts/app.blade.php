@@ -12,6 +12,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
     @vite(['resources/sass/admin.scss', 'resources/css/admin.css', 'resources/js/admin.js'])
     @livewireStyles
+    <style>
+        /* Profile pages' base from the design files, scoped to .acc-profiles and kept in
+           Tailwind's base layer so utility classes still win over it. */
+        @layer base {
+            :where(.acc-profiles) { font-size: 14px; color: #111827; }
+            :where(.acc-profiles) a { color: #4338ca; text-decoration: none; }
+            :where(.acc-profiles) a:hover { color: #312e81; }
+            :where(.acc-profiles) table { border-collapse: collapse; width: 100%; }
+            :where(.acc-profiles) button { cursor: pointer; }
+        }
+        @media print {
+            aside, header, .acc-no-print { display: none !important; }
+            body, main { background: #fff !important; padding: 0 !important; }
+        }
+    </style>
     @stack('styles')
 </head>
 
@@ -28,7 +43,7 @@
         {{-- Sidebar — shared with the profile pages (design: Main.dc.html / Sidebar.dc.html) --}}
         <aside class="fixed inset-y-0 left-0 z-30 flex w-[248px] -translate-x-full flex-col overflow-y-auto bg-[#0f172a] transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0"
                :class="{ 'translate-x-0!': navOpen }">
-            <x-accounts.sidebar active="dashboard" />
+            <x-accounts.sidebar :active="$active ?? 'dashboard'" />
         </aside>
 
         {{-- Mobile sidebar backdrop --}}

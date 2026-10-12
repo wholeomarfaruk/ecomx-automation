@@ -4,7 +4,8 @@
     $btn = 'text-[13px] px-[14px] py-[9px] border border-[#e5e7eb] rounded-[8px] bg-white text-[#374151]';
 @endphp
 
-<div class="box-border flex w-full max-w-[1400px] flex-col gap-[18px] px-[28px] pb-[40px] pt-[24px]">
+<div class="acc-profiles box-border flex w-full max-w-[1400px] flex-col gap-[18px]">
+    <x-accounts.profile-tabs active="owners" />
 
     <x-accounts.page-head title="Owners" subtitle="মূলধন, উত্তোলন আর লাভের ভাগ। উত্তোলন খরচ না, তাই লাভ কমায় না।">
         <button type="button" class="{{ $btn }}" wire:click="openVoucher('capital')">মূলধন যোগ · Add capital</button>

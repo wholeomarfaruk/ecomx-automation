@@ -5,7 +5,8 @@
     $badge = ['new' => 'bg-[#d1fae5] text-[#065f46]', 'role' => 'bg-[#e0e7ff] text-[#3730a3]', 'skip' => 'bg-[#f3f4f6] text-[#6b7280]'];
 @endphp
 
-<div class="box-border flex w-full max-w-[1100px] flex-col gap-[16px] px-[28px] pb-[40px] pt-[20px]">
+<div class="acc-profiles box-border flex w-full max-w-[1100px] flex-col gap-[16px]">
+    <x-accounts.profile-tabs active="profiles" />
     <a href="{{ route('accounts.profiles.index') }}" wire:navigate class="flex w-max items-center gap-[6px] text-[13px]">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
         Master Profiles</a>

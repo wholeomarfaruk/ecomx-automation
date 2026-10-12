@@ -9,7 +9,8 @@
         : 'rounded-[7px] border-0 bg-transparent px-[14px] py-[7px] text-[13px] text-[#4b5563]';
 @endphp
 
-<div class="box-border flex w-full max-w-[1400px] flex-col gap-[18px] px-[28px] pb-[40px] pt-[24px]">
+<div class="acc-profiles box-border flex w-full max-w-[1400px] flex-col gap-[18px]">
+    <x-accounts.profile-tabs active="lenders" />
 
     <x-accounts.page-head title="Lenders" subtitle="কার কাছ থেকে ঋণ নিয়েছি, কত বাকি, পরের কিস্তি কবে">
         <button type="button" class="{{ $btn }}" wire:click="openVoucher('kisti')">কিস্তি দিন · Pay kisti</button>

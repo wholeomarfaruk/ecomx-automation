@@ -49,7 +49,7 @@
     "src": "node_modules/boxicons/fonts/boxicons.woff2"
   },
   "resources/css/admin.css": {
-    "file": "assets/app-CBEmT5Y3.css",
+    "file": "assets/app-6HLYUJeq.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "admin",
@@ -59,7 +59,7 @@
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-CBEmT5Y3.css",
+    "file": "assets/app-6HLYUJeq.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "admin",

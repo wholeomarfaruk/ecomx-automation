@@ -39,22 +39,25 @@
         <div class="text-[16px] font-bold text-white">{{ $siteName }}</div>
     </div>
 
-    <div class="{{ $label }} pt-[8px]">Profiles</div>
-    <div x-data="{ open: true }" class="flex flex-col gap-[4px]">
+    <div class="{{ $label }} pt-[8px]">Accounts</div>
+    <a href="{{ route('accounts.dashboard') }}" wire:navigate class="{{ $active === 'dashboard' ? $on : $item }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg>
+        Dashboard</a>
+
+    {{-- All Profiles: open only while on a profile page; same look everywhere. --}}
+    <div x-data="{ open: @js($inProfiles) }" class="flex flex-col gap-[4px]">
         <button type="button" @click="open = !open" :aria-expanded="open"
-                @class(['flex w-full items-center gap-[10px] rounded-[8px] border-0 bg-transparent px-[10px] py-[9px] text-left text-[14px]', 'font-semibold text-white' => $inProfiles, 'text-[#cbd5e1]' => ! $inProfiles])>
+                @class(['flex w-full items-center gap-[10px] rounded-[8px] border-0 bg-transparent px-[10px] py-[9px] text-left text-[14px]', 'font-semibold text-white' => $inProfiles, 'text-[#cbd5e1] hover:text-white' => ! $inProfiles])>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"></path><path d="M16 4.5a3.5 3.5 0 0 1 0 7"></path><path d="M18.5 14.8c1.6.7 2.6 2.4 3 5.2"></path></svg>
             <span class="flex-1">All Profiles</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="transition" :class="open ? '' : '-rotate-90'"><path d="m6 9 6 6 6-6"></path></svg>
         </button>
-        <div x-show="open" x-collapse
-             @class(['ml-[18px] flex flex-col gap-[2px] border-l border-[#334155] text-[13px]', 'pl-[12px]' => $inProfiles, 'pl-[20px]' => ! $inProfiles])>
+        <div x-show="open" x-collapse @unless ($inProfiles) x-cloak @endunless
+             class="ml-[18px] flex flex-col gap-[2px] border-l border-[#334155] pl-[12px] text-[13px]">
             @foreach ($tabs as $t)
                 <a href="{{ route($t['route']) }}" wire:navigate
                    @class([
-                       'flex justify-between',
-                       'rounded-[6px] px-[8px] py-[6px]' => $inProfiles,
-                       'py-[5px]' => ! $inProfiles,
+                       'flex justify-between rounded-[6px] px-[8px] py-[6px]',
                        'bg-[#1e293b] font-semibold text-white' => $active === $t['key'],
                        'text-[#94a3b8] hover:text-white' => $active !== $t['key'],
                    ])>
@@ -63,11 +66,6 @@
             @endforeach
         </div>
     </div>
-
-    <div class="{{ $label }} pt-[18px]">Accounts</div>
-    <a href="{{ route('accounts.dashboard') }}" wire:navigate class="{{ $active === 'dashboard' ? $on : $item }}">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg>
-        Dashboard</a>
     <a href="{{ $href('admin.accounts.transactions') }}" class="{{ $item }}">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4 3 8l4 4"></path><path d="M3 8h14"></path><path d="m17 20 4-4-4-4"></path><path d="M21 16H7"></path></svg>
         Transactions</a>

@@ -35,7 +35,7 @@ use Spatie\Permission\Models\Role;
  * করুন" instead of creating a duplicate.
  */
 #[Title('Profile')]
-#[Layout('layouts.accounts.profiles')]
+#[Layout('layouts.accounts.app')]
 class ProfileForm extends Component
 {
     use WithFileUploads;

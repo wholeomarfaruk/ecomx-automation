@@ -31,7 +31,7 @@ use Livewire\WithPagination;
  * oldest open invoice, credit-limit usage, kisti plan and last payment.
  */
 #[Title('Customers')]
-#[Layout('layouts.accounts.profiles')]
+#[Layout('layouts.accounts.app')]
 class Customers extends Component
 {
     use HandlesVoucherModals, WithPagination;

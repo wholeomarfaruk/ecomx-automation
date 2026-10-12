@@ -6,7 +6,8 @@
     $btn = 'text-[13px] px-[14px] py-[9px] border border-[#e5e7eb] rounded-[8px] bg-white text-[#374151]';
 @endphp
 
-<div x-data="{ sel: [] }" class="box-border flex w-full max-w-[1400px] flex-col gap-[18px] px-[28px] pb-[40px] pt-[24px]">
+<div x-data="{ sel: [] }" class="acc-profiles box-border flex w-full max-w-[1400px] flex-col gap-[18px]">
+    <x-accounts.profile-tabs active="profiles" />
 
     <x-accounts.page-head title="Master Profiles" subtitle="একজন ব্যক্তি বা প্রতিষ্ঠান = একটি profile। এক profile-এ একাধিক role।">
         <a href="{{ route('accounts.profiles.import') }}" wire:navigate class="{{ $btn }} !text-[#374151]">Import (Excel)</a>

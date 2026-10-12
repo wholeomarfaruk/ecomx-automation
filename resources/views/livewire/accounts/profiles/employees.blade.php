@@ -8,7 +8,8 @@
     $input = 'w-full text-[14px] px-[12px] py-[9px] border border-[#d1d5db] rounded-[9px] bg-white focus:border-[#4f46e5] focus:ring-2 focus:ring-[#e0e7ff]';
 @endphp
 
-<div class="box-border flex w-full max-w-[1400px] flex-col gap-[18px] px-[28px] pb-[40px] pt-[24px]">
+<div class="acc-profiles box-border flex w-full max-w-[1400px] flex-col gap-[18px]">
+    <x-accounts.profile-tabs active="employees" />
 
     <x-accounts.page-head title="Employees" subtitle="বেতন, অগ্রিম আর login access — কর্মীদের সব হিসাব এক জায়গায়">
         <button type="button" class="{{ $btn }}" wire:click="openVoucher('salary_advance')">অগ্রিম দিন · Advance</button>

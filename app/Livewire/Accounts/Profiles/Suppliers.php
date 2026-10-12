@@ -25,7 +25,7 @@ use Livewire\WithPagination;
  * shaped once and filtered in memory.
  */
 #[Title('Suppliers')]
-#[Layout('layouts.accounts.profiles')]
+#[Layout('layouts.accounts.app')]
 class Suppliers extends Component
 {
     use HandlesVoucherModals, WithPagination;

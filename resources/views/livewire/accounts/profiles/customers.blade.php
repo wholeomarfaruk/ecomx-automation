@@ -7,7 +7,8 @@
     $btn = 'text-[13px] px-[14px] py-[9px] border border-[#e5e7eb] rounded-[8px] bg-white text-[#374151]';
 @endphp
 
-<div x-data="{ sel: [] }" class="box-border flex w-full max-w-[1400px] flex-col gap-[18px] px-[28px] pb-[40px] pt-[24px]">
+<div x-data="{ sel: [] }" class="acc-profiles box-border flex w-full max-w-[1400px] flex-col gap-[18px]">
+    <x-accounts.profile-tabs active="customers" />
 
     <x-accounts.page-head title="Customers" subtitle="বাকি, credit limit আর কিস্তি — কার কাছে কত পাবো">
         <button type="button" class="{{ $btn }}" wire:loading.attr="disabled" wire:target="sendReminders"

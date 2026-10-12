@@ -7,7 +7,8 @@
     $balColor = ['pay' => '#b91c1c', 'overdue' => '#b91c1c', 'adv' => '#4338ca', 'clear' => '#6b7280'];
 @endphp
 
-<div x-data="{ sel: [] }" class="box-border flex w-full max-w-[1400px] flex-col gap-[18px] px-[28px] pb-[40px] pt-[24px]">
+<div x-data="{ sel: [] }" class="acc-profiles box-border flex w-full max-w-[1400px] flex-col gap-[18px]">
+    <x-accounts.profile-tabs active="suppliers" />
 
     <x-accounts.page-head title="Suppliers" subtitle="কার কাছ থেকে মাল কিনি, কাকে কত দিবো, কবে দিবো">
         <button type="button" class="{{ $btn }}" @click="$wire.openVoucher('pay', sel.length === 1 ? Number(sel[0]) : null)">টাকা দিন · Pay</button>

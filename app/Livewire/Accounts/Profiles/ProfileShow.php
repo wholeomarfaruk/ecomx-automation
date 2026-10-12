@@ -37,7 +37,7 @@ use Livewire\WithFileUploads;
  * documents and the notes / activity timeline.
  */
 #[Title('Profile')]
-#[Layout('layouts.accounts.profiles')]
+#[Layout('layouts.accounts.app')]
 class ProfileShow extends Component
 {
     use HandlesVoucherModals, WithFileUploads;

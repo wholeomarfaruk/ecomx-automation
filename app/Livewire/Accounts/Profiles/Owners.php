@@ -26,7 +26,7 @@ use Livewire\Component;
  * profit share = profit × share %. Drawings are equity, never expense.
  */
 #[Title('Owners')]
-#[Layout('layouts.accounts.profiles')]
+#[Layout('layouts.accounts.app')]
 class Owners extends Component
 {
     use HandlesVoucherModals;

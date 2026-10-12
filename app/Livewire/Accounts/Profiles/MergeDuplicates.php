@@ -18,7 +18,7 @@ use Livewire\Component;
  * Profiles sharing a phone number, grouped; pick the primary and merge.
  */
 #[Title('Merge duplicates')]
-#[Layout('layouts.accounts.profiles')]
+#[Layout('layouts.accounts.app')]
 class MergeDuplicates extends Component
 {
     /** phone => primary profile id */

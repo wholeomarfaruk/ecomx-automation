@@ -24,7 +24,7 @@ use OpenSpout\Writer\XLSX\Writer;
  * One person or business = one profile; a profile can hold several roles.
  */
 #[Title('Master Profiles')]
-#[Layout('layouts.accounts.profiles')]
+#[Layout('layouts.accounts.app')]
 class ProfileIndex extends Component
 {
     use WithPagination;
