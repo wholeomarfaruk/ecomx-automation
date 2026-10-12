@@ -73,7 +73,8 @@ class Employees extends Component
 
         $lastRun = PayrollRun::whereDate('month', $this->lastMonth()->toDateString())->first();
         $lastItems = $lastRun ? $lastRun->items()->get()->keyBy('master_profile_id') : collect();
-        $unpaid = PayrollItem::whereIn('master_profile_id', $ids)->where('status', '!=', 'paid')->get()->groupBy('master_profile_id');
+        $unpaid = PayrollItem::whereIn('master_profile_id', $ids)->where('status', '!=', 'paid')->where('include', true)
+            ->whereHas('run', fn ($q) => $q->where('status', '!=', 'draft'))->get()->groupBy('master_profile_id');
 
         return $profiles->map(function (MasterProfile $p) use ($users, $lastItems, $unpaid) {
             $set = $p->roleSettings('employee');
@@ -126,7 +127,7 @@ class Employees extends Component
     public function summary(): array
     {
         $active = $this->all->where('active', true);
-        $unpaidRuns = PayrollRun::where('status', '!=', 'paid')->orderBy('month')->get();
+        $unpaidRuns = PayrollRun::whereNotIn('status', ['paid', 'draft'])->orderBy('month')->get();
         $oldest = $unpaidRuns->first();
         $owing = $this->all->where('owed', '>', 0.5);
 
@@ -134,10 +135,10 @@ class Employees extends Component
         $run = PayrollRun::whereDate('month', $month->toDateString())->first();
 
         if ($run) {
-            $banner = ['gross' => (float) $run->gross + (float) $run->bonus, 'deduction' => (float) $run->advance_deducted, 'net' => (float) $run->net, 'due' => $run->due_on, 'prepared' => true];
+            $banner = ['gross' => (float) $run->gross + (float) $run->bonus, 'deduction' => (float) $run->advance_deducted + (float) $run->other_deducted, 'net' => (float) $run->net, 'due' => $run->due_on, 'prepared' => true, 'draft' => $run->isDraft()];
         } else {
             $preview = app(Payroll::class)->preview();
-            $banner = ['gross' => $preview->sum('salary'), 'deduction' => $preview->sum('deduction'), 'net' => $preview->sum('net'), 'due' => $month->copy()->addMonth()->day(5), 'prepared' => false];
+            $banner = ['gross' => $preview->sum('salary'), 'deduction' => $preview->sum('deduction'), 'net' => $preview->sum('net'), 'due' => $month->copy()->addMonth()->day(5), 'prepared' => false, 'draft' => false];
         }
 
         return [
@@ -199,7 +200,8 @@ class Employees extends Component
         $month = Carbon::createFromFormat('Y-m', $this->prepare['month'])->startOfMonth();
 
         try {
-            app(Payroll::class)->prepare($month, (float) ($this->prepare['bonus'] ?: 0), $this->prepare['bonus_note'] ?: null, $this->prepare['due_on']);
+            // A draft salary sheet — edited per employee, posted when approved.
+            app(Payroll::class)->createDraft($month, $this->prepare['due_on'], (float) ($this->prepare['bonus'] ?: 0), $this->prepare['bonus_note'] ?: null);
         } catch (LockedFiscalPeriodException|\RuntimeException $e) {
             $this->addError('prepare.month', $e->getMessage());
 

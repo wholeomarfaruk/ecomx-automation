@@ -27,10 +27,10 @@
 
     <div class="flex flex-wrap items-center justify-between gap-[12px] rounded-[12px] border border-[#c7d2fe] bg-[#eef2ff] px-[18px] py-[14px]">
         <div>
-            <div class="font-bold text-[#312e81]">{{ $s['month']->format('F Y') }} payroll{{ $b['prepared'] ? ' · prepared' : '' }}</div>
-            <div class="mt-[2px] text-[13px] text-[#4338ca]">Gross {{ $money($b['gross']) }} − advance কাটা {{ $money($b['deduction']) }} = net {{ $money($b['net']) }} · due {{ \Carbon\Carbon::parse($b['due'])->format('d M') }}</div>
+            <div class="font-bold text-[#312e81]">{{ $s['month']->format('F Y') }} payroll{{ $b['prepared'] ? ($b['draft'] ? ' · draft sheet' : ' · posted') : '' }}</div>
+            <div class="mt-[2px] text-[13px] text-[#4338ca]">Gross {{ $money($b['gross']) }} − কাটা {{ $money($b['deduction']) }} = net {{ $money($b['net']) }} · due {{ \Carbon\Carbon::parse($b['due'])->format('d M') }}</div>
         </div>
-        <button type="button" wire:click="openPrepare" class="rounded-[8px] border-0 bg-[#4f46e5] px-[16px] py-[9px] text-[13px] font-semibold text-white">{{ $b['prepared'] ? 'Open payroll' : 'Prepare payroll' }}</button>
+        <button type="button" wire:click="openPrepare" class="rounded-[8px] border-0 bg-[#4f46e5] px-[16px] py-[9px] text-[13px] font-semibold text-white">{{ $b['prepared'] ? ($b['draft'] ? 'Open salary sheet' : 'Open payroll') : 'Prepare payroll' }}</button>
     </div>
 
     <section class="overflow-hidden rounded-[14px] border border-[#e5e7eb] bg-white">
@@ -151,7 +151,9 @@
                             <td class="px-[8px] py-[11px] text-right">{{ (float) $run->advance_deducted > 0 ? $money($run->advance_deducted) : '—' }}</td>
                             <td class="px-[8px] py-[11px] text-right font-semibold">{{ $money($run->paid) }}</td>
                             <td class="px-[18px] py-[11px]">
-                                @if ($run->unpaid() > 0.5)
+                                @if ($run->isDraft())
+                                    <span class="rounded-[6px] bg-[#e0e7ff] px-[8px] py-[3px] text-[12px] font-semibold text-[#3730a3]">Draft sheet</span>
+                                @elseif ($run->unpaid() > 0.5)
                                     <span class="rounded-[6px] bg-[#fef3c7] px-[8px] py-[3px] text-[12px] font-semibold text-[#92400e]">{{ $money($run->unpaid()) }} বাকি</span>
                                 @else
                                     <span class="rounded-[6px] bg-[#d1fae5] px-[8px] py-[3px] text-[12px] font-semibold text-[#065f46]">Paid</span>
@@ -188,10 +190,10 @@
                     <input id="pr-note" type="text" wire:model="prepare.bonus_note" placeholder="Eid" class="{{ $input }}">
                 </div>
             </div>
-            <div class="text-[12.5px] text-[#4b5563]">প্রত্যেক কর্মীর মাসিক বেতন + bonus থেকে চলতি অগ্রিমের মাসিক কিস্তি কেটে net বেতন Salary Payable-এ উঠবে। পরে "Pay" দিয়ে পরিশোধ করবেন।</div>
+            <div class="text-[12.5px] text-[#4b5563]">একটা <b>draft salary sheet</b> তৈরি হবে — প্রত্যেক কর্মীর বেতন, allowance, overtime, bonus, অনুপস্থিতি, অগ্রিম কাটা আলাদা করে ঠিক করতে পারবেন। "Post payroll" না দেওয়া পর্যন্ত হিসাবে কিছু যাবে না।</div>
             <x-slot:footer>
                 <button type="button" wire:click="$set('showPrepare', false)" class="rounded-[9px] border border-[#e5e7eb] bg-white px-[18px] py-[10px] text-[14px] text-[#374151]">Cancel</button>
-                <button type="button" wire:click="preparePayroll" wire:loading.attr="disabled" class="rounded-[9px] border-0 bg-[#4f46e5] px-[22px] py-[10px] text-[14px] font-bold text-white">Prepare &amp; post</button>
+                <button type="button" wire:click="preparePayroll" wire:loading.attr="disabled" class="rounded-[9px] border-0 bg-[#4f46e5] px-[22px] py-[10px] text-[14px] font-bold text-white">Create salary sheet</button>
             </x-slot:footer>
         </x-accounts.modal>
     @endif

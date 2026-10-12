@@ -35,6 +35,7 @@ Route::prefix('profiles')->name('profiles.')->group(function () {
     Route::get('/owners', Profiles\Owners::class)->name('owners');
     Route::get('/employees', Profiles\Employees::class)->name('employees');
     Route::get('/payroll/{month?}', Profiles\PayrollRunPage::class)->name('payroll')->where('month', '\d{4}-\d{2}');
+    Route::get('/payroll/{month}/payslips/{item?}', App\Http\Controllers\Accounts\PayslipController::class)->name('payslips')->where('month', '\d{4}-\d{2}')->whereNumber('item');
     Route::get('/create', Profiles\ProfileForm::class)->name('create');
     Route::get('/merge', Profiles\MergeDuplicates::class)->name('merge');
     Route::get('/import', Profiles\ImportProfiles::class)->name('import');

@@ -127,7 +127,8 @@ class PayablesSchedule
 
     protected function salaryRows(Collection $drafts): Collection
     {
-        $out = PayrollItem::with(['profile:id,display_name', 'run'])->where('status', '!=', 'paid')->get()
+        $out = PayrollItem::with(['profile:id,display_name', 'run'])->where('status', '!=', 'paid')->where('include', true)
+            ->whereHas('run', fn ($q) => $q->where('status', '!=', 'draft'))->get()
             ->groupBy('payroll_run_id')
             ->flatMap(function ($items) use ($drafts) {
                 $run = $items->first()->run;
@@ -144,7 +145,15 @@ class PayablesSchedule
 
         // This month's payroll, not prepared yet — shown so the cash plan sees it.
         $month = CarbonImmutable::now()->startOfMonth();
-        if (! PayrollRun::whereDate('month', $month->toDateString())->exists()) {
+        $run = PayrollRun::whereDate('month', $month->toDateString())->first();
+        if ($run?->isDraft() && (float) $run->net > 0) {
+            // The sheet is being filled in — show its net so the cash plan sees it.
+            $out->push([
+                'key' => 'payroll-' . $month->format('Y-m'), 'src' => 'salary', 'payee' => $run->items()->where('include', true)->count() . ' employees', 'profile_id' => null,
+                'due' => CarbonImmutable::parse($run->due_on ?? $month->addMonth()->day(5)), 'for' => $month->format('F') . ' payroll (net) · draft sheet',
+                'amount' => round((float) $run->net, 2), 'ref' => ['type' => 'payroll', 'id' => $run->id], 'draft' => null,
+            ]);
+        } elseif (! $run) {
             $preview = app(Payroll::class)->preview();
             if ($preview->isNotEmpty()) {
                 $out->push([

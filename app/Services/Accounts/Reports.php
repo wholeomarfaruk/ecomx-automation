@@ -688,7 +688,7 @@ class Reports
     protected function payroll(CarbonImmutable $from): array
     {
         $fy = AccountsPeriod::fyStart($from);
-        $runs = PayrollRun::withCount('items')->whereBetween('month', [$fy->toDateString(), $fy->addYear()->subDay()->toDateString()])->orderBy('month')->get();
+        $runs = PayrollRun::withCount('items')->where('status', '!=', 'draft')->whereBetween('month', [$fy->toDateString(), $fy->addYear()->subDay()->toDateString()])->orderBy('month')->get();
         $rows = $runs->map(fn ($r) => self::row('plain', [$r->month->format('F Y'), (int) $r->items_count, (float) $r->gross, (float) $r->bonus, -(float) $r->advance_deducted, (float) $r->net, (float) $r->paid, round((float) $r->net - (float) $r->paid, 2)],
             [7 => (float) $r->net - (float) $r->paid > 0.5 ? 'amber' : '']))->all();
         $rows[] = self::row('total', ['Total', null, (float) $runs->sum('gross'), (float) $runs->sum('bonus'), -(float) $runs->sum('advance_deducted'), (float) $runs->sum('net'), (float) $runs->sum('paid'), round((float) $runs->sum('net') - (float) $runs->sum('paid'), 2)]);

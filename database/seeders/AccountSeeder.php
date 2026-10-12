@@ -76,6 +76,7 @@ class AccountSeeder extends Seeder
             ['code' => '4950', 'name' => 'Sales Rebate',                 'type' => 'income',    'subtype' => 'contra_income', 'normal_balance' => 'debit'],
             ['code' => '4150', 'name' => 'Late Fee Income',              'type' => 'income',    'subtype' => null],
             ['code' => '2450', 'name' => 'Rebate Payable',               'type' => 'liability', 'subtype' => 'payable', 'is_control_account' => true],
+            ['code' => '2410', 'name' => 'Tax Deducted (TDS) Payable',   'type' => 'liability', 'subtype' => 'tax'],
         ];
 
         $expenseSubCategories = [
