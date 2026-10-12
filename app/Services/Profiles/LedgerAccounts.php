@@ -46,12 +46,18 @@ class LedgerAccounts
     /** Cash, bank and mobile-banking accounts money can move through, for the voucher modals. */
     public function cashAccounts(): array
     {
+        // A parent that only groups child accounts (e.g. "Bank" over City Bank /
+        // DBBL) is left out unless something was posted to it directly.
         return Account::query()
             ->where('is_active', true)
             ->whereIn('subtype', self::CASH_SUBTYPES)
+            ->where(fn ($q) => $q->whereDoesntHave('children', fn ($c) => $c->where('is_active', true))->orWhereHas('lines'))
             ->orderBy('code')
-            ->get(['id', 'code', 'name', 'subtype'])
-            ->map(fn (Account $a) => ['id' => $a->id, 'name' => $a->name, 'subtype' => $a->subtype])
+            ->get(['id', 'code', 'name', 'subtype', 'account_number', 'description', 'opening_balance', 'normal_balance', 'last_reconciled_at', 'last_reconciled_balance', 'parent_id'])
+            ->map(fn (Account $a) => [
+                'id' => $a->id, 'name' => $a->name, 'subtype' => $a->subtype, 'number' => $a->account_number ?: $a->description,
+                'last_reconciled_at' => $a->last_reconciled_at,
+            ])
             ->all();
     }
 }
