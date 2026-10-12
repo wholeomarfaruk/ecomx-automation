@@ -12,7 +12,7 @@
 
 <div class="acc-profiles box-border flex w-full max-w-[1480px] flex-col gap-[18px]">
 
-    <x-accounts.page-head title="ঋণ ও কিস্তি · Loans &amp; EMI" subtitle="যত কিস্তির হিসাব — নেওয়া ঋণ, কিস্তিতে বিক্রি, supplier-কে কিস্তি, staff loan">
+    <x-accounts.page-head title="ঋণ ও কিস্তি · Loans & EMI" subtitle="যত কিস্তির হিসাব — নেওয়া ঋণ, কিস্তিতে বিক্রি, supplier-কে কিস্তি, staff loan">
         <a href="{{ route('accounts.profiles.lenders') }}" wire:navigate class="rounded-[8px] border border-[#e5e7eb] bg-white px-[14px] py-[9px] text-[13px] !text-[#374151]">Lenders</a>
         <a href="#new-plan" class="rounded-[8px] bg-[#4f46e5] px-[16px] py-[9px] text-[13px] font-semibold !text-white">+ New loan / kisti plan</a>
     </x-accounts.page-head>

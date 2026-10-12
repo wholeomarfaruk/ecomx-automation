@@ -23,7 +23,7 @@
 
 <div class="acc-profiles box-border flex w-full max-w-[1480px] flex-col gap-[18px]">
 
-    <x-accounts.page-head title="কমিশন · Customer Commission &amp; Rebate" subtitle="বছরের বিক্রির উপর customer-দের commission — কম দামে দেওয়া invoice/item বাদ দিয়ে">
+    <x-accounts.page-head title="কমিশন · Customer Commission & Rebate" subtitle="বছরের বিক্রির উপর customer-দের commission — কম দামে দেওয়া invoice/item বাদ দিয়ে">
         <label for="cm-fy" class="text-[13px] text-[#4b5563]">Year</label>
         <select id="cm-fy" wire:model.live="fy" class="rounded-[9px] border border-[#d1d5db] bg-white py-[8px] pl-[10px] pr-[30px] text-[13px]">
             @foreach ($this->years as $k => $l)<option value="{{ $k }}">{{ $l }}</option>@endforeach

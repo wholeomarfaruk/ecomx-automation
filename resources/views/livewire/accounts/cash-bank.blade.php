@@ -11,7 +11,7 @@
 
 <div class="acc-profiles box-border flex w-full max-w-[1480px] flex-col gap-[18px]">
 
-    <x-accounts.page-head title="নগদ ও ব্যাংক · Cash &amp; Bank" subtitle="কোন account-এ কত টাকা, কোথা থেকে এলো, কোথায় গেলো">
+    <x-accounts.page-head title="নগদ ও ব্যাংক · Cash & Bank" subtitle="কোন account-এ কত টাকা, কোথা থেকে এলো, কোথায় গেলো">
         <a href="#transfer" class="rounded-[8px] border border-[#e5e7eb] bg-white px-[14px] py-[9px] text-[13px] !text-[#374151]">+ Transfer</a>
         <button type="button" wire:click="$set('showImport', true)" class="rounded-[8px] border border-[#e5e7eb] bg-white px-[14px] py-[9px] text-[13px] text-[#374151]">Statement import</button>
         <button type="button" wire:click="$set('showNew', true)" class="rounded-[8px] bg-[#4f46e5] px-[16px] py-[9px] text-[13px] font-semibold text-white">+ New account</button>

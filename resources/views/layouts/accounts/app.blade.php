@@ -65,7 +65,23 @@
                         <div class="truncate text-[12px] text-[#6b7280]">{{ $crumb ?? 'Accounts' }}</div>
                     </div>
                 @else
-                    <div class="hidden text-[13px] text-gray-500 lg:block">{{ now()->format('l, d M Y') }}</div>
+                    {{-- Live clock in the app timezone: "Monday, 12 Oct 2026 · 4:35 PM GMT+6" --}}
+                    <div class="hidden text-[13px] text-gray-500 lg:block"
+                         x-data="{
+                             tz: @js(config('app.timezone') === 'UTC' ? 'Asia/Dhaka' : config('app.timezone')),
+                             text: @js(now()->format('l, d M Y · g:i A')),
+                             timer: null,
+                             tick() {
+                                 const d = new Date(), o = { timeZone: this.tz };
+                                 const day = d.toLocaleDateString('en-GB', { ...o, weekday: 'long' });
+                                 const date = d.toLocaleDateString('en-GB', { ...o, day: '2-digit', month: 'short', year: 'numeric' });
+                                 const time = d.toLocaleTimeString('en-US', { ...o, hour: 'numeric', minute: '2-digit', hour12: true });
+                                 const zone = (d.toLocaleTimeString('en-US', { ...o, timeZoneName: 'shortOffset' }).split(' ').pop() || '');
+                                 this.text = `${day}, ${date} · ${time} ${zone}`;
+                             },
+                             init() { this.tick(); this.timer = setInterval(() => this.tick(), 15000); },
+                             destroy() { clearInterval(this.timer); },
+                         }" x-text="text">{{ now()->format('l, d M Y · g:i A') }}</div>
                 @endif
 
                 <div class="flex items-center gap-[14px]">
