@@ -1090,14 +1090,61 @@ class StockService
     }
 
     /**
-     * product_variants.stock_quantity is admin-managed only (set via the
-     * variant editor) — Stock In and every other StockService write path
-     * must not touch it while the Inventory module is on. (With it off,
-     * there's no warehouse balance and writeOwnStock() moves it directly.)
+     * The variant counterpart of syncSimpleProductStockForModuleToggle(): a
+     * variant's stock_quantity is its own balance with the module off and
+     * the mirror of its default-warehouse balance with it on, so carry the
+     * figure across the same way. Call it after the toggle is persisted.
+     */
+    public function syncVariantStockForModuleToggle(): void
+    {
+        $inventoryOn = ! $this->usesOwnStock();
+        $warehouse = Warehouse::default();
+
+        ProductVariant::query()
+            ->whereHas('product')
+            ->with('product')
+            ->chunkById(200, function ($variants) use ($inventoryOn, $warehouse) {
+                $ledger = InventoryStock::query()
+                    ->where('warehouse_id', $warehouse->id)
+                    ->whereIn('variant_id', $variants->pluck('id'))
+                    ->pluck('quantity', 'variant_id');
+
+                foreach ($variants as $variant) {
+                    $ledgerQty = (float) ($ledger[$variant->id] ?? 0);
+                    $variantQty = (float) $variant->stock_quantity;
+
+                    if (abs($ledgerQty - $variantQty) < 0.0005) {
+                        continue;
+                    }
+
+                    $this->setAbsolute(
+                        $variant->product,
+                        $variant,
+                        $inventoryOn ? $variantQty : $ledgerQty,
+                        $warehouse,
+                        note: $inventoryOn
+                            ? 'Synced from variant stock — Inventory module enabled'
+                            : 'Synced to variant stock — Inventory module disabled',
+                    );
+                }
+            });
+    }
+
+    /**
+     * With the Inventory module on, the default warehouse's inventory_stocks
+     * balance (kept equal to its batches by Stock In / packing / returns) is
+     * the stock. product_variants.stock_quantity mirrors it, because the
+     * storefront cart, product pages, the Inventory list and the admin
+     * product list all read a variant's stock from that column. (With the
+     * module off there's no ledger balance and writeOwnStock() moves the
+     * column directly.)
      */
     protected function syncVariantCache(?ProductVariant $variant, Warehouse $warehouse, float $newQuantity, float $newBookedQuantity = 0.0): void
     {
-        // Intentionally a no-op.
+        if ($variant && $warehouse->is_default) {
+            ProductVariant::query()->whereKey($variant->id)->update(['stock_quantity' => $newQuantity]);
+            $variant->stock_quantity = $newQuantity;
+        }
     }
 
     protected function lockOrCreateStock(Product $product, ?ProductVariant $variant, Warehouse $warehouse): InventoryStock

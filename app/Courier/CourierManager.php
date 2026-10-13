@@ -111,6 +111,10 @@ class CourierManager extends Manager
             return ShipmentResponse::failure('unknown', 'no_courier_selected', 'No courier was selected and the customer has no default courier set.');
         }
 
+        if ($reason = $this->notPackedReason($order)) {
+            return ShipmentResponse::failure($courierKey, 'not_packed', $reason);
+        }
+
         if (Setting::get('queue_shipment_creation', true, 'courier')) {
             CreateCourierShipmentJob::dispatch($order->id, $courierKey, $request);
 
@@ -152,6 +156,26 @@ class CourierManager extends Manager
     }
 
     /**
+     * With the Inventory module on, a parcel leaves only once every unit is
+     * packed from a batch — that's when its stock is taken. Same lines as
+     * PostOrderCompletion::assertFullyPacked(): non-gift lines with a
+     * product (combo lines are never packed). Null when it may ship.
+     */
+    public function notPackedReason(Order $order): ?string
+    {
+        if (! Setting::get('inventory_enabled', false, 'modules')) {
+            return null;
+        }
+
+        $short = $order->items()->with('batchAllocations')->get()
+            ->filter(fn ($i) => ! $i->is_gift && $i->product_id)
+            ->filter(fn ($i) => (float) $i->batchAllocations->sum('quantity') + 0.0005 < (float) $i->quantity)
+            ->map(fn ($i) => $i->product_name . ' (' . (float) $i->batchAllocations->sum('quantity') . '/' . (float) $i->quantity . ')');
+
+        return $short->isEmpty() ? null : "Order #{$order->id} is not fully packed — pack it before sending to the courier: " . $short->implode(', ');
+    }
+
+    /**
      * Books a real shipment with the given courier for an order, updating
      * the order's flat courier_* snapshot columns and creating both a
      * courier_shipments row and its first tracking event.
@@ -163,6 +187,10 @@ class CourierManager extends Manager
 
         if (! $account) {
             return ShipmentResponse::failure($courierKey, 'no_active_account', 'No active account is configured for this courier.');
+        }
+
+        if ($reason = $this->notPackedReason($order)) {
+            return ShipmentResponse::failure($courierKey, 'not_packed', $reason);
         }
 
         $shipment = CourierShipment::create([

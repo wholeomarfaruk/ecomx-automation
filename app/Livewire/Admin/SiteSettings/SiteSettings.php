@@ -579,6 +579,7 @@ class SiteSettings extends Component
             // source of truth.
             if ($old['inventory_enabled'] !== $this->inventory_enabled) {
                 app(StockService::class)->syncSimpleProductStockForModuleToggle();
+                app(StockService::class)->syncVariantStockForModuleToggle();
             }
 
             $this->logSettingsChange('Module settings were updated', $old, [
