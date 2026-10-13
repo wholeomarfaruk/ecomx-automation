@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Sales;
 
+use App\Actions\Sales\PackOrderItem;
 use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\OrderStatus;
 use App\Exceptions\Inventory\InsufficientStockException;
@@ -106,6 +107,14 @@ class OrderEditor extends Component
             || (float) $item->returned_quantity > 0;
     }
 
+    /** Locked only by its packing (nothing posted or returned) — Unpack opens it again. */
+    protected function itemUnpackable(OrderItem $item): bool
+    {
+        return $item->batchAllocations->isNotEmpty()
+            && $item->batchAllocations->every(fn ($a) => $a->posted_at === null)
+            && (float) $item->returned_quantity <= 0;
+    }
+
     protected function ensureEditable(Order $order): bool
     {
         if (static::isEditable($order)) {
@@ -152,6 +161,7 @@ class OrderEditor extends Component
             'unit_price'     => (string) (float) $item->unit_price,
             'purchase_price' => $item->purchase_price !== null ? (string) (float) $item->purchase_price : '',
             'locked'         => $this->itemLocked($item),
+            'unpackable'     => $this->itemUnpackable($item),
         ])->values()->all();
 
         $this->resetValidation();
@@ -353,6 +363,33 @@ class OrderEditor extends Component
 
         $this->itemsModal = false;
         $this->saved($order, 'items updated', $changes);
+    }
+
+    /** Gives a packed line's units back to their batches so it can be edited. */
+    public function unpackLine(int $index): void
+    {
+        $order = $this->order();
+        $line = $this->editItems[$index] ?? null;
+        $item = $line && $line['id'] ? $order->items->firstWhere('id', $line['id']) : null;
+
+        if (! $this->ensureEditable($order) || ! $item || ! $this->itemUnpackable($item)) {
+            return;
+        }
+
+        try {
+            app(PackOrderItem::class)->unpack($item);
+        } catch (\Throwable $e) {
+            report($e);
+            $this->dispatch('toast', ['type' => 'error', 'message' => $e->getMessage()]);
+
+            return;
+        }
+
+        $item = $item->fresh('batchAllocations');
+        $this->editItems[$index]['locked'] = $this->itemLocked($item);
+        $this->editItems[$index]['unpackable'] = false;
+
+        $this->saved($order, "{$item->product_name} unpacked", [['item' => $item->product_name, 'unpacked' => true]]);
     }
 
     /** Snapshot columns for an order line, same shape OrderCreate::save() writes. Line discount resets on any change. */

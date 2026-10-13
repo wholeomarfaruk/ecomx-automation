@@ -48,7 +48,22 @@ class PackOrderItem
             throw new \InvalidArgumentException('Allocated quantity exceeds the item\'s ordered quantity.');
         }
 
-        DB::transaction(function () use ($item, $allocations) {
+        $this->apply($item, $allocations, 're-packed');
+    }
+
+    /**
+     * Gives everything this item has packed back to its batches, so the line
+     * is open to edit again (Edit Items). Not once its sale is posted.
+     */
+    public function unpack(OrderItem $item): void
+    {
+        $this->apply($item, [], 'unpacked');
+    }
+
+    /** @param  array<int, float>  $allocations  the item's full allocation after this call */
+    protected function apply(OrderItem $item, array $allocations, string $returnNote): void
+    {
+        DB::transaction(function () use ($item, $allocations, $returnNote) {
             $existing = $item->batchAllocations()->with('batch')->get()->groupBy('inventory_batch_id');
             $batchIds = collect(array_keys($allocations))->merge($existing->keys())->unique();
 
@@ -59,7 +74,7 @@ class PackOrderItem
                 if ($diff > 0) {
                     $this->take($item, InventoryBatch::findOrFail($batchId), $diff);
                 } elseif ($diff < 0) {
-                    $this->putBack($item, $rows, -$diff);
+                    $this->putBack($item, $rows, -$diff, $returnNote);
                 }
             }
 
@@ -96,7 +111,7 @@ class PackOrderItem
      *
      * @param  \Illuminate\Support\Collection<int, OrderItemBatch>  $rows  this item's allocations from one batch
      */
-    protected function putBack(OrderItem $item, $rows, float $qty): void
+    protected function putBack(OrderItem $item, $rows, float $qty, string $note): void
     {
         $unposted = $rows->whereNull('posted_at');
 
@@ -126,7 +141,7 @@ class PackOrderItem
             'sale_cancelled',
             $batch->warehouse,
             $item,
-            "Order #{$item->order_id} re-packed",
+            "Order #{$item->order_id} {$note}",
         );
 
         $batch->increment('quantity', $qty);

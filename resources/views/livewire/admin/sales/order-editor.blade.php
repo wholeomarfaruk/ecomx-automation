@@ -48,7 +48,7 @@
             <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100 shrink-0">
                 <div class="flex-1">
                     <h2 class="text-base font-semibold text-gray-900">Edit Items</h2>
-                    <p class="text-xs text-gray-400">Changing a line resets its line discount. Packed/delivered lines are locked.</p>
+                    <p class="text-xs text-gray-400">Changing a line resets its line discount. Packed lines are locked — Unpack one to edit it.</p>
                 </div>
                 <button @click="open = false" type="button" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 transition">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
@@ -82,6 +82,14 @@
                                         @endif
                                         @if($line['locked'])
                                             <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-gray-200 text-gray-500">Locked</span>
+                                        @endif
+                                        @if(! empty($line['unpackable']))
+                                            <button type="button" wire:click="unpackLine({{ $i }})" wire:loading.attr="disabled" wire:target="unpackLine({{ $i }})"
+                                                wire:confirm="Unpack this item? Its units go back to their batch so you can edit it — pack it again after."
+                                                class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 transition disabled:opacity-50">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
+                                                Unpack
+                                            </button>
                                         @endif
                                     </div>
 
