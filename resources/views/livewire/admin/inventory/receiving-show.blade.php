@@ -15,6 +15,10 @@
         </div>
         <div class="flex gap-2">
             <button type="button" onclick="window.print()" class="rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50">Print GRN</button>
+            @php($labelBatches = $r->items->filter(fn ($it) => $it->batch_id)->groupBy('batch_id')->map(fn ($g) => (int) ceil((float) $g->sum('quantity'))))
+            @if ($r->status === 'received' && $labelBatches->isNotEmpty())
+                <a href="{{ route('admin.inventory.labels', ['q' => $labelBatches->all()]) }}" target="_blank" class="rounded-lg border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100">Print barcode labels</a>
+            @endif
             @if ($r->status === 'received')
                 <button type="button" wire:click="$set('showCancel', true)" class="rounded-lg border border-red-200 bg-white px-3.5 py-2 text-sm text-red-600 hover:bg-red-50">Cancel receiving</button>
             @endif

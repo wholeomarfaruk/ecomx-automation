@@ -217,6 +217,7 @@ Route::prefix('inventory')->name('inventory.')->middleware('module:inventory')->
     Route::get('/receivings', App\Livewire\Admin\Inventory\Receivings::class)->name('receivings');
     Route::get('/receivings/{receiving}', App\Livewire\Admin\Inventory\ReceivingShow::class)->name('receivings.show')->whereNumber('receiving');
     Route::get('/batches', App\Livewire\Admin\Inventory\Batches::class)->name('batches');
+    Route::get('/labels', App\Http\Controllers\Admin\BatchLabelController::class)->name('labels');
     Route::get('/movements', App\Livewire\Admin\Inventory\MovementList::class)->name('movements');
     Route::get('/warehouses', App\Livewire\Admin\Inventory\Warehouses::class)->name('warehouses');
     Route::get('/settings', App\Livewire\Admin\Inventory\InventorySettings::class)->name('settings');

@@ -16,6 +16,16 @@
                     </button>
                 </div>
 
+                <div class="border-b border-gray-100 bg-gray-50/60 px-6 py-3">
+                    <div class="relative">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.5v15m3-15v15m4.5-15v15m3-15v15m4.5-15v15m-1.5-15v15"/></svg>
+                        <input type="text" wire:model="scan" wire:keydown.enter.prevent="scanCode" x-init="$nextTick(() => $el.focus())" autocomplete="off"
+                            placeholder="Scan barcode — প্রতিটা piece-এর label scan করুন"
+                            class="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 font-mono text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                    </div>
+                    @error('scan') <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+
                 <div class="max-h-[65vh] space-y-4 overflow-y-auto px-6 py-4">
                     @forelse ($this->items as $item)
                         @php
@@ -32,6 +42,7 @@
                                 <div class="text-right text-xs">
                                     <div class="font-semibold {{ abs($picked - (float) $item->quantity) < 0.0005 ? 'text-emerald-600' : 'text-amber-600' }}">{{ $num($picked) }} / {{ $num($item->quantity) }} picked</div>
                                     @if ($packed > 0)<div class="text-gray-400">now packed {{ $num($packed) }}</div>@endif
+                                    @if (! empty($scanned[$item->id]))<div class="text-indigo-600">{{ $scanned[$item->id] }} scanned</div>@endif
                                 </div>
                             </div>
                             @if (! $opts)

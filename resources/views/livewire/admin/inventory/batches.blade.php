@@ -87,6 +87,7 @@
                         <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Quantity</th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Expiry</th>
                         <th class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                        <th class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Labels</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -152,10 +153,17 @@
                                     {{ $batch->status }}
                                 </span>
                             </td>
+                            <td class="px-5 py-3 text-center">
+                                <a href="{{ route('admin.inventory.labels', ['q' => [$batch->id => '']]) }}" target="_blank" title="Print one barcode label per piece"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.5v15m3-15v15m4.5-15v15m3-15v15m4.5-15v15m-1.5-15v15"/></svg>
+                                    Print
+                                </a>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-5 py-16 text-center">
+                            <td colspan="8" class="px-5 py-16 text-center">
                                 <p class="text-sm font-semibold text-gray-700">No batches found</p>
                                 <p class="text-xs text-gray-400 mt-0.5">Batches are created when you stock in with "Track as a Batch" enabled</p>
                             </td>
@@ -269,6 +277,11 @@
                         <h2 class="text-sm font-semibold text-gray-800">Batch Details</h2>
                         <p class="text-xs font-mono text-gray-500 mt-0.5">{{ $viewingBatchNo }}</p>
                     </div>
+                    <a href="{{ route('admin.inventory.labels', ['q' => $viewingBatchRecords->mapWithKeys(fn ($b) => [$b->id => ''])->all()]) }}" target="_blank"
+                        class="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.5v15m3-15v15m4.5-15v15m3-15v15m4.5-15v15m-1.5-15v15"/></svg>
+                        Print labels
+                    </a>
                     <button wire:click="closeBatchView" type="button" class="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 transition">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>

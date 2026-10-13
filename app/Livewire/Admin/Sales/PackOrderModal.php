@@ -35,6 +35,12 @@ class PackOrderModal extends Component
     /** item id => list<array{batch_id: string, quantity: string}> */
     public array $alloc = [];
 
+    /** Barcode scan box — a batch label's batch_no. */
+    public string $scan = '';
+
+    /** item id => units scanned since opening; an item's first scan replaces its pre-filled pick. */
+    public array $scanned = [];
+
     #[On('open-pack-order')]
     public function open(int $orderId): void
     {
@@ -48,6 +54,8 @@ class PackOrderModal extends Component
         $this->orderId = $orderId;
         unset($this->order, $this->batches);
         $this->alloc = [];
+        $this->scanned = [];
+        $this->scan = '';
 
         foreach ($this->items as $item) {
             $current = $item->batchAllocations->map(fn ($a) => ['batch_id' => (string) $a->inventory_batch_id, 'quantity' => (string) (float) $a->quantity])->all();
@@ -118,6 +126,70 @@ class PackOrderModal extends Component
         foreach ($this->items as $item) {
             $this->alloc[$item->id] = $this->fefo($item);
         }
+    }
+
+    /**
+     * A scanned label packs one unit from that exact batch: finds the order
+     * line whose own batches include this batch_no (a line still short of
+     * its quantity first) and adds 1 from it. The first scan of a line
+     * clears its pre-filled pick, so what's scanned is what gets packed.
+     */
+    public function scanCode(): void
+    {
+        $code = trim($this->scan);
+        $this->scan = '';
+        $this->resetErrorBag('scan');
+
+        if ($code === '') {
+            return;
+        }
+
+        $matches = $this->items->map(function (OrderItem $item) use ($code) {
+            $batch = collect($this->batches[$item->id] ?? [])->first(fn ($b) => strcasecmp($b['batch_no'], $code) === 0);
+
+            return $batch ? [$item, $batch] : null;
+        })->filter();
+
+        if ($matches->isEmpty()) {
+            $found = InventoryBatch::with('product:id,name', 'variant:id,sku')->where('batch_no', $code)->get();
+            $mine = $found->first(fn ($b) => $this->items->contains(fn ($i) => (int) $i->product_id === (int) $b->product_id && (int) $i->variant_id === (int) $b->variant_id));
+            $other = $found->first();
+            $this->addError('scan', match (true) {
+                $mine !== null  => "Batch {$code} has no stock left.",
+                $other !== null => "{$code} is {$other->product?->name}" . ($other->variant ? " ({$other->variant->sku})" : '') . ' — not in this order.',
+                default         => "No batch {$code} found.",
+            });
+
+            return;
+        }
+
+        [$item, $batch] = $matches->first(fn ($m) => (int) ($this->scanned[$m[0]->id] ?? 0) < (float) $m[0]->quantity) ?? $matches->first();
+        $done = (int) ($this->scanned[$item->id] ?? 0);
+
+        if ($done + 1 > (float) $item->quantity + 0.0005) {
+            $this->addError('scan', "{$item->product_name}: all " . (float) $item->quantity . ' already scanned.');
+
+            return;
+        }
+
+        $rows = $done ? array_values(array_filter($this->alloc[$item->id] ?? [], fn ($r) => ($r['batch_id'] ?? '') !== '')) : [];
+        $at = collect($rows)->search(fn ($r) => (int) $r['batch_id'] === (int) $batch['id']);
+        $inBatch = $at === false ? 0.0 : (float) $rows[$at]['quantity'];
+
+        if ($inBatch + 1 > $batch['available'] + 0.0005) {
+            $this->addError('scan', "Batch {$batch['batch_no']} has only " . (float) $batch['available'] . ' left.');
+
+            return;
+        }
+
+        if ($at === false) {
+            $rows[] = ['batch_id' => (string) $batch['id'], 'quantity' => '1'];
+        } else {
+            $rows[$at]['quantity'] = (string) ($inBatch + 1);
+        }
+
+        $this->alloc[$item->id] = $rows;
+        $this->scanned[$item->id] = (int) ($this->scanned[$item->id] ?? 0) + 1;
     }
 
     public function addRow(int $itemId): void
