@@ -825,7 +825,7 @@ class OrderDetail extends Component
 
         try {
             app(PackOrderItem::class)->handle($item, $allocations);
-        } catch (InsufficientStockException $e) {
+        } catch (InsufficientStockException|\RuntimeException|\InvalidArgumentException $e) {
             $this->addError('packAllocations', $e->getMessage());
             return;
         }

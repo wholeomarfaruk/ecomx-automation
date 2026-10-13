@@ -88,6 +88,10 @@ class PackOrderItem
     /** Deducts $qty more from $batch for this item and records it as a new (unposted) allocation. */
     protected function take(OrderItem $item, InventoryBatch $batch, float $qty): void
     {
+        if ((int) $batch->product_id !== (int) $item->product_id || (int) $batch->variant_id !== (int) $item->variant_id) {
+            throw new \RuntimeException("Batch {$batch->batch_no} is not of {$item->product_name}.");
+        }
+
         $this->stockService->decreaseFromBatch(
             $batch,
             $qty,
