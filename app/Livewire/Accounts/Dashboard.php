@@ -530,12 +530,25 @@ class Dashboard extends Component
             ->leftJoin('product_variants as v', 'v.id', '=', 'm.variant_id')
             ->leftJoin('products as p', 'p.id', '=', 'm.product_id')
             ->whereBetween('m.created_at', [$start, $end])
-            ->groupBy('m.type')
-            ->selectRaw('m.type,
+            ->groupByRaw('kind')
+            ->selectRaw("CASE WHEN m.type = 'sale_cancelled' AND m.note LIKE '%re-packed' THEN 'repack' ELSE m.type END as kind,
                 SUM(CASE WHEN m.quantity > 0 THEN m.quantity ELSE 0 END) as qty_in,
                 SUM(CASE WHEN m.quantity < 0 THEN -m.quantity ELSE 0 END) as qty_out,
-                SUM(CASE WHEN m.quantity > 0 THEN m.quantity * COALESCE(b.purchase_price, v.purchase_price, p.purchase_price, 0) ELSE 0 END) as cost_in')
-            ->get();
+                SUM(CASE WHEN m.quantity > 0 THEN m.quantity * COALESCE(b.purchase_price, v.purchase_price, p.purchase_price, 0) ELSE 0 END) as cost_in")
+            ->get()->keyBy('kind');
+
+        // A re-pack gives units back to a batch only to pack them again — no
+        // goods came in or left, so net it off the sales instead of counting it.
+        if ($repack = $movements->pull('repack')) {
+            if ($sale = $movements->get('sale')) {
+                $sale->qty_out = max(0, (float) $sale->qty_out - (float) $repack->qty_in);
+            }
+        }
+        $movements = $movements->map(function ($m, $kind) {
+            $m->type = $kind;
+
+            return $m;
+        });
 
         $note = fn (string $col) => ! $inventory
             ? 'inventory module off'

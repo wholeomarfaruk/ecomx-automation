@@ -18,11 +18,12 @@ use Illuminate\Support\Facades\DB;
  * batch) that PostOrderCompletion later reads to compute real per-batch
  * COGS instead of one flat purchase_price guess.
  *
- * Re-packing an already-partially-packed item is supported by first
- * removing its existing OrderItemBatch allocation (restocking those
- * batches) and then applying the new one — simplest way to keep "what's
- * currently packed" exactly matching the caller's latest allocation map
- * without diffing row-by-row.
+ * Re-packing applies only the difference per batch: an unchanged batch
+ * moves no stock, a raised one takes just the extra, a lowered or dropped
+ * one gives just the surplus back. (Un-packing everything and packing it
+ * again logged a stock-in + stock-out pair on every re-pack, which the
+ * Accounts dashboard counted as real movement, and re-created posted
+ * allocations as unposted so their sale/COGS would post twice.)
  */
 class PackOrderItem
 {
@@ -48,27 +49,18 @@ class PackOrderItem
         }
 
         DB::transaction(function () use ($item, $allocations) {
-            $this->unpack($item);
+            $existing = $item->batchAllocations()->with('batch')->get()->groupBy('inventory_batch_id');
+            $batchIds = collect(array_keys($allocations))->merge($existing->keys())->unique();
 
-            foreach ($allocations as $batchId => $qty) {
-                $batch = InventoryBatch::findOrFail($batchId);
+            foreach ($batchIds as $batchId) {
+                $rows = $existing->get($batchId, collect());
+                $diff = round((float) ($allocations[$batchId] ?? 0) - (float) $rows->sum('quantity'), 3);
 
-                $movement = $this->stockService->decreaseFromBatch(
-                    $batch,
-                    $qty,
-                    'sale',
-                    reference: $item,
-                    note: "Order #{$item->order_id} packed",
-                );
-
-                OrderItemBatch::create([
-                    'order_item_id'      => $item->id,
-                    'inventory_batch_id' => $batch->id,
-                    'quantity'           => $qty,
-                    'unit_cost'          => $batch->purchase_price ?? 0,
-                ]);
-
-                unset($movement);
+                if ($diff > 0) {
+                    $this->take($item, InventoryBatch::findOrFail($batchId), $diff);
+                } elseif ($diff < 0) {
+                    $this->putBack($item, $rows, -$diff);
+                }
             }
 
             $totalPacked = $item->batchAllocations()->sum('quantity');
@@ -78,36 +70,68 @@ class PackOrderItem
         });
     }
 
-    /**
-     * Reverses this item's existing batch allocation (restocks each batch
-     * and the aggregate balance, deletes the OrderItemBatch rows) so
-     * handle() can cleanly re-apply a fresh allocation map on re-pack,
-     * rather than trying to diff old vs. new row-by-row.
-     */
-    protected function unpack(OrderItem $item): void
+    /** Deducts $qty more from $batch for this item and records it as a new (unposted) allocation. */
+    protected function take(OrderItem $item, InventoryBatch $batch, float $qty): void
     {
-        $existing = $item->batchAllocations()->with('batch')->get();
+        $this->stockService->decreaseFromBatch(
+            $batch,
+            $qty,
+            'sale',
+            reference: $item,
+            note: "Order #{$item->order_id} packed",
+        );
 
-        foreach ($existing as $allocation) {
-            $batch = $allocation->batch;
+        OrderItemBatch::create([
+            'order_item_id'      => $item->id,
+            'inventory_batch_id' => $batch->id,
+            'quantity'           => $qty,
+            'unit_cost'          => $batch->purchase_price ?? 0,
+        ]);
+    }
 
-            if ($batch) {
-                $this->stockService->increase(
-                    $batch->product,
-                    $batch->variant,
-                    (float) $allocation->quantity,
-                    'sale_cancelled',
-                    reference: $item,
-                    note: "Order #{$item->order_id} re-packed",
-                );
+    /**
+     * Returns $qty of this item's allocation from one batch back to that
+     * batch (and the aggregate balance). Unposted rows are reduced first;
+     * quantity already costed into a posted sale can't be taken back here.
+     *
+     * @param  \Illuminate\Support\Collection<int, OrderItemBatch>  $rows  this item's allocations from one batch
+     */
+    protected function putBack(OrderItem $item, $rows, float $qty): void
+    {
+        $unposted = $rows->whereNull('posted_at');
 
-                $batch->increment('quantity', (float) $allocation->quantity);
-                if ($batch->status === 'depleted' && (float) $batch->quantity > 0) {
-                    $batch->update(['status' => 'active']);
-                }
+        if ($qty > (float) $unposted->sum('quantity') + 0.0005) {
+            throw new \RuntimeException("Order #{$item->order_id}: {$item->product_name} is already posted to accounts — its packed batch can't be reduced.");
+        }
+
+        $left = $qty;
+        foreach ($unposted as $row) {
+            $cut = min($left, (float) $row->quantity);
+            (float) $row->quantity - $cut <= 0.0005 ? $row->delete() : $row->update(['quantity' => (float) $row->quantity - $cut]);
+            $left -= $cut;
+            if ($left <= 0.0005) {
+                break;
             }
+        }
 
-            $allocation->delete();
+        $batch = $rows->first()->batch;
+        if (! $batch) {
+            return;
+        }
+
+        $this->stockService->increase(
+            $batch->product,
+            $batch->variant,
+            $qty,
+            'sale_cancelled',
+            $batch->warehouse,
+            $item,
+            "Order #{$item->order_id} re-packed",
+        );
+
+        $batch->increment('quantity', $qty);
+        if ($batch->status === 'depleted' && (float) $batch->quantity > 0) {
+            $batch->update(['status' => 'active']);
         }
     }
 }
