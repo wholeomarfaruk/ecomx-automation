@@ -12,6 +12,7 @@ use App\Marketing\Events\InitiateCheckout;
 use App\Marketing\Events\Purchase;
 use App\Marketing\Events\Search;
 use App\Marketing\Events\ViewContent;
+use App\Marketing\Identity\MarketingIdentity;
 
 /**
  * Builds the dataLayer payload for a canonical marketing event:
@@ -19,6 +20,8 @@ use App\Marketing\Events\ViewContent;
  *   event       → GA4 event name (page_view, view_item, …)
  *   custom_data → Pixel event parameters, same as Conversions API custom_data
  *   user_data   → advanced matching, already hashed (see MetaBrowserData)
+ *   user_provided_data → the same customer details unhashed, in Google's
+ *                 user-provided data shape (email, phone_number, address)
  *   ecommerce   → GA4-style ecommerce
  *   marketing   → event_id (dedup), event_name, occurred_at, …
  *   page        → url, path, referrer_url
@@ -47,6 +50,7 @@ final class BrowserEventPayloadBuilder
 
             'custom_data' => $meta['custom_data'] ?? null,
             'user_data' => $meta['user_data'] ?? null,
+            'user_provided_data' => $this->buildUserProvidedData($data->identity),
 
             'ecommerce' => $this->buildEcommerce($event, $eventData),
 
@@ -159,6 +163,45 @@ final class BrowserEventPayloadBuilder
         }
 
         return [];
+    }
+
+    /**
+     * The customer's details unhashed, shaped like Google's user-provided
+     * data (enhanced conversions), so a GTM "User-Provided Data" variable can
+     * map them field by field. The Google tag normalizes and hashes them
+     * itself before they leave the browser.
+     */
+    private function buildUserProvidedData(MarketingIdentity $identity): ?array
+    {
+        $email = strtolower(trim((string) $identity->email));
+
+        // Auto-generated placeholders (user+xxxx@, guest+<phone>@) aren't the
+        // customer's real email — same rule as MetaPayloadBuilder.
+        if ($email === '' || str_starts_with($email, 'user+') || str_starts_with($email, 'guest+')) {
+            $email = null;
+        }
+
+        $address = array_filter([
+            'first_name' => $this->trimmed($identity->firstName),
+            'last_name' => $this->trimmed($identity->lastName),
+            'city' => $this->trimmed($identity->city),
+            'region' => $this->trimmed($identity->state),
+            'postal_code' => $this->trimmed($identity->zip),
+            'country' => $this->trimmed($identity->country),
+        ], fn ($value) => $value !== null);
+
+        return array_filter([
+            'email' => $email,
+            'phone_number' => $this->trimmed($identity->phone),
+            'address' => $address ?: null,
+        ], fn ($value) => $value !== null) ?: null;
+    }
+
+    private function trimmed(?string $value): ?string
+    {
+        $value = trim((string) $value);
+
+        return $value !== '' ? $value : null;
     }
 
     private function buildAttribution(MarketingAttribution $attribution): ?array

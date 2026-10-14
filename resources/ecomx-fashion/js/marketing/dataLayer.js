@@ -10,7 +10,7 @@ export function pushMarketingEvent(payload) {
     // item, a purchase's order_id in meta.custom_data) would leak into this
     // one. Clearing the blocks first is Google's documented fix for
     // ecommerce, applied to every block these payloads carry.
-    window.dataLayer.push({ ecommerce: null, marketing: null, meta: null, page: null, attribution: null });
+    window.dataLayer.push({ ecommerce: null, marketing: null, meta: null, page: null, attribution: null, user_provided_data: null });
 
     window.dataLayer.push(payload);
 }
