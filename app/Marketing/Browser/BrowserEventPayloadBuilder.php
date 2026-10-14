@@ -21,7 +21,8 @@ use App\Marketing\Identity\MarketingIdentity;
  *   custom_data → Pixel event parameters, same as Conversions API custom_data
  *   user_data   → advanced matching, already hashed (see MetaBrowserData)
  *   user_provided_data → the same customer details unhashed, in Google's
- *                 user-provided data shape (email, phone_number, address)
+ *                 user-provided data shape (email, phone_number, address),
+ *                 plus external_id
  *   ecommerce   → GA4-style ecommerce
  *   marketing   → event_id (dedup), event_name, occurred_at, …
  *   page        → url, path, referrer_url
@@ -194,6 +195,9 @@ final class BrowserEventPayloadBuilder
             'email' => $email,
             'phone_number' => $this->trimmed($identity->phone),
             'address' => $address ?: null,
+            // Not a Google field. The most specific id (customer before
+            // device), like the Pixel's external_id in MetaBrowserData.
+            'external_id' => $identity->externalIds[0] ?? null,
         ], fn ($value) => $value !== null) ?: null;
     }
 
