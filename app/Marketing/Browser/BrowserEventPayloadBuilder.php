@@ -20,9 +20,8 @@ use App\Marketing\Identity\MarketingIdentity;
  *   event       → GA4 event name (page_view, view_item, …)
  *   custom_data → Pixel event parameters, same as Conversions API custom_data
  *   user_data   → advanced matching, already hashed (see MetaBrowserData)
- *   user_provided_data → the same customer details unhashed, in Google's
- *                 user-provided data shape (email, phone_number, address),
- *                 plus external_id
+ *   user_provided_data → the same customer details unhashed, flat
+ *                 (email, phone_number, first_name, …, external_id)
  *   ecommerce   → GA4-style ecommerce
  *   marketing   → event_id (dedup), event_name, occurred_at, …
  *   page        → url, path, referrer_url
@@ -167,10 +166,10 @@ final class BrowserEventPayloadBuilder
     }
 
     /**
-     * The customer's details unhashed, shaped like Google's user-provided
-     * data (enhanced conversions), so a GTM "User-Provided Data" variable can
-     * map them field by field. The Google tag normalizes and hashes them
-     * itself before they leave the browser.
+     * The customer's details unhashed, one flat level so a GTM "User-Provided
+     * Data" variable (manual configuration) can map them field by field. The
+     * Google tag normalizes and hashes them itself before they leave the
+     * browser.
      */
     private function buildUserProvidedData(MarketingIdentity $identity): ?array
     {
@@ -182,19 +181,15 @@ final class BrowserEventPayloadBuilder
             $email = null;
         }
 
-        $address = array_filter([
+        return array_filter([
+            'email' => $email,
+            'phone_number' => $this->trimmed($identity->phone),
             'first_name' => $this->trimmed($identity->firstName),
             'last_name' => $this->trimmed($identity->lastName),
             'city' => $this->trimmed($identity->city),
             'region' => $this->trimmed($identity->state),
             'postal_code' => $this->trimmed($identity->zip),
             'country' => $this->trimmed($identity->country),
-        ], fn ($value) => $value !== null);
-
-        return array_filter([
-            'email' => $email,
-            'phone_number' => $this->trimmed($identity->phone),
-            'address' => $address ?: null,
             // Not a Google field. The most specific id (customer before
             // device), like the Pixel's external_id in MetaBrowserData.
             'external_id' => $identity->externalIds[0] ?? null,
