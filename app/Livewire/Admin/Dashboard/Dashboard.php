@@ -271,9 +271,9 @@ class Dashboard extends Component
             'failed_deliveries' => CourierShipment::where('status', CourierStatus::FAILED->value)->count(),
             'out_of_stock' => Product::where('stock_status', 'out_of_stock')->count(),
             'low_stock' => Product::where('stock_status', 'low_stock')->count(),
-            'refunds_pending' => Order::where(fn ($q) => $q
-                ->where('payment_status', PaymentStatus::REFUNDED)
-                ->orWhere('status', OrderStatus::RETURNED))
+            // Returned but still fully paid — the customer needs refunding.
+            'refunds_pending' => Order::where('status', OrderStatus::RETURNED)
+                ->where('payment_status', PaymentStatus::PAID)
                 ->count(),
         ];
     }

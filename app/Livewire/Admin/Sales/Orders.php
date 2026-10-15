@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Sales;
 
 use App\Actions\Sales\DeleteOrder;
 use App\Enums\Sales\CourierStatus;
+use App\Enums\Sales\FulfillmentStatus;
 use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\OrderStatus;
 use App\Enums\Sales\PaymentStatus;
@@ -91,6 +92,18 @@ class Orders extends Component
     {
         $order = Order::findOrFail($orderId);
 
+        // Partial delivery's leftover coming back — the order stays Delivered, only the courier status moves.
+        if ($order->status === OrderStatus::DELIVERED && $order->courier_status === CourierStatus::RETURNING) {
+            $order->forceFill([
+                'courier_status' => CourierStatus::RETURNED,
+                'courier_status_updated_at' => now(),
+            ])->save();
+
+            $this->dispatch('toast', ['type' => 'success', 'message' => 'Return received']);
+
+            return;
+        }
+
         if ($order->status !== OrderStatus::RETURNING) {
             $this->dispatch('toast', ['type' => 'error', 'message' => "Order #{$orderId} isn't in Returning."]);
 
@@ -98,6 +111,25 @@ class Orders extends Component
         }
 
         $this->updateOrderStatus($orderId, OrderStatus::RETURNED->value);
+
+        $order->refresh();
+
+        if ($order->status !== OrderStatus::RETURNED) {
+            return;
+        }
+
+        // Nothing paid → failed; only part paid (e.g. the delivery charge) → partial;
+        // fully paid stays paid — the dashboard flags it for a refund.
+        $order->forceFill([
+            'courier_status' => CourierStatus::RETURNED,
+            'courier_status_updated_at' => now(),
+            'fulfillment_status' => FulfillmentStatus::UNFULFILLED,
+            'payment_status' => match (true) {
+                (float) $order->paid_amount <= 0 => PaymentStatus::FAILED,
+                (float) $order->due_amount > 0 => PaymentStatus::PARTIAL,
+                default => PaymentStatus::PAID,
+            },
+        ])->save();
     }
 
     public function updateOrderStatus(int $orderId, string $status): void

@@ -290,7 +290,8 @@
                                              :style="`position: absolute; top: ${top}px; right: ${right}px; z-index: 9999;`"
                                              class="w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-1 text-sm origin-top-right">
 
-                                            @if($order->status === \App\Enums\Sales\OrderStatus::RETURNING)
+                                            @if($order->status === \App\Enums\Sales\OrderStatus::RETURNING
+                                                || ($order->status === \App\Enums\Sales\OrderStatus::DELIVERED && $order->courier_status === \App\Enums\Sales\CourierStatus::RETURNING))
                                                 <button wire:click="markReturnReceived({{ $order->id }})" @click="open = false" type="button"
                                                     wire:confirm="Parcel for Order #{{ $order->id }} is back in your hands? The order becomes Returned and its stock is put back."
                                                     class="flex items-center gap-2.5 w-full px-4 py-2 text-orange-700 hover:bg-orange-50 transition">

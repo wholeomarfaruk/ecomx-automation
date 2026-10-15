@@ -65,7 +65,7 @@
             ['count' => $actionRequired['failed_deliveries'], 'label' => 'deliveries failed', 'href' => route('admin.settings.advance.courier.shipments')],
             ['count' => $actionRequired['out_of_stock'], 'label' => 'products are out of stock', 'href' => route('admin.catalog.products', ['filterStockStatus' => 'out_of_stock'])],
             ['count' => $actionRequired['low_stock'], 'label' => 'products are low on stock', 'href' => route('admin.catalog.products', ['filterStockStatus' => 'low_stock'])],
-            ['count' => $actionRequired['refunds_pending'], 'label' => 'refunds pending', 'href' => route('admin.sales.orders', ['filterPaymentStatus' => \App\Enums\Sales\PaymentStatus::REFUNDED->value])],
+            ['count' => $actionRequired['refunds_pending'], 'label' => 'refunds pending', 'href' => route('admin.sales.orders', ['filterStatus' => \App\Enums\Sales\OrderStatus::RETURNED->value, 'filterPaymentStatus' => \App\Enums\Sales\PaymentStatus::PAID->value])],
         ];
         $activeAlerts = collect($alerts)->filter(fn ($a) => $a['count'] > 0);
     @endphp

@@ -23,7 +23,7 @@
     <p class="muted" style="font-size:13.5px;margin-bottom:28px">Complete your shipping and payment details to place the order.</p>
 
     @if($placed)
-        @php($siteName = \App\Models\Setting::get('site_name', 'AnyNiche') ?: 'AnyNiche')
+        @php $siteName = \App\Models\Setting::get('site_name', 'AnyNiche') ?: 'AnyNiche'; @endphp
         <div class="checkout__success">
             <div class="checkout__success-head">
                 <div class="checkout__success-icon" aria-hidden="true">
