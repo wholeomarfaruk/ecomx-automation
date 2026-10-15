@@ -37,7 +37,12 @@
             <div class="checkout__success-card">
                 <h3>Your order is confirmed</h3>
                 <p>Thank you for your order with {{ $siteName }}.</p>
-                <p>Please keep the exact amount of cash ready at the time of delivery. Our delivery partner will contact you@if($phone) on {{ $phone }}@endif before delivery.</p>
+                <p>Please keep the exact amount of cash ready at the time of delivery. Our delivery partner will contact you{{ $phone ? ' on '.$phone : '' }} before delivery.</p>
+                <p class="checkout__success-note">
+                    <strong>অর্ডার টি কনফার্ম হয়েছে</strong><br>
+                    কোনো কারণে পার্সেল রিটার্ন অথবা বাতিল করলে, ডেলিভারি চার্জ দিয়ে রিটার্ন বা বাতিল করতে হবে।<br>
+                    পণ্যে কোনো ধরনের সমস্যা হলে <strong>২৪ ঘণ্টার মধ্যে</strong> আমাদের জানালে আমরা দ্রুত সমাধান করে দেবো।
+                </p>
                 <p>If you need any assistance, feel free to contact us via WhatsApp or Facebook.</p>
             </div>
             @if($order = $this->placedOrder)

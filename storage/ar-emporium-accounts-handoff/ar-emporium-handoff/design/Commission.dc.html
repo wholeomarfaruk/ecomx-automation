@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<title>Customer Commission</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Hind+Siliguri:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f1f3f7}
+a{color:#4338ca;text-decoration:none}a:hover{color:#312e81}
+table{border-collapse:collapse;width:100%}
+button,input,select,textarea{font-family:inherit}
+button{cursor:pointer}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; min-height: 100vh; background: #f1f3f7; font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif; color: #111827; font-size: 14px">
+
+<div style="flex: 1 1 248px; max-width: 100%; background: #0f172a; display: flex">
+<dc-import name="Sidebar" active="commission" hint-size="248px,1100px"></dc-import>
+</div>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+
+<header style="background: #fff; border-bottom: 1px solid #e5e7eb; padding: 14px 28px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<div>
+<div style="font-weight: 700; font-size: 16px">Customer Commission</div>
+<div style="font-size: 12px; color: #6b7280">Accounts / Commission &amp; Rebate</div>
+</div>
+<div style="display: flex; align-items: center; gap: 14px">
+<button aria-label="Notifications" style="width: 40px; height: 40px; border: 1px solid #e5e7eb; background: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #374151">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg>
+</button>
+<div style="display: flex; align-items: center; gap: 8px">
+<div style="width: 34px; height: 34px; border-radius: 50%; background: #0f172a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">SU</div>
+<div style="font-weight: 600; font-size: 13px">superadmin</div>
+</div>
+</div>
+</header>
+
+<div style="padding: 24px 28px 40px; display: flex; flex-direction: column; gap: 18px; max-width: 1480px; box-sizing: border-box; width: 100%">
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px">
+<div>
+<h1 style="margin: 0; font-size: 24px; font-weight: 700">কমিশন · Customer Commission &amp; Rebate</h1>
+<div style="color: #6b7280; font-size: 13px; margin-top: 2px">বছরের বিক্রির উপর customer-দের commission — কম দামে দেওয়া invoice/item বাদ দিয়ে</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<label for="cm-fy" style="font-size: 13px; color: #4b5563">Year</label>
+<select id="cm-fy" style="font-size: 13px; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 9px; background: #fff"><option>FY 2026–27 (Jul–Jun)</option><option>FY 2025–26</option></select>
+<button style="font-size: 13px; padding: 9px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">Statement to customers</button>
+<button onClick="{{goSchemes}}" style="font-size: 13px; padding: 9px 16px; border: 0; border-radius: 8px; background: #4f46e5; color: #fff; font-weight: 600">+ New scheme</button>
+</div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px">
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">যোগ্য বিক্রি · Eligible sales</div>
+<div style="font-size: 24px; font-weight: 700; margin-top: 6px">{{sum.eligible}}</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">{{sum.customers}} customers · paid invoices only</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">বাদ দেওয়া বিক্রি · Excluded</div>
+<div style="font-size: 24px; font-weight: 700; color: #b45309; margin-top: 6px">{{sum.excluded}}</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">Clearance, বড় discount, cost-এর নিচে</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">এখন পর্যন্ত জমা · Accrued</div>
+<div style="font-size: 24px; font-weight: 700; color: #4338ca; margin-top: 6px">{{sum.accrued}}</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">{{sum.modeNote}}</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">বছর শেষে আনুমানিক</div>
+<div style="font-size: 24px; font-weight: 700; margin-top: 6px">{{sum.projected}}</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">Current pace · settle 30 Jun 2027</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">গত বছর দেওয়া</div>
+<div style="font-size: 24px; font-weight: 700; margin-top: 6px">৳1,43,900</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">FY 2025–26 · 5 customers</div>
+</div>
+</div>
+
+<div role="tablist" aria-label="Commission sections" style="display: flex; gap: 2px; border-bottom: 1px solid #e5e7eb; overflow-x: auto">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+<button role="tab" onClick="{{t.pick}}" style="{{t.style}}">{{t.label}} <span style="{{t.countStyle}}">{{t.count}}</span></button>
+</sc-for>
+</div>
+
+<!-- PROGRESS -->
+<sc-if value="{{is.progress}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+<section style="flex: 999 1 640px; min-width: 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid #f0f1f4">
+<div><h2 style="margin: 0; font-size: 15px; font-weight: 700">Wholesale yearly rebate · customer progress</h2><div style="font-size: 12.5px; color: #6b7280; margin-top: 2px">1 Jul – 12 Oct 2026 · নাম চাপলে বিস্তারিত</div></div>
+<span style="font-size: 12px; font-weight: 600; border-radius: 6px; padding: 3px 9px; background: #eef2ff; color: #3730a3">{{modeLabel}}</span>
+</div>
+<div style="overflow-x: auto">
+<table style="min-width: 860px; font-size: 13px">
+<thead>
+<tr style="text-align: left; color: #6b7280; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em">
+<th style="padding: 10px 8px 10px 18px">Customer</th>
+<th style="padding: 10px 8px; text-align: right">Eligible</th>
+<th style="padding: 10px 8px; text-align: right">Excluded</th>
+<th style="padding: 10px 8px">Tier</th>
+<th style="padding: 10px 8px; width: 170px">Next tier</th>
+<th style="padding: 10px 8px; text-align: right">Accrued</th>
+<th style="padding: 10px 18px">Status</th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+<tr style="{{r.rowStyle}}">
+<td style="padding: 11px 8px 11px 18px"><button onClick="{{r.open}}" style="border: 0; background: transparent; padding: 0; font-size: 13px; font-weight: 700; color: #4338ca; text-align: left">{{r.name}}</button><div style="font-size: 11.5px; color: #6b7280">{{r.area}}</div></td>
+<td style="padding: 11px 8px; text-align: right; font-weight: 600; white-space: nowrap">{{r.eligible}}</td>
+<td style="padding: 11px 8px; text-align: right; white-space: nowrap; color: #b45309">{{r.excluded}}</td>
+<td style="padding: 11px 8px"><span style="{{r.tierStyle}}">{{r.tier}}</span></td>
+<td style="padding: 11px 8px">
+<div style="font-size: 11.5px; color: #4b5563; margin-bottom: 4px">{{r.gap}}</div>
+<div style="height: 6px; background: #eef0f3; border-radius: 4px; overflow: hidden"><div style="{{r.bar}}"></div></div>
+</td>
+<td style="padding: 11px 8px; text-align: right; font-weight: 700; white-space: nowrap; color: #4338ca">{{r.accrued}}</td>
+<td style="padding: 11px 18px"><span style="{{r.badge}}">{{r.status}}</span></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+
+<aside style="flex: 1 1 360px; min-width: 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden">
+<div style="padding: 16px 18px; border-bottom: 1px solid #f0f1f4">
+<h2 style="margin: 0; font-size: 17px; font-weight: 700">{{c.name}}</h2>
+<div style="font-size: 12.5px; color: #6b7280; margin-top: 2px">Wholesale yearly rebate · FY 2026–27</div>
+</div>
+<div style="padding: 14px 18px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: grid; grid-template-columns: 1fr auto; gap: 7px 10px; font-size: 13px">
+<span style="color: #4b5563">মোট বিক্রি</span><b>{{c.gross}}</b>
+<span style="color: #4b5563">− Return</span><span style="color: #b91c1c">{{c.returns}}</span>
+<span style="color: #4b5563">− বাদ দেওয়া invoice/item</span><span style="color: #b45309">{{c.excluded}}</span>
+<span style="color: #4b5563">− এখনো unpaid</span><span style="color: #6b7280">{{c.unpaid}}</span>
+<span style="font-weight: 700; border-top: 1px solid #e5e7eb; padding-top: 7px">= Commission-যোগ্য বিক্রি</span><b style="border-top: 1px solid #e5e7eb; padding-top: 7px">{{c.eligible}}</b>
+</div>
+<div>
+<div style="font-size: 12px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px">Tier ladder</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{c.ladder}}" as="l" hint-placeholder-count="4">
+<div style="{{l.box}}"><span>{{l.range}}</span><b>{{l.rate}}</b></div>
+</sc-for>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<div style="background: #eef2ff; border-radius: 10px; padding: 10px 12px"><div style="font-size: 11.5px; color: #3730a3">এখন পর্যন্ত</div><div style="font-weight: 700; font-size: 18px; color: #312e81; margin-top: 2px">{{c.accrued}}</div></div>
+<div style="background: #f9fafb; border-radius: 10px; padding: 10px 12px"><div style="font-size: 11.5px; color: #6b7280">বছর শেষে (আনুমানিক)</div><div style="font-weight: 700; font-size: 18px; margin-top: 2px">{{c.projected}}</div></div>
+</div>
+<sc-if value="{{c.blocked}}" hint-placeholder-val="{{ false }}">
+<div style="font-size: 13px; line-height: 1.5; border-radius: 10px; padding: 10px 12px; background: #fef2f2; color: #7f1d1d; border: 1px solid #fecaca">{{c.blockNote}}</div>
+</sc-if>
+<div>
+<div style="font-size: 12px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px">বাদ দেওয়া invoice</div>
+<sc-for list="{{c.exInv}}" as="e" hint-placeholder-count="2">
+<div style="display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 7px 0; border-top: 1px solid #f0f1f4"><div><b>{{e.ref}}</b> <span style="color: #6b7280">· {{e.reason}}</span></div><span>{{e.amt}}</span></div>
+</sc-for>
+<sc-if value="{{c.noEx}}" hint-placeholder-val="{{ false }}"><div style="font-size: 13px; color: #6b7280">কিছু বাদ যায়নি।</div></sc-if>
+</div>
+</div>
+<div style="padding: 14px 18px; border-top: 1px solid #f0f1f4; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; background: #fcfcfd">
+<button style="font-size: 13px; padding: 9px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">Send statement (SMS)</button>
+<a href="ProfileDetail.dc.html" style="font-size: 13px; padding: 9px 14px; border-radius: 8px; background: #4f46e5; color: #fff; font-weight: 600">Open profile</a>
+</div>
+</aside>
+</div>
+</sc-if>
+
+<!-- SCHEMES -->
+<sc-if value="{{is.schemes}}" hint-placeholder-val="{{ false }}">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px">
+<sc-for list="{{schemes}}" as="s" hint-placeholder-count="3">
+<button onClick="{{s.pick}}" style="{{s.box}}">
+<div style="display: flex; justify-content: space-between; gap: 8px; align-items: center"><span style="font-weight: 700; font-size: 15px">{{s.name}}</span><span style="{{s.stStyle}}">{{s.state}}</span></div>
+<div style="font-size: 12.5px; color: #6b7280; margin-top: 4px">{{s.rule}}</div>
+<div style="display: flex; gap: 14px; font-size: 12.5px; margin-top: 10px"><span><b>{{s.customers}}</b> customers</span><span><b>{{s.accrued}}</b> accrued</span></div>
+</button>
+</sc-for>
+</div>
+
+<section style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden">
+<div style="padding: 16px 20px; border-bottom: 1px solid #f0f1f4; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center">
+<div><h2 style="margin: 0; font-size: 17px; font-weight: 700">Scheme: Wholesale yearly rebate</h2><div style="font-size: 12.5px; color: #6b7280; margin-top: 2px">নিয়ম বদলালে Customer progress সাথে সাথে নতুন হিসাব দেখাবে</div></div>
+<span style="font-size: 12px; font-weight: 600; border-radius: 6px; padding: 3px 9px; background: #d1fae5; color: #065f46">Active · FY 2026–27</span>
+</div>
+<div style="display: flex; flex-wrap: wrap">
+<div style="flex: 1 1 460px; min-width: 0; padding: 18px 20px; display: flex; flex-direction: column; gap: 16px; border-right: 1px solid #f0f1f4">
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 6px"><label for="sc-type" style="font-size: 13px; font-weight: 600">Type</label><select id="sc-type" style="font-size: 14px; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 9px; background: #fff"><option>Rebate (বছরশেষে ফেরত)</option><option>Commission (agent / referral)</option><option>Instant discount</option></select></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><label for="sc-basis" style="font-size: 13px; font-weight: 600">কিসের উপর</label><select id="sc-basis" style="font-size: 14px; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 9px; background: #fff"><option>Net sales amount (৳)</option><option>Quantity (pcs)</option><option>Gross profit</option></select></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><label for="sc-period" style="font-size: 13px; font-weight: 600">Period</label><select id="sc-period" style="font-size: 14px; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 9px; background: #fff"><option>Yearly (Jul–Jun)</option><option>Half-yearly</option><option>Quarterly</option><option>Monthly</option><option>Custom dates</option></select></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><label for="sc-who" style="font-size: 13px; font-weight: 600">কারা পাবে</label><select id="sc-who" style="font-size: 14px; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 9px; background: #fff"><option>Price group: Wholesale (12)</option><option>Tag: Agent</option><option>Selected customers</option><option>All customers</option></select></div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; font-weight: 600">Rate কিভাবে বসবে</span>
+<div role="group" aria-label="Tier mode" style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{modeOpts}}" as="m" hint-placeholder-count="2">
+<button type="button" onClick="{{m.pick}}" style="{{m.style}}"><span style="display: block; font-weight: 700">{{m.label}}</span><span style="display: block; font-size: 11.5px; opacity: 0.85; margin-top: 2px">{{m.sub}}</span></button>
+</sc-for>
+</div>
+</div>
+
+<div>
+<div style="font-size: 13px; font-weight: 600; margin-bottom: 6px">Tiers</div>
+<table style="font-size: 13px; border: 1px solid #e5e7eb">
+<thead><tr style="background: #f9fafb; color: #6b7280; font-size: 11.5px; text-transform: uppercase; text-align: left"><th style="padding: 8px 12px; font-weight: 600">From (৳)</th><th style="padding: 8px 12px; font-weight: 600">To (৳)</th><th style="padding: 8px 12px; font-weight: 600">Rate</th></tr></thead>
+<tbody>
+<tr style="border-top: 1px solid #f0f1f4"><td style="padding: 6px 12px"><input type="number" value="0" aria-label="Tier 1 from" style="width: 110px; font-size: 13px; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 7px"></td><td style="padding: 6px 12px"><input type="number" value="500000" aria-label="Tier 1 to" style="width: 110px; font-size: 13px; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 7px"></td><td style="padding: 6px 12px"><input type="number" value="0" aria-label="Tier 1 rate" style="width: 60px; font-size: 13px; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 7px"> %</td></tr>
+<tr style="border-top: 1px solid #f0f1f4"><td style="padding: 6px 12px"><input type="number" value="500000" aria-label="Tier 2 from" style="width: 110px; font-size: 13px; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 7px"></td><td style="padding: 6px 12px"><input type="number" value="1000000" aria-label="Tier 2 to" style="width: 110px; font-size: 13px; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 7px"></td><td style="padding: 6px 12px"><input type="number" value="2" aria-label="Tier 2 rate" style="width: 60px; font-size: 13px; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 7px"> %</td></tr>
+<tr style="border-top: 1px solid #f0f1f4"><td style="padding: 6px 12px"><input type="number" value="1000000" aria-label="Tier 3 from" style="width: 110px; font-size: 13px; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 7px"></td><td style="padding: 6px 12px"><input type="number" value="2000000" aria-label="Tier 3 to" style="width: 110px; font-size: 13px; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 7px"></td><td style="padding: 6px 12px"><input type="number" value="3" aria-label="Tier 3 rate" style="width: 60px; font-size: 13px; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 7px"> %</td></tr>
+<tr style="border-top: 1px solid #f0f1f4"><td style="padding: 6px 12px"><input type="number" value="2000000" aria-label="Tier 4 from" style="width: 110px; font-size: 13px; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 7px"></td><td style="padding: 6px 12px; color: #6b7280">and above</td><td style="padding: 6px 12px"><input type="number" value="4" aria-label="Tier 4 rate" style="width: 60px; font-size: 13px; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 7px"> %</td></tr>
+</tbody>
+</table>
+<button type="button" style="margin-top: 8px; font-size: 12.5px; padding: 6px 12px; border: 1px dashed #c7d2fe; border-radius: 8px; background: #fff; color: #4338ca; font-weight: 600">+ Add tier</button>
+</div>
+</div>
+
+<div style="flex: 1 1 400px; min-width: 0; padding: 18px 20px; display: flex; flex-direction: column; gap: 16px; background: #fcfcfd">
+<div>
+<div style="font-size: 13px; font-weight: 600; margin-bottom: 4px">কোন বিক্রি বাদ যাবে · Exclusions</div>
+<div style="font-size: 12px; color: #6b7280; margin-bottom: 8px">কম দামে দেওয়া বা special deal-এর invoice/item commission পাবে না</div>
+<sc-for list="{{exRules}}" as="x" hint-placeholder-count="5">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid #f0f1f4">
+<label style="display: flex; gap: 10px; align-items: flex-start; font-size: 13px; cursor: pointer; flex: 1">
+<input type="checkbox" checked="{{x.on}}" onChange="{{x.toggle}}" style="margin-top: 2px; accent-color: #4f46e5">
+<span><span style="display: block; font-weight: 600">{{x.title}}</span><span style="display: block; font-size: 12px; color: #6b7280">{{x.sub}}</span></span>
+</label>
+<span style="font-size: 12px; color: #b45309; white-space: nowrap">{{x.impact}}</span>
+</div>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; font-weight: 600">শর্ত · Eligibility</span>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px"><input type="checkbox" checked style="accent-color: #4f46e5"> শুধু পুরো টাকা পরিশোধ হওয়া invoice গণনা হবে</label>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px"><input type="checkbox" checked style="accent-color: #4f46e5"> 60 দিনের বেশি বাকি থাকলে commission hold</label>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px"><input type="checkbox" checked style="accent-color: #4f46e5"> Return হলে commission-ও কাটা যাবে</label>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 6px"><label for="sc-settle" style="font-size: 13px; font-weight: 600">কিভাবে দেবো</label><select id="sc-settle" style="font-size: 14px; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 9px; background: #fff"><option>Credit note (পরের কেনায় adjust)</option><option>বাকি থেকে কাটবো</option><option>Cash / bKash</option><option>Customer বেছে নেবে</option></select></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><label for="sc-acct" style="font-size: 13px; font-weight: 600">হিসাবে কোথায় যাবে</label><select id="sc-acct" style="font-size: 14px; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 9px; background: #fff"><option>Sales rebate (বিক্রি থেকে কমবে)</option><option>Commission expense (খরচ)</option></select></div>
+</div>
+<div style="font-size: 12.5px; line-height: 1.5; border-radius: 10px; padding: 10px 12px; background: #eef2ff; color: #312e81; border: 1px solid #c7d2fe">প্রতি মাস শেষে accrual entry Posting Pending-এ যাবে (Dr Sales rebate / Cr Rebate payable)। বছর শেষে settlement-এ customer-এর নামে credit note বা payment হবে।</div>
+<div style="display: flex; gap: 8px; justify-content: flex-end">
+<button style="font-size: 13px; padding: 9px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">Save as draft</button>
+<button style="font-size: 13px; padding: 9px 18px; border: 0; border-radius: 8px; background: #4f46e5; color: #fff; font-weight: 600">Save scheme</button>
+</div>
+</div>
+</div>
+</section>
+</sc-if>
+
+<!-- EXCLUSIONS -->
+<sc-if value="{{is.exclusions}}" hint-placeholder-val="{{ false }}">
+<section style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid #f0f1f4">
+<div><h2 style="margin: 0; font-size: 15px; font-weight: 700">বাদ দেওয়া invoice ও item</h2><div style="font-size: 12.5px; color: #6b7280; margin-top: 2px">Rule অনুযায়ী নিজে থেকে বাদ, বা হাতে বাদ দেওয়া · দরকার হলে আবার যোগ করা যায়</div></div>
+<button style="font-size: 13px; padding: 8px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">+ Exclude invoice</button>
+</div>
+<div style="overflow-x: auto">
+<table style="min-width: 860px; font-size: 13px">
+<thead>
+<tr style="text-align: left; color: #6b7280; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em">
+<th style="padding: 10px 8px 10px 18px">Invoice</th>
+<th style="padding: 10px 8px">Customer</th>
+<th style="padding: 10px 8px">What</th>
+<th style="padding: 10px 8px">Why excluded</th>
+<th style="padding: 10px 8px; text-align: right">Amount</th>
+<th style="padding: 10px 18px; text-align: right"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Action</span></th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{exList}}" as="e" hint-placeholder-count="6">
+<tr style="{{e.rowStyle}}">
+<td style="padding: 11px 8px 11px 18px; white-space: nowrap"><b style="color: #4338ca">{{e.ref}}</b><div style="font-size: 11.5px; color: #6b7280">{{e.date}}</div></td>
+<td style="padding: 11px 8px; font-weight: 600">{{e.cust}}</td>
+<td style="padding: 11px 8px; color: #374151">{{e.what}}</td>
+<td style="padding: 11px 8px"><span style="{{e.srcStyle}}">{{e.src}}</span><div style="font-size: 11.5px; color: #6b7280; margin-top: 3px">{{e.reason}}</div></td>
+<td style="padding: 11px 8px; text-align: right; font-weight: 700; white-space: nowrap; {{e.amtStyle}}">{{e.amt}}</td>
+<td style="padding: 11px 18px; text-align: right"><button onClick="{{e.toggle}}" style="{{e.btnStyle}}">{{e.btn}}</button></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<div style="padding: 10px 18px 14px; font-size: 12px; color: #6b7280">আবার যোগ করলে কারণ লিখতে হবে, history-তে থাকবে।</div>
+</section>
+</sc-if>
+
+<!-- SETTLEMENT -->
+<sc-if value="{{is.settlement}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+<section style="flex: 999 1 600px; min-width: 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid #f0f1f4">
+<div><h2 style="margin: 0; font-size: 15px; font-weight: 700">বছরশেষের settlement · preview</h2><div style="font-size: 12.5px; color: #6b7280; margin-top: 2px">30 Jun 2027 · আর 261 দিন · এখনকার হিসাবে</div></div>
+<button style="font-size: 13px; padding: 9px 14px; border: 0; border-radius: 8px; background: #c7d2fe; color: #fff; font-weight: 600; cursor: not-allowed" disabled>Run settlement</button>
+</div>
+<div style="overflow-x: auto">
+<table style="min-width: 640px; font-size: 13px">
+<thead><tr style="text-align: left; color: #6b7280; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em"><th style="padding: 10px 8px 10px 18px">Customer</th><th style="padding: 10px 8px">Tier</th><th style="padding: 10px 8px; text-align: right">Commission</th><th style="padding: 10px 8px">দেওয়ার উপায়</th><th style="padding: 10px 18px">Note</th></tr></thead>
+<tbody>
+<sc-for list="{{settle}}" as="s" hint-placeholder-count="6">
+<tr style="border-top: 1px solid #f0f1f4">
+<td style="padding: 11px 8px 11px 18px; font-weight: 600">{{s.name}}</td>
+<td style="padding: 11px 8px"><span style="{{s.tierStyle}}">{{s.tier}}</span></td>
+<td style="padding: 11px 8px; text-align: right; font-weight: 700; white-space: nowrap">{{s.amt}}</td>
+<td style="padding: 11px 8px; color: #374151">{{s.method}}</td>
+<td style="padding: 11px 18px; font-size: 12px; {{s.noteStyle}}">{{s.note}}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<div style="padding: 12px 18px 16px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; border-top: 1px solid #f0f1f4">
+<span style="font-size: 12.5px; color: #6b7280">মাঝ বছরে আগাম দিতে চাইলে · advance settlement</span>
+<button style="font-size: 13px; padding: 8px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">Pay advance commission</button>
+</div>
+</section>
+
+<aside style="flex: 1 1 340px; min-width: 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden">
+<div style="padding: 14px 18px; border-bottom: 1px solid #f0f1f4"><h2 style="margin: 0; font-size: 15px; font-weight: 700">গত বছর · FY 2025–26</h2></div>
+<table style="font-size: 13px"><tbody>
+<tr style="border-top: 1px solid #f0f1f4"><td style="padding: 10px 8px 10px 18px"><div style="font-weight: 600">Dhaka Wholesale Hub</div><div style="font-size: 11.5px; color: #6b7280">Credit note CN-0012 · 4%</div></td><td style="padding: 10px 18px; text-align: right; font-weight: 700">৳62,400</td></tr>
+<tr style="border-top: 1px solid #f0f1f4"><td style="padding: 10px 8px 10px 18px"><div style="font-weight: 600">Karim Enterprise</div><div style="font-size: 11.5px; color: #6b7280">Cash · PV-0712 · 3%</div></td><td style="padding: 10px 18px; text-align: right; font-weight: 700">৳38,900</td></tr>
+<tr style="border-top: 1px solid #f0f1f4"><td style="padding: 10px 8px 10px 18px"><div style="font-weight: 600">Mehedi Fashion House</div><div style="font-size: 11.5px; color: #6b7280">Adjusted against due · 2%</div></td><td style="padding: 10px 18px; text-align: right; font-weight: 700">৳18,200</td></tr>
+<tr style="border-top: 1px solid #f0f1f4"><td style="padding: 10px 8px 10px 18px"><div style="font-weight: 600">Bismillah Cloth Store</div><div style="font-size: 11.5px; color: #6b7280">Credit note CN-0013 · 2%</div></td><td style="padding: 10px 18px; text-align: right; font-weight: 700">৳12,600</td></tr>
+<tr style="border-top: 1px solid #f0f1f4"><td style="padding: 10px 8px 10px 18px"><div style="font-weight: 600">Anika Fashion</div><div style="font-size: 11.5px; color: #6b7280">bKash · PV-0715 · 2%</div></td><td style="padding: 10px 18px; text-align: right; font-weight: 700">৳11,800</td></tr>
+<tr style="border-top: 2px solid #e5e7eb; background: #f9fafb; font-weight: 700"><td style="padding: 10px 8px 10px 18px">Total</td><td style="padding: 10px 18px; text-align: right">৳1,43,900</td></tr>
+</tbody></table>
+</aside>
+</div>
+</sc-if>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 'progress', mode: 'whole', sel: 'Karim Enterprise', back: {}, ex: { clearance: true, discount: true, cost: true, special: true, sample: true } };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state;
+    var fmt = function (n) {
+      var s = String(Math.round(n));
+      if (s.length > 3) { var last = s.slice(-3); var rest = s.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ','); s = rest + ',' + last; }
+      return '৳' + s;
+    };
+    var tiers = [[0, 500000, 0], [500000, 1000000, 2], [1000000, 2000000, 3], [2000000, Infinity, 4]];
+    var tierOf = function (e) { for (var i = tiers.length - 1; i >= 0; i--) if (e >= tiers[i][0]) return i; return 0; };
+    var commission = function (e) {
+      if (st.mode === 'whole') return e * tiers[tierOf(e)][2] / 100;
+      var t = 0;
+      tiers.forEach(function (tr) { if (e > tr[0]) t += (Math.min(e, tr[1]) - tr[0]) * tr[2] / 100; });
+      return t;
+    };
+    var exList = [
+      { id: 'INV-1102', date: '18 Jul', cust: 'Dhaka Wholesale Hub', what: 'Clearance stock, 48 pcs', rule: 'clearance', src: 'Auto', reason: 'Item tag: Clearance', n: 96000 },
+      { id: 'INV-1131', date: '02 Aug', cust: 'Karim Enterprise', what: 'Invoice discount 22%', rule: 'discount', src: 'Auto', reason: 'Discount 15%-এর বেশি', n: 58000 },
+      { id: 'INV-1150', date: '19 Aug', cust: 'Dhaka Wholesale Hub', what: 'Old stock at ৳610/pc (cost ৳640)', rule: 'cost', src: 'Auto', reason: 'Cost + 5%-এর নিচে বিক্রি', n: 62000 },
+      { id: 'INV-1176', date: '04 Sep', cust: 'Karim Enterprise', what: 'Eid special deal price', rule: 'special', src: 'Manual', reason: 'Omar: “already special price”', n: 62000 },
+      { id: 'INV-1190', date: '12 Sep', cust: 'Mehedi Fashion House', what: 'Clearance stock, 30 pcs', rule: 'clearance', src: 'Auto', reason: 'Item tag: Clearance', n: 60000 },
+      { id: 'INV-1205', date: '21 Sep', cust: 'Bismillah Cloth Store', what: 'Invoice discount 18%', rule: 'discount', src: 'Auto', reason: 'Discount 15%-এর বেশি', n: 45000 },
+      { id: 'INV-1211', date: '25 Sep', cust: 'Dhaka Wholesale Hub', what: 'Sample pieces, 12 pcs', rule: 'sample', src: 'Auto', reason: 'Free / sample item', n: 82000 },
+      { id: 'INV-1219', date: '29 Sep', cust: 'Lima Store', what: 'Clearance stock, 14 pcs', rule: 'clearance', src: 'Auto', reason: 'Item tag: Clearance', n: 30000 },
+      { id: 'INV-1224', date: '02 Oct', cust: 'Shapla Boutique', what: 'Invoice discount 20%', rule: 'discount', src: 'Auto', reason: 'Discount 15%-এর বেশি', n: 25000 }
+    ];
+    var isOut = function (e) { return st.ex[e.rule] && !st.back[e.id]; };
+    var custs = [
+      { name: 'Dhaka Wholesale Hub', area: 'Dhaka · Islampur', gross: 2190000, ret: 40000, unpaid: 0 },
+      { name: 'Karim Enterprise', area: 'Dhaka · Mirpur', gross: 1500000, ret: 20000, unpaid: 18500 },
+      { name: 'Mehedi Fashion House', area: 'Narayanganj', gross: 852000, ret: 12000, unpaid: 38400, block: 'Hold: 66 দিনের বাকি ৳38,400 — পরিশোধ হলে commission চালু হবে।' },
+      { name: 'Bismillah Cloth Store', area: 'Cumilla', gross: 628000, ret: 8000, unpaid: 22000 },
+      { name: 'Anika Fashion', area: 'Khulna', gross: 566000, ret: 6000, unpaid: 9600 },
+      { name: 'Shapla Boutique', area: 'Sylhet', gross: 418000, ret: 8000, unpaid: 24000 },
+      { name: 'Lima Store', area: 'Rangpur', gross: 316000, ret: 6000, unpaid: 12800, block: 'Hold: 95 দিনের বাকি ৳12,800।' },
+      { name: 'Rupkotha Boutique', area: 'Bogura', gross: 232000, ret: 2000, unpaid: 11200 }
+    ];
+    var dayFrac = 365 / 104;
+    var bb = 'font-size: 12px; font-weight: 600; border-radius: 6px; padding: 3px 8px; white-space: nowrap; ';
+    var tierStyles = [bb + 'background: #f3f4f6; color: #4b5563', bb + 'background: #e0f2fe; color: #075985', bb + 'background: #e0e7ff; color: #3730a3', bb + 'background: #ede9fe; color: #5b21b6'];
+    var totE = 0, totX = 0, totA = 0, totP = 0;
+    var calc = custs.map(function (c) {
+      var exAmt = exList.filter(function (e) { return e.cust === c.name && isOut(e); }).reduce(function (a, e) { return a + e.n; }, 0);
+      var elig = Math.max(c.gross - c.ret - exAmt - c.unpaid, 0);
+      var ti = tierOf(elig);
+      var acc = c.block ? 0 : commission(elig);
+      var accShown = commission(elig);
+      var proj = commission(elig * dayFrac);
+      totE += elig; totX += exAmt; totA += acc; totP += c.block ? 0 : proj;
+      return { c: c, exAmt: exAmt, elig: elig, ti: ti, acc: acc, accShown: accShown, proj: proj };
+    });
+    var rows = calc.map(function (k) {
+      var next = tiers[k.ti + 1];
+      var gap = next ? fmt(next[0] - k.elig) + ' আরও → ' + next[2] + '%' : 'Top tier';
+      var pct = next ? Math.round((k.elig - tiers[k.ti][0]) / (next[0] - tiers[k.ti][0]) * 100) : 100;
+      var on = st.sel === k.c.name;
+      return {
+        name: k.c.name, area: k.c.area, eligible: fmt(k.elig), excluded: k.exAmt ? fmt(k.exAmt) : '—',
+        tier: tiers[k.ti][2] + '%', tierStyle: tierStyles[k.ti], gap: gap,
+        bar: 'height: 100%; border-radius: 4px; background: #6366f1; width: ' + pct + '%',
+        accrued: k.c.block ? fmt(k.accShown) + ' (hold)' : fmt(k.acc),
+        status: k.c.block ? 'On hold' : (k.ti === 0 ? 'Below 5L' : 'Earning'),
+        badge: bb + (k.c.block ? 'background: #fee2e2; color: #991b1b' : k.ti === 0 ? 'background: #f3f4f6; color: #4b5563' : 'background: #d1fae5; color: #065f46'),
+        rowStyle: 'border-top: 1px solid #f0f1f4; ' + (on ? 'background: #eef2ff; box-shadow: inset 3px 0 0 #4f46e5' : ''),
+        open: function () { self.setState({ sel: k.c.name }); }
+      };
+    });
+    var cur = calc.filter(function (k) { return k.c.name === st.sel; })[0] || calc[1];
+    var ladder = tiers.map(function (tr, i) {
+      var on = i === cur.ti;
+      return { range: fmt(tr[0]) + (tr[1] === Infinity ? '+' : ' – ' + fmt(tr[1])), rate: tr[2] + '%',
+        box: 'display: flex; justify-content: space-between; font-size: 13px; padding: 8px 12px; border-radius: 8px; ' + (on ? 'background: #4f46e5; color: #fff' : 'background: #f9fafb; color: #374151') };
+    });
+    var exInv = exList.filter(function (e) { return e.cust === cur.c.name && isOut(e); }).map(function (e) { return { ref: e.id, reason: e.what, amt: fmt(e.n) }; });
+    var c = {
+      name: cur.c.name, gross: fmt(cur.c.gross), returns: '− ' + fmt(cur.c.ret), excluded: '− ' + fmt(cur.exAmt), unpaid: '− ' + fmt(cur.c.unpaid),
+      eligible: fmt(cur.elig), ladder: ladder, accrued: fmt(cur.accShown), projected: fmt(cur.proj),
+      blocked: !!cur.c.block, blockNote: cur.c.block || '', exInv: exInv, noEx: exInv.length === 0
+    };
+    var tabDefs = [['progress', 'Customer progress', String(custs.length)], ['schemes', 'Schemes & rules', '3'], ['exclusions', 'Exclusions', String(exList.filter(isOut).length)], ['settlement', 'Settlement', '']];
+    var tabs = tabDefs.map(function (t) {
+      var on = st.tab === t[0];
+      return { label: t[1], count: t[2], pick: function () { self.setState({ tab: t[0] }); },
+        style: 'border: 0; background: transparent; padding: 12px 14px 11px; font-size: 14px; white-space: nowrap; border-bottom: 3px solid ' + (on ? '#4f46e5; color: #312e81; font-weight: 700' : 'transparent; color: #4b5563; font-weight: 500'),
+        countStyle: 'font-size: 11.5px; font-weight: 700; border-radius: 10px; padding: 1px 7px; margin-left: 4px; ' + (t[2] ? (on ? 'background: #e0e7ff; color: #3730a3' : 'background: #f3f4f6; color: #4b5563') : 'display: none') };
+    });
+    var is = { progress: st.tab === 'progress', schemes: st.tab === 'schemes', exclusions: st.tab === 'exclusions', settlement: st.tab === 'settlement' };
+    var modeOpts = [['whole', 'পুরো amount-এ', 'যে tier-এ পৌঁছাবে, পুরো বিক্রিতে সেই rate (13L × 3%)'], ['slab', 'Slab অনুযায়ী', 'প্রতিটা ধাপে নিজের rate (5L×0 + 5L×2% + 3L×3%)']].map(function (m) {
+      var on = st.mode === m[0];
+      return { label: m[1], sub: m[2], pick: function () { self.setState({ mode: m[0] }); },
+        style: 'flex: 1 1 200px; text-align: left; font-family: inherit; border-radius: 10px; padding: 10px 14px; cursor: pointer; ' + (on ? 'border: 2px solid #4f46e5; background: #eef2ff; color: #312e81' : 'border: 1px solid #e5e7eb; background: #fff; color: #374151') };
+    });
+    var exRuleDefs = [
+      ['clearance', 'Clearance / Sale tag-এর item', 'Product-এ "Clearance" tag থাকলে'],
+      ['discount', 'Invoice discount 15%-এর বেশি', 'বড় discount দেওয়া invoice পুরোটা বাদ'],
+      ['cost', 'Cost + 5%-এর নিচে বিক্রি', 'Line-এর দাম avg cost-এর খুব কাছে হলে'],
+      ['special', 'হাতে বাদ দেওয়া invoice', 'Special deal — কারণ লিখে বাদ'],
+      ['sample', 'Free / sample item', 'দাম ৳0 বা sample tag']
+    ];
+    var exRules = exRuleDefs.map(function (x) {
+      var amt = exList.filter(function (e) { return e.rule === x[0]; }).reduce(function (a, e) { return a + e.n; }, 0);
+      return { title: x[1], sub: x[2], on: !!st.ex[x[0]], impact: fmt(amt) + ' বাদ',
+        toggle: function () { var n = Object.assign({}, self.state.ex); n[x[0]] = !n[x[0]]; self.setState({ ex: n }); } };
+    });
+    var sb = 'font-size: 11px; font-weight: 600; border-radius: 6px; padding: 2px 8px; ';
+    var exRows = exList.map(function (e) {
+      var out = isOut(e);
+      return {
+        ref: e.id, date: e.date, cust: e.cust, what: e.what, reason: st.ex[e.rule] ? e.reason : 'Rule বন্ধ — গণনায় আছে', amt: fmt(e.n),
+        src: e.src, srcStyle: sb + (e.src === 'Auto' ? 'background: #e0f2fe; color: #075985' : 'background: #fef3c7; color: #92400e'),
+        rowStyle: 'border-top: 1px solid #f0f1f4; ' + (out ? '' : 'opacity: 0.55'),
+        amtStyle: out ? 'color: #b45309' : 'color: #6b7280; text-decoration: line-through',
+        btn: out ? 'Include back' : 'Exclude', btnStyle: 'font-size: 12.5px; padding: 6px 12px; border-radius: 8px; background: #fff; ' + (out ? 'border: 1px solid #c7d2fe; color: #4338ca' : 'border: 1px solid #fde68a; color: #92400e'),
+        toggle: function () { var b = Object.assign({}, self.state.back); b[e.id] = !b[e.id]; self.setState({ back: b }); }
+      };
+    });
+    var methods = { 'Dhaka Wholesale Hub': 'Credit note', 'Karim Enterprise': 'Cash', 'Mehedi Fashion House': 'বাকি থেকে কাটবো', 'Bismillah Cloth Store': 'Credit note', 'Anika Fashion': 'bKash' };
+    var settle = calc.filter(function (k) { return k.ti > 0 || k.c.block; }).map(function (k) {
+      var pti = tierOf(k.elig * dayFrac);
+      return { name: k.c.name, tier: tiers[pti][2] + '%', tierStyle: tierStyles[pti], amt: fmt(k.proj), method: methods[k.c.name] || 'Credit note',
+        note: k.c.block ? 'Hold — বাকি পরিশোধ হলে' : 'Projected', noteStyle: k.c.block ? 'color: #b91c1c; font-weight: 600' : 'color: #6b7280' };
+    });
+    var schemes = [
+      { name: 'Wholesale yearly rebate', rule: 'Jul–Jun · net sales · 0 / 2 / 3 / 4% tiers', customers: '12', accrued: fmt(totA), state: 'Active', key: 'w' },
+      { name: 'Eid special commission', rule: 'Ramadan month · flat 1.5% · clearance বাদ', customers: '18', accrued: '৳0', state: 'Scheduled · Mar 2027', key: 'e' },
+      { name: 'Agent referral', rule: 'প্রতি order ৳50/pc · monthly payout', customers: '4 agents', accrued: '৳6,250', state: 'Active', key: 'a' }
+    ].map(function (s, i) {
+      return Object.assign({}, s, {
+        pick: function () {},
+        box: 'text-align: left; font-family: inherit; color: #111827; background: #fff; border-radius: 14px; padding: 14px 16px; cursor: pointer; ' + (i === 0 ? 'border: 2px solid #4f46e5' : 'border: 1px solid #e5e7eb'),
+        stStyle: 'font-size: 11.5px; font-weight: 600; border-radius: 6px; padding: 2px 8px; white-space: nowrap; ' + (s.state === 'Active' ? 'background: #d1fae5; color: #065f46' : 'background: #f3f4f6; color: #374151')
+      });
+    });
+    return {
+      tabs: tabs, is: is, rows: rows, c: c, modeOpts: modeOpts, exRules: exRules, exList: exRows, settle: settle, schemes: schemes,
+      modeLabel: st.mode === 'whole' ? 'Rate on whole amount' : 'Slab-wise rate',
+      goSchemes: function () { self.setState({ tab: 'schemes' }); },
+      sum: { eligible: fmt(totE), excluded: fmt(totX), accrued: fmt(totA), projected: fmt(totP), customers: String(custs.length), modeNote: st.mode === 'whole' ? 'Whole-amount tiers · hold বাদে' : 'Slab tiers · hold বাদে' }
+    };
+  }
+}
+</script>
+</body>
+</html>

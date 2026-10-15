@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<title>Suppliers</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Hind+Siliguri:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f1f3f7}
+a{color:#4338ca;text-decoration:none}a:hover{color:#312e81}
+table{border-collapse:collapse;width:100%}
+button,input,select{font-family:inherit}
+button{cursor:pointer}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; min-height: 100vh; background: #f1f3f7; font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif; color: #111827; font-size: 14px">
+
+<div style="flex: 1 1 248px; max-width: 100%; background: #0f172a; display: flex">
+<dc-import name="Sidebar" active="suppliers" hint-size="248px,1100px"></dc-import>
+</div>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+<dc-import name="ProfileTabs" active="suppliers" hint-size="100%,64px"></dc-import>
+
+<div style="padding: 24px 28px 40px; display: flex; flex-direction: column; gap: 18px; max-width: 1400px; box-sizing: border-box; width: 100%">
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px">
+<div>
+<h1 style="margin: 0; font-size: 24px; font-weight: 700">Suppliers</h1>
+<div style="color: #6b7280; font-size: 13px; margin-top: 2px">কার কাছ থেকে মাল কিনি, কাকে কত দিবো, কবে দিবো</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button style="font-size: 13px; padding: 9px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">টাকা দিন · Pay</button>
+<button style="font-size: 13px; padding: 9px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">Advance দিন</button>
+<a href="ProfileForm.dc.html" style="font-size: 13px; padding: 9px 16px; border-radius: 8px; background: #4f46e5; color: #fff; font-weight: 600">+ New supplier</a>
+</div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px">
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">মোট Supplier</div>
+<div style="font-size: 24px; font-weight: 700; margin-top: 6px">24</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">1 also a customer</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">মোট দিবো · Payable</div>
+<div style="font-size: 24px; font-weight: 700; color: #b91c1c; margin-top: 6px">৳1,40,000</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">To 3 suppliers</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">৭ দিনের মধ্যে দিতে হবে</div>
+<div style="font-size: 24px; font-weight: 700; color: #b45309; margin-top: 6px">৳1,00,000</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">৳15,000 already overdue</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">অগ্রিম দেওয়া · Advance</div>
+<div style="font-size: 24px; font-weight: 700; color: #4338ca; margin-top: 6px">৳35,000</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">Adjusts on next purchase</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">এই মাসে কেনা</div>
+<div style="font-size: 24px; font-weight: 700; margin-top: 6px">৳3,48,000</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">11 purchases</div>
+</div>
+</div>
+
+<section style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden">
+<div style="display: flex; flex-direction: column; gap: 12px; padding: 14px 18px; border-bottom: 1px solid #f0f1f4">
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+<label for="sup-search" style="position: absolute; width: 1px; height: 1px; overflow: hidden">Search suppliers</label>
+<div style="flex: 1 1 260px; display: flex; align-items: center; gap: 8px; border: 1px solid #d1d5db; border-radius: 9px; padding: 0 12px; background: #fff">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+<input id="sup-search" type="search" placeholder="নাম, phone, contact person" style="flex: 1; border: 0; outline: none; padding: 10px 0; font-size: 13.5px; background: transparent">
+</div>
+<label for="sup-cat" style="font-size: 13px; color: #4b5563">Category</label>
+<select id="sup-cat" style="font-size: 13px; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 9px; background: #fff; color: #111827">
+<option>All categories</option><option>Fabric</option><option>Embroidery</option><option>Accessories</option><option>Packaging</option><option>Printing</option>
+</select>
+<label for="sup-terms" style="font-size: 13px; color: #4b5563">Terms</label>
+<select id="sup-terms" style="font-size: 13px; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 9px; background: #fff; color: #111827">
+<option>All terms</option><option>Cash</option><option>Credit 7 days</option><option>Credit 15 days</option><option>Credit 30 days</option><option>Kisti (custom)</option>
+</select>
+</div>
+<div role="group" aria-label="Payment status" style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="5">
+<button onClick="{{c.pick}}" style="{{c.style}}">{{c.label}} <span style="opacity: 0.7">{{c.count}}</span></button>
+</sc-for>
+</div>
+</div>
+
+<div style="overflow-x: auto">
+<table style="min-width: 1000px; font-size: 13px">
+<thead>
+<tr style="text-align: left; color: #6b7280; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em">
+<th style="padding: 10px 0 10px 18px; width: 28px"><input type="checkbox" aria-label="Select all"></th>
+<th style="padding: 10px 8px">Supplier</th>
+<th style="padding: 10px 8px">Category</th>
+<th style="padding: 10px 8px">Terms</th>
+<th style="padding: 10px 8px; text-align: right">Purchase (2026)</th>
+<th style="padding: 10px 8px; text-align: right">Balance</th>
+<th style="padding: 10px 8px">Next due</th>
+<th style="padding: 10px 8px">Last purchase</th>
+<th style="padding: 10px 18px; text-align: right"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Actions</span></th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="7">
+<tr style="border-top: 1px solid #f0f1f4">
+<td style="padding: 11px 0 11px 18px"><input type="checkbox" aria-label="Select supplier"></td>
+<td style="padding: 11px 8px">
+<div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap"><span style="font-weight: 600">{{r.name}}</span>
+<sc-if value="{{r.alsoCustomer}}" hint-placeholder-val="{{ false }}"><span style="font-size: 11px; font-weight: 600; border-radius: 6px; padding: 1px 7px; background: #d1fae5; color: #065f46">Also customer</span></sc-if>
+</div>
+<div style="font-size: 11.5px; color: #6b7280">{{r.code}} · {{r.contact}}</div>
+</td>
+<td style="padding: 11px 8px; color: #374151">{{r.cat}}</td>
+<td style="padding: 11px 8px"><span style="font-size: 12px; background: #f3f4f6; color: #374151; border-radius: 6px; padding: 3px 8px; white-space: nowrap">{{r.terms}}</span></td>
+<td style="padding: 11px 8px; text-align: right; white-space: nowrap">{{r.purchase}}</td>
+<td style="padding: 11px 8px; text-align: right; white-space: nowrap"><div style="{{r.balStyle}}">{{r.balance}}</div><div style="font-size: 11.5px; color: #6b7280">{{r.balLabel}}</div></td>
+<td style="padding: 11px 8px; white-space: nowrap"><div style="{{r.dueStyle}}">{{r.due}}</div><div style="font-size: 11.5px; color: #6b7280">{{r.dueNote}}</div></td>
+<td style="padding: 11px 8px; color: #6b7280; white-space: nowrap">{{r.last}}</td>
+<td style="padding: 11px 18px; text-align: right; white-space: nowrap"><a href="#" style="font-weight: 600">Pay</a><span style="color: #d1d5db"> · </span><a href="ProfileDetail.dc.html">View</a></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 18px; border-top: 1px solid #f0f1f4; font-size: 13px; color: #6b7280">
+<span>Showing {{shown}} of 24</span>
+<div style="display: flex; gap: 6px">
+<button style="padding: 7px 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #9ca3af" disabled>Previous</button>
+<button style="padding: 7px 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">Next</button>
+</div>
+</div>
+</section>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1250}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { st: 'all' };
+  }
+  renderVals() {
+    var self = this;
+    var chip = function (on) {
+      return on
+        ? 'border: 1px solid #4f46e5; border-radius: 20px; padding: 6px 12px; font-size: 12.5px; background: #4f46e5; color: #fff; font-weight: 600'
+        : 'border: 1px solid #e5e7eb; border-radius: 20px; padding: 6px 12px; font-size: 12.5px; background: #fff; color: #374151';
+    };
+    var data = [
+      { name: 'Rahman Fabrics', code: 'P-0011', contact: 'Abdur Rahman', cat: 'Fabric', terms: 'Credit 30 days', purchase: '৳6,40,000', balance: '৳85,000', st: 'pay', balLabel: 'দিবো', due: '14 Oct', dueNote: 'in 2 days', last: '11 Oct', alsoCustomer: false },
+      { name: 'Karim Enterprise', code: 'P-0042', contact: 'Rezaul Karim', cat: 'Fabric', terms: 'Credit 15 days', purchase: '৳2,10,000', balance: '৳40,000', st: 'pay', balLabel: 'দিবো · net ৳21,500', due: '20 Oct', dueNote: 'in 8 days', last: '05 Oct', alsoCustomer: true },
+      { name: 'Jamal Hossain', code: 'P-0063', contact: 'Self', cat: 'Embroidery', terms: 'Kisti 15/45/90', purchase: '৳1,20,000', balance: '৳15,000', st: 'overdue', balLabel: 'দিবো', due: '10 Oct', dueNote: '2 days overdue', last: '25 Aug', alsoCustomer: false },
+      { name: 'Noor Embroidery', code: 'P-0078', contact: 'Nurul Islam', cat: 'Embroidery', terms: 'Advance', purchase: '৳95,000', balance: '৳35,000', st: 'adv', balLabel: 'Advance দেওয়া', due: '—', dueNote: 'Delivery 18 Oct', last: '05 Oct', alsoCustomer: false },
+      { name: 'Dhaka Print House', code: 'P-0090', contact: 'Sabbir Ahmed', cat: 'Printing', terms: 'Credit 7 days', purchase: '৳36,000', balance: '৳0', st: 'clear', balLabel: 'Clear', due: '—', dueNote: '', last: '29 Sep', alsoCustomer: false },
+      { name: 'Mizan Packaging', code: 'P-0024', contact: 'Mizanur Rahman', cat: 'Packaging', terms: 'Cash', purchase: '৳48,000', balance: '৳0', st: 'clear', balLabel: 'Clear', due: '—', dueNote: '', last: '22 Sep', alsoCustomer: false },
+      { name: 'Afsana Lace & Button', code: 'P-0101', contact: 'Afsana Mim', cat: 'Accessories', terms: 'Credit 30 days', purchase: '৳54,000', balance: '৳0', st: 'clear', balLabel: 'Clear', due: '—', dueNote: '', last: '18 Sep', alsoCustomer: false }
+    ];
+    var st = this.state.st;
+    var defs = [['all', 'All', '24'], ['pay', 'Payable', '2'], ['overdue', 'Overdue', '1'], ['adv', 'Advance given', '1'], ['clear', 'Clear', '20']];
+    var chips = defs.map(function (d) {
+      return { label: d[1], count: d[2], style: chip(st === d[0]), pick: function () { self.setState({ st: d[0] }); } };
+    });
+    var color = { pay: '#b91c1c', overdue: '#b91c1c', adv: '#4338ca', clear: '#6b7280' };
+    var rows = data.filter(function (d) { return st === 'all' || d.st === st; }).map(function (d) {
+      return Object.assign({}, d, {
+        balStyle: 'font-weight: 700; color: ' + color[d.st],
+        dueStyle: d.st === 'overdue' ? 'font-weight: 700; color: #b91c1c' : 'font-weight: 600; color: #111827'
+      });
+    });
+    return { chips: chips, rows: rows, shown: rows.length ? '1–' + rows.length : '0' };
+  }
+}
+</script>
+</body>
+</html>

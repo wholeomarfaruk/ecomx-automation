@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<title>Profile details</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Hind+Siliguri:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f1f3f7}
+a{color:#4338ca;text-decoration:none}a:hover{color:#312e81}
+table{border-collapse:collapse;width:100%}
+button,input,select{font-family:inherit}
+button{cursor:pointer}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; min-height: 100vh; background: #f1f3f7; font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif; color: #111827; font-size: 14px">
+
+<div style="flex: 1 1 248px; max-width: 100%; background: #0f172a; display: flex">
+<dc-import name="Sidebar" active="profiles" hint-size="248px,1100px"></dc-import>
+</div>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+<dc-import name="ProfileTabs" active="profiles" hint-size="100%,64px"></dc-import>
+
+<div style="padding: 20px 28px 40px; display: flex; flex-direction: column; gap: 16px; max-width: 1400px; box-sizing: border-box; width: 100%">
+
+<a href="Profiles.dc.html" style="font-size: 13px; display: flex; align-items: center; gap: 6px; width: max-content">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
+Master Profiles</a>
+
+<!-- Header -->
+<section style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; justify-content: space-between">
+<div style="display: flex; gap: 16px; align-items: flex-start; min-width: 0; flex: 1 1 420px">
+<div style="width: 60px; height: 60px; border-radius: 14px; background: #eef2ff; color: #3730a3; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; flex: none">KE</div>
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<h1 style="margin: 0; font-size: 22px; font-weight: 700">Karim Enterprise</h1>
+<span style="font-size: 11.5px; font-weight: 600; border-radius: 6px; padding: 2px 8px; background: #d1fae5; color: #065f46">Customer</span>
+<span style="font-size: 11.5px; font-weight: 600; border-radius: 6px; padding: 2px 8px; background: #e0f2fe; color: #075985">Supplier</span>
+<span style="font-size: 11.5px; font-weight: 600; border-radius: 6px; padding: 2px 8px; background: #f3f4f6; color: #374151">Active</span>
+</div>
+<div style="font-size: 13px; color: #4b5563">P-0042 · Business · Contact: Rezaul Karim</div>
+<div style="display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: #374151">
+<span style="display: flex; align-items: center; gap: 6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"></path></svg>017••-••4521</span>
+<span style="display: flex; align-items: center; gap: 6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>Mirpur 10, Dhaka</span>
+<span style="color: #6b7280">Since Mar 2025</span>
+</div>
+</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button style="font-size: 13px; padding: 9px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">Statement (PDF / SMS)</button>
+<button style="font-size: 13px; padding: 9px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">Edit</button>
+<button style="font-size: 13px; padding: 9px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">টাকা দিন · Pay</button>
+<button style="font-size: 13px; padding: 9px 16px; border: 0; border-radius: 8px; background: #4f46e5; color: #fff; font-weight: 600">টাকা নিন · Collect</button>
+</div>
+</section>
+
+<!-- Position -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px">
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">Customer হিসেবে · পাবো</div>
+<div style="font-size: 24px; font-weight: 700; color: #047857; margin-top: 6px">৳18,500</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">Credit limit ৳50,000 · 37% used</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">Supplier হিসেবে · দিবো</div>
+<div style="font-size: 24px; font-weight: 700; color: #b91c1c; margin-top: 6px">৳40,000</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">Due 20 Oct · credit 15 days</div>
+</div>
+<div style="background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 14px; padding: 16px 18px; display: flex; justify-content: space-between; align-items: center; gap: 12px">
+<div>
+<div style="font-size: 12.5px; color: #3730a3">Net position</div>
+<div style="font-size: 24px; font-weight: 700; color: #312e81; margin-top: 6px">দিবো ৳21,500</div>
+<div style="font-size: 12px; color: #4338ca; margin-top: 4px">৳40,000 − ৳18,500</div>
+</div>
+<button style="font-size: 12.5px; padding: 9px 12px; border: 1px solid #a5b4fc; border-radius: 8px; background: #fff; color: #3730a3; font-weight: 600; white-space: nowrap">Set-off ৳18,500</button>
+</div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+
+<!-- Left: tabs -->
+<section style="flex: 999 1 560px; min-width: 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden">
+<div role="tablist" aria-label="Profile sections" style="display: flex; gap: 2px; overflow-x: auto; border-bottom: 1px solid #e5e7eb; padding: 0 12px">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="7">
+<button role="tab" onClick="{{t.pick}}" style="{{t.style}}">{{t.label}}</button>
+</sc-for>
+</div>
+
+<sc-if value="{{isLedger}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding: 14px 18px">
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<label for="led-from" style="font-size: 13px; color: #4b5563">From</label>
+<input id="led-from" type="date" value="2026-09-01" style="font-size: 13px; padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 8px">
+<label for="led-to" style="font-size: 13px; color: #4b5563">To</label>
+<input id="led-to" type="date" value="2026-10-12" style="font-size: 13px; padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 8px">
+<label for="led-role" style="font-size: 13px; color: #4b5563">Role</label>
+<select id="led-role" style="font-size: 13px; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff">
+<option>All roles</option><option>Customer</option><option>Supplier</option>
+</select>
+</div>
+<div style="display: flex; gap: 8px">
+<button style="font-size: 13px; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">Print</button>
+<button style="font-size: 13px; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">Send via SMS / WhatsApp</button>
+</div>
+</div>
+<div style="overflow-x: auto">
+<table style="min-width: 760px; font-size: 13px">
+<thead>
+<tr style="text-align: left; color: #6b7280; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; background: #f9fafb">
+<th style="padding: 10px 18px">Date</th>
+<th style="padding: 10px 8px">Voucher</th>
+<th style="padding: 10px 8px">Particulars</th>
+<th style="padding: 10px 8px; text-align: right">Debit</th>
+<th style="padding: 10px 8px; text-align: right">Credit</th>
+<th style="padding: 10px 18px; text-align: right">Balance</th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{ledger}}" as="l" hint-placeholder-count="9">
+<tr style="border-top: 1px solid #f0f1f4">
+<td style="padding: 10px 18px; white-space: nowrap; color: #374151">{{l.date}}</td>
+<td style="padding: 10px 8px; white-space: nowrap"><a href="#" style="font-weight: 600">{{l.ref}}</a></td>
+<td style="padding: 10px 8px"><div>{{l.text}}</div><div style="font-size: 11.5px; color: #6b7280">{{l.sub}}</div></td>
+<td style="padding: 10px 8px; text-align: right; white-space: nowrap">{{l.dr}}</td>
+<td style="padding: 10px 8px; text-align: right; white-space: nowrap">{{l.cr}}</td>
+<td style="padding: 10px 18px; text-align: right; white-space: nowrap; font-weight: 600"><span style="{{l.balStyle}}">{{l.bal}}</span></td>
+</tr>
+</sc-for>
+<tr style="border-top: 2px solid #e5e7eb; background: #f9fafb; font-weight: 700">
+<td style="padding: 12px 18px" colspan="3">Closing balance · 12 Oct 2026</td>
+<td style="padding: 12px 8px; text-align: right">৳86,500</td>
+<td style="padding: 12px 8px; text-align: right">৳1,02,000</td>
+<td style="padding: 12px 18px; text-align: right; color: #b91c1c">৳21,500 Cr</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div style="padding: 10px 18px 14px; font-size: 12px; color: #6b7280">Dr = উনি আমাদের কাছে দেনা (পাবো) · Cr = আমরা ওনার কাছে দেনা (দিবো)</div>
+</sc-if>
+
+<sc-if value="{{isKisti}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 16px 18px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center">
+<div>
+<div style="font-weight: 700">INV-1188 · Weekly kisti plan</div>
+<div style="font-size: 12.5px; color: #6b7280">8 × ৳6,500 = ৳52,000 · started 22 Sep · support adjusts next kisti</div>
+</div>
+<span style="font-size: 12px; font-weight: 600; color: #3730a3; background: #e0e7ff; border-radius: 6px; padding: 3px 9px">3 / 8 paid</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px">
+<sc-for list="{{kisti}}" as="k" hint-placeholder-count="8">
+<div style="{{k.box}}">
+<div style="font-size: 11.5px; opacity: 0.8">Kisti {{k.no}} · {{k.date}}</div>
+<div style="font-weight: 700; margin-top: 2px">{{k.amount}}</div>
+<div style="font-size: 11.5px; margin-top: 2px">{{k.note}}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isSales}}" hint-placeholder-val="{{ false }}">
+<div style="overflow-x: auto">
+<table style="min-width: 600px; font-size: 13px">
+<thead><tr style="text-align: left; color: #6b7280; font-size: 11.5px; text-transform: uppercase; background: #f9fafb"><th style="padding: 10px 18px">Date</th><th style="padding: 10px 8px">Invoice</th><th style="padding: 10px 8px">Items</th><th style="padding: 10px 8px; text-align: right">Amount</th><th style="padding: 10px 18px">Payment</th></tr></thead>
+<tbody>
+<tr style="border-top: 1px solid #f0f1f4"><td style="padding: 10px 18px">08 Oct</td><td style="padding: 10px 8px"><a href="#">INV-1240</a></td><td style="padding: 10px 8px">40 pcs · wholesale</td><td style="padding: 10px 8px; text-align: right">৳30,000</td><td style="padding: 10px 18px">Credit</td></tr>
+<tr style="border-top: 1px solid #f0f1f4"><td style="padding: 10px 18px">12 Sep</td><td style="padding: 10px 8px"><a href="#">INV-1188</a></td><td style="padding: 10px 8px">24 pcs · wholesale</td><td style="padding: 10px 8px; text-align: right">৳31,500</td><td style="padding: 10px 18px">Kisti · weekly</td></tr>
+</tbody>
+</table>
+</div>
+</sc-if>
+
+<sc-if value="{{isPurchases}}" hint-placeholder-val="{{ false }}">
+<div style="overflow-x: auto">
+<table style="min-width: 600px; font-size: 13px">
+<thead><tr style="text-align: left; color: #6b7280; font-size: 11.5px; text-transform: uppercase; background: #f9fafb"><th style="padding: 10px 18px">Date</th><th style="padding: 10px 8px">Purchase</th><th style="padding: 10px 8px">Items</th><th style="padding: 10px 8px; text-align: right">Amount</th><th style="padding: 10px 18px">Due</th></tr></thead>
+<tbody>
+<tr style="border-top: 1px solid #f0f1f4"><td style="padding: 10px 18px">05 Oct</td><td style="padding: 10px 8px"><a href="#">PUR-0437</a></td><td style="padding: 10px 8px">Fabric · 80 m</td><td style="padding: 10px 8px; text-align: right">৳40,000</td><td style="padding: 10px 18px">20 Oct</td></tr>
+<tr style="border-top: 1px solid #f0f1f4"><td style="padding: 10px 18px">05 Sep</td><td style="padding: 10px 8px"><a href="#">PUR-0412</a></td><td style="padding: 10px 8px">Fabric · 120 m</td><td style="padding: 10px 8px; text-align: right">৳40,000</td><td style="padding: 10px 18px">Paid</td></tr>
+</tbody>
+</table>
+</div>
+</sc-if>
+
+<sc-if value="{{isDocs}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 16px 18px; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; justify-content: space-between; align-items: center; border: 1px solid #eef0f3; border-radius: 10px; padding: 10px 12px"><div><div style="font-weight: 600">Trade license</div><div style="font-size: 12px; color: #6b7280">PDF · expires Jun 2027</div></div><a href="#">View</a></div>
+<div style="display: flex; justify-content: space-between; align-items: center; border: 1px solid #eef0f3; border-radius: 10px; padding: 10px 12px"><div><div style="font-weight: 600">TIN certificate</div><div style="font-size: 12px; color: #6b7280">PDF</div></div><a href="#">View</a></div>
+<div style="display: flex; justify-content: space-between; align-items: center; border: 1px solid #eef0f3; border-radius: 10px; padding: 10px 12px"><div><div style="font-weight: 600">Contact person NID</div><div style="font-size: 12px; color: #6b7280">Image · front &amp; back</div></div><a href="#">View</a></div>
+<button style="align-self: flex-start; font-size: 13px; padding: 8px 12px; border: 1px dashed #c7d2fe; border-radius: 8px; background: #fff; color: #4338ca; font-weight: 600">+ Upload document</button>
+</div>
+</sc-if>
+
+<sc-if value="{{isActivity}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 16px 18px; display: flex; flex-direction: column; gap: 12px">
+<label for="note-in" style="font-size: 13px; font-weight: 600">Add note</label>
+<textarea id="note-in" rows="2" placeholder="যেমন: ২০ তারিখে বাকি দেবে বলেছে" style="font-family: inherit; font-size: 13px; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 9px; resize: vertical"></textarea>
+<sc-for list="{{activity}}" as="a" hint-placeholder-count="4">
+<div style="display: flex; gap: 10px; align-items: flex-start">
+<span style="width: 8px; height: 8px; border-radius: 50%; background: #a5b4fc; margin-top: 6px; flex: none"></span>
+<div><div style="font-size: 13px">{{a.text}}</div><div style="font-size: 11.5px; color: #6b7280">{{a.meta}}</div></div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</section>
+
+<!-- Right: details -->
+<aside style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<section style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 15px; font-weight: 700">Details</h2>
+<div style="display: grid; grid-template-columns: 110px 1fr; gap: 8px 10px; font-size: 13px">
+<span style="color: #6b7280">Alt phone</span><span>018••-••0932</span>
+<span style="color: #6b7280">Email</span><span>—</span>
+<span style="color: #6b7280">Address</span><span>House 14, Road 3, Mirpur 10, Dhaka</span>
+<span style="color: #6b7280">TIN</span><span>••••••4471</span>
+<span style="color: #6b7280">BIN (VAT)</span><span>••••••0912</span>
+<span style="color: #6b7280">Trade license</span><span>DNCC ••••82</span>
+<span style="color: #6b7280">Opening bal.</span><span>৳6,000 Cr · 01 Sep 2026</span>
+</div>
+</section>
+<section style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-size: 15px; font-weight: 700">Role settings</h2>
+<div style="border: 1px solid #eef0f3; border-radius: 10px; padding: 10px 12px; display: grid; grid-template-columns: 110px 1fr; gap: 6px 10px; font-size: 13px">
+<span style="grid-column: 1 / -1; font-weight: 600; color: #065f46">Customer</span>
+<span style="color: #6b7280">Credit limit</span><span>৳50,000</span>
+<span style="color: #6b7280">Terms</span><span>15 days</span>
+<span style="color: #6b7280">Price group</span><span>Wholesale</span>
+</div>
+<div style="border: 1px solid #eef0f3; border-radius: 10px; padding: 10px 12px; display: grid; grid-template-columns: 110px 1fr; gap: 6px 10px; font-size: 13px">
+<span style="grid-column: 1 / -1; font-weight: 600; color: #075985">Supplier</span>
+<span style="color: #6b7280">Category</span><span>Fabric</span>
+<span style="color: #6b7280">Terms</span><span>Credit 15 days</span>
+</div>
+<a href="#" style="font-size: 13px; font-weight: 600">+ Add role (Lender / Owner)</a>
+</section>
+<section style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 15px; font-weight: 700">Tags</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<span style="font-size: 12px; background: #f3f4f6; color: #374151; border-radius: 6px; padding: 3px 9px">Wholesale</span>
+<span style="font-size: 12px; background: #f3f4f6; color: #374151; border-radius: 6px; padding: 3px 9px">Mirpur</span>
+<span style="font-size: 12px; background: #f3f4f6; color: #374151; border-radius: 6px; padding: 3px 9px">Pays on time</span>
+</div>
+</section>
+</aside>
+</div>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1700}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 'ledger' };
+  }
+  renderVals() {
+    var self = this;
+    var tab = this.state.tab;
+    var defs = [['ledger', 'Ledger'], ['kisti', 'Installments'], ['sales', 'Sales'], ['purchases', 'Purchases'], ['docs', 'Documents'], ['activity', 'Notes & activity']];
+    var tabs = defs.map(function (d) {
+      var on = tab === d[0];
+      return {
+        label: d[1],
+        pick: function () { self.setState({ tab: d[0] }); },
+        style: 'border: 0; background: transparent; padding: 14px 12px 12px; font-size: 13.5px; white-space: nowrap; border-bottom: 3px solid ' + (on ? '#4f46e5; color: #312e81; font-weight: 700' : 'transparent; color: #4b5563')
+      };
+    });
+    var dr = 'color: #047857';
+    var cr = 'color: #b91c1c';
+    var ledger = [
+      { date: '01 Sep', ref: 'OB', text: 'Opening balance', sub: '', dr: '', cr: '', bal: '৳6,000 Cr', c: cr },
+      { date: '05 Sep', ref: 'PUR-0412', text: 'Purchase · fabric 120 m', sub: 'Supplier', dr: '', cr: '৳40,000', bal: '৳46,000 Cr', c: cr },
+      { date: '12 Sep', ref: 'INV-1188', text: 'Sale · 24 pcs (weekly kisti)', sub: 'Customer', dr: '৳31,500', cr: '', bal: '৳14,500 Cr', c: cr },
+      { date: '20 Sep', ref: 'PV-0851', text: 'Payment to supplier', sub: 'City Bank', dr: '৳25,000', cr: '', bal: '৳10,500 Dr', c: dr },
+      { date: '29 Sep', ref: 'RV-2190', text: 'Kisti 1/8 received', sub: 'Cash box', dr: '', cr: '৳6,500', bal: '৳4,000 Dr', c: dr },
+      { date: '05 Oct', ref: 'PUR-0437', text: 'Purchase · fabric 80 m', sub: 'Supplier', dr: '', cr: '৳40,000', bal: '৳36,000 Cr', c: cr },
+      { date: '06 Oct', ref: 'RV-2205', text: 'Kisti 2/8 received', sub: 'bKash Merchant', dr: '', cr: '৳6,500', bal: '৳42,500 Cr', c: cr },
+      { date: '08 Oct', ref: 'INV-1240', text: 'Sale · 40 pcs', sub: 'Customer · credit', dr: '৳30,000', cr: '', bal: '৳12,500 Cr', c: cr },
+      { date: '11 Oct', ref: 'RV-2228', text: 'Kisti 3/8 + ৳2,500 support', sub: 'Cash box', dr: '', cr: '৳9,000', bal: '৳21,500 Cr', c: cr }
+    ].map(function (l) { return Object.assign({}, l, { balStyle: l.c }); });
+    var box = {
+      paid: 'border-radius: 10px; padding: 10px; background: #ecfdf5; color: #064e3b; border: 1px solid #a7f3d0',
+      next: 'border-radius: 10px; padding: 10px; background: #fffbeb; color: #78350f; border: 1px solid #fde68a',
+      later: 'border-radius: 10px; padding: 10px; background: #fff; color: #374151; border: 1px solid #e5e7eb'
+    };
+    var kisti = [
+      { no: '1', date: '29 Sep', amount: '৳6,500', note: 'Paid', s: 'paid' },
+      { no: '2', date: '06 Oct', amount: '৳6,500', note: 'Paid', s: 'paid' },
+      { no: '3', date: '11 Oct', amount: '৳9,000', note: 'Paid · +৳2,500 support', s: 'paid' },
+      { no: '4', date: '13 Oct', amount: '৳4,000', note: 'Next · ৳2,500 adjusted', s: 'next' },
+      { no: '5', date: '20 Oct', amount: '৳6,500', note: 'Upcoming', s: 'later' },
+      { no: '6', date: '27 Oct', amount: '৳6,500', note: 'Upcoming', s: 'later' },
+      { no: '7', date: '03 Nov', amount: '৳6,500', note: 'Upcoming', s: 'later' },
+      { no: '8', date: '10 Nov', amount: '৳6,500', note: 'Upcoming', s: 'later' }
+    ].map(function (k) { return Object.assign({}, k, { box: box[k.s] }); });
+    var activity = [
+      { text: 'Kisti 3/8 received ৳9,000 (৳2,500 support)', meta: '11 Oct · Sumon' },
+      { text: 'Due reminder SMS sent', meta: '10 Oct · System' },
+      { text: 'Credit limit changed ৳40,000 → ৳50,000', meta: '15 Sep · Omar' },
+      { text: 'Role added: Supplier', meta: '02 Sep · Omar' }
+    ];
+    return {
+      tabs: tabs, ledger: ledger, kisti: kisti, activity: activity,
+      isLedger: tab === 'ledger', isKisti: tab === 'kisti', isSales: tab === 'sales',
+      isPurchases: tab === 'purchases', isDocs: tab === 'docs', isActivity: tab === 'activity'
+    };
+  }
+}
+</script>
+</body>
+</html>

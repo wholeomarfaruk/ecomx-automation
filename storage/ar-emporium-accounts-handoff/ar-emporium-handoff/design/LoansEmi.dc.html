@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<title>Loans &amp; EMI</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Hind+Siliguri:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f1f3f7}
+a{color:#4338ca;text-decoration:none}a:hover{color:#312e81}
+table{border-collapse:collapse;width:100%}
+button,input,select,textarea{font-family:inherit}
+button{cursor:pointer}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; min-height: 100vh; background: #f1f3f7; font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif; color: #111827; font-size: 14px">
+
+<div style="flex: 1 1 248px; max-width: 100%; background: #0f172a; display: flex">
+<dc-import name="Sidebar" active="loans" hint-size="248px,1100px"></dc-import>
+</div>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+
+<header style="background: #fff; border-bottom: 1px solid #e5e7eb; padding: 14px 28px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<div>
+<div style="font-weight: 700; font-size: 16px">Loans &amp; EMI</div>
+<div style="font-size: 12px; color: #6b7280">Accounts / Loans &amp; EMI</div>
+</div>
+<div style="display: flex; align-items: center; gap: 14px">
+<button aria-label="Notifications" style="width: 40px; height: 40px; border: 1px solid #e5e7eb; background: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #374151">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg>
+</button>
+<div style="display: flex; align-items: center; gap: 8px">
+<div style="width: 34px; height: 34px; border-radius: 50%; background: #0f172a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">SU</div>
+<div style="font-weight: 600; font-size: 13px">superadmin</div>
+</div>
+</div>
+</header>
+
+<div style="padding: 24px 28px 40px; display: flex; flex-direction: column; gap: 18px; max-width: 1480px; box-sizing: border-box; width: 100%">
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px">
+<div>
+<h1 style="margin: 0; font-size: 24px; font-weight: 700">ঋণ ও কিস্তি · Loans &amp; EMI</h1>
+<div style="color: #6b7280; font-size: 13px; margin-top: 2px">যত কিস্তির হিসাব — নেওয়া ঋণ, কিস্তিতে বিক্রি, supplier-কে কিস্তি, staff loan</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<a href="Lenders.dc.html" style="font-size: 13px; padding: 9px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">Lenders</a>
+<a href="#new-plan" style="font-size: 13px; padding: 9px 16px; border-radius: 8px; background: #4f46e5; color: #fff; font-weight: 600">+ New loan / kisti plan</a>
+</div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px">
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">চালু plan · Active</div>
+<div style="font-size: 24px; font-weight: 700; margin-top: 6px">9</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">দিবো 4 · পাবো 5</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">এই মাসে দিতে হবে</div>
+<div style="font-size: 24px; font-weight: 700; color: #b91c1c; margin-top: 6px">৳47,400</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">Rahim Traders ৳22,500 paid already</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">এই মাসে পাওয়ার কথা</div>
+<div style="font-size: 24px; font-weight: 700; color: #047857; margin-top: 6px">৳44,100</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">৳9,500 collected so far</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">মিস হওয়া কিস্তি · Overdue</div>
+<div style="font-size: 24px; font-weight: 700; color: #b45309; margin-top: 6px">2</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">Jamal Hossain (দিবো) · Mehedi (পাবো)</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">Support / অগ্রিম কিস্তি</div>
+<div style="font-size: 24px; font-weight: 700; color: #4338ca; margin-top: 6px">৳4,000</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">দিয়েছি ৳1,500 · পেয়েছি ৳2,500</div>
+</div>
+</div>
+
+<!-- Plans -->
+<section style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid #f0f1f4">
+<div role="group" aria-label="Direction" style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{dirChips}}" as="c" hint-placeholder-count="3">
+<button onClick="{{c.pick}}" style="{{c.style}}">{{c.label}} <span style="opacity: 0.7">{{c.count}}</span></button>
+</sc-for>
+</div>
+<div role="group" aria-label="Frequency" style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{fqChips}}" as="c" hint-placeholder-count="6">
+<button onClick="{{c.pick}}" style="{{c.style}}">{{c.label}}</button>
+</sc-for>
+</div>
+</div>
+<div style="overflow-x: auto">
+<table style="min-width: 960px; font-size: 13px">
+<thead>
+<tr style="text-align: left; color: #6b7280; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em">
+<th style="padding: 10px 8px 10px 18px">Party</th>
+<th style="padding: 10px 8px">Rule</th>
+<th style="padding: 10px 8px; width: 150px">Progress</th>
+<th style="padding: 10px 8px; text-align: right">Kisti</th>
+<th style="padding: 10px 8px; text-align: right">বাকি</th>
+<th style="padding: 10px 8px">Next</th>
+<th style="padding: 10px 18px">Status</th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{plans}}" as="p" hint-placeholder-count="9">
+<tr style="border-top: 1px solid #f0f1f4">
+<td style="padding: 11px 8px 11px 18px">
+<div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap"><a href="ProfileDetail.dc.html" style="font-weight: 600; color: #111827">{{p.party}}</a><span style="{{p.dirStyle}}">{{p.dirLabel}}</span></div>
+<div style="font-size: 11.5px; color: #6b7280">{{p.kind}}</div>
+</td>
+<td style="padding: 11px 8px"><span style="font-size: 12px; background: #eef2ff; color: #3730a3; border-radius: 6px; padding: 3px 8px; font-weight: 600; white-space: nowrap">{{p.rule}}</span></td>
+<td style="padding: 11px 8px">
+<div style="display: flex; justify-content: space-between; font-size: 11.5px; color: #4b5563; margin-bottom: 4px"><span>{{p.done}}</span><span>{{p.pct}}%</span></div>
+<div style="height: 6px; background: #eef0f3; border-radius: 4px; overflow: hidden"><div style="{{p.bar}}"></div></div>
+</td>
+<td style="padding: 11px 8px; text-align: right; white-space: nowrap">{{p.kisti}}</td>
+<td style="padding: 11px 8px; text-align: right; font-weight: 700; white-space: nowrap">{{p.left}}</td>
+<td style="padding: 11px 8px; white-space: nowrap"><div style="font-weight: 600">{{p.next}}</div><div style="font-size: 11.5px; color: #047857">{{p.nextNote}}</div></td>
+<td style="padding: 11px 18px"><span style="{{p.badge}}">{{p.status}}</span></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<sc-if value="{{noPlans}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 32px 18px; text-align: center; color: #6b7280">এই filter-এ কোনো plan নেই।</div>
+</sc-if>
+</section>
+
+<!-- Builder -->
+<section id="new-plan" style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden">
+<div style="padding: 16px 20px; border-bottom: 1px solid #f0f1f4">
+<h2 style="margin: 0; font-size: 17px; font-weight: 700">নতুন ঋণ / কিস্তি plan</h2>
+<div style="font-size: 12.5px; color: #6b7280; margin-top: 2px">নিয়ম দিন — schedule নিজে থেকে তৈরি হবে</div>
+</div>
+<div style="display: flex; flex-wrap: wrap">
+
+<div style="flex: 1 1 440px; min-width: 0; padding: 18px 20px; display: flex; flex-direction: column; gap: 16px; border-right: 1px solid #f0f1f4">
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; font-weight: 600">কী ধরনের?</span>
+<div role="group" aria-label="Plan type" style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{typeOpts}}" as="t" hint-placeholder-count="3">
+<button type="button" onClick="{{t.pick}}" style="{{t.style}}"><span style="display: block; font-weight: 700">{{t.label}}</span><span style="display: block; font-size: 11.5px; opacity: 0.8; margin-top: 2px">{{t.sub}}</span></button>
+</sc-for>
+</div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="pl-party" style="font-size: 13px; font-weight: 600">{{partyLabel}}</label>
+<select id="pl-party" style="font-size: 14px; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 9px; background: #fff">
+<sc-for list="{{partyOpts}}" as="o" hint-placeholder-count="4"><option>{{o}}</option></sc-for>
+</select>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="pl-amt" style="font-size: 13px; font-weight: 600">{{amountLabel}} (৳)</label>
+<input id="pl-amt" type="number" value="{{amountVal}}" onChange="{{setAmount}}" style="font-size: 14px; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 9px">
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="pl-start" style="font-size: 13px; font-weight: 600">প্রথম কিস্তি · First due</label>
+<input id="pl-start" type="date" value="2026-11-15" style="font-size: 14px; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 9px">
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; font-weight: 600">কত দিন পরপর · Frequency</span>
+<div role="group" aria-label="Frequency" style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{freqOpts}}" as="f" hint-placeholder-count="5">
+<button type="button" onClick="{{f.pick}}" style="{{f.style}}">{{f.label}}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px">
+<sc-if value="{{notCustom}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="pl-n" style="font-size: 13px; font-weight: 600">কয়টা কিস্তি</label>
+<input id="pl-n" type="number" min="1" value="{{countVal}}" onChange="{{setCount}}" style="font-size: 14px; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 9px">
+</div>
+</sc-if>
+<sc-if value="{{isCustom}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="pl-off" style="font-size: 13px; font-weight: 600">কত দিন পরে পরে (comma দিয়ে)</label>
+<input id="pl-off" type="text" value="{{offsetsVal}}" onChange="{{setOffsets}}" style="font-size: 14px; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 9px">
+</div>
+</sc-if>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="pl-int" style="font-size: 13px; font-weight: 600">লাভ / সুদ</label>
+<select id="pl-int" onChange="{{setIntType}}" style="font-size: 14px; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 9px; background: #fff">
+<option value="flat" selected="{{isFlat}}">Flat (মোট টাকার উপর)</option>
+<option value="reducing" selected="{{isReducing}}">Reducing (বাকির উপর)</option>
+<option value="none" selected="{{isNone}}">নেই · No interest</option>
+</select>
+</div>
+<sc-if value="{{hasRate}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="pl-rate" style="font-size: 13px; font-weight: 600">Rate (% per year)</label>
+<input id="pl-rate" type="number" step="0.5" value="{{rateVal}}" onChange="{{setRate}}" style="font-size: 14px; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 9px">
+</div>
+</sc-if>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; font-weight: 600">কিস্তির বেশি টাকা দিলে (Support)</span>
+<sc-for list="{{supportOpts}}" as="s" hint-placeholder-count="3">
+<label style="display: flex; gap: 10px; align-items: flex-start; font-size: 13px; cursor: pointer">
+<input type="radio" name="support" checked="{{s.on}}" onChange="{{s.pick}}" style="margin-top: 2px; accent-color: #4f46e5">
+<span><span style="display: block; font-weight: 600">{{s.label}}</span><span style="display: block; font-size: 12px; color: #6b7280">{{s.sub}}</span></span>
+</label>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="pl-late" style="font-size: 13px; font-weight: 600">দেরি হলে · Late rule</label>
+<select id="pl-late" style="font-size: 14px; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 9px; background: #fff"><option>Reminder only (SMS 1 day before + on due date)</option><option>Reminder + late fee ৳200</option><option>Reminder + block new credit</option></select>
+</div>
+</div>
+
+<!-- Preview -->
+<div style="flex: 1 1 420px; min-width: 0; padding: 18px 20px; background: #fcfcfd; display: flex; flex-direction: column; gap: 14px">
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 14px"><div style="font-size: 12px; color: #6b7280">প্রতি কিস্তি</div><div style="font-size: 22px; font-weight: 700; color: #4338ca; margin-top: 2px">{{sum.kisti}}</div><div style="font-size: 11.5px; color: #6b7280">{{sum.kistiNote}}</div></div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 14px"><div style="font-size: 12px; color: #6b7280">মোট {{sum.totalWord}}</div><div style="font-size: 22px; font-weight: 700; margin-top: 2px">{{sum.total}}</div><div style="font-size: 11.5px; color: #6b7280">লাভ/সুদ {{sum.interest}}</div></div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 14px"><div style="font-size: 12px; color: #6b7280">কিস্তি সংখ্যা</div><div style="font-size: 18px; font-weight: 700; margin-top: 2px">{{sum.n}}</div></div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 14px"><div style="font-size: 12px; color: #6b7280">শেষ কিস্তি</div><div style="font-size: 18px; font-weight: 700; margin-top: 2px">{{sum.end}}</div></div>
+</div>
+<div>
+<div style="font-size: 12px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px">Schedule preview</div>
+<div style="border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; background: #fff">
+<table style="font-size: 13px">
+<thead><tr style="background: #f9fafb; color: #6b7280; font-size: 11.5px; text-transform: uppercase; text-align: left"><th style="padding: 8px 12px; font-weight: 600">#</th><th style="padding: 8px 12px; font-weight: 600">Due</th><th style="padding: 8px 12px; text-align: right; font-weight: 600">Kisti</th><th style="padding: 8px 12px; text-align: right; font-weight: 600">বাকি থাকবে</th></tr></thead>
+<tbody>
+<sc-for list="{{sched}}" as="r" hint-placeholder-count="7">
+<tr style="border-top: 1px solid #f0f1f4"><td style="padding: 8px 12px; color: #6b7280">{{r.no}}</td><td style="padding: 8px 12px">{{r.date}}</td><td style="padding: 8px 12px; text-align: right; font-weight: 600">{{r.amt}}</td><td style="padding: 8px 12px; text-align: right; color: #4b5563">{{r.left}}</td></tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</div>
+<div style="font-size: 12.5px; line-height: 1.5; border-radius: 10px; padding: 10px 12px; background: #eef2ff; color: #312e81; border: 1px solid #c7d2fe">{{postNote}}</div>
+<div style="display: flex; gap: 8px; justify-content: flex-end">
+<button style="font-size: 13px; padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">Cancel</button>
+<button style="font-size: 13px; padding: 10px 18px; border: 0; border-radius: 8px; background: #4f46e5; color: #fff; font-weight: 600">Create plan</button>
+</div>
+</div>
+
+</div>
+</section>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dir: 'all', fq: 'all', type: 'loan', freq: 'monthly', amount: 200000, count: 12, offsets: '15, 45, 90', intType: 'flat', rate: 10, support: 'next' };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state;
+    var chip = function (on) {
+      return on
+        ? 'border: 1px solid #4f46e5; border-radius: 20px; padding: 6px 12px; font-size: 12.5px; background: #4f46e5; color: #fff; font-weight: 600'
+        : 'border: 1px solid #e5e7eb; border-radius: 20px; padding: 6px 12px; font-size: 12.5px; background: #fff; color: #374151';
+    };
+    var fmt = function (n) {
+      var neg = n < 0; var s = String(Math.abs(Math.round(n)));
+      if (s.length > 3) { var last = s.slice(-3); var rest = s.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ','); s = rest + ',' + last; }
+      return (neg ? '− ' : '') + '৳' + s;
+    };
+    var bb = 'font-size: 12px; font-weight: 600; border-radius: 6px; padding: 3px 8px; white-space: nowrap; ';
+    var badge = {
+      ok: bb + 'background: #d1fae5; color: #065f46',
+      soon: bb + 'background: #fef3c7; color: #92400e',
+      late: bb + 'background: #fee2e2; color: #991b1b',
+      flex: bb + 'background: #f3f4f6; color: #374151'
+    };
+    var plans = [
+      { party: 'Rahim Traders', kind: 'Loan taken · ৳2,40,000', dir: 'pay', fq: 'monthly', rule: 'Monthly · 12', done: '5 / 12', pct: 42, kisti: '৳21,000', left: '৳1,45,500', next: '12 Nov', nextNote: '৳19,500 after support', st: 'ok', status: 'On track' },
+      { party: 'City Bank SME Loan', kind: 'Loan taken · ৳6,90,000 · 12% reducing', dir: 'pay', fq: 'monthly', rule: 'Monthly · 24', done: '8 / 24', pct: 33, kisti: '৳32,400', left: '৳5,18,400', next: '15 Oct', nextNote: 'auto-debit', st: 'soon', status: 'Due in 3 days' },
+      { party: 'Jamal Hossain', kind: 'Supplier kisti · ৳1,20,000', dir: 'pay', fq: 'custom', rule: 'Custom · 15/45/90d', done: '1.6 / 3', pct: 54, kisti: '৳40,000', left: '৳55,000', next: '10 Oct', nextNote: '', st: 'late', status: '৳15,000 overdue' },
+      { party: 'Ariful Rahman', kind: 'Owner loan · ৳1,00,000 · no interest', dir: 'pay', fq: 'custom', rule: 'Flexible', done: '৳20,000 paid', pct: 20, kisti: '—', left: '৳80,000', next: 'No fixed date', nextNote: '', st: 'flex', status: 'Flexible' },
+      { party: 'Mehedi Fashion House', kind: 'Credit sale on kisti · ৳57,600', dir: 'recv', fq: 'monthly', rule: 'Monthly · 6', done: '2 / 6', pct: 33, kisti: '৳9,600', left: '৳38,400', next: '14 Sep', nextNote: '', st: 'late', status: 'Missed Sep' },
+      { party: 'Karim Enterprise', kind: 'Credit sale on kisti · ৳52,000', dir: 'recv', fq: 'weekly', rule: 'Weekly · 8', done: '3 / 8', pct: 42, kisti: '৳6,500', left: '৳30,000', next: '13 Oct', nextNote: '৳4,000 after support', st: 'soon', status: 'Due tomorrow' },
+      { party: 'Nasrin Akter', kind: 'Credit sale on kisti · ৳30,000', dir: 'recv', fq: 'daily', rule: 'Daily · 60', done: '18 / 60', pct: 30, kisti: '৳500', left: '৳21,000', next: '13 Oct', nextNote: '', st: 'ok', status: 'On track' },
+      { party: 'Bismillah Cloth Store', kind: 'Credit sale on kisti · ৳22,000', dir: 'recv', fq: 'custom', rule: 'Custom · 15/30/45d', done: '0 / 3', pct: 0, kisti: '৳8,000', left: '৳22,000', next: '15 Oct', nextNote: '', st: 'soon', status: 'Due in 3 days' },
+      { party: 'Rafiq Hasan', kind: 'Staff advance · ৳15,000', dir: 'recv', fq: 'monthly', rule: 'Monthly · from salary', done: '2 / 6', pct: 33, kisti: '৳2,500', left: '৳10,000', next: '05 Nov', nextNote: 'payroll-এ কাটবে', st: 'ok', status: 'On track' }
+    ];
+    var dirDefs = [['all', 'All', '9'], ['pay', 'আমি দিবো', '4'], ['recv', 'আমি পাবো', '5']];
+    var dirChips = dirDefs.map(function (d) { return { label: d[1], count: d[2], style: chip(st.dir === d[0]), pick: function () { self.setState({ dir: d[0] }); } }; });
+    var fqDefs = [['all', 'Any frequency'], ['monthly', 'Monthly'], ['weekly', 'Weekly'], ['daily', 'Daily'], ['yearly', 'Yearly'], ['custom', 'Custom']];
+    var fqChips = fqDefs.map(function (d) { return { label: d[1], style: chip(st.fq === d[0]), pick: function () { self.setState({ fq: d[0] }); } }; });
+    var db = 'font-size: 11px; font-weight: 600; border-radius: 6px; padding: 1px 7px; ';
+    var shown = plans.filter(function (p) { return (st.dir === 'all' || p.dir === st.dir) && (st.fq === 'all' || p.fq === st.fq); }).map(function (p) {
+      return Object.assign({}, p, {
+        dirLabel: p.dir === 'pay' ? 'দিবো' : 'পাবো',
+        dirStyle: db + (p.dir === 'pay' ? 'background: #fee2e2; color: #991b1b' : 'background: #d1fae5; color: #065f46'),
+        bar: 'height: 100%; border-radius: 4px; background: ' + (p.st === 'late' ? '#dc2626' : '#4f46e5') + '; width: ' + p.pct + '%',
+        badge: badge[p.st]
+      });
+    });
+
+    // ---- builder ----
+    var types = {
+      loan: { label: 'ঋণ নিলাম', sub: 'আমি দিবো · lender', party: 'Lender', amount: 'ঋণের পরিমাণ', opts: ['City Bank Ltd', 'Rahim Traders', 'Ariful Rahman', '+ New lender'], word: 'ফেরত দিতে হবে' },
+      sale: { label: 'কিস্তিতে বিক্রি', sub: 'আমি পাবো · customer', party: 'Customer', amount: 'বিক্রির বাকি অংশ', opts: ['Karim Enterprise', 'Nasrin Akter', 'Shapla Boutique', '+ New customer'], word: 'পাবো' },
+      supplier: { label: 'Supplier-কে কিস্তি', sub: 'আমি দিবো · supplier', party: 'Supplier', amount: 'মোট দেনা', opts: ['Rahman Fabrics', 'Jamal Hossain', 'Karim Enterprise', '+ New supplier'], word: 'দিতে হবে' }
+    };
+    var tdef = types[st.type];
+    var typeOpts = ['loan', 'sale', 'supplier'].map(function (k) {
+      var on = st.type === k;
+      return { label: types[k].label, sub: types[k].sub, pick: function () { self.setState({ type: k }); },
+        style: 'text-align: left; font-family: inherit; border-radius: 10px; padding: 10px 14px; cursor: pointer; ' + (on ? 'border: 2px solid #4f46e5; background: #eef2ff; color: #312e81' : 'border: 1px solid #e5e7eb; background: #fff; color: #374151') };
+    });
+    var freqDefs = [['monthly', 'Monthly', 12], ['weekly', 'Weekly', 52], ['daily', 'Daily', 365], ['yearly', 'Yearly', 1], ['custom', 'Custom days', 0]];
+    var freqOpts = freqDefs.map(function (f) { return { label: f[1], style: chip(st.freq === f[0]), pick: function () { self.setState({ freq: f[0] }); } }; });
+    var P = Math.max(Number(st.amount) || 0, 0);
+    var start = new Date(2026, 10, 15);
+    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var fd = function (d) { return ('0' + d.getDate()).slice(-2) + ' ' + months[d.getMonth()] + ' ' + d.getFullYear(); };
+    var dates = [];
+    if (st.freq === 'custom') {
+      var offs = String(st.offsets).split(',').map(function (x) { return parseInt(x, 10); }).filter(function (x) { return !isNaN(x) && x >= 0; });
+      if (!offs.length) offs = [0];
+      dates = offs.map(function (o) { var d = new Date(start); d.setDate(d.getDate() + o); return d; });
+    } else {
+      var n = Math.min(Math.max(parseInt(st.count, 10) || 1, 1), 400);
+      for (var i = 0; i < n; i++) {
+        var d = new Date(start);
+        if (st.freq === 'monthly') d.setMonth(d.getMonth() + i);
+        if (st.freq === 'weekly') d.setDate(d.getDate() + 7 * i);
+        if (st.freq === 'daily') d.setDate(d.getDate() + i);
+        if (st.freq === 'yearly') d.setFullYear(d.getFullYear() + i);
+        dates.push(d);
+      }
+    }
+    var N = dates.length;
+    var rate = Math.max(Number(st.rate) || 0, 0) / 100;
+    var spanYears = Math.max((dates[N - 1] - start) / (365 * 86400000), 0) + (st.freq === 'custom' ? 0 : ({ monthly: 1 / 12, weekly: 1 / 52, daily: 1 / 365, yearly: 1 })[st.freq]);
+    var amounts = [];
+    var total = P;
+    if (st.intType === 'flat') {
+      total = P + P * rate * spanYears;
+    } else if (st.intType === 'reducing' && rate > 0 && st.freq !== 'custom') {
+      var ppy = ({ monthly: 12, weekly: 52, daily: 365, yearly: 1 })[st.freq];
+      var r = rate / ppy;
+      var emi = P * r / (1 - Math.pow(1 + r, -N));
+      total = emi * N;
+    } else if (st.intType === 'reducing') {
+      total = P + P * rate * spanYears;
+    }
+    total = Math.round(total);
+    var base = Math.ceil(total / N / 10) * 10;
+    for (var j = 0; j < N; j++) amounts.push(j < N - 1 ? base : total - base * (N - 1));
+    var running = total;
+    var allRows = dates.map(function (dt, k) { running -= amounts[k]; return { no: String(k + 1), date: fd(dt), amt: fmt(amounts[k]), left: fmt(Math.max(running, 0)) }; });
+    var sched = allRows.length > 7 ? allRows.slice(0, 5).concat([{ no: '…', date: (N - 6) + ' more', amt: '', left: '' }]).concat(allRows.slice(-1)) : allRows;
+    var lastDiff = amounts[N - 1] !== base;
+    var supDefs = [
+      ['next', 'পরের কিস্তি থেকে কাটবে', 'যেমন ৳21,000 কিস্তিতে ৳22,500 দিলে পরের কিস্তি ৳19,500'],
+      ['principal', 'আসল থেকে কমবে', 'বাকি টাকা কমবে, কিস্তি সংখ্যা একই থাকবে, শেষ কিস্তি ছোট হবে'],
+      ['advance', 'Advance হিসেবে জমা থাকবে', 'যেকোনো সময় adjust করা যাবে']
+    ];
+    var supportOpts = supDefs.map(function (s) { return { label: s[1], sub: s[2], on: st.support === s[0], pick: function () { self.setState({ support: s[0] }); } }; });
+    var postNote = {
+      loan: 'Create করলে ঋণ পাওয়ার voucher (Dr Bank / Cr Loan — ' + fmt(P) + ') Posting Pending-এ যাবে, আর ' + N + 'টা কিস্তি schedule-এ বসবে।',
+      sale: 'Create করলে invoice-এর বাকি ' + fmt(P) + ' এই plan-এ চলে যাবে। প্রতি কিস্তির আগের দিন customer-কে SMS যাবে।',
+      supplier: 'Create করলে supplier-এর ' + fmt(P) + ' দেনা ' + N + 'টা কিস্তিতে ভাগ হবে, Payables-এ due date অনুযায়ী দেখাবে।'
+    }[st.type];
+    return {
+      dirChips: dirChips, fqChips: fqChips, plans: shown, noPlans: shown.length === 0,
+      typeOpts: typeOpts, partyLabel: tdef.party, amountLabel: tdef.amount, partyOpts: tdef.opts,
+      amountVal: String(st.amount), setAmount: function (e) { self.setState({ amount: e && e.target ? e.target.value : 0 }); },
+      freqOpts: freqOpts, isCustom: st.freq === 'custom', notCustom: st.freq !== 'custom',
+      countVal: String(st.count), setCount: function (e) { self.setState({ count: e && e.target ? e.target.value : 1 }); },
+      offsetsVal: st.offsets, setOffsets: function (e) { self.setState({ offsets: e && e.target ? e.target.value : '' }); },
+      isFlat: st.intType === 'flat', isReducing: st.intType === 'reducing', isNone: st.intType === 'none', hasRate: st.intType !== 'none',
+      setIntType: function (e) { self.setState({ intType: e && e.target ? e.target.value : 'none' }); },
+      rateVal: String(st.rate), setRate: function (e) { self.setState({ rate: e && e.target ? e.target.value : 0 }); },
+      supportOpts: supportOpts,
+      sum: { kisti: fmt(base), kistiNote: lastDiff ? 'শেষ কিস্তি ' + fmt(amounts[N - 1]) : 'সব কিস্তি সমান', total: fmt(total), totalWord: tdef.word, interest: fmt(total - P), n: String(N), end: fd(dates[N - 1]) },
+      sched: sched, postNote: postNote
+    };
+  }
+}
+</script>
+</body>
+</html>

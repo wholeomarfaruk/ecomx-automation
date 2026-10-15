@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<title>Transactions</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Hind+Siliguri:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f1f3f7}
+a{color:#4338ca;text-decoration:none}a:hover{color:#312e81}
+table{border-collapse:collapse;width:100%}
+button,input,select,textarea{font-family:inherit}
+button{cursor:pointer}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; min-height: 100vh; background: #f1f3f7; font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif; color: #111827; font-size: 14px">
+
+<div style="flex: 1 1 248px; max-width: 100%; background: #0f172a; display: flex">
+<dc-import name="Sidebar" active="transactions" hint-size="248px,1100px"></dc-import>
+</div>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+
+<header style="background: #fff; border-bottom: 1px solid #e5e7eb; padding: 14px 28px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<div>
+<div style="font-weight: 700; font-size: 16px">Transactions</div>
+<div style="font-size: 12px; color: #6b7280">Accounts / Transactions</div>
+</div>
+<div style="display: flex; align-items: center; gap: 14px">
+<button aria-label="Notifications" style="width: 40px; height: 40px; border: 1px solid #e5e7eb; background: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #374151">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg>
+</button>
+<div style="display: flex; align-items: center; gap: 8px">
+<div style="width: 34px; height: 34px; border-radius: 50%; background: #0f172a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">SU</div>
+<div style="font-weight: 600; font-size: 13px">superadmin</div>
+</div>
+</div>
+</header>
+
+<div style="padding: 24px 28px 40px; display: flex; flex-direction: column; gap: 18px; max-width: 1480px; box-sizing: border-box; width: 100%">
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px">
+<div>
+<h1 style="margin: 0; font-size: 24px; font-weight: 700">লেনদেন · Transactions</h1>
+<div style="color: #6b7280; font-size: 13px; margin-top: 2px">সব টাকা আসা-যাওয়া, দিন অনুযায়ী (Day book)</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<a href="#" style="font-size: 13px; padding: 9px 12px; border: 1px solid #a7f3d0; border-radius: 8px; background: #ecfdf5; color: #065f46; font-weight: 600">+ টাকা আসলো</a>
+<a href="#" style="font-size: 13px; padding: 9px 12px; border: 1px solid #fecaca; border-radius: 8px; background: #fef2f2; color: #991b1b; font-weight: 600">+ টাকা গেলো</a>
+<a href="#" style="font-size: 13px; padding: 9px 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">+ Expense</a>
+<a href="#" style="font-size: 13px; padding: 9px 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">+ Transfer</a>
+<a href="#" style="font-size: 13px; padding: 9px 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">+ Journal</a>
+</div>
+</div>
+
+<!-- Period -->
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<div role="group" aria-label="Period" style="display: flex; flex-wrap: wrap; gap: 4px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 4px">
+<sc-for list="{{periods}}" as="p" hint-placeholder-count="5">
+<button onClick="{{p.pick}}" style="{{p.style}}">{{p.label}}</button>
+</sc-for>
+</div>
+<div style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: #4b5563">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18"></path><path d="M8 3v4"></path><path d="M16 3v4"></path></svg>
+<span>{{rangeText}}</span>
+<span style="color: #d1d5db">·</span>
+<button style="border: 0; background: transparent; padding: 0; font-size: 12.5px; color: #4338ca">Export</button>
+<span style="color: #d1d5db">·</span>
+<button style="border: 0; background: transparent; padding: 0; font-size: 12.5px; color: #4338ca">Print day book</button>
+</div>
+</div>
+
+<!-- Summary -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px">
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">টাকা আসলো · Money in</div>
+<div style="font-size: 24px; font-weight: 700; color: #047857; margin-top: 6px">{{sum.inPosted}}</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">Posted · {{sum.inDraft}} in draft</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">টাকা গেলো · Money out</div>
+<div style="font-size: 24px; font-weight: 700; color: #b91c1c; margin-top: 6px">{{sum.outPosted}}</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">Posted · {{sum.outDraft}} in draft</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">নিট · Net</div>
+<div style="{{sum.netStyle}}">{{sum.net}}</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">In − out, posted only</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">Transfer · নিজের account-এ</div>
+<div style="font-size: 24px; font-weight: 700; margin-top: 6px">{{sum.transfer}}</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">Cash ↔ bank ↔ bKash</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">মোট entry</div>
+<div style="font-size: 24px; font-weight: 700; margin-top: 6px">{{sum.count}}</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">{{sum.countNote}}</div>
+</div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+
+<!-- List -->
+<section style="flex: 999 1 640px; min-width: 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden">
+<div style="display: flex; flex-direction: column; gap: 12px; padding: 14px 18px; border-bottom: 1px solid #f0f1f4">
+<div role="group" aria-label="Type" style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{types}}" as="t" hint-placeholder-count="8">
+<button onClick="{{t.pick}}" style="{{t.style}}">{{t.label}}</button>
+</sc-for>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+<label for="tx-search" style="position: absolute; width: 1px; height: 1px; overflow: hidden">Search transactions</label>
+<div style="flex: 1 1 220px; display: flex; align-items: center; gap: 8px; border: 1px solid #d1d5db; border-radius: 9px; padding: 0 12px; background: #fff">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+<input id="tx-search" type="search" placeholder="Ref, party, note বা amount" style="flex: 1; border: 0; outline: none; padding: 9px 0; font-size: 13.5px; background: transparent">
+</div>
+<label for="tx-acc" style="font-size: 13px; color: #4b5563">Account</label>
+<select id="tx-acc" style="font-size: 13px; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 9px; background: #fff"><option>All accounts</option><option>Cash box</option><option>City Bank</option><option>DBBL</option><option>bKash Merchant</option><option>Nagad</option></select>
+<label for="tx-status" style="font-size: 13px; color: #4b5563">Status</label>
+<select id="tx-status" style="font-size: 13px; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 9px; background: #fff"><option>All</option><option>Posted</option><option>Draft</option><option>Reversed</option><option>Rejected</option></select>
+<label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #374151"><input type="checkbox" checked="{{showDrafts}}" onChange="{{toggleDrafts}}" style="accent-color: #4f46e5"> Draft দেখাও</label>
+</div>
+</div>
+
+<div style="overflow-x: auto">
+<table style="min-width: 860px; font-size: 13px">
+<thead>
+<tr style="text-align: left; color: #6b7280; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em">
+<th style="padding: 10px 8px 10px 18px">Time</th>
+<th style="padding: 10px 8px">Voucher</th>
+<th style="padding: 10px 8px">Party · note</th>
+<th style="padding: 10px 8px">Account</th>
+<th style="padding: 10px 8px; text-align: right">In</th>
+<th style="padding: 10px 8px; text-align: right">Out</th>
+<th style="padding: 10px 18px">Status</th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{days}}" as="d" hint-placeholder-count="2">
+<tr style="background: #f8fafc; border-top: 1px solid #e5e7eb">
+<td colspan="4" style="padding: 9px 18px; font-weight: 700; font-size: 12.5px; color: #334155">{{d.label}}</td>
+<td style="padding: 9px 8px; text-align: right; font-weight: 700; font-size: 12.5px; color: #047857; white-space: nowrap">{{d.in}}</td>
+<td style="padding: 9px 8px; text-align: right; font-weight: 700; font-size: 12.5px; color: #b91c1c; white-space: nowrap">{{d.out}}</td>
+<td style="padding: 9px 18px; font-size: 11.5px; color: #6b7280">posted total</td>
+</tr>
+<sc-for list="{{d.rows}}" as="r" hint-placeholder-count="4">
+<tr style="{{r.rowStyle}}">
+<td style="padding: 11px 8px 11px 18px; color: #6b7280; white-space: nowrap">{{r.time}}</td>
+<td style="padding: 11px 8px; white-space: nowrap">
+<button onClick="{{r.open}}" style="{{r.refStyle}}">{{r.ref}}</button>
+<div style="font-size: 11.5px; color: #6b7280">{{r.type}}</div>
+</td>
+<td style="padding: 11px 8px"><div style="font-weight: 600">{{r.party}}</div><div style="font-size: 11.5px; color: #6b7280">{{r.note}}</div></td>
+<td style="padding: 11px 8px; color: #374151; white-space: nowrap">{{r.account}}</td>
+<td style="padding: 11px 8px; text-align: right; white-space: nowrap"><span style="{{r.inStyle}}">{{r.in}}</span></td>
+<td style="padding: 11px 8px; text-align: right; white-space: nowrap"><span style="{{r.outStyle}}">{{r.out}}</span></td>
+<td style="padding: 11px 18px"><span style="{{r.badge}}">{{r.status}}</span></td>
+</tr>
+</sc-for>
+</sc-for>
+</tbody>
+</table>
+</div>
+<sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 36px 18px; text-align: center; color: #6b7280">এই filter-এ কোনো লেনদেন নেই।</div>
+</sc-if>
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 18px; border-top: 1px solid #f0f1f4; font-size: 13px; color: #6b7280">
+<span>Showing {{shown}} entries</span>
+<div style="display: flex; gap: 6px">
+<button style="padding: 7px 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #9ca3af" disabled>Previous</button>
+<button style="padding: 7px 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">Next</button>
+</div>
+</div>
+</section>
+
+<!-- Detail -->
+<aside style="flex: 1 1 380px; min-width: 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column">
+<div style="padding: 16px 18px; border-bottom: 1px solid #f0f1f4; display: flex; justify-content: space-between; gap: 10px; align-items: flex-start">
+<div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<h2 style="margin: 0; font-size: 18px; font-weight: 700">{{v.ref}}</h2>
+<span style="{{v.badge}}">{{v.status}}</span>
+</div>
+<div style="font-size: 12.5px; color: #6b7280; margin-top: 3px">{{v.type}} · {{v.dateFull}}</div>
+</div>
+<div style="text-align: right">
+<div style="font-size: 11.5px; color: #6b7280">{{v.dirLabel}}</div>
+<div style="{{v.amtStyle}}">{{v.amount}}</div>
+</div>
+</div>
+<div style="padding: 14px 18px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: grid; grid-template-columns: 96px 1fr; gap: 6px 10px; font-size: 13px">
+<span style="color: #6b7280">Party</span><span style="font-weight: 600">{{v.party}}</span>
+<span style="color: #6b7280">Account</span><span>{{v.account}}</span>
+<span style="color: #6b7280">Note</span><span>{{v.note}}</span>
+<span style="color: #6b7280">Created</span><span>{{v.by}}</span>
+<span style="color: #6b7280">Posted</span><span>{{v.posted}}</span>
+</div>
+<sc-if value="{{v.hasFlag}}" hint-placeholder-val="{{ false }}">
+<div style="{{v.flagBox}}">{{v.flag}}</div>
+</sc-if>
+<div>
+<div style="font-size: 12px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px">Journal lines</div>
+<table style="font-size: 12.5px; border: 1px solid #eef0f3">
+<thead><tr style="background: #f9fafb; color: #6b7280; text-align: left"><th style="padding: 7px 10px; font-weight: 600">Account</th><th style="padding: 7px 10px; text-align: right; font-weight: 600">Debit</th><th style="padding: 7px 10px; text-align: right; font-weight: 600">Credit</th></tr></thead>
+<tbody>
+<sc-for list="{{v.lines}}" as="l" hint-placeholder-count="2">
+<tr style="border-top: 1px solid #f0f1f4"><td style="padding: 7px 10px">{{l.acc}}</td><td style="padding: 7px 10px; text-align: right">{{l.dr}}</td><td style="padding: 7px 10px; text-align: right">{{l.cr}}</td></tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<div>
+<div style="font-size: 12px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px">Attachment</div>
+<div style="display: flex; align-items: center; justify-content: space-between; border: 1px solid #eef0f3; border-radius: 10px; padding: 9px 12px; font-size: 13px">
+<span style="display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"></path><path d="M14 3v5h5"></path></svg>{{v.attach}}</span>
+<a href="#" style="font-size: 12.5px">View</a>
+</div>
+</div>
+</div>
+<div style="margin-top: auto; padding: 14px 18px; border-top: 1px solid #f0f1f4; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; background: #fcfcfd">
+<button style="font-size: 13px; padding: 9px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">Print</button>
+<button style="font-size: 13px; padding: 9px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">Duplicate</button>
+<sc-if value="{{v.isPosted}}" hint-placeholder-val="{{ true }}">
+<button style="font-size: 13px; padding: 9px 14px; border: 1px solid #fecaca; border-radius: 8px; background: #fff; color: #b91c1c">Reverse</button>
+</sc-if>
+<sc-if value="{{v.isDraft}}" hint-placeholder-val="{{ false }}">
+<a href="PostingPending.dc.html" style="font-size: 13px; padding: 9px 16px; border-radius: 8px; background: #4f46e5; color: #fff; font-weight: 600">Open in Posting Pending</a>
+</sc-if>
+</div>
+</aside>
+</div>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1650}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { period: 'week', type: 'All', drafts: true, sel: 'RV-2228' };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state;
+    var pill = function (on) {
+      return on
+        ? 'border: 0; border-radius: 7px; padding: 7px 12px; font-size: 13px; background: #4f46e5; color: #fff; font-weight: 600'
+        : 'border: 0; border-radius: 7px; padding: 7px 12px; font-size: 13px; background: transparent; color: #374151';
+    };
+    var chip = function (on) {
+      return on
+        ? 'border: 1px solid #4f46e5; border-radius: 20px; padding: 6px 12px; font-size: 12.5px; background: #4f46e5; color: #fff; font-weight: 600'
+        : 'border: 1px solid #e5e7eb; border-radius: 20px; padding: 6px 12px; font-size: 12.5px; background: #fff; color: #374151';
+    };
+    var b = 'font-size: 11.5px; font-weight: 600; border-radius: 6px; padding: 2px 8px; white-space: nowrap; ';
+    var badge = {
+      Posted: b + 'background: #d1fae5; color: #065f46',
+      Draft: b + 'background: #fef3c7; color: #92400e',
+      Reversed: b + 'background: #f3f4f6; color: #4b5563',
+      Rejected: b + 'background: #fee2e2; color: #991b1b'
+    };
+    var data = [
+      { day: 12, time: '1:55 PM', ref: 'RV-2231', type: 'Receipt', party: 'Pathao Courier', note: 'COD settlement, 24 parcels', account: 'City Bank', dir: 'in', n: 58420, status: 'Draft', by: 'System · 1:55 PM', posted: '— (needs Owner approval)', attach: 'Settlement sheet.xlsx',
+        lines: [['City Bank', '৳58,420', ''], ['Receivable — Pathao Courier', '', '৳58,420']] },
+      { day: 12, time: '1:20 PM', ref: 'EMI-0319', type: 'Loan / EMI', party: 'Rahim Traders', note: 'Kisti 5/12 + support ৳1,500', account: 'Cash box', dir: 'out', n: 22500, status: 'Draft', by: 'Sumon · 1:20 PM', posted: '—', attach: 'Receipt photo.jpg',
+        lines: [['Loan — Rahim Traders', '৳21,000', ''], ['Support advance — Rahim Traders', '৳1,500', ''], ['Cash box', '', '৳22,500']] },
+      { day: 12, time: '1:05 PM', ref: 'RV-2222', type: 'Receipt', party: 'Nasrin Akter', note: 'Daily kisti 18/60', account: 'bKash Merchant', dir: 'in', n: 500, status: 'Posted', by: 'Sumon · 1:04 PM', posted: 'Sumon · 1:05 PM', attach: 'bKash TrxID 9JK2…',
+        lines: [['bKash Merchant', '৳500', ''], ['Receivable — Nasrin Akter', '', '৳500']] },
+      { day: 12, time: '11:20 AM', ref: 'RV-2228', type: 'Receipt', party: 'Karim Enterprise', note: 'Kisti 3/8 + ৳2,500 support', account: 'Cash box', dir: 'in', n: 9000, status: 'Posted', by: 'Laboni · 11:12 AM', posted: 'Sumon · 11:20 AM', attach: 'Money receipt #4471.jpg',
+        lines: [['Cash box', '৳9,000', ''], ['Receivable — Karim Enterprise', '', '৳6,500'], ['Customer advance — Karim Enterprise', '', '৳2,500']] },
+      { day: 12, time: '10:35 AM', ref: 'EXP-0558', type: 'Expense', party: 'Courier charge', note: 'Return parcels, 6 pcs', account: 'Cash box', dir: 'out', n: 2100, status: 'Posted', by: 'Omar · 10:30 AM', posted: 'Sumon · 10:35 AM', attach: 'Courier slip.jpg',
+        lines: [['Courier expense', '৳2,100', ''], ['Cash box', '', '৳2,100']] },
+      { day: 12, time: '10:10 AM', ref: 'CT-0034', type: 'Transfer', party: 'Cash box → City Bank', note: 'Cash deposit', account: 'Cash box → City Bank', dir: 'transfer', n: 50000, status: 'Posted', by: 'Omar · 10:05 AM', posted: 'Sumon · 10:10 AM', attach: 'Deposit slip.jpg',
+        lines: [['City Bank', '৳50,000', ''], ['Cash box', '', '৳50,000']] },
+      { day: 12, time: '9:50 AM', ref: 'PV-0877', type: 'Payment', party: 'Mirpur Landlord', note: 'Office rent, October', account: 'Cash box', dir: 'out', n: 18000, status: 'Draft', by: 'Omar · 9:50 AM', posted: '—', attach: 'Rent agreement.pdf',
+        lines: [['Rent expense', '৳18,000', ''], ['Cash box', '', '৳18,000']] },
+      { day: 12, time: '9:40 AM', ref: 'RV-2219', type: 'Receipt', party: 'Steadfast Courier', note: 'COD settlement, 13 parcels', account: 'City Bank', dir: 'in', n: 31400, status: 'Posted', by: 'System · 9:00 AM', posted: 'Sumon · 9:40 AM', attach: 'Settlement sheet.xlsx',
+        lines: [['City Bank', '৳31,400', ''], ['Receivable — Steadfast Courier', '', '৳31,400']] },
+      { day: 11, time: '8:30 PM', ref: 'EXP-0561', type: 'Expense', party: 'Facebook Ads', note: 'Meta ads top-up', account: 'bKash Merchant', dir: 'out', n: 12000, status: 'Draft', by: 'Omar · 8:30 PM', posted: '—', attach: 'Meta invoice.pdf',
+        lines: [['Marketing — Meta ads', '৳12,000', ''], ['bKash Merchant', '', '৳12,000']] },
+      { day: 11, time: '4:30 PM', ref: 'PV-0874', type: 'Payment', party: 'Rahman Fabrics', note: 'Against PUR-0431', account: 'City Bank', dir: 'out', n: 25000, status: 'Posted', by: 'Sumon · 4:20 PM', posted: 'Omar · 4:30 PM', attach: 'Cheque copy.jpg',
+        lines: [['Payable — Rahman Fabrics', '৳25,000', ''], ['City Bank', '', '৳25,000']] },
+      { day: 11, time: '3:15 PM', ref: 'RV-2226', type: 'Receipt', party: 'Shapla Boutique', note: 'Due collection', account: 'Cash box', dir: 'in', n: 6000, status: 'Rejected', by: 'Laboni · 3:15 PM', posted: '—', attach: 'Bank slip.jpg', flag: 'Rejected by Sumon: bank slip-এ ৳5,000 লেখা।', flagKind: 'bad',
+        lines: [['Cash box', '৳6,000', ''], ['Receivable — Shapla Boutique', '', '৳6,000']] },
+      { day: 11, time: '11:00 AM', ref: 'JV-1038', type: 'Journal', party: 'Lima Store', note: 'Discount allowed', account: '—', dir: 'none', n: 1200, status: 'Reversed', by: 'Sumon · 10:50 AM', posted: 'Sumon · 11:00 AM', attach: '—', flag: 'Reversed by JV-1041 (wrong customer).', flagKind: 'muted',
+        lines: [['Discount allowed', '৳1,200', ''], ['Receivable — Lima Store', '', '৳1,200']] },
+      { day: 11, time: '9:30 AM', ref: 'RV-2215', type: 'Receipt', party: 'Mehedi Fashion House', note: 'Kisti 2/6', account: 'City Bank', dir: 'in', n: 10000, status: 'Posted', by: 'Laboni · 9:20 AM', posted: 'Sumon · 9:30 AM', attach: 'Bank SMS screenshot.jpg',
+        lines: [['City Bank', '৳10,000', ''], ['Receivable — Mehedi Fashion House', '', '৳10,000']] }
+    ];
+    var fmt = function (n) {
+      var s = String(n);
+      if (s.length > 3) { var last = s.slice(-3); var rest = s.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ','); s = rest + ',' + last; }
+      return '৳' + s;
+    };
+    var typeKeys = ['All', 'Receipt', 'Payment', 'Expense', 'Transfer', 'Journal', 'Loan / EMI', 'Salary'];
+    var types = typeKeys.map(function (t) { return { label: t, style: chip(st.type === t), pick: function () { self.setState({ type: t }); } }; });
+    var perDefs = [['today', 'Today'], ['yesterday', 'Yesterday'], ['week', 'This week'], ['month', 'This month'], ['custom', 'Custom']];
+    var periods = perDefs.map(function (p) { return { label: p[1], style: pill(st.period === p[0]), pick: function () { self.setState({ period: p[0] }); } }; });
+    var rangeText = { today: '12 Oct 2026', yesterday: '11 Oct 2026', week: '10 Oct – 12 Oct 2026', month: '01 Oct – 12 Oct 2026', custom: '01 Oct – 12 Oct 2026' }[st.period];
+    var inPeriod = function (d) { return st.period === 'today' ? d.day === 12 : st.period === 'yesterday' ? d.day === 11 : true; };
+    var visible = data.filter(function (d) {
+      return inPeriod(d) && (st.type === 'All' || d.type === st.type) && (st.drafts || d.status !== 'Draft');
+    });
+    var periodRows = data.filter(inPeriod);
+    var sumWhere = function (rows, dir, status) { return rows.filter(function (d) { return d.dir === dir && d.status === status; }).reduce(function (a, d) { return a + d.n; }, 0); };
+    var inP = sumWhere(periodRows, 'in', 'Posted'), outP = sumWhere(periodRows, 'out', 'Posted');
+    var net = inP - outP;
+    var postedCount = periodRows.filter(function (d) { return d.status === 'Posted'; }).length;
+    var draftCount = periodRows.filter(function (d) { return d.status === 'Draft'; }).length;
+    var sum = {
+      inPosted: fmt(inP), inDraft: fmt(sumWhere(periodRows, 'in', 'Draft')),
+      outPosted: fmt(outP), outDraft: fmt(sumWhere(periodRows, 'out', 'Draft')),
+      net: (net < 0 ? '− ' : '+ ') + fmt(Math.abs(net)),
+      netStyle: 'font-size: 24px; font-weight: 700; margin-top: 6px; color: ' + (net < 0 ? '#b91c1c' : '#047857'),
+      transfer: fmt(sumWhere(periodRows, 'transfer', 'Posted')),
+      count: String(periodRows.length),
+      countNote: postedCount + ' posted · ' + draftCount + ' draft · ' + (periodRows.length - postedCount - draftCount) + ' other'
+    };
+    var muted = 'color: #9ca3af';
+    var rowsFor = function (day) {
+      return visible.filter(function (d) { return d.day === day; }).map(function (d) {
+        var isSel = st.sel === d.ref;
+        var dead = d.status === 'Reversed' || d.status === 'Rejected';
+        var amt = fmt(d.n);
+        return {
+          time: d.time, ref: d.ref, type: d.type, party: d.party, note: d.note, account: d.account, status: d.status, badge: badge[d.status],
+          in: d.dir === 'in' ? amt : (d.dir === 'transfer' ? amt : ''),
+          out: d.dir === 'out' ? amt : (d.dir === 'transfer' ? amt : ''),
+          inStyle: dead ? muted + '; text-decoration: line-through' : d.dir === 'transfer' ? 'color: #6b7280' : d.status === 'Draft' ? 'color: #047857; opacity: 0.6; font-weight: 600' : 'color: #047857; font-weight: 700',
+          outStyle: dead ? muted + '; text-decoration: line-through' : d.dir === 'transfer' ? 'color: #6b7280' : d.status === 'Draft' ? 'color: #b91c1c; opacity: 0.6; font-weight: 600' : 'color: #b91c1c; font-weight: 700',
+          refStyle: 'border: 0; background: transparent; padding: 0; font-size: 13px; font-weight: 700; text-align: left; color: ' + (dead ? '#6b7280; text-decoration: line-through' : '#4338ca'),
+          rowStyle: 'border-top: 1px solid #f0f1f4; ' + (isSel ? 'background: #eef2ff; box-shadow: inset 3px 0 0 #4f46e5' : ''),
+          open: function () { self.setState({ sel: d.ref }); }
+        };
+      });
+    };
+    var days = [];
+    [[12, 'সোমবার · 12 Oct 2026'], [11, 'রবিবার · 11 Oct 2026']].forEach(function (dd) {
+      var rows = rowsFor(dd[0]);
+      if (!rows.length) return;
+      var dayRows = data.filter(function (d) { return d.day === dd[0]; });
+      days.push({ label: dd[1], rows: rows, in: fmt(sumWhere(dayRows, 'in', 'Posted')), out: fmt(sumWhere(dayRows, 'out', 'Posted')) });
+    });
+    var cur = data.filter(function (d) { return d.ref === st.sel; })[0] || data[3];
+    var flagBox = {
+      bad: 'font-size: 13px; border-radius: 10px; padding: 10px 12px; background: #fef2f2; color: #7f1d1d; border: 1px solid #fecaca',
+      muted: 'font-size: 13px; border-radius: 10px; padding: 10px 12px; background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb'
+    };
+    var dirLabel = { in: 'টাকা আসলো', out: 'টাকা গেলো', transfer: 'Transfer', none: 'Journal' }[cur.dir];
+    var amtColor = { in: '#047857', out: '#b91c1c', transfer: '#111827', none: '#111827' }[cur.dir];
+    var v = {
+      ref: cur.ref, type: cur.type, status: cur.status, badge: badge[cur.status],
+      dateFull: (cur.day === 12 ? '12 Oct 2026' : '11 Oct 2026') + ', ' + cur.time,
+      dirLabel: dirLabel, amount: fmt(cur.n), amtStyle: 'font-size: 20px; font-weight: 700; color: ' + amtColor,
+      party: cur.party, account: cur.account, note: cur.note, by: cur.by, posted: cur.posted, attach: cur.attach,
+      hasFlag: !!cur.flag, flag: cur.flag || '', flagBox: flagBox[cur.flagKind || 'muted'],
+      lines: cur.lines.map(function (l) { return { acc: l[0], dr: l[1], cr: l[2] }; }),
+      isPosted: cur.status === 'Posted', isDraft: cur.status === 'Draft'
+    };
+    return {
+      periods: periods, rangeText: rangeText, types: types, sum: sum, days: days, v: v,
+      empty: days.length === 0, shown: String(visible.length),
+      showDrafts: st.drafts, toggleDrafts: function () { self.setState({ drafts: !self.state.drafts }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<title>Accounts Dashboard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Hind+Siliguri:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f1f3f7}
+a{color:#4338ca;text-decoration:none}a:hover{color:#312e81}
+table{border-collapse:collapse;width:100%}
+th{font-weight:600}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; min-height: 100vh; background: #f1f3f7; font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif; color: #111827; font-size: 14px">
+
+<!-- Sidebar -->
+<nav aria-label="Main" style="flex: 1 1 248px; max-width: 100%; background: #0f172a; color: #cbd5e1; display: flex; flex-direction: column; padding: 18px 14px; box-sizing: border-box; gap: 4px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 4px 6px 22px">
+<div style="width: 34px; height: 34px; border-radius: 9px; background: #4f46e5; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700">A</div>
+<div style="font-weight: 700; color: #fff; font-size: 16px">AR Emporium</div>
+</div>
+<div style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #64748b; padding: 8px 8px 6px">Profiles</div>
+<button type="button" aria-expanded="true" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #cbd5e1; background: transparent; border: 0; font-size: 14px; text-align: left; width: 100%">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"></path><path d="M16 4.5a3.5 3.5 0 0 1 0 7"></path><path d="M18.5 14.8c1.6.7 2.6 2.4 3 5.2"></path></svg>
+<span style="flex: 1">All Profiles</span>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+</button>
+<div style="display: flex; flex-direction: column; margin-left: 18px; padding-left: 20px; border-left: 1px solid #334155; gap: 2px; font-size: 13px">
+<a href="Profiles.dc.html" style="display: flex; justify-content: space-between; color: #94a3b8; padding: 5px 0"><span>Master Profiles</span><span style="color: #64748b; font-size: 12px">242</span></a>
+<a href="Customers.dc.html" style="display: flex; justify-content: space-between; color: #94a3b8; padding: 5px 0"><span>Customers</span><span style="color: #64748b; font-size: 12px">199</span></a>
+<a href="Suppliers.dc.html" style="display: flex; justify-content: space-between; color: #94a3b8; padding: 5px 0"><span>Suppliers</span><span style="color: #64748b; font-size: 12px">24</span></a>
+<a href="Lenders.dc.html" style="display: flex; justify-content: space-between; color: #94a3b8; padding: 5px 0"><span>Lenders</span><span style="color: #64748b; font-size: 12px">3</span></a>
+<a href="Owners.dc.html" style="display: flex; justify-content: space-between; color: #94a3b8; padding: 5px 0"><span>Owners</span><span style="color: #64748b; font-size: 12px">2</span></a>
+<a href="Employees.dc.html" style="display: flex; justify-content: space-between; color: #94a3b8; padding: 5px 0"><span>Employees</span><span style="color: #64748b; font-size: 12px">8</span></a>
+</div>
+<div style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #64748b; padding: 18px 8px 6px">Accounts</div>
+<a href="#" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; background: #1e293b; color: #fff; font-weight: 600">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg>
+Dashboard</a>
+<a href="#" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #cbd5e1">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4 3 8l4 4"></path><path d="M3 8h14"></path><path d="m17 20 4-4-4-4"></path><path d="M21 16H7"></path></svg>
+Transactions</a>
+<a href="#" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #cbd5e1">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+<span style="flex: 1">Posting Pending</span><span style="background: #f59e0b; color: #1f2937; font-size: 11px; font-weight: 700; border-radius: 10px; padding: 1px 8px">5</span></a>
+<a href="#" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #cbd5e1">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="13" rx="2"></rect><path d="M2.5 10h19"></path><path d="M6 15h4"></path></svg>
+Cash &amp; Bank</a>
+<a href="#" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #cbd5e1">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 7 7 17"></path><path d="M7 8v9h9"></path></svg>
+Receivables (Due)</a>
+<a href="#" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #cbd5e1">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"></path><path d="M8 7h9v9"></path></svg>
+Payables</a>
+<a href="#" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #cbd5e1">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10 12 4l9 6"></path><path d="M5 10v8"></path><path d="M10 10v8"></path><path d="M14 10v8"></path><path d="M19 10v8"></path><path d="M3 20h18"></path></svg>
+Loans &amp; EMI</a>
+<a href="#" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #cbd5e1">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1.5"></rect><path d="M8 20h8"></path><path d="M12 16v4"></path></svg>
+Fixed Assets</a>
+<a href="#" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #cbd5e1">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"></path><path d="M9 12h7"></path><path d="M9 16h7"></path></svg>
+Expenses</a>
+<a href="#" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #cbd5e1">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-7"></path><path d="M21 20H3"></path></svg>
+Reports</a>
+<a href="#" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #cbd5e1">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"></path></svg>
+Settings</a>
+<div style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #64748b; padding: 18px 8px 6px">Operations</div>
+<a href="#" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #cbd5e1">Purchase</a>
+<a href="#" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #cbd5e1">Inventory</a>
+</nav>
+
+<!-- Content -->
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+
+<header style="background: #fff; border-bottom: 1px solid #e5e7eb; padding: 14px 28px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<div>
+<div style="font-weight: 700; font-size: 16px">Accounts Home</div>
+<div style="font-size: 12px; color: #6b7280">Dashboard / Accounts</div>
+</div>
+<div style="display: flex; align-items: center; gap: 14px">
+<button aria-label="Notifications" style="width: 40px; height: 40px; border: 1px solid #e5e7eb; background: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #374151">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg>
+</button>
+<div style="display: flex; align-items: center; gap: 8px">
+<div style="width: 34px; height: 34px; border-radius: 50%; background: #0f172a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">SU</div>
+<div style="font-weight: 600; font-size: 13px">superadmin</div>
+</div>
+</div>
+</header>
+
+<div style="padding: 24px 28px 40px; display: flex; flex-direction: column; gap: 20px; max-width: 1400px; box-sizing: border-box; width: 100%">
+
+<!-- Title + period -->
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px">
+<div>
+<h1 style="margin: 0; font-size: 24px; font-weight: 700; font-family: 'Hind Siliguri', 'Plus Jakarta Sans', sans-serif">হিসাবের সারাংশ</h1>
+<div style="color: #6b7280; font-size: 13px; margin-top: 2px">Cash, due, payable, loans and EMI at a glance</div>
+</div>
+<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px">
+<div role="group" aria-label="Period" style="display: flex; flex-wrap: wrap; gap: 4px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 4px">
+<sc-for list="{{periods}}" as="p" hint-placeholder-count="6">
+<button onClick="{{p.pick}}" style="{{p.style}}">{{p.label}}</button>
+</sc-for>
+</div>
+<sc-if value="{{notCustom}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: #4b5563">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18"></path><path d="M8 3v4"></path><path d="M16 3v4"></path></svg>
+<span>{{rangeText}}</span>
+</div>
+</sc-if>
+<sc-if value="{{isCustom}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px">
+<label for="from-date" style="color: #4b5563">From</label>
+<input id="from-date" type="date" value="2026-10-01" style="font-family: inherit; font-size: 13px; padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; color: #111827">
+<label for="to-date" style="color: #4b5563">To</label>
+<input id="to-date" type="date" value="2026-10-11" style="font-family: inherit; font-size: 13px; padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; color: #111827">
+<button style="border: 0; border-radius: 8px; padding: 8px 14px; font-size: 13px; background: #4f46e5; color: #fff; font-weight: 600">Apply</button>
+</div>
+</sc-if>
+</div>
+</div>
+
+<!-- KPI row 1 -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px">
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">আজকে আসলো · Cash In</div>
+<div style="font-size: 26px; font-weight: 700; color: #047857; margin-top: 6px">৳48,250</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">12 receipts · COD ৳31,400</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">আজকে গেলো · Cash Out</div>
+<div style="font-size: 26px; font-weight: 700; color: #b91c1c; margin-top: 6px">৳31,600</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">7 payments · 1 EMI</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">হাতে নগদ · Cash on Hand</div>
+<div style="font-size: 26px; font-weight: 700; color: #111827; margin-top: 6px">৳1,24,300</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">Main cash box</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">ব্যাংক ও মোবাইল ব্যাংকিং</div>
+<div style="font-size: 26px; font-weight: 700; color: #111827; margin-top: 6px">৳3,86,900</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">2 banks · bKash · Nagad</div>
+</div>
+</div>
+
+<!-- KPI row 2 -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px">
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">আমি পাবো · Receivable (Due)</div>
+<div style="font-size: 22px; font-weight: 700; color: #047857; margin-top: 6px">৳2,48,700</div>
+<div style="font-size: 12px; color: #b45309; margin-top: 4px; font-weight: 600">৳62,400 মেয়াদোত্তীর্ণ (60+ দিন)</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">আমি দিবো · Payable</div>
+<div style="font-size: 22px; font-weight: 700; color: #b91c1c; margin-top: 6px">৳1,92,000</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">৳85,000 due within 7 days</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">ঋণ বাকি · Loan Outstanding</div>
+<div style="font-size: 22px; font-weight: 700; color: #4338ca; margin-top: 6px">৳7,43,900</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">3 lenders · support advance ৳1,500</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">লাভ · Profit (this month)</div>
+<div style="font-size: 22px; font-weight: 700; color: #047857; margin-top: 6px">৳86,450</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">Posted entries only</div>
+</div>
+</div>
+
+<!-- Stock -->
+<section style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; padding: 14px 18px; border-bottom: 1px solid #f0f1f4">
+<h2 style="margin: 0; font-size: 15px; font-weight: 700">স্টক · Inventory</h2>
+<div style="display: flex; align-items: center; gap: 14px; font-size: 12.5px">
+<span style="color: #6b7280">Valued at weighted average cost</span>
+<a href="#" style="font-weight: 600">Stock ledger</a>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr))">
+<div style="padding: 16px 18px; border-right: 1px solid #f0f1f4">
+<div style="font-size: 12.5px; color: #4b5563">আজকে স্টক আসলো · Stock In</div>
+<div style="display: flex; align-items: baseline; gap: 6px; margin-top: 6px"><span style="font-size: 24px; font-weight: 700; color: #047857">+120</span><span style="color: #6b7280; font-size: 13px">pcs</span></div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">Cost ৳1,32,000 · purchase 110 · return 10</div>
+</div>
+<div style="padding: 16px 18px; border-right: 1px solid #f0f1f4">
+<div style="font-size: 12.5px; color: #4b5563">আজকে স্টক গেলো · Stock Out</div>
+<div style="display: flex; align-items: baseline; gap: 6px; margin-top: 6px"><span style="font-size: 24px; font-weight: 700; color: #b91c1c">−38</span><span style="color: #6b7280; font-size: 13px">pcs</span></div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">COGS ৳41,800 · sold 36 · damaged 2</div>
+</div>
+<div style="padding: 16px 18px; border-right: 1px solid #f0f1f4">
+<div style="font-size: 12.5px; color: #4b5563">মোট স্টক · Total Stock</div>
+<div style="display: flex; align-items: baseline; gap: 6px; margin-top: 6px"><span style="font-size: 24px; font-weight: 700; color: #111827">789</span><span style="color: #6b7280; font-size: 13px">pcs</span></div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">107 products · 45 pcs in transit (COD)</div>
+</div>
+<div style="padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">স্টকের দাম · Stock Value</div>
+<div style="font-size: 24px; font-weight: 700; color: #4338ca; margin-top: 6px">৳8,67,900</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">At cost · sale value ৳17,75,250</div>
+</div>
+</div>
+</section>
+
+<!-- Posting pending + Master profiles -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; align-items: start">
+
+<section style="grid-column: span 2; min-width: 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 18px; border-bottom: 1px solid #f0f1f4; background: #fffbeb">
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="width: 8px; height: 8px; border-radius: 50%; background: #d97706"></span>
+<h2 style="margin: 0; font-size: 15px; font-weight: 700">পোস্টিং বাকি · Posting Pending</h2>
+<span style="font-size: 12px; color: #92400e; background: #fef3c7; border-radius: 10px; padding: 2px 9px; font-weight: 600">5 vouchers · ৳1,45,920</span>
+</div>
+<div style="display: flex; gap: 8px">
+<a href="#" style="font-size: 13px; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">Review all</a>
+<a href="#" style="font-size: 13px; padding: 8px 14px; border-radius: 8px; background: #4f46e5; color: #fff; font-weight: 600">Post selected</a>
+</div>
+</div>
+<div style="overflow-x: auto">
+<table style="min-width: 640px; font-size: 13px">
+<thead>
+<tr style="text-align: left; color: #6b7280; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em">
+<th style="padding: 10px 18px">Voucher</th>
+<th style="padding: 10px 8px">Details</th>
+<th style="padding: 10px 8px">Party</th>
+<th style="padding: 10px 8px; text-align: right">Amount</th>
+<th style="padding: 10px 8px">By</th>
+<th style="padding: 10px 18px; text-align: right">Action</th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{pending}}" as="v" hint-placeholder-count="5">
+<tr style="border-top: 1px solid #f0f1f4">
+<td style="padding: 11px 18px"><div style="font-weight: 600">{{v.ref}}</div><div style="font-size: 11.5px; color: #6b7280">{{v.type}}</div></td>
+<td style="padding: 11px 8px; color: #374151">{{v.detail}}</td>
+<td style="padding: 11px 8px">{{v.party}}</td>
+<td style="padding: 11px 8px; text-align: right; font-weight: 600; white-space: nowrap">{{v.amount}}</td>
+<td style="padding: 11px 8px; color: #6b7280; white-space: nowrap">{{v.by}}</td>
+<td style="padding: 11px 18px; text-align: right; white-space: nowrap"><a href="#" style="font-weight: 600">Post</a></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+
+<section style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<h2 style="margin: 0; font-size: 15px; font-weight: 700">Master Profiles</h2>
+<a href="#" style="font-size: 13px; font-weight: 600">+ New profile</a>
+</div>
+<p style="margin: 0; font-size: 12.5px; color: #4b5563; line-height: 1.5">একজন ব্যক্তি বা প্রতিষ্ঠান = একটি profile। একই profile একাধিক role নিতে পারে: Customer, Supplier, Lender, Owner, Employee.</p>
+<sc-for list="{{masters}}" as="m" hint-placeholder-count="4">
+<a href="#" style="display: flex; align-items: center; gap: 12px; padding: 11px 12px; border: 1px solid #eef0f3; border-radius: 10px; color: #111827">
+<div style="{{m.dot}}">{{m.initial}}</div>
+<div style="flex: 1; min-width: 0">
+<div style="font-weight: 600">{{m.label}} <span style="color: #6b7280; font-weight: 500">· {{m.count}}</span></div>
+<div style="font-size: 12px; color: #6b7280">{{m.sub}}</div>
+</div>
+<div style="text-align: right; font-weight: 700; font-size: 13.5px; white-space: nowrap">{{m.amount}}</div>
+</a>
+</sc-for>
+</section>
+</div>
+
+<!-- Installments + Support example -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; align-items: start">
+
+<section style="grid-column: 1 / -1; min-width: 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden">
+<div style="padding: 14px 18px; border-bottom: 1px solid #f0f1f4; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px">
+<h2 style="margin: 0; font-size: 15px; font-weight: 700">কিস্তি ও EMI · Installments</h2>
+<a href="#" style="font-size: 13px; font-weight: 600">+ New EMI rule</a>
+</div>
+<div role="group" aria-label="Frequency" style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{freqs}}" as="f" hint-placeholder-count="6">
+<button onClick="{{f.pick}}" style="{{f.style}}">{{f.label}} <span style="opacity: 0.7">{{f.count}}</span></button>
+</sc-for>
+</div>
+</div>
+<div style="overflow-x: auto">
+<table style="min-width: 760px; font-size: 13px">
+<thead>
+<tr style="text-align: left; color: #6b7280; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em">
+<th style="padding: 10px 18px">Party</th>
+<th style="padding: 10px 8px">Rule</th>
+<th style="padding: 10px 8px">Kisti</th>
+<th style="padding: 10px 8px">Due</th>
+<th style="padding: 10px 8px; text-align: right">EMI</th>
+<th style="padding: 10px 8px; text-align: right">Paid</th>
+<th style="padding: 10px 8px; text-align: right">Support</th>
+<th style="padding: 10px 18px">Status</th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{emis}}" as="e" hint-placeholder-count="6">
+<tr style="border-top: 1px solid #f0f1f4">
+<td style="padding: 11px 18px"><div style="font-weight: 600">{{e.party}}</div><div style="font-size: 11.5px; color: #6b7280">{{e.role}}</div></td>
+<td style="padding: 11px 8px"><span style="font-size: 12px; background: #eef2ff; color: #3730a3; border-radius: 6px; padding: 3px 8px; font-weight: 600; white-space: nowrap">{{e.freq}}</span></td>
+<td style="padding: 11px 8px; color: #374151">{{e.no}}</td>
+<td style="padding: 11px 8px; white-space: nowrap">{{e.due}}</td>
+<td style="padding: 11px 8px; text-align: right; white-space: nowrap">{{e.emi}}</td>
+<td style="padding: 11px 8px; text-align: right; font-weight: 600; white-space: nowrap">{{e.paid}}</td>
+<td style="padding: 11px 8px; text-align: right; color: #047857; font-weight: 600; white-space: nowrap">{{e.support}}</td>
+<td style="padding: 11px 18px"><span style="{{e.badge}}">{{e.status}}</span></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+
+</div>
+
+<!-- Aging + Payables + Cash & Bank -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start">
+
+<section style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<h2 style="margin: 0; font-size: 15px; font-weight: 700">বাকি কত দিনের · Due Aging</h2>
+<a href="#" style="font-size: 13px">View all</a>
+</div>
+<sc-for list="{{aging}}" as="g" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; font-size: 13px"><span style="color: #4b5563">{{g.label}}</span><span style="font-weight: 600">{{g.amount}}</span></div>
+<div style="height: 8px; background: #eef0f3; border-radius: 5px; overflow: hidden"><div style="{{g.bar}}"></div></div>
+</div>
+</sc-for>
+</section>
+
+<section style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px">
+<h2 style="margin: 0; font-size: 15px; font-weight: 700">দিতে হবে শীঘ্রই · Payables</h2>
+<a href="#" style="font-size: 13px">View all</a>
+</div>
+<sc-for list="{{payables}}" as="p" hint-placeholder-count="4">
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-top: 1px solid #f0f1f4">
+<div><div style="font-weight: 600">{{p.party}}</div><div style="{{p.whenStyle}}">{{p.when}}</div></div>
+<div style="font-weight: 700; color: #b91c1c">{{p.amount}}</div>
+</div>
+</sc-for>
+</section>
+
+<section style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px">
+<h2 style="margin: 0; font-size: 15px; font-weight: 700">Cash &amp; Bank</h2>
+<a href="#" style="font-size: 13px">Transfer</a>
+</div>
+<sc-for list="{{accounts}}" as="a" hint-placeholder-count="5">
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-top: 1px solid #f0f1f4">
+<div><div style="font-weight: 600">{{a.name}}</div><div style="font-size: 12px; color: #6b7280">{{a.kind}}</div></div>
+<div style="font-weight: 700">{{a.amount}}</div>
+</div>
+</sc-for>
+</section>
+</div>
+
+<!-- Today's transactions + Alerts -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; align-items: start">
+
+<section style="grid-column: span 2; min-width: 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden">
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid #f0f1f4">
+<h2 style="margin: 0; font-size: 15px; font-weight: 700">আজকের লেনদেন</h2>
+<a href="#" style="font-size: 13px">সব দেখুন</a>
+</div>
+<div style="overflow-x: auto">
+<table style="min-width: 560px; font-size: 13px">
+<tbody>
+<sc-for list="{{today}}" as="t" hint-placeholder-count="6">
+<tr style="border-top: 1px solid #f0f1f4">
+<td style="padding: 11px 18px; color: #6b7280; white-space: nowrap">{{t.time}}</td>
+<td style="padding: 11px 8px"><div style="font-weight: 600">{{t.title}}</div><div style="font-size: 11.5px; color: #6b7280">{{t.account}}</div></td>
+<td style="padding: 11px 8px"><span style="{{t.postStyle}}">{{t.post}}</span></td>
+<td style="padding: 11px 18px; text-align: right; white-space: nowrap"><span style="{{t.amountStyle}}">{{t.amount}}</span></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+
+<section style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 15px; font-weight: 700">সতর্কতা · Alerts</h2>
+<sc-for list="{{alerts}}" as="al" hint-placeholder-count="4">
+<div style="{{al.box}}">
+<div style="font-weight: 600; font-size: 13px">{{al.title}}</div>
+<div style="font-size: 12.5px; margin-top: 2px; opacity: 0.85">{{al.text}}</div>
+</div>
+</sc-for>
+</section>
+</div>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2050}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { period: 'Today', freq: 'All' };
+  }
+  renderVals() {
+    var self = this;
+    var period = this.state.period;
+    var freq = this.state.freq;
+    var pill = function (on) {
+      return on
+        ? 'border: 0; border-radius: 7px; padding: 7px 12px; font-size: 13px; background: #4f46e5; color: #fff; font-weight: 600'
+        : 'border: 0; border-radius: 7px; padding: 7px 12px; font-size: 13px; background: transparent; color: #374151';
+    };
+    var chip = function (on) {
+      return on
+        ? 'border: 1px solid #4f46e5; border-radius: 20px; padding: 6px 12px; font-size: 12.5px; background: #4f46e5; color: #fff; font-weight: 600'
+        : 'border: 1px solid #e5e7eb; border-radius: 20px; padding: 6px 12px; font-size: 12.5px; background: #fff; color: #374151';
+    };
+    var badge = {
+      Paid: 'font-size: 12px; font-weight: 600; color: #065f46; background: #d1fae5; border-radius: 6px; padding: 3px 8px; white-space: nowrap',
+      Due: 'font-size: 12px; font-weight: 600; color: #92400e; background: #fef3c7; border-radius: 6px; padding: 3px 8px; white-space: nowrap',
+      Upcoming: 'font-size: 12px; font-weight: 600; color: #374151; background: #f3f4f6; border-radius: 6px; padding: 3px 8px; white-space: nowrap',
+      Overdue: 'font-size: 12px; font-weight: 600; color: #991b1b; background: #fee2e2; border-radius: 6px; padding: 3px 8px; white-space: nowrap'
+    };
+
+    var allEmis = [
+      { party: 'Rahim Traders', role: 'Lender · আমি দিবো', freq: 'Monthly', no: '5 / 12', due: '12 Oct', emi: '৳21,000', paid: '৳22,500', support: '৳1,500', status: 'Paid', st: 'Paid' },
+      { party: 'Karim Enterprise', role: 'Customer · আমি পাবো', freq: 'Weekly', no: '3 / 8', due: '13 Oct', emi: '৳6,500', paid: '—', support: '—', status: 'Due', st: 'Due' },
+      { party: 'Nasrin Akter', role: 'Customer · আমি পাবো', freq: 'Daily', no: '18 / 60', due: 'Today', emi: '৳500', paid: '৳500', support: '—', status: 'Paid', st: 'Paid' },
+      { party: 'City Bank SME Loan', role: 'Lender · আমি দিবো', freq: 'Monthly', no: '9 / 24', due: '15 Oct', emi: '৳32,400', paid: '—', support: '—', status: 'Upcoming', st: 'Upcoming' },
+      { party: 'Shop rent advance', role: 'Landlord · আমি দিবো', freq: 'Yearly', no: '2 / 3', due: '01 Jan', emi: '৳1,20,000', paid: '—', support: '—', status: 'Upcoming', st: 'Upcoming' },
+      { party: 'Jamal Hossain', role: 'Supplier · আমি দিবো', freq: 'Custom · 15/45/90d', no: '2 / 3', due: '10 Oct', emi: '৳40,000', paid: '৳25,000', support: '—', status: 'Overdue ৳15,000', st: 'Overdue' }
+    ];
+    var freqKeys = ['All', 'Monthly', 'Weekly', 'Daily', 'Yearly', 'Custom'];
+    var freqs = freqKeys.map(function (k) {
+      var n = k === 'All' ? allEmis.length : allEmis.filter(function (e) { return e.freq.indexOf(k) === 0; }).length;
+      return { label: k, count: String(n), style: chip(freq === k), pick: function () { self.setState({ freq: k }); } };
+    });
+    var emis = allEmis
+      .filter(function (e) { return freq === 'All' || e.freq.indexOf(freq) === 0; })
+      .map(function (e) { return Object.assign({}, e, { badge: badge[e.st] }); });
+
+    var periods = ['Today', 'Yesterday', 'This week', 'This month', 'This year', 'Custom'].map(function (p) {
+      return { label: p, style: pill(period === p), pick: function () { self.setState({ period: p }); } };
+    });
+    var ranges = {
+      'Today': '11 Oct 2026',
+      'Yesterday': '10 Oct 2026',
+      'This week': '04 Oct – 11 Oct 2026',
+      'This month': '01 Oct – 11 Oct 2026',
+      'This year': '01 Jan – 11 Oct 2026',
+      'Custom': ''
+    };
+    var rangeText = ranges[period];
+    var isCustom = period === 'Custom';
+
+    var dot = function (bg, fg) {
+      return 'width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex: none; background: ' + bg + '; color: ' + fg;
+    };
+    var masters = [
+      { label: 'Customers', count: '199', sub: 'পাবো (due)', amount: '৳2,48,700', initial: 'C', dot: dot('#d1fae5', '#065f46') },
+      { label: 'Suppliers', count: '24', sub: 'দিবো (payable)', amount: '৳1,27,000', initial: 'S', dot: dot('#fee2e2', '#991b1b') },
+      { label: 'Lenders', count: '3', sub: 'ঋণ বাকি', amount: '৳7,43,900', initial: 'L', dot: dot('#e0e7ff', '#3730a3') },
+      { label: 'Owners', count: '2', sub: 'Capital · drawings ৳45,000 this month', amount: '৳12,00,000', initial: 'O', dot: dot('#fef3c7', '#92400e') },
+      { label: 'Employees', count: '8', sub: 'বেতন বাকি · advance ৳22,000', amount: '৳18,000', initial: 'E', dot: dot('#ccfbf1', '#115e59') },
+      { label: 'Login Profiles', count: '6', sub: '2 can post vouchers', amount: '—', initial: 'U', dot: dot('#f3f4f6', '#374151') }
+    ];
+
+    var pending = [
+      { ref: 'EMI-0319', type: 'Loan repayment', detail: 'Kisti 5/12 + support ৳1,500', party: 'Rahim Traders', amount: '৳22,500', by: 'Sumon' },
+      { ref: 'RV-2231', type: 'Receipt', detail: 'COD settlement, 24 parcels', party: 'Pathao Courier', amount: '৳58,420', by: 'System' },
+      { ref: 'PV-0877', type: 'Payment', detail: 'Office rent, October', party: 'Mirpur Landlord', amount: '৳18,000', by: 'Omar' },
+      { ref: 'JV-1042', type: 'Journal', detail: 'Supplier advance adjustment', party: 'Rahman Fabrics', amount: '৳35,000', by: 'Sumon' },
+      { ref: 'EXP-0561', type: 'Expense', detail: 'Meta ads top-up', party: 'Facebook Ads', amount: '৳12,000', by: 'Omar' }
+    ];
+
+    var bar = function (pct, c) { return 'height: 100%; width: ' + pct + '%; background: ' + c + '; border-radius: 5px'; };
+    var aging = [
+      { label: '0–30 দিন', amount: '৳1,42,300', bar: bar(57, '#10b981') },
+      { label: '31–60 দিন', amount: '৳44,000', bar: bar(18, '#f59e0b') },
+      { label: '61–90 দিন', amount: '৳38,400', bar: bar(15, '#f97316') },
+      { label: '90+ দিন', amount: '৳24,000', bar: bar(10, '#dc2626') }
+    ];
+
+    var whenOk = 'font-size: 12px; color: #6b7280';
+    var whenBad = 'font-size: 12px; color: #b91c1c; font-weight: 600';
+    var payables = [
+      { party: 'Jamal Hossain', when: '1 day overdue', whenStyle: whenBad, amount: '৳15,000' },
+      { party: 'Rahman Fabrics', when: 'Due 14 Oct', whenStyle: whenOk, amount: '৳85,000' },
+      { party: 'City Bank SME Loan', when: 'EMI · 15 Oct', whenStyle: whenOk, amount: '৳32,400' },
+      { party: 'Packaging supplier', when: 'Due 20 Oct', whenStyle: whenOk, amount: '৳12,000' }
+    ];
+
+    var accounts = [
+      { name: 'Cash box', kind: 'Cash', amount: '৳1,24,300' },
+      { name: 'City Bank', kind: 'Bank · current', amount: '৳2,32,000' },
+      { name: 'DBBL', kind: 'Bank · savings', amount: '৳72,000' },
+      { name: 'bKash Merchant', kind: 'Mobile banking', amount: '৳64,200' },
+      { name: 'Nagad', kind: 'Mobile banking', amount: '৳18,700' }
+    ];
+
+    var inS = 'color: #047857; font-weight: 700';
+    var outS = 'color: #b91c1c; font-weight: 700';
+    var posted = 'font-size: 11.5px; font-weight: 600; color: #065f46; background: #d1fae5; border-radius: 6px; padding: 2px 8px';
+    var draft = 'font-size: 11.5px; font-weight: 600; color: #92400e; background: #fef3c7; border-radius: 6px; padding: 2px 8px';
+    var today = [
+      { time: '1:55 PM', title: 'COD settlement · Pathao', account: 'City Bank', post: 'Pending', postStyle: draft, amount: '+ ৳58,420', amountStyle: inS },
+      { time: '1:20 PM', title: 'EMI 5/12 · Rahim Traders', account: 'Cash box', post: 'Pending', postStyle: draft, amount: '− ৳22,500', amountStyle: outS },
+      { time: '12:40 PM', title: 'Daily kisti · Nasrin Akter', account: 'bKash Merchant', post: 'Posted', postStyle: posted, amount: '+ ৳500', amountStyle: inS },
+      { time: '11:15 AM', title: 'Due collection · Karim Enterprise', account: 'Cash box', post: 'Posted', postStyle: posted, amount: '+ ৳9,000', amountStyle: inS },
+      { time: '10:30 AM', title: 'Courier charge', account: 'Cash box', post: 'Posted', postStyle: posted, amount: '− ৳2,100', amountStyle: outS },
+      { time: '9:50 AM', title: 'Office rent, October', account: 'Cash box', post: 'Pending', postStyle: draft, amount: '− ৳18,000', amountStyle: outS }
+    ];
+
+    var red = 'background: #fef2f2; color: #7f1d1d; border-radius: 10px; padding: 10px 12px';
+    var amber = 'background: #fffbeb; color: #78350f; border-radius: 10px; padding: 10px 12px';
+    var green = 'background: #ecfdf5; color: #064e3b; border-radius: 10px; padding: 10px 12px';
+    var alerts = [
+      { title: 'Jamal Hossain — কিস্তি বাকি', text: '৳15,000 overdue since 10 Oct', box: red },
+      { title: '5 vouchers waiting to post', text: 'Not counted in profit until posted', box: amber },
+      { title: 'City Bank EMI in 4 days', text: '৳32,400 · bank balance enough', box: amber },
+      { title: 'Support advance ৳1,500', text: 'Rahim Traders · next kisti ৳19,500', box: green }
+    ];
+
+    return { rangeText: rangeText, isCustom: isCustom, notCustom: !isCustom, periods: periods, freqs: freqs, emis: emis, masters: masters, pending: pending, aging: aging, payables: payables, accounts: accounts, today: today, alerts: alerts };
+  }
+}
+</script>
+</body>
+</html>

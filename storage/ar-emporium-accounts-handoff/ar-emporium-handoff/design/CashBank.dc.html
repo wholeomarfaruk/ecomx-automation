@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<title>Cash &amp; Bank</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Hind+Siliguri:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f1f3f7}
+a{color:#4338ca;text-decoration:none}a:hover{color:#312e81}
+table{border-collapse:collapse;width:100%}
+button,input,select,textarea{font-family:inherit}
+button{cursor:pointer}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; min-height: 100vh; background: #f1f3f7; font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif; color: #111827; font-size: 14px">
+
+<div style="flex: 1 1 248px; max-width: 100%; background: #0f172a; display: flex">
+<dc-import name="Sidebar" active="cash" hint-size="248px,1100px"></dc-import>
+</div>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+
+<header style="background: #fff; border-bottom: 1px solid #e5e7eb; padding: 14px 28px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<div>
+<div style="font-weight: 700; font-size: 16px">Cash &amp; Bank</div>
+<div style="font-size: 12px; color: #6b7280">Accounts / Cash &amp; Bank</div>
+</div>
+<div style="display: flex; align-items: center; gap: 14px">
+<button aria-label="Notifications" style="width: 40px; height: 40px; border: 1px solid #e5e7eb; background: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #374151">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg>
+</button>
+<div style="display: flex; align-items: center; gap: 8px">
+<div style="width: 34px; height: 34px; border-radius: 50%; background: #0f172a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">SU</div>
+<div style="font-weight: 600; font-size: 13px">superadmin</div>
+</div>
+</div>
+</header>
+
+<div style="padding: 24px 28px 40px; display: flex; flex-direction: column; gap: 18px; max-width: 1480px; box-sizing: border-box; width: 100%">
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px">
+<div>
+<h1 style="margin: 0; font-size: 24px; font-weight: 700">নগদ ও ব্যাংক · Cash &amp; Bank</h1>
+<div style="color: #6b7280; font-size: 13px; margin-top: 2px">কোন account-এ কত টাকা, কোথা থেকে এলো, কোথায় গেলো</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<a href="#transfer" style="font-size: 13px; padding: 9px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">+ Transfer</a>
+<a href="#" style="font-size: 13px; padding: 9px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">Statement import</a>
+<a href="#" style="font-size: 13px; padding: 9px 16px; border-radius: 8px; background: #4f46e5; color: #fff; font-weight: 600">+ New account</a>
+</div>
+</div>
+
+<!-- Total -->
+<section style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 14px">
+<div>
+<div style="font-size: 12.5px; color: #4b5563">মোট টাকা · All accounts (posted)</div>
+<div style="font-size: 30px; font-weight: 700; margin-top: 4px">৳5,11,200</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 2px">Draft post হলে হবে ৳5,17,120 · 4 drafts</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 22px; font-size: 13px">
+<div><div style="display: flex; align-items: center; gap: 6px; color: #4b5563"><span style="width: 10px; height: 10px; border-radius: 3px; background: #f59e0b"></span>Cash</div><div style="font-weight: 700; margin-top: 2px">৳1,24,300</div></div>
+<div><div style="display: flex; align-items: center; gap: 6px; color: #4b5563"><span style="width: 10px; height: 10px; border-radius: 3px; background: #0ea5e9"></span>Bank</div><div style="font-weight: 700; margin-top: 2px">৳3,04,000</div></div>
+<div><div style="display: flex; align-items: center; gap: 6px; color: #4b5563"><span style="width: 10px; height: 10px; border-radius: 3px; background: #db2777"></span>Mobile banking</div><div style="font-weight: 700; margin-top: 2px">৳82,900</div></div>
+</div>
+</div>
+<div style="display: flex; height: 10px; border-radius: 6px; overflow: hidden; gap: 2px">
+<div style="width: 24.3%; background: #f59e0b"></div>
+<div style="width: 59.5%; background: #0ea5e9"></div>
+<div style="width: 16.2%; background: #db2777"></div>
+</div>
+</section>
+
+<!-- Accounts -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px">
+<sc-for list="{{cards}}" as="c" hint-placeholder-count="5">
+<button onClick="{{c.pick}}" style="{{c.box}}">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px">
+<span style="{{c.kindStyle}}">{{c.kindLabel}}</span>
+<span style="{{c.recStyle}}">{{c.rec}}</span>
+</div>
+<div style="font-weight: 700; font-size: 15px; margin-top: 10px">{{c.name}}</div>
+<div style="font-size: 12px; color: #6b7280">{{c.no}}</div>
+<div style="font-size: 22px; font-weight: 700; margin-top: 8px">{{c.balance}}</div>
+<div style="display: flex; gap: 10px; font-size: 12px; margin-top: 4px">
+<span style="color: #047857">+ {{c.tin}}</span><span style="color: #b91c1c">− {{c.tout}}</span><span style="color: #6b7280">today</span>
+</div>
+</button>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+
+<!-- Ledger -->
+<section style="flex: 999 1 600px; min-width: 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid #f0f1f4">
+<div>
+<h2 style="margin: 0; font-size: 15px; font-weight: 700">{{a.name}} · Ledger</h2>
+<div style="font-size: 12.5px; color: #6b7280; margin-top: 2px">10 Oct – 12 Oct 2026 · posted entries</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<label for="led-range" style="font-size: 13px; color: #4b5563">Period</label>
+<select id="led-range" style="font-size: 13px; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 9px; background: #fff"><option>This week</option><option>Today</option><option>This month</option><option>Custom</option></select>
+<button style="font-size: 13px; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">Print</button>
+<a href="Transactions.dc.html" style="font-size: 13px">All transactions</a>
+</div>
+</div>
+<div style="overflow-x: auto">
+<table style="min-width: 680px; font-size: 13px">
+<thead>
+<tr style="text-align: left; color: #6b7280; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em">
+<th style="padding: 10px 8px 10px 18px">Date</th>
+<th style="padding: 10px 8px">Voucher</th>
+<th style="padding: 10px 8px">Particulars</th>
+<th style="padding: 10px 8px; text-align: right">In</th>
+<th style="padding: 10px 8px; text-align: right">Out</th>
+<th style="padding: 10px 18px; text-align: right">Balance</th>
+</tr>
+</thead>
+<tbody>
+<tr style="background: #f8fafc; border-top: 1px solid #e5e7eb">
+<td colspan="5" style="padding: 9px 18px; font-weight: 600; color: #334155">Opening balance · 10 Oct</td>
+<td style="padding: 9px 18px; text-align: right; font-weight: 700">{{a.opening}}</td>
+</tr>
+<sc-for list="{{a.rows}}" as="r" hint-placeholder-count="4">
+<tr style="border-top: 1px solid #f0f1f4">
+<td style="padding: 11px 8px 11px 18px; white-space: nowrap; color: #374151">{{r.date}}</td>
+<td style="padding: 11px 8px; white-space: nowrap; font-weight: 600; color: #4338ca">{{r.ref}}</td>
+<td style="padding: 11px 8px">{{r.text}}</td>
+<td style="padding: 11px 8px; text-align: right; color: #047857; font-weight: 600; white-space: nowrap">{{r.in}}</td>
+<td style="padding: 11px 8px; text-align: right; color: #b91c1c; font-weight: 600; white-space: nowrap">{{r.out}}</td>
+<td style="padding: 11px 18px; text-align: right; font-weight: 600; white-space: nowrap">{{r.bal}}</td>
+</tr>
+</sc-for>
+<sc-if value="{{a.noRows}}" hint-placeholder-val="{{ false }}">
+<tr style="border-top: 1px solid #f0f1f4"><td colspan="6" style="padding: 22px 18px; text-align: center; color: #6b7280">এই সময়ে কোনো লেনদেন নেই।</td></tr>
+</sc-if>
+<tr style="border-top: 2px solid #e5e7eb; background: #f9fafb; font-weight: 700">
+<td colspan="3" style="padding: 11px 18px">Closing balance · 12 Oct</td>
+<td style="padding: 11px 8px; text-align: right; color: #047857">{{a.totIn}}</td>
+<td style="padding: 11px 8px; text-align: right; color: #b91c1c">{{a.totOut}}</td>
+<td style="padding: 11px 18px; text-align: right">{{a.balance}}</td>
+</tr>
+</tbody>
+</table>
+</div>
+<sc-if value="{{a.hasDraft}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 11px 18px; border-top: 1px solid #fde68a; background: #fffbeb; font-size: 13px; color: #78350f">
+<span>{{a.draftText}}</span>
+<a href="PostingPending.dc.html" style="font-weight: 600; color: #92400e">Review drafts</a>
+</div>
+</sc-if>
+</section>
+
+<!-- Right column -->
+<div style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+
+<sc-if value="{{a.isCash}}" hint-placeholder-val="{{ true }}">
+<section style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px">
+<div>
+<h2 style="margin: 0; font-size: 15px; font-weight: 700">নগদ গণনা · Cash count</h2>
+<div style="font-size: 12.5px; color: #6b7280; margin-top: 2px">দিন শেষে হাতের টাকা গুনে মিলিয়ে নিন</div>
+</div>
+<table style="font-size: 13px">
+<thead><tr style="color: #6b7280; font-size: 11.5px; text-transform: uppercase; text-align: left"><th style="padding: 6px 0; font-weight: 600">Note</th><th style="padding: 6px 0; font-weight: 600">Count</th><th style="padding: 6px 0; text-align: right; font-weight: 600">Total</th></tr></thead>
+<tbody>
+<sc-for list="{{notes}}" as="n" hint-placeholder-count="8">
+<tr style="border-top: 1px solid #f0f1f4">
+<td style="padding: 6px 0; font-weight: 600">{{n.label}}</td>
+<td style="padding: 5px 0"><label style="position: absolute; width: 1px; height: 1px; overflow: hidden" for="{{n.id}}">{{n.label}} count</label><input id="{{n.id}}" type="number" min="0" value="{{n.count}}" onChange="{{n.set}}" style="width: 84px; font-size: 13px; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 7px"></td>
+<td style="padding: 6px 0; text-align: right">{{n.total}}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+<div style="display: grid; grid-template-columns: 1fr auto; gap: 6px; font-size: 13px; background: #f9fafb; border-radius: 10px; padding: 10px 12px">
+<span style="color: #4b5563">গুনে পাওয়া</span><b>{{count.total}}</b>
+<span style="color: #4b5563">Book balance</span><b>৳1,24,300</b>
+<span style="font-weight: 700">{{count.diffLabel}}</span><b style="{{count.diffStyle}}">{{count.diff}}</b>
+</div>
+<button style="{{count.btnStyle}}">{{count.btn}}</button>
+</section>
+</sc-if>
+
+<sc-if value="{{a.isRec}}" hint-placeholder-val="{{ false }}">
+<section style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px">
+<div>
+<h2 style="margin: 0; font-size: 15px; font-weight: 700">মিলিয়ে দেখা · Reconcile</h2>
+<div style="font-size: 12.5px; color: #6b7280; margin-top: 2px">Bank / app-এর balance-এর সাথে software মিলছে কিনা</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="stmt-bal" style="font-size: 13px; font-weight: 600">Statement balance (12 Oct)</label>
+<input id="stmt-bal" type="text" value="{{a.stmt}}" style="font-size: 14px; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 9px">
+</div>
+<div style="display: grid; grid-template-columns: 1fr auto; gap: 6px; font-size: 13px; background: #f9fafb; border-radius: 10px; padding: 10px 12px">
+<span style="color: #4b5563">Book balance</span><b>{{a.balance}}</b>
+<span style="font-weight: 700">Difference</span><b style="{{a.diffStyle}}">{{a.diff}}</b>
+</div>
+<div style="{{a.recBox}}">{{a.recText}}</div>
+<div style="display: flex; gap: 8px; justify-content: flex-end">
+<button style="font-size: 13px; padding: 9px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">{{a.recSecondary}}</button>
+<button style="font-size: 13px; padding: 9px 14px; border: 0; border-radius: 8px; background: #4f46e5; color: #fff; font-weight: 600">{{a.recPrimary}}</button>
+</div>
+<div style="font-size: 12px; color: #6b7280">Last reconciled: {{a.lastRec}}</div>
+</section>
+</sc-if>
+
+<section id="transfer" style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px">
+<div>
+<h2 style="margin: 0; font-size: 15px; font-weight: 700">Transfer · এক account থেকে আরেক account</h2>
+<div style="font-size: 12.5px; color: #6b7280; margin-top: 2px">আয় বা খরচ না — শুধু টাকা জায়গা বদলায়</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<div style="display: flex; flex-direction: column; gap: 6px"><label for="tr-from" style="font-size: 13px; font-weight: 600">From</label><select id="tr-from" style="font-size: 13px; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 9px; background: #fff"><option>bKash Merchant</option><option>Cash box</option><option>City Bank</option><option>DBBL</option><option>Nagad</option></select></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><label for="tr-to" style="font-size: 13px; font-weight: 600">To</label><select id="tr-to" style="font-size: 13px; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 9px; background: #fff"><option>Cash box</option><option>City Bank</option><option>DBBL</option><option>bKash Merchant</option><option>Nagad</option></select></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><label for="tr-amt" style="font-size: 13px; font-weight: 600">Amount (৳)</label><input id="tr-amt" type="number" value="40000" style="font-size: 13px; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 9px"></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><label for="tr-fee" style="font-size: 13px; font-weight: 600">Charge (৳)</label><input id="tr-fee" type="number" value="740" style="font-size: 13px; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 9px"></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><label for="tr-date" style="font-size: 13px; font-weight: 600">Date</label><input id="tr-date" type="date" value="2026-10-12" style="font-size: 13px; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 9px"></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><label for="tr-note" style="font-size: 13px; font-weight: 600">Note</label><input id="tr-note" type="text" placeholder="যেমন: cash out" style="font-size: 13px; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 9px"></div>
+</div>
+<div style="font-size: 12.5px; color: #4b5563; background: #f9fafb; border-radius: 10px; padding: 10px 12px; line-height: 1.6">
+bKash Merchant ৳64,200 → <b>৳23,460</b> (৳40,000 + ৳740 charge)<br>
+Cash box ৳1,24,300 → <b>৳1,64,300</b><br>
+<span style="color: #6b7280">Charge যাবে Bank &amp; MFS charges খরচে।</span>
+</div>
+<div style="display: flex; gap: 8px; justify-content: flex-end">
+<button style="font-size: 13px; padding: 9px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">Save as draft</button>
+<button style="font-size: 13px; padding: 9px 16px; border: 0; border-radius: 8px; background: #4f46e5; color: #fff; font-weight: 600">Transfer</button>
+</div>
+</section>
+</div>
+</div>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1750}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: 'cash', counts: { n1000: 85, n500: 52, n200: 30, n100: 44, n50: 40, n20: 25, n10: 20, coin: 100 } };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state;
+    var fmt = function (n) {
+      var neg = n < 0; var s = String(Math.abs(Math.round(n)));
+      if (s.length > 3) { var last = s.slice(-3); var rest = s.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ','); s = rest + ',' + last; }
+      return (neg ? '− ' : '') + '৳' + s;
+    };
+    var kind = {
+      cash: ['Cash', 'background: #fef3c7; color: #92400e'],
+      bank: ['Bank', 'background: #e0f2fe; color: #075985'],
+      mfs: ['Mobile banking', 'background: #fce7f3; color: #9d174d']
+    };
+    var accts = [
+      { id: 'cash', name: 'Cash box', no: 'Main cash · shop counter', k: 'cash', opening: 167400, rec: 'Counted yesterday', recOk: true,
+        rows: [['12 Oct', 'CT-0034', 'Deposit to City Bank', 0, 50000], ['12 Oct', 'EXP-0558', 'Courier charge', 0, 2100], ['12 Oct', 'RV-2228', 'Karim Enterprise · kisti 3/8', 9000, 0]],
+        draft: '2 draft entry: EMI-0319 (− ৳22,500), PV-0877 (− ৳18,000). Post হলে balance হবে ৳83,800।' },
+      { id: 'city', name: 'City Bank', no: 'Current · A/C ••7781 · Gulshan', k: 'bank', opening: 165600, rec: 'Not reconciled 12 days', recOk: false,
+        rows: [['11 Oct', 'RV-2215', 'Mehedi Fashion House · kisti 2/6', 10000, 0], ['11 Oct', 'PV-0874', 'Rahman Fabrics · against PUR-0431', 0, 25000], ['12 Oct', 'RV-2219', 'Steadfast · COD settlement', 31400, 0], ['12 Oct', 'CT-0034', 'Cash deposit from Cash box', 50000, 0]],
+        draft: '1 draft entry: RV-2231 Pathao COD (+ ৳58,420) — Owner approval লাগবে।',
+        stmt: '৳2,90,420', diff: 58420, recText: 'Statement-এ Pathao-র ৳58,420 জমা আছে, কিন্তু RV-2231 এখনো draft। Post করলে মিলে যাবে।', recPrimary: 'Match with RV-2231', recSecondary: 'Add bank entry', lastRec: '30 Sep 2026' },
+      { id: 'dbbl', name: 'DBBL', no: 'Savings · A/C ••3304', k: 'bank', opening: 72000, rec: 'Not reconciled 12 days', recOk: false, rows: [], draft: '',
+        stmt: '৳72,180', diff: 180, recText: '৳180 বেশি — সম্ভবত সেপ্টেম্বরের bank interest, এখনো entry হয়নি।', recPrimary: 'Add interest ৳180', recSecondary: 'Ignore', lastRec: '30 Sep 2026' },
+      { id: 'bkash', name: 'bKash Merchant', no: '01•••-••4590 · merchant', k: 'mfs', opening: 60640, rec: 'Matched today', recOk: true,
+        rows: [['11 Oct', 'RV-2211', 'Online order #1093 payment', 3800, 0], ['11 Oct', 'EXP-0557', 'bKash cash-out charge', 0, 740], ['12 Oct', 'RV-2222', 'Nasrin Akter · daily kisti', 500, 0]],
+        draft: '1 draft entry: EXP-0561 Meta ads (− ৳12,000)।',
+        stmt: '৳64,200', diff: 0, recText: 'App-এর balance আর software মিলে গেছে।', recPrimary: 'Mark reconciled', recSecondary: 'View statement', lastRec: '12 Oct 2026, 9:00 AM' },
+      { id: 'nagad', name: 'Nagad', no: '01•••-••8817 · merchant', k: 'mfs', opening: 17200, rec: 'Matched 10 Oct', recOk: true,
+        rows: [['10 Oct', 'RV-2203', 'Online order #1088 payment', 1500, 0]], draft: '',
+        stmt: '৳18,700', diff: 0, recText: 'App-এর balance আর software মিলে গেছে।', recPrimary: 'Mark reconciled', recSecondary: 'View statement', lastRec: '10 Oct 2026' }
+    ];
+    var today = function (a, idx) { return a.rows.filter(function (r) { return r[0] === '12 Oct'; }).reduce(function (s, r) { return s + r[idx]; }, 0); };
+    var cards = accts.map(function (a) {
+      var on = st.sel === a.id;
+      var bal = a.rows.reduce(function (s, r) { return s + r[3] - r[4]; }, a.opening);
+      return {
+        name: a.name, no: a.no, balance: fmt(bal), kindLabel: kind[a.k][0],
+        kindStyle: 'font-size: 11.5px; font-weight: 600; border-radius: 6px; padding: 2px 8px; ' + kind[a.k][1],
+        rec: a.rec, recStyle: 'font-size: 11px; ' + (a.recOk ? 'color: #047857' : 'color: #b45309; font-weight: 600'),
+        tin: fmt(today(a, 3)).replace('৳', '৳'), tout: fmt(today(a, 4)),
+        box: 'text-align: left; font-family: inherit; color: #111827; background: #fff; border-radius: 14px; padding: 14px 16px; cursor: pointer; ' + (on ? 'border: 2px solid #4f46e5; box-shadow: 0 0 0 3px #e0e7ff' : 'border: 1px solid #e5e7eb'),
+        pick: function () { self.setState({ sel: a.id }); }
+      };
+    });
+    var cur = accts.filter(function (a) { return a.id === st.sel; })[0];
+    var run = cur.opening, tIn = 0, tOut = 0;
+    var rows = cur.rows.map(function (r) {
+      run += r[3] - r[4]; tIn += r[3]; tOut += r[4];
+      return { date: r[0], ref: r[1], text: r[2], in: r[3] ? fmt(r[3]) : '', out: r[4] ? fmt(r[4]) : '', bal: fmt(run) };
+    });
+    var isRec = cur.k !== 'cash';
+    var a = {
+      name: cur.name, opening: fmt(cur.opening), rows: rows, noRows: rows.length === 0,
+      totIn: fmt(tIn), totOut: fmt(tOut), balance: fmt(run),
+      hasDraft: !!cur.draft, draftText: cur.draft,
+      isCash: cur.k === 'cash', isRec: isRec,
+      stmt: cur.stmt || '', lastRec: cur.lastRec || '',
+      diff: isRec ? (cur.diff ? fmt(cur.diff) : '৳0') : '',
+      diffStyle: isRec && cur.diff ? 'color: #b45309' : 'color: #047857',
+      recText: cur.recText || '', recPrimary: cur.recPrimary || '', recSecondary: cur.recSecondary || '',
+      recBox: isRec && cur.diff
+        ? 'font-size: 13px; line-height: 1.5; border-radius: 10px; padding: 10px 12px; background: #fffbeb; color: #78350f; border: 1px solid #fde68a'
+        : 'font-size: 13px; line-height: 1.5; border-radius: 10px; padding: 10px 12px; background: #ecfdf5; color: #064e3b; border: 1px solid #a7f3d0'
+    };
+    var denoms = [['n1000', '৳1000', 1000], ['n500', '৳500', 500], ['n200', '৳200', 200], ['n100', '৳100', 100], ['n50', '৳50', 50], ['n20', '৳20', 20], ['n10', '৳10', 10], ['coin', 'Coins (৳)', 1]];
+    var total = 0;
+    var notes = denoms.map(function (d) {
+      var c = Number(st.counts[d[0]]) || 0; var t = c * d[2]; total += t;
+      return {
+        id: 'cc-' + d[0], label: d[1], count: String(c), total: fmt(t),
+        set: function (e) { var n = Object.assign({}, self.state.counts); n[d[0]] = e && e.target ? e.target.value : 0; self.setState({ counts: n }); }
+      };
+    });
+    var diff = total - 124300;
+    var count = {
+      total: fmt(total),
+      diff: diff === 0 ? '৳0' : fmt(Math.abs(diff)),
+      diffLabel: diff === 0 ? 'মিলে গেছে' : diff < 0 ? 'কম আছে · Shortage' : 'বেশি আছে · Excess',
+      diffStyle: diff === 0 ? 'color: #047857' : 'color: #b91c1c',
+      btn: diff === 0 ? 'Save cash count' : (diff < 0 ? 'Record shortage ' : 'Record excess ') + fmt(Math.abs(diff)),
+      btnStyle: 'font-size: 13px; padding: 10px 14px; border: 0; border-radius: 8px; font-weight: 600; color: #fff; background: ' + (diff === 0 ? '#4f46e5' : '#b91c1c')
+    };
+    return { cards: cards, a: a, notes: notes, count: count };
+  }
+}
+</script>
+</body>
+</html>

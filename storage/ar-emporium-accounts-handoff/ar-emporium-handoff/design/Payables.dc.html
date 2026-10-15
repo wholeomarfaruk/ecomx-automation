@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<title>Payables</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Hind+Siliguri:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f1f3f7}
+a{color:#4338ca;text-decoration:none}a:hover{color:#312e81}
+table{border-collapse:collapse;width:100%}
+button,input,select,textarea{font-family:inherit}
+button{cursor:pointer}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; min-height: 100vh; background: #f1f3f7; font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif; color: #111827; font-size: 14px">
+
+<div style="flex: 1 1 248px; max-width: 100%; background: #0f172a; display: flex">
+<dc-import name="Sidebar" active="payables" hint-size="248px,1100px"></dc-import>
+</div>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+
+<header style="background: #fff; border-bottom: 1px solid #e5e7eb; padding: 14px 28px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<div>
+<div style="font-weight: 700; font-size: 16px">Payables</div>
+<div style="font-size: 12px; color: #6b7280">Accounts / Payables</div>
+</div>
+<div style="display: flex; align-items: center; gap: 14px">
+<button aria-label="Notifications" style="width: 40px; height: 40px; border: 1px solid #e5e7eb; background: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #374151">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg>
+</button>
+<div style="display: flex; align-items: center; gap: 8px">
+<div style="width: 34px; height: 34px; border-radius: 50%; background: #0f172a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">SU</div>
+<div style="font-weight: 600; font-size: 13px">superadmin</div>
+</div>
+</div>
+</header>
+
+<div style="padding: 24px 28px 40px; display: flex; flex-direction: column; gap: 18px; max-width: 1480px; box-sizing: border-box; width: 100%">
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px">
+<div>
+<h1 style="margin: 0; font-size: 24px; font-weight: 700">আমি দিবো · Payables</h1>
+<div style="color: #6b7280; font-size: 13px; margin-top: 2px">Supplier, ঋণের কিস্তি, বেতন আর bill — কবে কত দিতে হবে</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button style="font-size: 13px; padding: 9px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">+ Bill</button>
+<button style="font-size: 13px; padding: 9px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">Payment schedule (PDF)</button>
+<a href="#" style="font-size: 13px; padding: 9px 16px; border-radius: 8px; background: #4f46e5; color: #fff; font-weight: 600">টাকা দিন · Pay</a>
+</div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px">
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">মেয়াদ পার · Overdue</div>
+<div style="font-size: 24px; font-weight: 700; color: #b91c1c; margin-top: 6px">৳15,000</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">Jamal Hossain · 2 দিন</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">এই সপ্তাহে · by 18 Oct</div>
+<div style="font-size: 24px; font-weight: 700; color: #b45309; margin-top: 6px">৳1,35,400</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">3 payments</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">পরের সপ্তাহে · 19–25 Oct</div>
+<div style="font-size: 24px; font-weight: 700; margin-top: 6px">৳45,700</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">3 payments</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">এরপর · to 11 Nov</div>
+<div style="font-size: 24px; font-weight: 700; margin-top: 6px">৳1,41,500</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">October payroll</div>
+</div>
+</div>
+
+<!-- Cash plan -->
+<section style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center">
+<div>
+<h2 style="margin: 0; font-size: 15px; font-weight: 700">টাকা যথেষ্ট আছে তো? · Next 30 days</h2>
+<div style="font-size: 12.5px; color: #6b7280; margin-top: 2px">আগামী ৩০ দিনে দিতে হবে বনাম এখন হাতে আছে</div>
+</div>
+<span style="font-size: 12px; font-weight: 600; border-radius: 6px; padding: 3px 9px; background: #d1fae5; color: #065f46">Covered</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; font-size: 13px">
+<div style="background: #f9fafb; border-radius: 10px; padding: 10px 12px"><div style="color: #6b7280">দিতে হবে (30 days)</div><div style="font-weight: 700; font-size: 18px; color: #b91c1c; margin-top: 2px">৳3,37,600</div></div>
+<div style="background: #f9fafb; border-radius: 10px; padding: 10px 12px"><div style="color: #6b7280">Cash + bank + MFS</div><div style="font-weight: 700; font-size: 18px; margin-top: 2px">৳5,11,200</div></div>
+<div style="background: #f9fafb; border-radius: 10px; padding: 10px 12px"><div style="color: #6b7280">আসার কথা (COD + due)</div><div style="font-weight: 700; font-size: 18px; color: #047857; margin-top: 2px">+ ৳1,58,420</div></div>
+<div style="background: #ecfdf5; border-radius: 10px; padding: 10px 12px"><div style="color: #065f46">৩০ দিন পরে থাকবে (approx)</div><div style="font-weight: 700; font-size: 18px; color: #065f46; margin-top: 2px">৳3,32,020</div></div>
+</div>
+<div style="font-size: 12px; color: #6b7280">সবচেয়ে টাইট দিন: 15 Oct — Rahman Fabrics + City Bank EMI + salary একসাথে ৳1,35,400। City Bank-এ ৳2,32,000 আছে।</div>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+
+<section style="flex: 999 1 640px; min-width: 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 14px 18px; border-bottom: 1px solid #f0f1f4">
+<div role="group" aria-label="When" style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{whenChips}}" as="c" hint-placeholder-count="5">
+<button onClick="{{c.pick}}" style="{{c.style}}">{{c.label}}</button>
+</sc-for>
+</div>
+<div role="group" aria-label="Source" style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{srcChips}}" as="c" hint-placeholder-count="5">
+<button onClick="{{c.pick}}" style="{{c.style}}">{{c.label}}</button>
+</sc-for>
+</div>
+</div>
+
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 18px; background: #eef2ff; border-bottom: 1px solid #c7d2fe; font-size: 13px; color: #312e81">
+<span><b>{{selCount}} selected</b> · {{selTotal}}</span>
+<div style="display: flex; gap: 8px; align-items: center">
+<label for="pay-from" style="font-size: 13px">Pay from</label>
+<select id="pay-from" style="font-size: 13px; padding: 7px 10px; border: 1px solid #c7d2fe; border-radius: 8px; background: #fff"><option>City Bank · ৳2,32,000</option><option>Cash box · ৳1,24,300</option><option>DBBL · ৳72,000</option><option>bKash Merchant · ৳64,200</option></select>
+<button style="font-size: 13px; padding: 7px 14px; border: 0; border-radius: 8px; background: #4f46e5; color: #fff; font-weight: 600">Create payments</button>
+</div>
+</div>
+</sc-if>
+
+<div style="overflow-x: auto">
+<table style="min-width: 860px; font-size: 13px">
+<thead>
+<tr style="text-align: left; color: #6b7280; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em">
+<th style="padding: 10px 0 10px 18px; width: 28px"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Select</span></th>
+<th style="padding: 10px 8px">Due</th>
+<th style="padding: 10px 8px">Pay to</th>
+<th style="padding: 10px 8px">For</th>
+<th style="padding: 10px 8px; text-align: right">Amount</th>
+<th style="padding: 10px 8px">Status</th>
+<th style="padding: 10px 18px; text-align: right"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Actions</span></th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+<tr style="border-top: 1px solid #f0f1f4">
+<td style="padding: 11px 0 11px 18px"><input type="checkbox" checked="{{r.checked}}" onChange="{{r.toggle}}" aria-label="Select payment" style="accent-color: #4f46e5"></td>
+<td style="padding: 11px 8px; white-space: nowrap"><div style="{{r.dueStyle}}">{{r.due}}</div><div style="font-size: 11.5px; color: #6b7280">{{r.dueNote}}</div></td>
+<td style="padding: 11px 8px"><div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap"><span style="font-weight: 600">{{r.payee}}</span><span style="{{r.srcStyle}}">{{r.src}}</span></div></td>
+<td style="padding: 11px 8px; color: #374151">{{r.for}}</td>
+<td style="padding: 11px 8px; text-align: right; font-weight: 700; white-space: nowrap">{{r.amount}}</td>
+<td style="padding: 11px 8px"><span style="{{r.badge}}">{{r.status}}</span></td>
+<td style="padding: 11px 18px; text-align: right; white-space: nowrap"><a href="#" style="font-weight: 600">Pay</a><span style="color: #d1d5db"> · </span><a href="#">Reschedule</a></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 36px 18px; text-align: center; color: #6b7280">এই filter-এ কিছু দেওয়ার নেই।</div>
+</sc-if>
+<div style="display: flex; justify-content: space-between; padding: 11px 18px; border-top: 2px solid #e5e7eb; background: #f9fafb; font-weight: 700; font-size: 13px">
+<span>Shown total</span><span>{{shownTotal}}</span>
+</div>
+</section>
+
+<aside style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<section style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 15px; font-weight: 700">Supplier aging</h2>
+<div style="display: flex; height: 12px; border-radius: 6px; overflow: hidden; gap: 2px">
+<div style="width: 28.6%; background: #94a3b8"></div>
+<div style="width: 60.7%; background: #f59e0b"></div>
+<div style="width: 10.7%; background: #dc2626"></div>
+</div>
+<div style="display: grid; grid-template-columns: 1fr auto; gap: 6px; font-size: 13px">
+<span style="display: flex; align-items: center; gap: 6px; color: #4b5563"><span style="width: 10px; height: 10px; border-radius: 3px; background: #94a3b8"></span>Not due yet</span><b>৳40,000</b>
+<span style="display: flex; align-items: center; gap: 6px; color: #4b5563"><span style="width: 10px; height: 10px; border-radius: 3px; background: #f59e0b"></span>Due in 7 days</span><b>৳85,000</b>
+<span style="display: flex; align-items: center; gap: 6px; color: #4b5563"><span style="width: 10px; height: 10px; border-radius: 3px; background: #dc2626"></span>Overdue</span><b style="color: #b91c1c">৳15,000</b>
+</div>
+<a href="Suppliers.dc.html" style="font-size: 13px">All suppliers</a>
+</section>
+
+<section style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 15px; font-weight: 700">Recurring bills</h2>
+<div style="display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; border-top: 1px solid #f0f1f4"><div><div style="font-weight: 600">Office rent</div><div style="font-size: 11.5px; color: #6b7280">Monthly · 10th</div></div><b>৳18,000</b></div>
+<div style="display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; border-top: 1px solid #f0f1f4"><div><div style="font-weight: 600">Electricity (DESCO)</div><div style="font-size: 11.5px; color: #6b7280">Monthly · 20th · varies</div></div><b>~৳4,200</b></div>
+<div style="display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; border-top: 1px solid #f0f1f4"><div><div style="font-weight: 600">Internet</div><div style="font-size: 11.5px; color: #6b7280">Monthly · 25th</div></div><b>৳1,500</b></div>
+<a href="#" style="font-size: 13px; font-weight: 600">+ Add recurring bill</a>
+</section>
+</aside>
+</div>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1550}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { when: 'all', src: 'all', checked: {} };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state;
+    var chip = function (on) {
+      return on
+        ? 'border: 1px solid #4f46e5; border-radius: 20px; padding: 6px 12px; font-size: 12.5px; background: #4f46e5; color: #fff; font-weight: 600'
+        : 'border: 1px solid #e5e7eb; border-radius: 20px; padding: 6px 12px; font-size: 12.5px; background: #fff; color: #374151';
+    };
+    var fmt = function (n) {
+      var s = String(n);
+      if (s.length > 3) { var last = s.slice(-3); var rest = s.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ','); s = rest + ',' + last; }
+      return '৳' + s;
+    };
+    var data = [
+      { id: 1, due: '10 Oct', dueNote: '2 দিন পার', when: 'overdue', payee: 'Jamal Hossain', src: 'supplier', for: 'Kisti 2/3 · embroidery work', n: 15000 },
+      { id: 2, due: '14 Oct', dueNote: 'in 2 days', when: 'week', payee: 'Rahman Fabrics', src: 'supplier', for: 'PUR-0431 · fabric 160 m', n: 85000 },
+      { id: 3, due: '15 Oct', dueNote: 'in 3 days · auto-debit', when: 'week', payee: 'City Bank SME Loan', src: 'loan', for: 'EMI 9/24', n: 32400 },
+      { id: 4, due: '15 Oct', dueNote: 'in 3 days', when: 'week', payee: 'Mitu Akter, Hasan Ali', src: 'salary', for: 'September salary balance', n: 18000 },
+      { id: 5, due: '20 Oct', dueNote: 'in 8 days', when: 'next', payee: 'Karim Enterprise', src: 'supplier', for: 'PUR-0437 · fabric 80 m', n: 40000 },
+      { id: 6, due: '20 Oct', dueNote: 'in 8 days', when: 'next', payee: 'DESCO', src: 'bill', for: 'Electricity · October', n: 4200 },
+      { id: 7, due: '25 Oct', dueNote: 'in 13 days', when: 'next', payee: 'Link3', src: 'bill', for: 'Internet · November', n: 1500 },
+      { id: 8, due: '05 Nov', dueNote: 'in 24 days', when: 'later', payee: '8 employees', src: 'salary', for: 'October payroll (net)', n: 141500 }
+    ];
+    var whenDefs = [['all', 'All · 30 days'], ['overdue', 'Overdue'], ['week', 'This week'], ['next', 'Next week'], ['later', 'Later']];
+    var srcDefs = [['all', 'All sources'], ['supplier', 'Suppliers'], ['loan', 'Loan / EMI'], ['salary', 'Salary'], ['bill', 'Bills']];
+    var whenChips = whenDefs.map(function (c) { return { label: c[1], style: chip(st.when === c[0]), pick: function () { self.setState({ when: c[0] }); } }; });
+    var srcChips = srcDefs.map(function (c) { return { label: c[1], style: chip(st.src === c[0]), pick: function () { self.setState({ src: c[0] }); } }; });
+    var sb = 'font-size: 11px; font-weight: 600; border-radius: 6px; padding: 1px 7px; ';
+    var srcStyle = {
+      supplier: [sb + 'background: #e0f2fe; color: #075985', 'Supplier'],
+      loan: [sb + 'background: #e0e7ff; color: #3730a3', 'Lender'],
+      salary: [sb + 'background: #ccfbf1; color: #115e59', 'Salary'],
+      bill: [sb + 'background: #f3f4f6; color: #374151', 'Bill']
+    };
+    var bb = 'font-size: 12px; font-weight: 600; border-radius: 6px; padding: 3px 8px; white-space: nowrap; ';
+    var status = {
+      overdue: [bb + 'background: #fee2e2; color: #991b1b', 'Overdue'],
+      week: [bb + 'background: #fef3c7; color: #92400e', 'Due soon'],
+      next: [bb + 'background: #f3f4f6; color: #374151', 'Upcoming'],
+      later: [bb + 'background: #f3f4f6; color: #374151', 'Upcoming']
+    };
+    var visible = data.filter(function (d) { return (st.when === 'all' || d.when === st.when) && (st.src === 'all' || d.src === st.src); });
+    var rows = visible.map(function (d) {
+      return {
+        due: d.due, dueNote: d.dueNote, payee: d.payee, for: d.for, amount: fmt(d.n),
+        src: srcStyle[d.src][1], srcStyle: srcStyle[d.src][0],
+        status: status[d.when][1], badge: status[d.when][0],
+        dueStyle: d.when === 'overdue' ? 'font-weight: 700; color: #b91c1c' : 'font-weight: 600',
+        checked: !!st.checked[d.id],
+        toggle: function () { var c = Object.assign({}, self.state.checked); c[d.id] = !c[d.id]; self.setState({ checked: c }); }
+      };
+    });
+    var picked = data.filter(function (d) { return st.checked[d.id]; });
+    return {
+      whenChips: whenChips, srcChips: srcChips, rows: rows, empty: rows.length === 0,
+      shownTotal: fmt(visible.reduce(function (a, d) { return a + d.n; }, 0)),
+      hasSel: picked.length > 0, selCount: String(picked.length),
+      selTotal: fmt(picked.reduce(function (a, d) { return a + d.n; }, 0))
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<title>Lenders</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Hind+Siliguri:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f1f3f7}
+a{color:#4338ca;text-decoration:none}a:hover{color:#312e81}
+table{border-collapse:collapse;width:100%}
+button,input,select{font-family:inherit}
+button{cursor:pointer}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; min-height: 100vh; background: #f1f3f7; font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif; color: #111827; font-size: 14px">
+
+<div style="flex: 1 1 248px; max-width: 100%; background: #0f172a; display: flex">
+<dc-import name="Sidebar" active="lenders" hint-size="248px,1100px"></dc-import>
+</div>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+<dc-import name="ProfileTabs" active="lenders" hint-size="100%,64px"></dc-import>
+
+<div style="padding: 24px 28px 40px; display: flex; flex-direction: column; gap: 18px; max-width: 1400px; box-sizing: border-box; width: 100%">
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px">
+<div>
+<h1 style="margin: 0; font-size: 24px; font-weight: 700">Lenders</h1>
+<div style="color: #6b7280; font-size: 13px; margin-top: 2px">কার কাছ থেকে ঋণ নিয়েছি, কত বাকি, পরের কিস্তি কবে</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button style="font-size: 13px; padding: 9px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">কিস্তি দিন · Pay kisti</button>
+<button style="font-size: 13px; padding: 9px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151">+ New loan</button>
+<a href="ProfileForm.dc.html" style="font-size: 13px; padding: 9px 16px; border-radius: 8px; background: #4f46e5; color: #fff; font-weight: 600">+ New lender</a>
+</div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px">
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">ঋণ নেওয়া · Borrowed</div>
+<div style="font-size: 24px; font-weight: 700; margin-top: 6px">৳10,30,000</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">3 lenders · 3 loans</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">মোট বাকি · Outstanding</div>
+<div style="font-size: 24px; font-weight: 700; color: #b91c1c; margin-top: 6px">৳7,43,900</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">Including bank interest</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">এই মাসের কিস্তি</div>
+<div style="font-size: 24px; font-weight: 700; margin-top: 6px">৳53,400</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">৳21,000 paid · ৳32,400 on 15 Oct</div>
+</div>
+<div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px">
+<div style="font-size: 12.5px; color: #4b5563">সাপোর্ট অগ্রিম · Support</div>
+<div style="font-size: 24px; font-weight: 700; color: #047857; margin-top: 6px">৳1,500</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 4px">Rahim Traders · next kisti কমবে</div>
+</div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start">
+<sc-for list="{{loans}}" as="l" hint-placeholder-count="3">
+<section style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px">
+<div>
+<div style="font-weight: 700; font-size: 16px">{{l.name}}</div>
+<div style="font-size: 12px; color: #6b7280; margin-top: 2px">{{l.code}} · {{l.note}}</div>
+</div>
+<span style="{{l.typeStyle}}">{{l.type}}</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<span style="font-size: 12px; background: #eef2ff; color: #3730a3; border-radius: 6px; padding: 3px 8px; font-weight: 600">{{l.rule}}</span>
+<span style="font-size: 12px; background: #f3f4f6; color: #374151; border-radius: 6px; padding: 3px 8px">{{l.rate}}</span>
+</div>
+<div>
+<div style="display: flex; justify-content: space-between; font-size: 12.5px; color: #4b5563; margin-bottom: 6px"><span>Paid {{l.paidCount}}</span><span style="font-weight: 600; color: #111827">{{l.pct}}%</span></div>
+<div style="height: 8px; background: #eef0f3; border-radius: 5px; overflow: hidden"><div style="{{l.bar}}"></div></div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; font-size: 13px">
+<div><div style="font-size: 11.5px; color: #6b7280">নেওয়া</div><div style="font-weight: 600">{{l.borrowed}}</div></div>
+<div><div style="font-size: 11.5px; color: #6b7280">মোট ফেরত দিতে হবে</div><div style="font-weight: 600">{{l.total}}</div></div>
+<div><div style="font-size: 11.5px; color: #6b7280">দেওয়া হয়েছে</div><div style="font-weight: 600; color: #047857">{{l.paid}}</div></div>
+<div><div style="font-size: 11.5px; color: #6b7280">বাকি</div><div style="font-weight: 700; color: #b91c1c">{{l.outstanding}}</div></div>
+</div>
+<div style="background: #f9fafb; border: 1px solid #eef0f3; border-radius: 10px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px">
+<div><div style="font-size: 11.5px; color: #6b7280">পরের কিস্তি</div><div style="font-weight: 600">{{l.nextDate}}</div></div>
+<div style="text-align: right"><div style="font-weight: 700">{{l.nextAmt}}</div><div style="font-size: 11.5px; color: #047857">{{l.nextNote}}</div></div>
+</div>
+<div style="display: flex; gap: 8px">
+<a href="#" style="flex: 1; text-align: center; font-size: 13px; padding: 9px 12px; border-radius: 8px; background: #4f46e5; color: #fff; font-weight: 600">Pay kisti</a>
+<a href="#" style="flex: 1; text-align: center; font-size: 13px; padding: 9px 12px; border-radius: 8px; border: 1px solid #e5e7eb; color: #374151">Schedule</a>
+<a href="ProfileDetail.dc.html" style="flex: 1; text-align: center; font-size: 13px; padding: 9px 12px; border-radius: 8px; border: 1px solid #e5e7eb; color: #374151">Ledger</a>
+</div>
+</section>
+</sc-for>
+</div>
+
+<section style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden">
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid #f0f1f4">
+<h2 style="margin: 0; font-size: 15px; font-weight: 700">আগামী কিস্তি · Next 60 days</h2>
+<a href="#" style="font-size: 13px">Full schedule</a>
+</div>
+<div style="overflow-x: auto">
+<table style="min-width: 720px; font-size: 13px">
+<thead>
+<tr style="text-align: left; color: #6b7280; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em">
+<th style="padding: 10px 18px">Date</th>
+<th style="padding: 10px 8px">Lender</th>
+<th style="padding: 10px 8px">Kisti</th>
+<th style="padding: 10px 8px; text-align: right">EMI</th>
+<th style="padding: 10px 8px; text-align: right">Support adjust</th>
+<th style="padding: 10px 8px; text-align: right">দিতে হবে</th>
+<th style="padding: 10px 18px">Status</th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{schedule}}" as="s" hint-placeholder-count="4">
+<tr style="border-top: 1px solid #f0f1f4">
+<td style="padding: 11px 18px; white-space: nowrap; font-weight: 600">{{s.date}}</td>
+<td style="padding: 11px 8px">{{s.lender}}</td>
+<td style="padding: 11px 8px; color: #374151">{{s.no}}</td>
+<td style="padding: 11px 8px; text-align: right">{{s.emi}}</td>
+<td style="padding: 11px 8px; text-align: right; color: #047857; font-weight: 600">{{s.support}}</td>
+<td style="padding: 11px 8px; text-align: right; font-weight: 700">{{s.pay}}</td>
+<td style="padding: 11px 18px"><span style="{{s.badge}}">{{s.status}}</span></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var typeStyle = {
+      Bank: 'font-size: 11.5px; font-weight: 600; border-radius: 6px; padding: 3px 8px; background: #e0f2fe; color: #075985; white-space: nowrap',
+      Business: 'font-size: 11.5px; font-weight: 600; border-radius: 6px; padding: 3px 8px; background: #e0e7ff; color: #3730a3; white-space: nowrap',
+      'Owner loan': 'font-size: 11.5px; font-weight: 600; border-radius: 6px; padding: 3px 8px; background: #fef3c7; color: #92400e; white-space: nowrap'
+    };
+    var loans = [
+      { name: 'Rahim Traders', code: 'P-0007', note: 'Narayanganj · since May 2026', type: 'Business', rule: 'Monthly · 12 kisti', rate: 'Flat ৳12,000 profit', paidCount: '5 / 12', pct: 42, borrowed: '৳2,40,000', total: '৳2,52,000', paid: '৳1,06,500', outstanding: '৳1,45,500', nextDate: '12 Nov · kisti 6/12', nextAmt: '৳19,500', nextNote: '৳1,500 support adjusted' },
+      { name: 'City Bank SME Loan', code: 'P-0009', note: 'Gulshan branch · A/C ••7781', type: 'Bank', rule: 'Monthly · 24 kisti', rate: '12% reducing', paidCount: '8 / 24', pct: 33, borrowed: '৳6,90,000', total: '৳7,77,600', paid: '৳2,59,200', outstanding: '৳5,18,400', nextDate: '15 Oct · kisti 9/24', nextAmt: '৳32,400', nextNote: 'Auto-debit from City Bank' },
+      { name: 'Ariful Rahman', code: 'P-0001', note: 'Owner · personal loan to business', type: 'Owner loan', rule: 'Custom · when possible', rate: 'No interest', paidCount: '৳20,000 of ৳1,00,000', pct: 20, borrowed: '৳1,00,000', total: '৳1,00,000', paid: '৳20,000', outstanding: '৳80,000', nextDate: 'No fixed date', nextAmt: '—', nextNote: '' }
+    ].map(function (l) {
+      return Object.assign({}, l, {
+        typeStyle: typeStyle[l.type],
+        bar: 'height: 100%; border-radius: 5px; background: #4f46e5; width: ' + l.pct + '%'
+      });
+    });
+    var badge = {
+      Paid: 'font-size: 12px; font-weight: 600; color: #065f46; background: #d1fae5; border-radius: 6px; padding: 3px 8px',
+      Upcoming: 'font-size: 12px; font-weight: 600; color: #374151; background: #f3f4f6; border-radius: 6px; padding: 3px 8px',
+      'Due soon': 'font-size: 12px; font-weight: 600; color: #92400e; background: #fef3c7; border-radius: 6px; padding: 3px 8px'
+    };
+    var schedule = [
+      { date: '12 Oct', lender: 'Rahim Traders', no: '5 / 12', emi: '৳21,000', support: '+ ৳1,500 extra', pay: '৳22,500', status: 'Paid' },
+      { date: '15 Oct', lender: 'City Bank SME Loan', no: '9 / 24', emi: '৳32,400', support: '—', pay: '৳32,400', status: 'Due soon' },
+      { date: '12 Nov', lender: 'Rahim Traders', no: '6 / 12', emi: '৳21,000', support: '− ৳1,500', pay: '৳19,500', status: 'Upcoming' },
+      { date: '15 Nov', lender: 'City Bank SME Loan', no: '10 / 24', emi: '৳32,400', support: '—', pay: '৳32,400', status: 'Upcoming' }
+    ].map(function (s) { return Object.assign({}, s, { badge: badge[s.status] }); });
+    return { loans: loans, schedule: schedule };
+  }
+}
+</script>
+</body>
+</html>

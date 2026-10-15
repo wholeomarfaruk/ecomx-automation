@@ -90,6 +90,8 @@
 .checkout__success-card h3{font-size:18px;font-weight:700;margin:0 0 12px;color:var(--pri);}
 .checkout__success-card p{font-size:14.5px;line-height:1.55;color:rgba(var(--pri-rgb),.85);margin:0 0 12px;}
 .checkout__success-card p:last-child{margin-bottom:0;}
+.checkout__success-card .checkout__success-note{background:rgba(var(--pri-rgb),.04);border-left:3px solid var(--ac);border-radius:8px;padding:12px 14px;line-height:1.75;}
+.checkout__success-note strong{color:var(--pri);}
 .checkout__details-part{padding-top:16px;margin-top:16px;border-top:1px solid rgba(var(--pri-rgb),.08);}
 .checkout__details-part:first-of-type{padding-top:0;margin-top:0;border-top:0;}
 .checkout__details-part h4{font-size:15px;font-weight:700;margin:0 0 10px;color:var(--pri);}
