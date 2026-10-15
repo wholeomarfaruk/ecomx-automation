@@ -23,15 +23,91 @@
     <p class="muted" style="font-size:13.5px;margin-bottom:28px">Complete your shipping and payment details to place the order.</p>
 
     @if($placed)
+        @php($siteName = \App\Models\Setting::get('site_name', 'Seldom Fashion') ?: 'Seldom Fashion')
         <div class="checkout__success">
-            <div class="checkout__success-icon">✓</div>
-            <h2 style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:8px">Order placed — thank you!</h2>
-            <p class="muted" style="font-size:13.5px;margin-bottom:20px">
-                Order #{{ $orderId }} has been placed.<br>
-                Dear {{ $name ?: 'customer' }}@if($phone) ({{ $phone }})@endif, your order has been confirmed. You will get your parcel within 2/4 days.
-            </p>
-            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-                <a href="{{ route('ecomx-fashion.track', ['order' => $orderId]) }}" class="btn btn--outline btn--pill">Track order</a>
+            <div class="checkout__success-head">
+                <div class="checkout__success-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+                </div>
+                <div>
+                    <p class="checkout__success-ref">Confirmation #{{ $orderId }}</p>
+                    <h2 class="checkout__success-title">Thank you{{ $name ? ', '.$name : '' }}!</h2>
+                </div>
+            </div>
+            <div class="checkout__success-card">
+                <h3>Your order is confirmed</h3>
+                <p>Thank you for your order with {{ $siteName }}.</p>
+                <p>Please keep the exact amount of cash ready at the time of delivery. Our delivery partner will contact you@if($phone) on {{ $phone }}@endif before delivery.</p>
+                <p>If you need any assistance, feel free to contact us via WhatsApp or Facebook.</p>
+            </div>
+            @if($order = $this->placedOrder)
+                @php
+                    $sm = $order->shipping_meta ?? [];
+                    $pay = $order->paymentSummary();
+                    $onlinePayment = $order->payments->firstWhere('type', \App\Enums\Sales\OrderPaymentType::PAYMENT);
+                @endphp
+                <div class="checkout__success-card checkout__details">
+                    <h3>Order details</h3>
+
+                    <div class="checkout__details-part">
+                        <h4>Products</h4>
+                        @foreach($order->items as $item)
+                            <div class="checkout__details-item">
+                                <img src="{{ $item->variant?->display_image ?? $item->product?->featured_image ?? '' }}" alt="{{ $item->product_name }}" loading="lazy">
+                                <div class="checkout__details-item-info">
+                                    <div class="checkout__details-item-name">{{ $item->product_name }}</div>
+                                    @if($item->variant_name)<div class="checkout__details-muted">{{ $item->variant_name }}</div>@endif
+                                    <div class="checkout__details-muted">৳{{ number_format($item->unit_price, 2) }} × {{ (int) $item->quantity }}</div>
+                                </div>
+                                <div class="checkout__details-amount">৳{{ number_format($item->total_amount, 2) }}</div>
+                            </div>
+                        @endforeach
+                        <dl class="checkout__details-totals">
+                            <div><dt>Subtotal</dt><dd>৳{{ number_format($order->subtotal, 2) }}</dd></div>
+                            @if((float) $order->discount_amount > 0)
+                                <div><dt>Discount{{ $order->coupon_code ? ' ('.$order->coupon_code.')' : '' }}</dt><dd>−৳{{ number_format($order->discount_amount, 2) }}</dd></div>
+                            @endif
+                            <div><dt>Delivery charge</dt><dd>{{ (float) $order->shipping_amount - (float) $order->shipping_discount > 0 ? '৳'.number_format($order->shipping_amount - $order->shipping_discount, 2) : 'Free' }}</dd></div>
+                            @foreach($order->charges as $charge)
+                                <div><dt>{{ $charge->label }}</dt><dd>৳{{ number_format($charge->amount, 2) }}</dd></div>
+                            @endforeach
+                            <div class="checkout__details-total"><dt>Total</dt><dd>৳{{ number_format($order->total_amount, 2) }}</dd></div>
+                        </dl>
+                    </div>
+
+                    <div class="checkout__details-part">
+                        <h4>Payment</h4>
+                        <dl class="checkout__details-rows">
+                            <div><dt>Method</dt><dd>{{ $onlinePayment ? ($onlinePayment->payment_method?->label() ?? 'Online payment') : 'Cash on delivery' }}</dd></div>
+                            @if($onlinePayment?->transaction_id)
+                                <div><dt>Transaction ID</dt><dd>{{ $onlinePayment->transaction_id }}</dd></div>
+                            @endif
+                            <div><dt>Status</dt><dd>{{ ['paid' => 'Paid', 'verifying' => 'Verifying payment', 'partial' => 'Partially paid', 'unpaid' => 'Pay on delivery'][$pay['state']] }}</dd></div>
+                            @if($pay['paid'] > 0)
+                                <div><dt>Paid</dt><dd>৳{{ number_format($pay['paid'], 2) }}</dd></div>
+                            @endif
+                            <div><dt>Amount due</dt><dd>৳{{ number_format($pay['due'], 2) }}</dd></div>
+                        </dl>
+                    </div>
+
+                    <div class="checkout__details-part">
+                        <h4>Shipping</h4>
+                        <dl class="checkout__details-rows">
+                            <div><dt>Name</dt><dd>{{ $order->shippingAddress?->name ?: '—' }}</dd></div>
+                            <div><dt>Phone</dt><dd>{{ $order->shippingAddress?->phone ?: '—' }}</dd></div>
+                            <div><dt>Address</dt><dd>{{ $order->shippingAddress?->full_address ?: '—' }}</dd></div>
+                            @if(! empty($sm['method']) || ! empty($sm['zone']))
+                                <div><dt>Delivery</dt><dd>{{ collect([$sm['zone'] ?? null, $sm['method'] ?? null])->filter()->implode(' · ') }}</dd></div>
+                            @endif
+                            @if(! empty($sm['delivery_time']))
+                                <div><dt>Estimated time</dt><dd>{{ $sm['delivery_time'] }}</dd></div>
+                            @endif
+                        </dl>
+                    </div>
+                </div>
+            @endif
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px">
+                <a href="{{ auth()->check() ? route('ecomx-fashion.track', ['order' => $orderId,'phone' => $phone]) : route('ecomx-fashion.track', ['order_id' => $orderId, 'phone' => $phone]) }}" class="btn btn--outline btn--pill">Track order</a>
                 <a href="{{ route('ecomx-fashion.home') }}" class="btn btn--primary btn--pill">Continue shopping</a>
             </div>
         </div>

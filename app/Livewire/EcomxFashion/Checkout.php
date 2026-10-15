@@ -725,6 +725,16 @@ class Checkout extends Component
         return $cart;
     }
 
+    /** The order shown on the thank-you screen, with what its details section lists. */
+    public function getPlacedOrderProperty(): ?Order
+    {
+        if (! $this->placed || ! $this->orderId) {
+            return null;
+        }
+
+        return Order::with(['items.product', 'items.variant.media', 'shippingAddress', 'payments', 'charges'])->find($this->orderId);
+    }
+
     public function render()
     {
         $cart = $this->cart;
