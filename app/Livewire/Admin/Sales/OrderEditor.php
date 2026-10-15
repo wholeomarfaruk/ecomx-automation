@@ -612,6 +612,56 @@ class OrderEditor extends Component
         return null;
     }
 
+    /**
+     * Takes a storefront offer off the order: its free-delivery part comes
+     * off the shipping discount, and a line discount puts the item prices
+     * back to full (line discounts aren't tracked per offer, so every offer's
+     * line discount goes — same as editing the items).
+     */
+    public function removeOffer(int $orderOfferId): void
+    {
+        $order = $this->order();
+
+        if (! $this->ensureEditable($order)) {
+            return;
+        }
+
+        $offer = $order->offers()->find($orderOfferId);
+
+        if (! $offer) {
+            return;
+        }
+
+        DB::transaction(function () use ($order, $offer) {
+            $order->update([
+                'shipping_discount' => max(0.0, (float) $order->shipping_discount - (float) $offer->shipping_discount),
+            ]);
+
+            if ((float) $offer->discount_amount > 0) {
+                foreach ($order->items as $item) {
+                    if ((float) $item->discount_amount > 0 && ! $item->is_gift) {
+                        $item->update([
+                            'discount_amount' => 0,
+                            'total_amount'    => round((float) $item->unit_price * (float) $item->quantity, 2),
+                        ]);
+                    }
+                }
+
+                $order->offers()->whereKeyNot($offer->id)->where('shipping_discount', '<=', 0)->delete();
+                $order->offers()->whereKeyNot($offer->id)->update(['discount_amount' => 0]);
+            }
+
+            $offer->delete();
+            $order->recalculateTotals();
+        });
+
+        $this->saved($order, "offer \"{$offer->name}\" removed", [
+            'offer' => $offer->name,
+            'discount_amount' => (float) $offer->discount_amount,
+            'shipping_discount' => (float) $offer->shipping_discount,
+        ]);
+    }
+
     /** Drops the coupon and its usage; keeps any free-delivery offer discount. */
     protected function clearCoupon(Order $order): void
     {

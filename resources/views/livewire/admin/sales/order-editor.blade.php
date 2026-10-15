@@ -191,6 +191,28 @@
                     </div>
                 </div>
 
+                @if($order->offers->isNotEmpty())
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Applied Offers</label>
+                        <div class="space-y-2">
+                            @foreach($order->offers as $appliedOffer)
+                                <div wire:key="applied-offer-{{ $appliedOffer->id }}" class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-2">
+                                    <div class="min-w-0">
+                                        <p class="text-sm text-gray-700 truncate">{{ $appliedOffer->name }}</p>
+                                        <p class="text-[11px] text-emerald-600">
+                                            @if((float) $appliedOffer->discount_amount > 0) Items −{{ number_format((float) $appliedOffer->discount_amount, 2) }} @endif
+                                            @if((float) $appliedOffer->shipping_discount > 0) Shipping −{{ number_format((float) $appliedOffer->shipping_discount, 2) }} @endif
+                                        </p>
+                                    </div>
+                                    <button type="button" wire:click="removeOffer({{ $appliedOffer->id }})"
+                                        wire:confirm="Remove offer &quot;{{ $appliedOffer->name }}&quot; from this order? Its discount will be added back to the total."
+                                        class="shrink-0 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition">Remove</button>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1.5">Coupon <span class="text-gray-400 font-normal">(shipping discount — applies to the saved shipping charge)</span></label>
                     <div class="flex gap-2">
