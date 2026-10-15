@@ -87,8 +87,12 @@
                 <input wire:model.live.debounce.300ms="search" type="text" placeholder="Search by order #, customer name, phone, product, or SKU…"
                     class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
             </div>
+            <div class="w-56" wire:key="orders-customer-filter">
+                <x-searchable-select field="filterCustomer" :value="$filterCustomer" :options="$this->customerOptions"
+                    placeholder="All Customers" search-placeholder="Search name or phone…" />
+            </div>
             @include('livewire.admin.sales.partials.order-filters')
-            @if($search || $filterStatus || $filterPaymentStatus || $filterSource || $dateFrom || $dateTo)
+            @if($search || $filterStatus || $filterPaymentStatus || $filterSource || $filterCustomer || $dateFrom || $dateTo)
                 <button wire:click="resetFilters" type="button" class="text-sm text-gray-500 hover:text-gray-700 transition">Clear</button>
             @endif
 
@@ -117,7 +121,7 @@
                         </svg>
                         <span>
                             Excel Export
-                            <span class="block text-[11px] text-gray-400">{{ ($search || $filterStatus || $filterPaymentStatus || $filterSource || $dateFrom || $dateTo) ? 'Filtered orders only' : 'All orders' }}</span>
+                            <span class="block text-[11px] text-gray-400">{{ ($search || $filterStatus || $filterPaymentStatus || $filterSource || $filterCustomer || $dateFrom || $dateTo) ? 'Filtered orders only' : 'All orders' }}</span>
                         </span>
                     </button>
                 </div>
@@ -125,7 +129,7 @@
         </div>
 
         {{-- Result count --}}
-        @php $isFiltered = $search || $filterStatus || $filterPaymentStatus || $filterSource || $dateFrom || $dateTo; @endphp
+        @php $isFiltered = $search || $filterStatus || $filterPaymentStatus || $filterSource || $filterCustomer || $dateFrom || $dateTo; @endphp
         <div class="flex flex-wrap items-center justify-between gap-2 px-5 py-2.5 border-b border-gray-100 {{ $isFiltered ? 'bg-indigo-50/60' : 'bg-white' }}">
             <p class="text-sm text-gray-600">
                 @if ($orders->total() > 0)
@@ -177,6 +181,16 @@
                             <td class="px-5 py-3 cursor-pointer" onclick="window.location.href='{{ route('admin.sales.orders.show', $order->id) }}'">
                                 <span class="block text-sm text-gray-600">{{ $order->customer?->full_name ?? 'Guest' }}</span>
                                 <span class="block text-xs text-gray-400">{{ $order->customer?->phone ?? '' }}</span>
+                                @if ($order->customer_id && ($cs = $customerOrderStats[$order->customer_id] ?? null))
+                                    <button type="button" @click.stop wire:click="$set('filterCustomer', '{{ $order->customer_id }}')"
+                                        title="{{ $cs->total_orders }} total orders · {{ (int) $cs->new_orders }} not shipped yet — click to show this customer's orders"
+                                        class="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ring-1 transition
+                                            {{ (int) $cs->new_orders > 1 ? 'bg-amber-50 text-amber-700 ring-amber-200 hover:bg-amber-100' : 'bg-gray-50 text-gray-500 ring-gray-200 hover:bg-gray-100' }}">
+                                        {{ $cs->total_orders }} {{ Str::plural('order', $cs->total_orders) }}
+                                        <span class="text-gray-300">·</span>
+                                        {{ (int) $cs->new_orders }} new
+                                    </button>
+                                @endif
                                 @if ($fraudEnabled && ($fraudPhone = \App\Services\FraudShield\FraudShield::orderPhone($order)))
                                     @php
                                         $fc = $fraudChecks[$fraudPhone] ?? null;

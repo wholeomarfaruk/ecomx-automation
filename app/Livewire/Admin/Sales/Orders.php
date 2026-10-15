@@ -10,6 +10,7 @@ use App\Enums\Sales\OrderStatus;
 use App\Enums\Sales\PaymentStatus;
 use App\Exceptions\Inventory\InsufficientStockException;
 use App\Livewire\Concerns\BooksCourierShipments;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\FraudCheck;
@@ -19,6 +20,7 @@ use App\Services\FraudShield\FraudShieldSettings;
 use App\Services\StockService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use OpenSpout\Common\Entity\Row;
@@ -54,6 +56,8 @@ class Orders extends Component
     #[Url]
     public string $filterPaymentStatus = '';
     public string $filterSource        = '';
+    #[Url]
+    public string $filterCustomer      = '';
     public string $dateFrom            = '';
     public string $dateTo              = '';
 
@@ -63,6 +67,7 @@ class Orders extends Component
     public function updatingFilterStatus(): void        { $this->resetPage(); $this->resetPage('productsPage'); }
     public function updatingFilterPaymentStatus(): void { $this->resetPage(); $this->resetPage('productsPage'); }
     public function updatingFilterSource(): void        { $this->resetPage(); $this->resetPage('productsPage'); }
+    public function updatingFilterCustomer(): void      { $this->resetPage(); }
     public function updatingDateFrom(): void            { $this->resetPage(); $this->resetPage('productsPage'); }
     public function updatingDateTo(): void              { $this->resetPage(); $this->resetPage('productsPage'); }
     public function updatingProductSearch(): void       { $this->resetPage('productsPage'); }
@@ -70,7 +75,7 @@ class Orders extends Component
 
     public function resetFilters(): void
     {
-        $this->reset(['search', 'productSearch', 'filterStatus', 'filterPaymentStatus', 'filterSource', 'dateFrom', 'dateTo']);
+        $this->reset(['search', 'productSearch', 'filterStatus', 'filterPaymentStatus', 'filterSource', 'filterCustomer', 'dateFrom', 'dateTo']);
         $this->resetPage();
         $this->resetPage('productsPage');
     }
@@ -213,8 +218,24 @@ class Orders extends Component
             ->when($this->filterStatus !== '', fn ($q) => $q->where('status', $this->filterStatus))
             ->when($this->filterPaymentStatus !== '', fn ($q) => $q->where('payment_status', $this->filterPaymentStatus))
             ->when($this->filterSource !== '', fn ($q) => $q->where('source', $this->filterSource))
+            ->when($this->filterCustomer !== '', fn ($q) => $q->where('customer_id', $this->filterCustomer))
             ->when($this->dateFrom, fn ($q) => $q->whereDate('created_at', '>=', $this->dateFrom))
             ->when($this->dateTo, fn ($q) => $q->whereDate('created_at', '<=', $this->dateTo));
+    }
+
+    /** Statuses that count as a "new" order — not shipped yet. */
+    private const NEW_ORDER_STATUSES = [OrderStatus::PENDING, OrderStatus::CONFIRMED, OrderStatus::PROCESSING];
+
+    /** Customer filter options — only customers who have ordered, "Name — phone". */
+    #[Computed]
+    public function customerOptions(): array
+    {
+        return Customer::query()
+            ->whereIn('id', Order::query()->select('customer_id')->whereNotNull('customer_id'))
+            ->orderBy('full_name')
+            ->get(['id', 'full_name', 'phone'])
+            ->mapWithKeys(fn ($c) => [$c->id => trim(($c->full_name ?: 'Unnamed') . ($c->phone ? " — {$c->phone}" : ''))])
+            ->all();
     }
 
     /**
@@ -451,6 +472,19 @@ class Orders extends Component
 
         $canManageCourier = auth()->user()->can('courier_configuration.manage');
 
+        // Per-customer order totals for this page's rows — one grouped query.
+        $customerIds = $orders->getCollection()->pluck('customer_id')->filter()->unique()->values();
+        $newStatuses = array_map(fn ($s) => $s->value, self::NEW_ORDER_STATUSES);
+        $customerOrderStats = $customerIds->isEmpty()
+            ? collect()
+            : Order::query()
+                ->whereIn('customer_id', $customerIds)
+                ->selectRaw('customer_id, COUNT(*) as total_orders')
+                ->selectRaw('SUM(CASE WHEN status IN (' . implode(',', array_fill(0, count($newStatuses), '?')) . ') THEN 1 ELSE 0 END) as new_orders', $newStatuses)
+                ->groupBy('customer_id')
+                ->get()
+                ->keyBy('customer_id');
+
         // Stored FraudShield results for this page's phones — no API calls
         // here; unchecked/stale rows are checked one by one by the list's
         // script after the page has loaded (OrderFraudCheckController).
@@ -465,6 +499,7 @@ class Orders extends Component
 
         return view('livewire.admin.sales.orders', [
             'orders'          => $orders,
+            'customerOrderStats' => $customerOrderStats,
             'accountsOn'      => \App\Services\Accounts\OrderPosting::accountsOn(),
             'inventoryOn'     => ! app(StockService::class)->usesOwnStock(),
             'fraudEnabled'    => $fraudEnabled,
