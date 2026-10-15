@@ -26,7 +26,9 @@
         order.</p>
 
     @if ($placed)
-        @php($siteName = \App\Models\Setting::get('site_name', 'Seldom Fashion') ?: 'Seldom Fashion')
+        @php
+        $siteName = \App\Models\Setting::get('site_name', 'Seldom Fashion') ?: 'Seldom Fashion';
+        @endphp
         <div class="checkout__success">
             <div class="checkout__success-head">
                 <div class="checkout__success-icon" aria-hidden="true">
