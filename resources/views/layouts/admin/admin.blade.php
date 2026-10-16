@@ -124,6 +124,13 @@
                     const textarea = el.querySelector('textarea');
                     if (!textarea) return;
 
+                    // x-init runs before Alpine reaches the child's wire:model,
+                    // so the textarea is still empty here — seed it from
+                    // Livewire, since the editor reads its initial HTML from it.
+                    if (options.wireModel && !textarea.value) {
+                        textarea.value = this.$wire.get(options.wireModel) ?? '';
+                    }
+
                     this.editor = window.OmarTextEditor.init({
                         selector: `#${this.ensureId(textarea)}`,
                         toolbar: options.toolbar ?? 'undo redo | blockformat | bold italic underline | link image table',

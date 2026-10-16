@@ -28,6 +28,7 @@
         toolbar: @js($toolbar),
         plugins: @js($plugins),
         menubar: @js($menubar),
+        wireModel: @js($wireModel),
     })" x-init="init($el)">
     <textarea wire:model="{{ $wireModel }}" style="display:none"></textarea>
 </div>
