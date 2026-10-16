@@ -108,6 +108,16 @@ class ProductReview extends Model
         return $this->customer?->full_name ?: ($this->author_name ?: 'Guest');
     }
 
+    /** Name shown on the storefront — null when none was given, so it can be hidden. */
+    public function publicAuthorName(): ?string
+    {
+        if ($this->author_type === 'admin') {
+            return $this->author_name ?: null;
+        }
+
+        return $this->customer?->full_name ?: ($this->author_name ?: null);
+    }
+
     public function scopeApproved(Builder $query): Builder
     {
         return $query->where('status', 'approved');

@@ -28,8 +28,12 @@ class ProductReviewStatistic extends Model
         return $this->belongsTo(Product::class);
     }
 
-    public static function recalculateFor(int $productId): self
+    public static function recalculateFor(?int $productId): ?self
     {
+        if (! $productId) {
+            return null; // store review with no product — nothing to aggregate
+        }
+
         $approved = ProductReview::query()->forProduct($productId)->approved();
 
         $counts = (clone $approved)->selectRaw('rating, count(*) as c')->groupBy('rating')->pluck('c', 'rating');

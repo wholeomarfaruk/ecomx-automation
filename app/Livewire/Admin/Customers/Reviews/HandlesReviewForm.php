@@ -51,7 +51,7 @@ trait HandlesReviewForm
         $this->resetReviewForm();
         $this->editingReviewId = $review->id;
         $this->formAuthorType = $review->author_type ?: 'admin';
-        $this->formProductId = (string) $review->product_id;
+        $this->formProductId = $review->product_id ? (string) $review->product_id : '';
         $this->formCustomerId = $review->customer_id ? (string) $review->customer_id : '';
         $this->formAuthorName = $review->author_name ?? '';
         $this->formSource = $review->source ?: 'admin';
@@ -92,19 +92,17 @@ trait HandlesReviewForm
         }
 
         $this->validate([
-            'formProductId' => 'required|integer|exists:products,id',
+            'formProductId' => 'nullable|integer|exists:products,id',
             'formCustomerId' => 'nullable|integer|exists:customers,id',
-            'formAuthorName' => 'required_without:formCustomerId|nullable|string|max:150',
+            'formAuthorName' => 'nullable|string|max:150',
             'formSource' => 'required|in:website,admin,facebook,whatsapp,phone,import',
             'formRating' => 'required|integer|min:1|max:5',
             'formTitle' => 'nullable|string|max:255',
-            'formComment' => 'required|string|max:2000',
+            'formComment' => 'nullable|string|max:2000',
             'formImageIds' => 'array|max:5',
             'formImageIds.*' => 'integer|exists:files,id',
             'formVideoIds' => 'array|max:5',
             'formVideoIds.*' => 'integer|exists:files,id',
-        ], [
-            'formAuthorName.required_without' => 'Enter a reviewer name or pick a customer.',
         ]);
 
         $isAdminAuthored = ! $review || $review->author_type === 'admin';
@@ -114,14 +112,14 @@ trait HandlesReviewForm
         }
 
         $data = [
-            'product_id' => $this->formProductId,
+            'product_id' => $this->formProductId ?: null,
             'customer_id' => $this->formCustomerId ?: null,
             'author_name' => $this->formAuthorName ?: null,
             'source' => $this->formSource,
             'is_verified_purchase' => (bool) $this->formVerifiedPurchase,
             'rating' => $this->formRating,
             'title' => $this->formTitle ?: null,
-            'comment' => $this->formComment,
+            'comment' => $this->formComment ?: null,
         ];
 
         if ($review) {

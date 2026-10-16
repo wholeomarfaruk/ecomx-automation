@@ -35,10 +35,10 @@
                         <span style="position:absolute;top:12px;right:12px;background:rgba(var(--pri-rgb),.65);color:var(--sec);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:5px 10px;border-radius:999px">Video</span>
                     </template>
                     <div class="rcard__foot">
-                        <template x-if="r.avatar">
+                        <template x-if="r.avatar || !r.name">
                             <img class="rcard__avatar" :src="avatarUrl(r.avatar,100)" :alt="r.name">
                         </template>
-                        <template x-if="!r.avatar">
+                        <template x-if="!r.avatar && r.name">
                             <span class="rcard__avatar" x-text="initials(r.name)"
                                 style="display:flex;align-items:center;justify-content:center;background:var(--ac2);color:var(--sec);font-size:12px;font-weight:700;line-height:1"></span>
                         </template>
@@ -52,7 +52,7 @@
                     @endif --}}
                         <div style="flex:1;min-width:0">
                             <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600">
-                                <span x-text="r.name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
+                                <span x-show="r.name" x-text="r.name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
                                 <template x-if="r.verified"><span class="verified__tick">✓</span></template>
                             </span>
                         </div>
@@ -75,14 +75,14 @@
                     <img :src="u(item.img,900)" :alt="item.product" style="width:100%;height:100%;object-fit:cover">
                 </div>
                 <figcaption style="display:flex;align-items:center;gap:12px;color:#fff;margin-top:12px">
-                    <template x-if="item.avatar">
+                    <template x-if="item.avatar || !item.name">
                         <img :src="avatarUrl(item.avatar,100)" :alt="item.name" style="width:36px;height:36px;border-radius:999px;object-fit:cover">
                     </template>
-                    <template x-if="!item.avatar">
+                    <template x-if="!item.avatar && item.name">
                         <span x-text="initials(item.name)"
                             style="width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:var(--ac2);color:var(--sec);font-size:13px;font-weight:700;flex-shrink:0"></span>
                     </template>
-                    <div style="flex:1"><span x-text="item.name" style="font-size:13.5px;font-weight:600"></span><br><span x-text="'On: '+item.product" style="font-size:12px;opacity:.6"></span></div>
+                    <div style="flex:1"><span x-show="item.name" x-text="item.name" style="display:block;font-size:13.5px;font-weight:600"></span><span x-show="item.product" x-text="'On: '+item.product" style="font-size:12px;opacity:.6"></span></div>
                     <span class="rcard__stars" x-text="stars(item.rating)"></span>
                 </figcaption>
             </figure>

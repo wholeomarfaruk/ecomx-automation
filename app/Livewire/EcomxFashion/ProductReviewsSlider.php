@@ -226,14 +226,14 @@ class ProductReviewsSlider extends Component
 
         return [
             'id' => $review->id,
-            'name' => $review->authorName(),
+            'name' => $review->publicAuthorName() ?? '',
             'verified' => $review->is_verified_purchase,
             'rating' => $review->rating,
             'product' => $review->product->name ?? '',
             'video' => $media?->isVideo() ?? false,
             'img' => $media?->getUrl(),
             'avatar' => null,
-            'text' => $review->comment,
+            'text' => $review->comment ?? '',
             'is_product_review' => $isProductReview,
             'helpful_count' => $review->helpfulVotes->count(),
             'voted_helpful' => $device ? $review->helpfulVotes->contains('device_id', $device->id) : false,

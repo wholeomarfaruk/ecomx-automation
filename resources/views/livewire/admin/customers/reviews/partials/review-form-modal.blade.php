@@ -29,7 +29,7 @@
 
         <form wire:submit.prevent="saveReview" class="overflow-y-auto px-6 py-5 space-y-4">
             <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1.5">Product <span class="text-red-500">*</span></label>
+                <label class="block text-xs font-medium text-gray-600 mb-1.5">Product <span class="text-gray-400 font-normal">(optional)</span></label>
                 <x-searchable-select wire:key="review-product-{{ $editingReviewId ?? 'new' }}" field="formProductId" :value="$formProductId"
                     :options="$productOptions" :images="$productImages" placeholder="— Select a product —" search-placeholder="Search products…" />
                 @error('formProductId') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
@@ -43,7 +43,7 @@
                     @error('formCustomerId') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Reviewer Name @if(!$formCustomerId)<span class="text-red-500">*</span>@endif</label>
+                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Reviewer Name <span class="text-gray-400 font-normal">(optional)</span></label>
                     <input wire:model="formAuthorName" type="text" placeholder="e.g. Rahim Uddin"
                         class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
                     @error('formAuthorName') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
@@ -82,7 +82,7 @@
             </div>
 
             <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1.5">Comment <span class="text-red-500">*</span></label>
+                <label class="block text-xs font-medium text-gray-600 mb-1.5">Comment <span class="text-gray-400 font-normal">(optional)</span></label>
                 <textarea wire:model="formComment" rows="4" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"></textarea>
                 @error('formComment') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
             </div>

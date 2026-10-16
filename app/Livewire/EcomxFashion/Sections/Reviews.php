@@ -51,14 +51,14 @@ class Reviews extends Component
 
         return [
             'id' => $review->id,
-            'name' => $review->authorName(),
+            'name' => $review->publicAuthorName() ?? '',
             'verified' => $review->is_verified_purchase,
             'rating' => $review->rating,
             'product' => $review->product->name ?? '',
             'video' => $media?->isVideo() ?? false,
             'img' => $media?->getUrl(),
             'avatar' => null,
-            'text' => $review->comment,
+            'text' => $review->comment ?? '',
         ];
     }
 
