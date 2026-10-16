@@ -27,7 +27,7 @@ class Reviews extends Component
         $this->heading = $config['heading'] ?? '' ?: static::DEFAULT_HEADING;
         $this->linkLabel = $config['linkLabel'] ?? '' ?: static::DEFAULT_LINK_LABEL;
 
-        $approved = ProductReview::approved()->with(['media', 'product', 'customer']);
+        $approved = ProductReview::approved()->with(['media.file.items', 'product:id,name', 'customer:id,full_name']);
 
         $count = (clone $approved)->count();
         $average = $count > 0 ? (clone $approved)->avg('rating') : null;

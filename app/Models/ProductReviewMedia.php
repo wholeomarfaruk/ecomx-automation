@@ -30,6 +30,17 @@ class ProductReviewMedia extends Model
 
     public function getUrl(): ?string
     {
-        return $this->file_id ? file_path($this->file_id) : null;
+        if (! $this->file_id) {
+            return null;
+        }
+
+        // Eager-loaded (media.file.items) — no query per review.
+        if ($this->relationLoaded('file')) {
+            $item = $this->file?->items->firstWhere('type', 'original');
+
+            return $item ? asset('storage/' . $item->path) : null;
+        }
+
+        return file_path($this->file_id);
     }
 }

@@ -76,7 +76,10 @@ class ProductReviewsSlider extends Component
         // This product's reviews first (newest first), then other products' in random order.
         $mapped = ProductReview::approved()
             ->whereHas('media')
-            ->with(['media', 'product', 'customer', 'helpfulVotes'])
+            ->with([
+                'media.file.items', 'product:id,name', 'customer:id,full_name',
+                'helpfulVotes' => fn ($q) => $q->where('device_id', $device?->id ?? 0),
+            ])
             ->orderByRaw('product_id = ? DESC', [$this->productId])
             ->orderByRaw('CASE WHEN product_id = ? THEN created_at END DESC', [$this->productId])
             ->inRandomOrder()
@@ -235,8 +238,8 @@ class ProductReviewsSlider extends Component
             'avatar' => null,
             'text' => $review->comment ?? '',
             'is_product_review' => $isProductReview,
-            'helpful_count' => $review->helpfulVotes->count(),
-            'voted_helpful' => $device ? $review->helpfulVotes->contains('device_id', $device->id) : false,
+            'helpful_count' => (int) $review->helpful_count,
+            'voted_helpful' => $review->helpfulVotes->isNotEmpty(),
         ];
     }
 
