@@ -190,6 +190,11 @@
                             <label class="block text-xs font-medium text-gray-600 mb-1.5">Full Description</label>
                             <x-rich-text-editor wire-model="description" class="w-full" />
                         </div>
+                        <div class="col-span-2">
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Size Guide</label>
+                            <p class="text-xs text-gray-400 mb-1.5">Shown when customers click "Size guide" on the product page. Use Table to build a size chart. Leave empty to hide the link.</p>
+                            <x-rich-text-editor wire-model="sizeGuide" class="w-full" />
+                        </div>
                     </div>
                 </div>
 

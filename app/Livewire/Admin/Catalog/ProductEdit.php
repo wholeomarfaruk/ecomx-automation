@@ -25,6 +25,7 @@ class ProductEdit extends Component
     public string $code              = '';
     public string $shortDescription  = '';
     public string $description       = '';
+    public string $sizeGuide         = '';
     public string $brandId           = '';
     public array  $categoryIds       = [];
     public string $status            = 'draft';
@@ -78,6 +79,7 @@ class ProductEdit extends Component
         $this->code                = $product->code;
         $this->shortDescription    = $product->short_description ?? '';
         $this->description         = $product->description ?? '';
+        $this->sizeGuide           = $product->size_guide ?? '';
         $this->brandId             = (string) ($product->brand_id ?? '');
         $this->categoryIds         = $product->categories->pluck('id')->map(fn($id) => (string) $id)->all();
         $this->status               = $product->status;
@@ -149,6 +151,7 @@ class ProductEdit extends Component
             'code'              => 'required|string|max:100|unique:products,code,' . $this->productId,
             'shortDescription'  => 'nullable|string',
             'description'       => 'nullable|string',
+            'sizeGuide'         => 'nullable|string',
             'brandId'           => 'nullable|integer|exists:brands,id',
             'categoryIds.*'     => 'integer|exists:categories,id',
             'status'            => 'required|in:draft,active,inactive,archived',
@@ -306,6 +309,7 @@ class ProductEdit extends Component
             'code'               => $this->code,
             'short_description'  => $this->shortDescription ?: null,
             'description'        => $this->description ?: null,
+            'size_guide'         => $this->sizeGuide ?: null,
             'brand_id'           => $this->brandId ?: null,
             'status'             => $this->status,
             'featured'           => $this->featured,

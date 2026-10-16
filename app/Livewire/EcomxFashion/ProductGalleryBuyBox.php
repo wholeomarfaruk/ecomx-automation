@@ -30,6 +30,7 @@ class ProductGalleryBuyBox extends Component
         'sale' => 0,
         'desc' => '',
         'shortDesc' => '',
+        'sizeGuide' => '',
     ];
 
     public array $media = [];
@@ -79,6 +80,7 @@ class ProductGalleryBuyBox extends Component
             'sale' => $pricing['discounted'] < $pricing['regular'] ? $pricing['discounted'] : 0,
             'desc' => $p->description ?: '',
             'shortDesc' => $p->short_description ?: '',
+            'sizeGuide' => $p->size_guide ?: '',
         ];
 
         $this->media = $this->buildMedia($p);

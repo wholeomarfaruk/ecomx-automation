@@ -92,7 +92,9 @@
             @endif
             <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
                 <span style="font-size:12.5px;font-weight:600">Size @if($selectedSize) — {{ $selectedSize }} @endif</span>
-                <button type="button" wire:click="toggleSizeGuide" style="border:none;background:none;font-size:12px;color:var(--ac2);text-decoration:underline">Size guide</button>
+                @if($product['sizeGuide'])
+                    <button type="button" wire:click="toggleSizeGuide" style="border:none;background:none;font-size:12px;color:var(--ac2);text-decoration:underline">Size guide</button>
+                @endif
             </div>
             <div class="size-grid">
                 @foreach($sizes as $z)
@@ -222,14 +224,15 @@
         <div class="modal" wire:click.self="toggleSizeGuide">
             <div class="modal__box modal__box--lg">
                 <div class="modal__head"><p class="modal__title" style="font-size:28px">Size guide</p><button type="button" class="modal__close" wire:click="toggleSizeGuide">✕</button></div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(var(--pri-rgb),.1);border:1px solid rgba(var(--pri-rgb),.1);border-radius:10px;overflow:hidden;margin-bottom:16px">
-                    <span style="background:var(--pri);color:var(--sec);padding:10px 14px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">Size</span>
-                    <span style="background:var(--pri);color:var(--sec);padding:10px 14px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">Chest (cm)</span>
-                    @foreach([['XS','82'],['S','87'],['M','92'],['L','97'],['XL','102']] as [$sz,$ch])
-                        <span style="background:#fff;padding:13px 16px;font-size:14px;font-weight:600">{{ $sz }}</span><span style="background:#fff;padding:13px 16px;font-size:14px;color:rgba(var(--pri-rgb),.7)">{{ $ch }}</span>
-                    @endforeach
-                </div>
-                <p class="muted" style="font-size:13.5px;line-height:1.7">Model is 178 cm and wears size S. Fits true to size — size down between sizes for a closer fit.</p>
+                <style>
+                    .size-guide-content{font-size:14px;line-height:1.7;overflow-x:auto}
+                    .size-guide-content table{width:100%;border-collapse:collapse;margin:0 0 14px}
+                    .size-guide-content th,.size-guide-content td{border:1px solid #e5e7eb;padding:8px 12px;text-align:left}
+                    .size-guide-content th,.size-guide-content tr:first-child td{background:#f9fafb;font-weight:600}
+                    .size-guide-content img{max-width:100%;height:auto}
+                    .size-guide-content p{margin:0 0 10px}
+                </style>
+                <div class="size-guide-content">{!! $product['sizeGuide'] !!}</div>
             </div>
         </div>
     @endif

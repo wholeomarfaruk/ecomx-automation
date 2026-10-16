@@ -93,7 +93,9 @@
                 @endif
                 <div class="jtc-pd-sizes__head">
                     <span class="jtc-pd-info__brand" style="color:#14201c">Size @if($selectedSize) — {{ $selectedSize }} @endif</span>
-                    <button type="button" class="jtc-pd-sizes__guide" wire:click="toggleSizeGuide">Size guide</button>
+                    @if($product['sizeGuide'])
+                        <button type="button" class="jtc-pd-sizes__guide" wire:click="toggleSizeGuide">Size guide</button>
+                    @endif
                 </div>
                 <div class="jtc-pd-sizes__grid">
                     @foreach($sizes as $z)
@@ -243,14 +245,15 @@
                 </button>
             </div>
             <div class="jtc-form">
-                <div class="jtc-sizeguide__table">
-                    <span class="head">Size</span>
-                    <span class="head">Chest (cm)</span>
-                    @foreach([['XS','82'],['S','87'],['M','92'],['L','97'],['XL','102']] as [$sz, $ch])
-                        <span>{{ $sz }}</span><span>{{ $ch }}</span>
-                    @endforeach
-                </div>
-                <p style="font-size:0.85rem;color:#6b7a73;line-height:1.7">Model is 178 cm and wears size S. Fits true to size — size down between sizes for a closer fit.</p>
+                <style>
+                    .size-guide-content{font-size:14px;line-height:1.7;overflow-x:auto}
+                    .size-guide-content table{width:100%;border-collapse:collapse;margin:0 0 14px}
+                    .size-guide-content th,.size-guide-content td{border:1px solid #e5e7eb;padding:8px 12px;text-align:left}
+                    .size-guide-content th,.size-guide-content tr:first-child td{background:#f9fafb;font-weight:600}
+                    .size-guide-content img{max-width:100%;height:auto}
+                    .size-guide-content p{margin:0 0 10px}
+                </style>
+                <div class="size-guide-content">{!! $product['sizeGuide'] !!}</div>
             </div>
         </div>
     </div>
