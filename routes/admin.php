@@ -228,6 +228,7 @@ Route::get('/settings/advance/developer-tools', App\Livewire\Admin\DeveloperTool
 Route::get('/settings/advance/system-health', App\Livewire\Admin\Advance\SystemHealth::class)->name('settings.advance.system-health');
 Route::get('/settings/advance/license-configuration', App\Livewire\Admin\Advance\LicenseConfiguration::class)->name('settings.advance.license-configuration');
 Route::get('/settings/advance/fraud-checker', App\Livewire\Admin\Advance\FraudChecker::class)->name('settings.advance.fraud-checker');
+Route::get('/settings/advance/data-reset', App\Livewire\Admin\Advance\DataReset::class)->name('settings.advance.data-reset');
 
 Route::prefix('settings/advance/sms-configuration')->name('settings.advance.sms-configuration.')->group(function () {
     Route::get('/', App\Livewire\Admin\Sms\Dashboard::class)->name('dashboard');

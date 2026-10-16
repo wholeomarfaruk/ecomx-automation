@@ -1095,7 +1095,7 @@
                 @if ($canSee('courier_configuration.view', 'developer_tools.view', 'email_configuration.view', 'fraud_checker.manage', 'license_configuration.view', 'marketing_integration.manage', 'notification_configuration.view', 'sms_configuration.view', 'system_health.view'))
                 @php
                     $advanceActive = in_array(Route::currentRouteName(), [
-                        'admin.settings.advance.developer-tools', 'admin.settings.advance.system-health', 'admin.settings.advance.license-configuration', 'admin.settings.advance.fraud-checker'
+                        'admin.settings.advance.developer-tools', 'admin.settings.advance.system-health', 'admin.settings.advance.license-configuration', 'admin.settings.advance.fraud-checker', 'admin.settings.advance.data-reset'
                     ]) || str_starts_with(Route::currentRouteName(), 'admin.settings.advance.sms-configuration.')
                         || str_starts_with(Route::currentRouteName(), 'admin.settings.advance.email-configuration.')
                         || str_starts_with(Route::currentRouteName(), 'admin.settings.advance.notification-configuration.')
@@ -1179,6 +1179,12 @@
                         <a href="{{ route('admin.site-settings', ['group' => 'marketing']) }}"
                             class="block hover:text-gray-200 cursor-pointer {{ Route::currentRouteName() === 'admin.site-settings' && request()->query('group') === 'marketing' ? 'text-gray-200' : '' }}">
                             Marketing
+                        </a>
+                        @endif
+                        @if ($isSuper)
+                        <a href="{{ route('admin.settings.advance.data-reset') }}"
+                            class="block hover:text-red-300 cursor-pointer {{ Route::currentRouteName() === 'admin.settings.advance.data-reset' ? 'text-red-300' : '' }}">
+                            Clean Data
                         </a>
                         @endif
                     </div>
