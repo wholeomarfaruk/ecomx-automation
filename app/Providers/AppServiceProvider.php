@@ -53,6 +53,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerAuthListeners();
         $this->registerNotificationListeners();
         QueueHealthService::listen();
+        $this->configureAppNameFromSettings();
         $this->configureMailFromSettings();
         $this->configureMarketingFromSettings();
 
@@ -216,6 +217,26 @@ class AppServiceProvider extends ServiceProvider
                 'mail.from.address' => $fromEmail,
                 'mail.from.name' => $fromName ?? config('mail.from.name'),
             ]);
+        }
+    }
+
+    // Site Settings → Site Name drives config('app.name') so emails, push
+    // titles, feeds etc. follow the admin setting instead of .env APP_NAME.
+    // Same settings-table guard as above; empty Site Name keeps APP_NAME.
+    protected function configureAppNameFromSettings(): void
+    {
+        try {
+            if (! Schema::hasTable('settings')) {
+                return;
+            }
+        } catch (\Throwable $e) {
+            return;
+        }
+
+        $siteName = Setting::get('site_name');
+
+        if (filled($siteName)) {
+            config(['app.name' => $siteName]);
         }
     }
 
