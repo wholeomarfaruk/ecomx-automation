@@ -110,7 +110,7 @@
 
     {{-- ── Filled: single ── --}}
     @else
-        <div class="relative group rounded-xl border border-gray-200 overflow-hidden bg-gray-50">
+        <div class="relative group min-h-32 flex items-center justify-center rounded-xl border border-gray-200 overflow-hidden bg-gray-50">
             @if($type === 'video')
                 <video class="w-full max-h-40 object-cover" controls preload="metadata">
                     <source src="{{ file_path($value) }}">
