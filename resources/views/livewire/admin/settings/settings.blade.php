@@ -65,11 +65,11 @@
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-sm text-gray-600">Member Since</span>
-                        <span class="text-sm text-gray-900">{{ local_time($user->created_at)->format('M d, Y') }}</span>
+                        <span class="text-sm text-gray-900">{{ local_time($user->created_at)?->format('M d, Y') ?? '—' }}</span>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-sm text-gray-600">Last Updated</span>
-                        <span class="text-sm text-gray-900">{{ local_time($user->updated_at)->format('M d, Y') }}</span>
+                        <span class="text-sm text-gray-900">{{ local_time($user->updated_at)?->format('M d, Y') ?? '—' }}</span>
                     </div>
                 </div>
             </div>
