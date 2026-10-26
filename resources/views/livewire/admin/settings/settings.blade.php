@@ -75,40 +75,167 @@
             </div>
             {{-- Security Settings --}}
             <div class="bg-white border border-gray-200 rounded-lg p-6">
-                <h2 class="text-xl font-semibold text-gray-900 mb-4">Security Settings</h2>
-                <form wire:submit.prevent="updatePassword" class="space-y-6">
+                <h2 class="text-xl font-semibold text-gray-900">Security Settings</h2>
+                <p class="text-sm text-gray-500 mb-6">Every change here needs your current password.</p>
 
-                    {{-- Current Password --}}
-                    <div>
-                        <label for="current_password" class="block text-sm font-medium text-gray-700">Current Password</label>
-                        <input type="password" wire:model="current_password" id="current_password"
-                            class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                        @error('current_password') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                <div class="divide-y divide-gray-200">
+
+                    {{-- Login Email --}}
+                    <div class="pb-6 space-y-4">
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="min-w-0">
+                                <h3 class="text-base font-semibold text-gray-900">Login Email</h3>
+                                <p class="text-sm text-gray-500 break-all">Current: {{ $user->email }}</p>
+                            </div>
+                            @if($user->email_verified_at)
+                                <span class="shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Verified</span>
+                            @else
+                                <span class="shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Unverified</span>
+                            @endif
+                        </div>
+
+                        @unless($user->email_verified_at)
+                            @include('livewire.admin.settings.partials.verify-box', [
+                                'channel' => 'email',
+                                'sent' => $emailCodeSent,
+                                'sends' => $emailSends,
+                                'resendIn' => $this->resendIn('email'),
+                                'destination' => $user->email,
+                                'sendAction' => 'sendEmailCode',
+                                'verifyAction' => 'verifyEmailCode',
+                                'codeField' => 'email_code',
+                            ])
+                        @endunless
+
+                        <form wire:submit.prevent="updateEmail" class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="email" class="block text-sm font-medium text-gray-700">New Email</label>
+                                    <input type="email" wire:model="email" id="email" autocomplete="email"
+                                        class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    @error('email') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label for="email_password" class="block text-sm font-medium text-gray-700">Current Password</label>
+                                    <input type="password" wire:model="email_password" id="email_password" autocomplete="current-password"
+                                        class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    @error('email_password') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between gap-4">
+                                <p class="text-xs text-gray-500">You will log in with the new email. A verification code is sent to it.</p>
+                                <button type="submit" wire:loading.attr="disabled" wire:target="updateEmail"
+                                    class="shrink-0 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-60">
+                                    <span wire:loading.remove wire:target="updateEmail">Change Email</span>
+                                    <span wire:loading wire:target="updateEmail">Saving…</span>
+                                </button>
+                            </div>
+                        </form>
                     </div>
 
-                    {{-- New Password --}}
-                    <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700">New Password</label>
-                        <input type="password" wire:model="password" id="password"
-                            class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                        @error('password') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                    {{-- Phone Number --}}
+                    <div class="py-6 space-y-4">
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="min-w-0">
+                                <h3 class="text-base font-semibold text-gray-900">Phone Number</h3>
+                                <p class="text-sm text-gray-500">Current: {{ $user->phone ? trim($user->country_code . ' ' . $user->phone) : 'Not set' }}</p>
+                            </div>
+                            @if($user->phone)
+                                @if($user->phone_verified_at)
+                                    <span class="shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Verified</span>
+                                @else
+                                    <span class="shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Not Verified</span>
+                                @endif
+                            @endif
+                        </div>
+
+                        @if($user->phone && !$user->phone_verified_at)
+                            @include('livewire.admin.settings.partials.verify-box', [
+                                'channel' => 'phone',
+                                'sent' => $phoneCodeSent,
+                                'sends' => $phoneSends,
+                                'resendIn' => $this->resendIn('phone'),
+                                'destination' => trim($user->country_code . ' ' . $user->phone),
+                                'sendAction' => 'sendPhoneCode',
+                                'verifyAction' => 'verifyPhoneCode',
+                                'codeField' => 'phone_code',
+                            ])
+                        @endif
+
+                        <form wire:submit.prevent="updatePhone" class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="phone" class="block text-sm font-medium text-gray-700">New Phone</label>
+                                    <div class="mt-1 flex gap-1.5">
+                                        <select wire:model="country_code" id="country_code"
+                                            class="w-24 shrink-0 p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                            <option value="">Code</option>
+                                            @foreach($countries as $country)
+                                                <option value="{{ $country->phone_code }}">{{ $country->phone_code }}</option>
+                                            @endforeach
+                                        </select>
+                                        <input type="tel" wire:model="phone" id="phone" autocomplete="tel-national" placeholder="1XXXXXXXXX"
+                                            class="flex-1 min-w-0 p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    </div>
+                                    @error('country_code') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    @error('phone') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label for="phone_password" class="block text-sm font-medium text-gray-700">Current Password</label>
+                                    <input type="password" wire:model="phone_password" id="phone_password" autocomplete="current-password"
+                                        class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    @error('phone_password') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between gap-4">
+                                <p class="text-xs text-gray-500">Leave the phone empty to remove it. A new number gets a verification code by SMS.</p>
+                                <button type="submit" wire:loading.attr="disabled" wire:target="updatePhone"
+                                    class="shrink-0 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-60">
+                                    <span wire:loading.remove wire:target="updatePhone">Change Phone</span>
+                                    <span wire:loading wire:target="updatePhone">Saving…</span>
+                                </button>
+                            </div>
+                        </form>
                     </div>
 
-                    {{-- Confirm Password --}}
-                    <div>
-                        <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Confirm New Password</label>
-                        <input type="password" wire:model="password_confirmation" id="password_confirmation"
-                            class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                        @error('password_confirmation') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                    </div>
+                    {{-- Password --}}
+                    <form wire:submit.prevent="updatePassword" class="pt-6 space-y-4">
+                        <div>
+                            <h3 class="text-base font-semibold text-gray-900">Password</h3>
+                            <p class="text-sm text-gray-500">Last changed: {{ local_time($user->password_set_at)?->format('M d, Y') ?? '—' }}</p>
+                        </div>
 
-                    <div class="flex justify-end">
-                        <button type="submit"
-                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            Update Password
-                        </button>
-                    </div>
-                </form>
+                        <div>
+                            <label for="current_password" class="block text-sm font-medium text-gray-700">Current Password</label>
+                            <input type="password" wire:model="current_password" id="current_password" autocomplete="current-password"
+                                class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            @error('current_password') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="password" class="block text-sm font-medium text-gray-700">New Password</label>
+                                <input type="password" wire:model="password" id="password" autocomplete="new-password"
+                                    class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                @error('password') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Confirm New Password</label>
+                                <input type="password" wire:model="password_confirmation" id="password_confirmation" autocomplete="new-password"
+                                    class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                @error('password_confirmation') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button type="submit" wire:loading.attr="disabled" wire:target="updatePassword"
+                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-60">
+                                <span wire:loading.remove wire:target="updatePassword">Update Password</span>
+                                <span wire:loading wire:target="updatePassword">Saving…</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
 
 

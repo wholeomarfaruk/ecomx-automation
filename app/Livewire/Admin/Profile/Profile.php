@@ -8,24 +8,16 @@ use App\Models\Gender;
 use App\Models\User;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
 
 class Profile extends Component
 {
     use WithMediaPicker;
     public $user;
     public $name;
-    public $email;
-    public $phone;
-    public $country_code;
     public $address;
     public $bio;
     public $gender;
     public $avatar_id;
-
-    // Required only when the email is being changed.
-    public $email_password;
 
     public function mount()
     {
@@ -36,9 +28,6 @@ class Profile extends Component
     protected function fillFromUser(): void
     {
         $this->name = $this->user->name;
-        $this->email = $this->user->email;
-        $this->phone = $this->user->phone;
-        $this->country_code = $this->user->country_code;
         $this->address = $this->user->address;
         $this->bio = $this->user->bio;
         $this->gender = $this->user->gender;
@@ -47,7 +36,7 @@ class Profile extends Component
 
     public function updated($propertyName)
     {
-        if (in_array($propertyName, ['name', 'email', 'phone', 'country_code', 'address', 'bio', 'gender'])) {
+        if (in_array($propertyName, ['name', 'address', 'bio', 'gender'])) {
             $this->validateOnly($propertyName, $this->rules());
         }
     }
@@ -56,14 +45,6 @@ class Profile extends Component
     {
         return [
             'name' => 'required|string|max:255',
-            'email' => [
-                'required',
-                'email',
-                'max:255',
-                Rule::unique('users')->ignore($this->user->id),
-            ],
-            'phone' => ['nullable', 'string', 'max:20', 'regex:/^\+?[0-9\s\-]{6,20}$/'],
-            'country_code' => ['nullable', 'string', 'max:5', 'regex:/^\+?[0-9]{1,4}$/'],
             'address' => 'nullable|string|max:500',
             'bio' => 'nullable|string|max:1000',
             'gender' => 'nullable|exists:genders,slug',
@@ -71,35 +52,13 @@ class Profile extends Component
         ];
     }
 
-    protected function messages()
-    {
-        return [
-            'phone.regex' => 'Phone may only contain digits, spaces, dashes and a leading +.',
-            'country_code.regex' => 'Use a format like +88.',
-        ];
-    }
-
-    protected function emailChanged(): bool
-    {
-        return strcasecmp(trim((string) $this->email), (string) $this->user->email) !== 0;
-    }
-
     public function updateProfile()
     {
         $validated = $this->validate();
-        $validated['email'] = trim($validated['email']);
         $validated['gender'] = $validated['gender'] ?: null;
         $validated['avatar_id'] = $validated['avatar_id'] ?: null;
 
-        if ($this->emailChanged()) {
-            if (blank($this->email_password) || !Hash::check($this->email_password, $this->user->password)) {
-                $this->addError('email_password', 'Enter your current password to change the email.');
-                return;
-            }
-        }
-
         $this->user->update($validated);
-        $this->reset('email_password');
         $this->fillFromUser();
 
         $this->dispatch('toast', [
@@ -111,13 +70,12 @@ class Profile extends Component
     public function resetForm()
     {
         $this->resetErrorBag();
-        $this->reset('email_password');
         $this->fillFromUser();
     }
 
     public function render()
     {
-        $this->user->loadMissing('roles:id,name', 'panels:id,name');
+        $this->user->loadMissing('roles', 'panels');
 
         return view('livewire.admin.profile.profile', [
             'genders' => Gender::active()->orderBy('sort_order')->get(['name', 'slug']),

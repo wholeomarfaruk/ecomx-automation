@@ -50,7 +50,7 @@
                                 @if($user->email_verified_at)
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Verified</span>
                                 @else
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Unverified</span>
+                                    <a href="{{ route('admin.settings') }}" wire:navigate class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200">Unverified — verify</a>
                                 @endif
                             </dd>
                         </div>
@@ -60,7 +60,11 @@
                                 @if($user->phone_verified_at)
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Verified</span>
                                 @else
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Not verified</span>
+                                    @if($user->phone)
+                                    <a href="{{ route('admin.settings') }}" wire:navigate class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 hover:bg-gray-200">Not verified — verify</a>
+                                @else
+                                    <span class="text-xs text-gray-500">Not set</span>
+                                @endif
                                 @endif
                             </dd>
                         </div>
@@ -141,40 +145,23 @@
                             </div>
                         </div>
 
-                        {{-- Email --}}
-                        <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700">Email <span class="text-red-500">*</span></label>
-                            <input type="email" wire:model="email" id="email" autocomplete="email"
-                                class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                            @error('email') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-
-                            {{-- Shown client-side only when the email differs from the saved one --}}
-                            <div data-original="{{ strtolower($user->email) }}"
-                                x-show="($wire.email ?? '').trim().toLowerCase() !== $el.dataset.original"
-                                x-cloak
-                                class="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3">
-                                <label for="email_password" class="block text-sm font-medium text-amber-900">Current password</label>
-                                <p class="text-xs text-amber-700">Required to change your login email.</p>
-                                <input type="password" wire:model="email_password" id="email_password" autocomplete="current-password"
-                                    class="mt-2 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        {{-- Email & Phone are changed under Security Settings --}}
+                        <div class="rounded-md border border-gray-200 bg-gray-50 p-4">
+                            <div class="flex items-center justify-between gap-4 mb-3">
+                                <p class="text-sm font-medium text-gray-700">Email &amp; Phone</p>
+                                <a href="{{ route('admin.settings') }}" wire:navigate
+                                    class="text-xs font-medium text-indigo-600 hover:text-indigo-800">Change in Security settings →</a>
                             </div>
-                            @error('email_password') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                        </div>
-
-                        {{-- Phone --}}
-                        <div class="grid grid-cols-3 gap-4">
-                            <div>
-                                <label for="country_code" class="block text-sm font-medium text-gray-700">Country Code</label>
-                                <input type="text" wire:model="country_code" id="country_code" placeholder="+88"
-                                    class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                @error('country_code') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                            </div>
-                            <div class="col-span-2">
-                                <label for="phone" class="block text-sm font-medium text-gray-700">Phone</label>
-                                <input type="tel" wire:model="phone" id="phone" autocomplete="tel-national"
-                                    class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                @error('phone') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                            </div>
+                            <dl class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                <div class="min-w-0">
+                                    <dt class="text-gray-500">Email</dt>
+                                    <dd class="text-gray-900 break-all">{{ $user->email }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-gray-500">Phone</dt>
+                                    <dd class="text-gray-900">{{ $user->phone ? trim($user->country_code . ' ' . $user->phone) : 'Not set' }}</dd>
+                                </div>
+                            </dl>
                         </div>
 
                         {{-- Address --}}
