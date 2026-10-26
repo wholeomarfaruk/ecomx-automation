@@ -3,27 +3,15 @@
 namespace App\Livewire\Admin\Settings;
 
 use App\Models\Country;
-use App\Models\EmailTemplate;
-use App\Models\SmsGatewayConfig;
-use App\Sms\Facades\Sms;
+use App\Services\Auth\VerificationCodes;
 use App\Support\PhoneNumber;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
 
 class Settings extends Component
 {
-    // Verification codes live in cache (not users.otp) so they never clash
-    // with a storefront login/forgot-password OTP for the same account.
-    public const CODE_TTL_MINUTES = 10;
-    public const RESEND_COOLDOWN = 60;
-    public const MAX_SENDS_PER_HOUR = 5;
-    public const MAX_VERIFY_ATTEMPTS = 5;
-
     public $user;
 
     // Login email
@@ -41,6 +29,11 @@ class Settings extends Component
     public bool $phoneCodeSent = false;
     public int $phoneSends = 0;
 
+    // Two-factor email / SMS codes
+    public bool $two_factor_email = false;
+    public bool $two_factor_sms = false;
+    public $two_factor_password;
+
     // Password
     public $current_password;
     public $password;
@@ -52,10 +45,17 @@ class Settings extends Component
         $this->email = $this->user->email;
         $this->country_code = $this->user->country_code;
         $this->phone = $this->user->phone;
+        $this->two_factor_email = (bool) $this->user->two_factor_email_enabled;
+        $this->two_factor_sms = (bool) $this->user->two_factor_sms_enabled;
 
         // Keep the code box open across reloads while a code is still valid.
-        $this->emailCodeSent = $this->pendingCode('email') !== null;
-        $this->phoneCodeSent = $this->pendingCode('phone') !== null;
+        $this->emailCodeSent = $this->codes()->hasPending($this->user, 'verify', 'email');
+        $this->phoneCodeSent = $this->codes()->hasPending($this->user, 'verify', 'sms');
+    }
+
+    protected function codes(): VerificationCodes
+    {
+        return app(VerificationCodes::class);
     }
 
     protected function passwordMatches(?string $plain, string $errorKey): bool
@@ -91,8 +91,7 @@ class Settings extends Component
             'email_verified_at' => null,
         ])->save();
 
-        $this->reset('email_password');
-        $this->forgetCode('email');
+        $this->reset('email_password', 'email_code', 'emailCodeSent');
 
         $this->dispatch('toast', [
             'type' => 'success',
@@ -131,8 +130,7 @@ class Settings extends Component
 
         $this->phone = $phone;
         $this->country_code = $countryCode;
-        $this->reset('phone_password');
-        $this->forgetCode('phone');
+        $this->reset('phone_password', 'phone_code', 'phoneCodeSent');
 
         $this->dispatch('toast', [
             'type' => 'success',
@@ -169,7 +167,7 @@ class Settings extends Component
         return [$this->country_code, ltrim($digits, '0')];
     }
 
-    // ── Verification ─────────────────────────────────────────────
+    // ── Contact verification ─────────────────────────────────────
 
     public function sendEmailCode()
     {
@@ -179,28 +177,8 @@ class Settings extends Component
             return;
         }
 
-        if (!$this->canSend('email', 'email_code')) {
-            return;
-        }
-
-        $code = $this->issueCode('email', $this->user->email);
-
-        try {
-            $sent = EmailTemplate::send('otp', $this->user->email, [
-                'name' => $this->user->name,
-                'email' => $this->user->email,
-                'code' => $code,
-                'app_name' => config('app.name'),
-                'year' => now()->year,
-            ]);
-        } catch (\Throwable $e) {
-            Log::warning('Admin email verification send failed', ['user_id' => $this->user->id, 'error' => $e->getMessage()]);
-            $sent = false;
-        }
-
-        if (!$sent) {
-            $this->forgetCode('email');
-            $this->addError('email_code', 'Could not send the email. Check Email Configuration and that the "otp" email template is active.');
+        if ($error = $this->codes()->send($this->user, 'verify', 'email')) {
+            $this->addError('email_code', $error);
             return;
         }
 
@@ -217,28 +195,8 @@ class Settings extends Component
             return;
         }
 
-        $gateway = SmsGatewayConfig::active();
-        if ($gateway === null || empty($gateway->credentials)) {
-            $this->addError('phone_code', 'No active SMS gateway. Set one up in SMS Configuration first.');
-            return;
-        }
-
-        if (!$this->canSend('phone', 'phone_code')) {
-            return;
-        }
-
-        $code = $this->issueCode('phone', $this->user->country_code . $this->user->phone);
-
-        try {
-            $sent = Sms::sendOTP(PhoneNumber::local($this->user->phone), $code)->success;
-        } catch (\Throwable $e) {
-            Log::warning('Admin phone verification send failed', ['user_id' => $this->user->id, 'error' => $e->getMessage()]);
-            $sent = false;
-        }
-
-        if (!$sent) {
-            $this->forgetCode('phone');
-            $this->addError('phone_code', 'Could not send the SMS. Check the SMS gateway and try again.');
+        if ($error = $this->codes()->send($this->user, 'verify', 'sms')) {
+            $this->addError('phone_code', $error);
             return;
         }
 
@@ -249,111 +207,69 @@ class Settings extends Component
 
     public function verifyEmailCode()
     {
-        if ($this->checkCode('email', $this->user->email, 'email_code')) {
-            $this->user->forceFill(['email_verified_at' => now()])->save();
-            $this->reset('email_code', 'emailCodeSent');
-            $this->dispatch('toast', ['type' => 'success', 'message' => 'Email verified!']);
+        $this->validate(['email_code' => ['required', 'digits:6']], [], ['email_code' => 'code']);
+
+        if ($error = $this->codes()->verify($this->user, 'verify', 'email', $this->email_code)) {
+            $this->addError('email_code', $error);
+            return;
         }
+
+        $this->user->forceFill(['email_verified_at' => now()])->save();
+        $this->reset('email_code', 'emailCodeSent');
+        $this->dispatch('toast', ['type' => 'success', 'message' => 'Email verified!']);
     }
 
     public function verifyPhoneCode()
     {
-        if ($this->checkCode('phone', $this->user->country_code . $this->user->phone, 'phone_code')) {
-            $this->user->forceFill(['phone_verified_at' => now()])->save();
-            $this->reset('phone_code', 'phoneCodeSent');
-            $this->dispatch('toast', ['type' => 'success', 'message' => 'Phone number verified!']);
+        $this->validate(['phone_code' => ['required', 'digits:6']], [], ['phone_code' => 'code']);
+
+        if ($error = $this->codes()->verify($this->user, 'verify', 'sms', $this->phone_code)) {
+            $this->addError('phone_code', $error);
+            return;
         }
+
+        $this->user->forceFill(['phone_verified_at' => now()])->save();
+        $this->reset('phone_code', 'phoneCodeSent');
+        $this->dispatch('toast', ['type' => 'success', 'message' => 'Phone number verified!']);
     }
 
-    /** Seconds until another code may be sent on this channel (drives the resend countdown). */
+    /** Seconds until another verification code may be sent ('email' | 'sms'). */
     public function resendIn(string $channel): int
     {
-        return RateLimiter::availableIn($this->throttleKey($channel, 'cooldown'));
+        return $this->codes()->resendIn($this->user, 'verify', $channel);
     }
 
-    protected function canSend(string $channel, string $errorKey): bool
-    {
-        $cooldownKey = $this->throttleKey($channel, 'cooldown');
-        $hourlyKey = $this->throttleKey($channel, 'hourly');
+    // ── Two-factor: email / SMS codes ────────────────────────────
 
-        if (RateLimiter::tooManyAttempts($cooldownKey, 1)) {
-            $this->addError($errorKey, 'Please wait ' . RateLimiter::availableIn($cooldownKey) . ' seconds before requesting another code.');
-            return false;
+    public function updateTwoFactorMethods()
+    {
+        $this->validate(['two_factor_password' => 'required'], [], ['two_factor_password' => 'current password']);
+
+        if ($this->two_factor_email && !$this->user->email_verified_at) {
+            $this->addError('two_factor_email', 'Verify your email first.');
+            return;
         }
 
-        if (RateLimiter::tooManyAttempts($hourlyKey, self::MAX_SENDS_PER_HOUR)) {
-            $this->addError($errorKey, 'Too many codes requested. Try again in ' . ceil(RateLimiter::availableIn($hourlyKey) / 60) . ' minutes.');
-            return false;
+        if ($this->two_factor_sms && !($this->user->phone && $this->user->phone_verified_at)) {
+            $this->addError('two_factor_sms', 'Add and verify a phone number first.');
+            return;
         }
 
-        RateLimiter::hit($cooldownKey, self::RESEND_COOLDOWN);
-        RateLimiter::hit($hourlyKey, 3600);
-
-        return true;
-    }
-
-    protected function issueCode(string $channel, string $target): string
-    {
-        $code = (string) random_int(100000, 999999);
-
-        // Bound to the target so a code sent to an old address can't verify a new one.
-        Cache::put($this->codeKey($channel), [
-            'hash' => hash('sha256', $code),
-            'target' => $target,
-            'attempts' => 0,
-        ], now()->addMinutes(self::CODE_TTL_MINUTES));
-
-        return $code;
-    }
-
-    protected function checkCode(string $channel, string $target, string $errorKey): bool
-    {
-        $this->validate([$errorKey => ['required', 'digits:6']], [], [$errorKey => 'code']);
-
-        $pending = $this->pendingCode($channel);
-
-        if (!$pending || $pending['target'] !== $target) {
-            $this->addError($errorKey, 'This code has expired. Send a new one.');
-            return false;
+        if (!$this->passwordMatches($this->two_factor_password, 'two_factor_password')) {
+            return;
         }
 
-        if ($pending['attempts'] >= self::MAX_VERIFY_ATTEMPTS) {
-            $this->forgetCode($channel);
-            $this->addError($errorKey, 'Too many wrong attempts. Send a new code.');
-            return false;
-        }
+        $this->user->forceFill([
+            'two_factor_email_enabled' => $this->two_factor_email,
+            'two_factor_sms_enabled' => $this->two_factor_sms,
+        ])->save();
 
-        if (!hash_equals($pending['hash'], hash('sha256', trim($this->$errorKey)))) {
-            $pending['attempts']++;
-            Cache::put($this->codeKey($channel), $pending, now()->addMinutes(self::CODE_TTL_MINUTES));
-            $this->addError($errorKey, 'Incorrect code. ' . (self::MAX_VERIFY_ATTEMPTS - $pending['attempts']) . ' attempts left.');
-            return false;
-        }
+        $this->reset('two_factor_password');
 
-        $this->forgetCode($channel);
-
-        return true;
-    }
-
-    protected function pendingCode(string $channel): ?array
-    {
-        return Cache::get($this->codeKey($channel));
-    }
-
-    protected function forgetCode(string $channel): void
-    {
-        Cache::forget($this->codeKey($channel));
-        $this->{$channel . 'CodeSent'} = false;
-    }
-
-    protected function codeKey(string $channel): string
-    {
-        return 'admin-verify:' . $this->user->id . ':' . $channel;
-    }
-
-    protected function throttleKey(string $channel, string $kind): string
-    {
-        return 'admin-verify-' . $kind . ':' . $this->user->id . ':' . $channel;
+        $this->dispatch('toast', [
+            'type' => 'success',
+            'message' => 'Two-factor methods updated.'
+        ]);
     }
 
     // ── Password ─────────────────────────────────────────────────

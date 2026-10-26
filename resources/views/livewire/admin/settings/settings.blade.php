@@ -154,7 +154,7 @@
                                 'channel' => 'phone',
                                 'sent' => $phoneCodeSent,
                                 'sends' => $phoneSends,
-                                'resendIn' => $this->resendIn('phone'),
+                                'resendIn' => $this->resendIn('sms'),
                                 'destination' => trim($user->country_code . ' ' . $user->phone),
                                 'sendAction' => 'sendPhoneCode',
                                 'verifyAction' => 'verifyPhoneCode',
@@ -238,6 +238,86 @@
                 </div>
             </div>
 
+
+            {{-- Two-Factor Methods --}}
+            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900">Two-Factor Login Methods</h2>
+                <p class="text-sm text-gray-500 mb-5">
+                    After your password, you'll be asked for a code from any method that is on.
+                    You can pick which one to use on the login screen.
+                </p>
+
+                <form wire:submit.prevent="updateTwoFactorMethods" class="space-y-4">
+                    <div class="divide-y divide-gray-100 rounded-md border border-gray-200">
+                        {{-- Authenticator app (managed by the Jetstream card below) --}}
+                        <div class="flex items-center justify-between gap-4 p-4">
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-gray-900">Authenticator app</p>
+                                <p class="text-xs text-gray-500">Google Authenticator, Microsoft Authenticator, Authy. Strongest option, works offline.</p>
+                            </div>
+                            @if($user->hasAuthenticatorTwoFactor())
+                                <span class="shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">On</span>
+                            @else
+                                <span class="shrink-0 text-xs text-gray-500">Set up below ↓</span>
+                            @endif
+                        </div>
+
+                        {{-- Email code --}}
+                        <label class="flex items-center justify-between gap-4 p-4 {{ $user->email_verified_at ? 'cursor-pointer' : 'opacity-60' }}">
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-gray-900">Email code</p>
+                                <p class="text-xs text-gray-500 break-all">
+                                    @if($user->email_verified_at)
+                                        A 6-digit code is emailed to {{ $user->email }}.
+                                    @else
+                                        Verify your email above to use this.
+                                    @endif
+                                </p>
+                                @error('two_factor_email') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                            <input type="checkbox" wire:model="two_factor_email" @disabled(!$user->email_verified_at && !$two_factor_email)
+                                class="h-5 w-5 shrink-0 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        </label>
+
+                        {{-- SMS code --}}
+                        <label class="flex items-center justify-between gap-4 p-4 {{ $user->phone && $user->phone_verified_at ? 'cursor-pointer' : 'opacity-60' }}">
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-gray-900">SMS code</p>
+                                <p class="text-xs text-gray-500">
+                                    @if($user->phone && $user->phone_verified_at)
+                                        A 6-digit code is sent by SMS to {{ trim($user->country_code . ' ' . $user->phone) }}.
+                                    @else
+                                        Add and verify a phone number above to use this.
+                                    @endif
+                                </p>
+                                @error('two_factor_sms') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                            <input type="checkbox" wire:model="two_factor_sms" @disabled(!($user->phone && $user->phone_verified_at) && !$two_factor_sms)
+                                class="h-5 w-5 shrink-0 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        </label>
+                    </div>
+
+                    @if(($user->two_factor_email_enabled && !$user->email_verified_at) || ($user->two_factor_sms_enabled && !$user->phone_verified_at))
+                        <p class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-3">
+                            A method is on but its email/phone is not verified, so it is paused until you verify it.
+                        </p>
+                    @endif
+
+                    <div class="flex flex-col sm:flex-row sm:items-end justify-end gap-3">
+                        <div class="sm:w-64">
+                            <label for="two_factor_password" class="block text-sm font-medium text-gray-700">Current Password</label>
+                            <input type="password" wire:model="two_factor_password" id="two_factor_password" autocomplete="current-password"
+                                class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            @error('two_factor_password') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        </div>
+                        <button type="submit" wire:loading.attr="disabled" wire:target="updateTwoFactorMethods"
+                            class="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-60">
+                            <span wire:loading.remove wire:target="updateTwoFactorMethods">Save Methods</span>
+                            <span wire:loading wire:target="updateTwoFactorMethods">Saving…</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
 
             {{-- Two-Factor Authentication --}}
             <div class="bg-white border border-gray-200 rounded-lg p-6">

@@ -70,9 +70,15 @@
                         </div>
                         <div class="flex justify-between gap-4">
                             <dt class="text-gray-600">Two-factor auth</dt>
-                            <dd>
-                                @if($user->two_factor_confirmed_at)
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Enabled</span>
+                            <dd class="text-right">
+                                @if($user->hasAnyTwoFactor())
+                                    @php
+                                        $tfMethods = array_merge(
+                                            $user->hasAuthenticatorTwoFactor() ? ['App'] : [],
+                                            array_map(fn ($c) => $c === 'email' ? 'Email' : 'SMS', $user->twoFactorCodeChannels()),
+                                        );
+                                    @endphp
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">On · {{ implode(', ', $tfMethods) }}</span>
                                 @else
                                     <a href="{{ route('admin.settings') }}" wire:navigate
                                         class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 hover:bg-amber-200">Off — enable</a>

@@ -17,7 +17,7 @@
         <form wire:submit.prevent="{{ $verifyAction }}" class="space-y-2">
             <label for="{{ $codeField }}" class="block text-sm text-amber-900">
                 Enter the 6-digit code sent to <span class="font-medium break-all">{{ $destination }}</span>
-                <span class="text-amber-700">(valid {{ \App\Livewire\Admin\Settings\Settings::CODE_TTL_MINUTES }} minutes)</span>
+                <span class="text-amber-700">(valid {{ \App\Services\Auth\VerificationCodes::CODE_TTL_MINUTES }} minutes)</span>
             </label>
             <div class="flex flex-wrap items-center gap-2">
                 <input type="text" wire:model="{{ $codeField }}" id="{{ $codeField }}" inputmode="numeric" maxlength="6"

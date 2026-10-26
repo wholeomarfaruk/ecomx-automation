@@ -81,8 +81,42 @@ class User extends Authenticatable
             'password_set_at' => 'datetime',
             'phone_verified_at' => 'datetime',
             'otp_expires_at' => 'datetime',
+            'two_factor_email_enabled' => 'boolean',
+            'two_factor_sms_enabled' => 'boolean',
             'status' => Status::class,
         ];
+    }
+
+    public function hasAuthenticatorTwoFactor(): bool
+    {
+        return $this->two_factor_secret && $this->two_factor_confirmed_at;
+    }
+
+    /**
+     * Email / SMS two-factor channels that can actually be used right now:
+     * switched on AND the destination verified. Changing the email/phone
+     * clears its verification, which pauses that channel until re-verified.
+     *
+     * @return array<int, 'email'|'sms'>
+     */
+    public function twoFactorCodeChannels(): array
+    {
+        $channels = [];
+
+        if ($this->two_factor_email_enabled && $this->email && $this->email_verified_at) {
+            $channels[] = 'email';
+        }
+
+        if ($this->two_factor_sms_enabled && $this->phone && $this->phone_verified_at) {
+            $channels[] = 'sms';
+        }
+
+        return $channels;
+    }
+
+    public function hasAnyTwoFactor(): bool
+    {
+        return $this->hasAuthenticatorTwoFactor() || $this->twoFactorCodeChannels() !== [];
     }
     public function avatar()
     {

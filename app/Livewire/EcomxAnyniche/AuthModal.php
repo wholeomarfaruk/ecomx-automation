@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\EmailTemplate;
 use App\Models\SmsGatewayConfig;
 use App\Models\User;
+use App\Services\Auth\TwoFactorChallenge;
 use App\Sms\Facades\Sms;
 use App\Support\PhoneNumber;
 use Illuminate\Support\Carbon;
@@ -129,6 +130,28 @@ class AuthModal extends Component
      * caused Alpine/Livewire to fight over the same DOM nodes on morph.
      * A reload sidesteps that entirely and re-renders everything correctly.
      */
+    /**
+     * Accounts with two-factor on (staff/admins) go through the 2FA challenge
+     * instead of being logged in straight from the storefront modal.
+     */
+    private function loginOrChallenge(User $user): void
+    {
+        $challenge = app(TwoFactorChallenge::class);
+
+        if ($challenge->required($user)) {
+            $challenge->start(request(), $user, remember: true);
+            $this->resetForms();
+            $this->redirect(route('two-factor.login'));
+
+            return;
+        }
+
+        auth()->login($user, remember: true);
+
+        $this->resetForms();
+        $this->reloadAfterLogin();
+    }
+
     private function reloadAfterLogin(): void
     {
         $this->redirect(request()->header('Referer') ?: route('ecomx-anyniche.home'));
@@ -170,10 +193,7 @@ class AuthModal extends Component
         }
 
         RateLimiter::clear($key);
-        auth()->login($user, remember: true);
-
-        $this->resetForms();
-        $this->reloadAfterLogin();
+        $this->loginOrChallenge($user);
     }
 
     public function sendLoginOtp(): void
@@ -267,10 +287,7 @@ class AuthModal extends Component
         RateLimiter::clear($key);
 
         $user->forceFill(['otp' => null, 'otp_expires_at' => null])->save();
-        auth()->login($user, remember: true);
-
-        $this->resetForms();
-        $this->reloadAfterLogin();
+        $this->loginOrChallenge($user);
     }
 
     public function sendForgotOtp(): void

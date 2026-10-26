@@ -25,3 +25,11 @@ Route::middleware([
 // Client-side device signals (screen size/density, timezone) that DeviceTracker
 // can't read from headers alone — fired async from the layout, never blocks render.
 Route::post('/device-signal', [\App\Http\Controllers\DeviceSignalController::class, 'store'])->name('device-signal');
+
+// Email / SMS code option on the two-factor login challenge (alongside
+// Fortify's authenticator-app form). Same guest + throttle as Fortify's own route.
+Route::middleware(['guest:' . config('fortify.guard'), 'throttle:' . config('fortify.limiters.two-factor', 'two-factor')])
+    ->prefix('two-factor-challenge')->name('two-factor.code.')->group(function () {
+        Route::post('/send', [\App\Http\Controllers\Auth\TwoFactorCodeController::class, 'send'])->name('send');
+        Route::post('/code', [\App\Http\Controllers\Auth\TwoFactorCodeController::class, 'verify'])->name('verify');
+    });

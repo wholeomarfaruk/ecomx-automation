@@ -446,7 +446,9 @@ class Checkout extends Component
         $existingCustomer = Customer::where('phone', $this->phone)->first();
 
         if ($existingCustomer) {
-            if ($existingCustomer->user) {
+            // Never auto-login a two-factor protected account (staff/admins)
+            // from a phone number alone — the order still goes to the customer.
+            if ($existingCustomer->user && ! $existingCustomer->user->hasAnyTwoFactor()) {
                 auth()->login($existingCustomer->user, remember: true);
             }
 
