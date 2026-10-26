@@ -68,7 +68,7 @@ class VerificationCodes
             }
         } else {
             try {
-                $sent = Sms::sendOTP(PhoneNumber::local($user->phone), $code)->success;
+                $sent = Sms::sendOTP(PhoneNumber::local($user->phone), $code, self::CODE_TTL_MINUTES)->success;
             } catch (\Throwable $e) {
                 Log::warning('Verification code SMS failed', ['user_id' => $user->id, 'scope' => $scope, 'error' => $e->getMessage()]);
                 $sent = false;

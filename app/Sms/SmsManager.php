@@ -57,9 +57,10 @@ class SmsManager extends Manager
         return $this->dispatchOrSendNow(new SmsMessage($to, $message, context: $context));
     }
 
-    public function sendOTP(string $to, string $code): SmsResponse
+    /** Storefront login / forgot-password codes last 5 minutes; callers with a different lifetime pass it. */
+    public function sendOTP(string $to, string $code, int $expiresInMinutes = 5): SmsResponse
     {
-        return $this->sendWithTemplate('otp', $to, ['code' => $code], 'otp');
+        return $this->sendWithTemplate('otp', $to, ['code' => $code, 'expires_in' => (string) $expiresInMinutes], 'otp');
     }
 
     public function sendOrder(string $to, array $data): SmsResponse

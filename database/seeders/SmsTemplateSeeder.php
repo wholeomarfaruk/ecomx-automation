@@ -13,42 +13,42 @@ class SmsTemplateSeeder extends Seeder
             [
                 'key' => 'otp',
                 'label' => 'OTP Verification',
-                'body' => 'Your verification code is {code}. It will expire in 5 minutes.',
+                'body' => '{code} is your {site_name} verification code. Valid for {expires_in} minutes. Do not share it with anyone.',
             ],
             [
                 'key' => 'welcome',
                 'label' => 'Welcome',
-                'body' => 'Welcome to {app_name}, {name}! We are glad to have you with us.',
+                'body' => 'Welcome to {site_name}, {name}! We are glad to have you with us. {site_url}',
             ],
             [
                 'key' => 'registration',
                 'label' => 'Registration',
-                'body' => 'Hi {name}, your account has been created successfully.',
+                'body' => 'Hi {name}, your {site_name} account has been created successfully. {site_url}',
             ],
             [
                 'key' => 'login',
                 'label' => 'Login Verification',
-                'body' => 'Your login verification code is {code}.',
+                'body' => '{code} is your {site_name} login code. Do not share it with anyone.',
             ],
             [
                 'key' => 'order_confirmation',
                 'label' => 'Order Confirmation',
-                'body' => 'Hi {name}, your order #{order_id} has been confirmed. Total: {amount}.',
+                'body' => 'Hi {name}, your {site_name} order #{order_id} has been confirmed. Total: {amount}.',
             ],
             [
                 'key' => 'order_processing',
                 'label' => 'Order Processing (auto)',
-                'body' => 'Dear {customer_name}, your order #{order_id} is being processed. Due: {due} Tk. Track: {website_tracking_url}',
+                'body' => 'Dear {customer_name}, your {site_name} order #{order_id} is being processed. Due: {due} Tk. Track: {website_tracking_url}',
             ],
             [
                 'key' => 'invoice',
                 'label' => 'Invoice',
-                'body' => 'Hi {name}, your invoice #{invoice_id} for {amount} is ready.',
+                'body' => 'Hi {name}, your {site_name} invoice #{invoice_id} for {amount} is ready.',
             ],
             [
                 'key' => 'password_reset',
                 'label' => 'Password Reset',
-                'body' => 'Your password reset code is {code}. If you did not request this, please ignore.',
+                'body' => '{code} is your {site_name} password reset code. If you did not request this, please ignore.',
             ],
         ];
 

@@ -5,7 +5,19 @@
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-6 py-5 border-b border-gray-100">
             <h2 class="text-sm font-semibold text-gray-900">{{ $editingId ? 'Edit Template' : 'New Template' }}</h2>
-            <p class="text-xs text-gray-400">Use {placeholders} in the body — e.g. {code}, {order_id}, {amount}</p>
+            <p class="text-xs text-gray-400">Use {placeholders} in the body — e.g. {code}, {order_id}, {amount}. A placeholder the sender doesn't fill is left out of the SMS.</p>
+            <p class="text-xs text-gray-400 mt-1">
+                Any template:
+                @foreach (\App\Models\SmsTemplate::globalPlaceholders() as $placeholder => $description)
+                    <code class="font-mono text-[11px] bg-gray-100 text-gray-600 rounded px-1" title="{{ $description }}">{{ '{' . $placeholder . '}' }}</code>
+                @endforeach
+            </p>
+            <p class="text-xs text-gray-400 mt-1">
+                Code templates (<code class="font-mono text-[11px]">otp</code>):
+                <code class="font-mono text-[11px] bg-gray-100 text-gray-600 rounded px-1">{code}</code>
+                <code class="font-mono text-[11px] bg-gray-100 text-gray-600 rounded px-1">{expires_in}</code>
+                — minutes the code stays valid.
+            </p>
             <p class="text-xs text-gray-400 mt-1">
                 Order templates:
                 @foreach (['order_id', 'customer_name', 'amount', 'paid', 'due', 'status', 'courier', 'tracking_number', 'tracking_url', 'website_tracking_url'] as $placeholder)

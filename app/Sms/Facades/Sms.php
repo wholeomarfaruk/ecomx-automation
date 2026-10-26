@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Facade;
 
 /**
  * @method static \App\Sms\DTO\SmsResponse send(string $to, string $message, string $context = 'custom')
- * @method static \App\Sms\DTO\SmsResponse sendOTP(string $to, string $code)
+ * @method static \App\Sms\DTO\SmsResponse sendOTP(string $to, string $code, int $expiresInMinutes = 5)
  * @method static \App\Sms\DTO\SmsResponse sendOrder(string $to, array $data)
  * @method static \App\Sms\DTO\SmsResponse sendInvoice(string $to, array $data)
  * @method static \App\Sms\DTO\SmsResponse sendNotification(string $to, string $message)
