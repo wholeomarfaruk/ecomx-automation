@@ -55,8 +55,8 @@
                     </div>
                 @endif
                 <div class="mt-4 text-sm text-gray-500">
-                    <p>Member since: {{ local_time($user->created_at)->format('M d, Y') }}</p>
-                    <p>Last updated: {{ local_time($user->updated_at)->format('M d, Y') }}</p>
+                    <p>Member since: {{ local_time($user->created_at)?->format('M d, Y') ?? '—' }}</p>
+                    <p>Last updated: {{ local_time($user->updated_at)?->format('M d, Y') ?? '—' }}</p>
                 </div>
             </div>
 
