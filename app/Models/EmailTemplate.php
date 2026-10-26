@@ -63,4 +63,22 @@ class EmailTemplate extends Model
 
         return true;
     }
+
+    /**
+     * Send right away, bypassing the queue — for time-critical mail like
+     * one-time codes, which are useless if they wait for a cron-driven worker.
+     * Throws on transport failure. Returns false when the template is missing/inactive.
+     */
+    public static function sendNow(string $key, string $to, array $data = []): bool
+    {
+        $template = static::where('key', $key)->where('is_active', true)->first();
+
+        if (! $template) {
+            return false;
+        }
+
+        Mail::to($to)->sendNow(new TemplatedMail($template, $data));
+
+        return true;
+    }
 }

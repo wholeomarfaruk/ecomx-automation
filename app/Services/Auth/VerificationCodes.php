@@ -2,7 +2,9 @@
 
 namespace App\Services\Auth;
 
+use App\Models\EmailLog;
 use App\Models\EmailTemplate;
+use App\Models\Setting;
 use App\Models\SmsGatewayConfig;
 use App\Models\User;
 use App\Sms\Facades\Sms;
@@ -60,25 +62,21 @@ class VerificationCodes
 
         $code = (string) random_int(100000, 999999);
 
-        try {
-            $sent = $channel === 'email'
-                ? EmailTemplate::send('otp', $user->email, [
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'code' => $code,
-                    'app_name' => config('app.name'),
-                    'year' => now()->year,
-                ])
-                : Sms::sendOTP(PhoneNumber::local($user->phone), $code)->success;
-        } catch (\Throwable $e) {
-            Log::warning('Verification code send failed', ['user_id' => $user->id, 'scope' => $scope, 'channel' => $channel, 'error' => $e->getMessage()]);
-            $sent = false;
-        }
+        if ($channel === 'email') {
+            if ($error = $this->sendEmail($user, $code)) {
+                return $error;
+            }
+        } else {
+            try {
+                $sent = Sms::sendOTP(PhoneNumber::local($user->phone), $code)->success;
+            } catch (\Throwable $e) {
+                Log::warning('Verification code SMS failed', ['user_id' => $user->id, 'scope' => $scope, 'error' => $e->getMessage()]);
+                $sent = false;
+            }
 
-        if (!$sent) {
-            return $channel === 'email'
-                ? 'Could not send the email. Check Email Configuration and that the "otp" email template is active.'
-                : 'Could not send the SMS. Check the SMS gateway and try again.';
+            if (!$sent) {
+                return 'Could not send the SMS. Check the SMS gateway and try again.';
+            }
         }
 
         RateLimiter::hit($cooldownKey, self::RESEND_COOLDOWN);
@@ -153,6 +151,55 @@ class VerificationCodes
         }
 
         return '•••••' . substr((string) $user->phone, -4);
+    }
+
+    /**
+     * Sent immediately (not queued) — a code that waits for the cron-driven
+     * queue worker is useless. Every attempt lands in Email → Logs so a
+     * mail-server failure is visible there; the screen only gets a generic
+     * message since the 2FA page is shown before login completes.
+     */
+    protected function sendEmail(User $user, string $code): ?string
+    {
+        $log = [
+            'mailer' => Setting::get('active_mailer', config('mail.default'), 'email'),
+            'to' => $user->email,
+            'subject' => 'Verification code',
+        ];
+
+        try {
+            $sent = EmailTemplate::sendNow('otp', $user->email, [
+                'name' => $user->name,
+                'email' => $user->email,
+                'code' => $code,
+                'app_name' => config('app.name'),
+                'year' => now()->year,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Verification code email failed', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+            $this->logEmail($log + ['status' => 'failed', 'error_message' => $e->getMessage()]);
+
+            return 'Could not send the email. The mail server rejected it — see Email → Logs for the reason.';
+        }
+
+        if (!$sent) {
+            $this->logEmail($log + ['status' => 'failed', 'error_message' => 'Email template "otp" is missing or inactive.']);
+
+            return 'Could not send the email: the "otp" email template is missing or inactive.';
+        }
+
+        $this->logEmail($log + ['status' => 'sent', 'sent_at' => now()]);
+
+        return null;
+    }
+
+    protected function logEmail(array $attributes): void
+    {
+        try {
+            EmailLog::create($attributes);
+        } catch (\Throwable $e) {
+            // Logging must never block sending a code.
+        }
     }
 
     protected function target(User $user, string $channel): ?string
