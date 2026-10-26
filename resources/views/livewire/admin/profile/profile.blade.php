@@ -1,127 +1,252 @@
 {{-- ======================== Page Layout Start From Here ======================== --}}
 <div x-data x-init="$store.pageName = { name: 'My Profile', slug: 'profile' }">
-    <div class="flex-1 w-full bg-white rounded-lg min-h-[80vh] p-6">
+    <div class="flex-1 w-full bg-white rounded-lg min-h-[80vh] p-4 sm:p-6">
         {{-- ======================== Content Start From Here ======================== --}}
-        <div class="max-w-4xl mx-auto space-y-6">
+        <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            {{-- Profile Overview --}}
-            <div class="bg-gray-50 rounded-lg p-6">
-                <h2 class="text-xl font-semibold text-gray-900 mb-4">Profile Overview</h2>
-                <div class="flex items-start space-x-6">
-                    <div class="flex-shrink-0">
-                        <div class="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center">
-                            <svg class="w-12 h-12 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                            </svg>
+            {{-- ======================== Left column ======================== --}}
+            <div class="space-y-6">
+
+                {{-- Profile Overview --}}
+                <div class="bg-gray-50 rounded-lg p-6 text-center">
+                    @php $savedAvatar = $user->avatar_id ? file_path($user->avatar_id, 'thumbnail') : null; @endphp
+                    <img src="{{ $savedAvatar ?? $user->initialsAvatarUrl() }}"
+                        onerror="this.onerror=null;this.src='{{ $user->initialsAvatarUrl() }}'"
+                        alt="{{ $user->name }}"
+                        class="w-24 h-24 mx-auto rounded-full object-cover border-4 border-white shadow">
+
+                    <h3 class="mt-3 text-xl font-bold text-gray-900 break-words">{{ $user->name }}</h3>
+                    <p class="text-sm text-gray-600 break-all">{{ $user->email }}</p>
+                    @if($user->phone)
+                        <p class="text-sm text-gray-600">{{ $user->country_code }} {{ $user->phone }}</p>
+                    @endif
+
+                    @if($user->roles->count() > 0)
+                        <div class="mt-3 flex flex-wrap justify-center gap-2">
+                            @foreach($user->roles as $role)
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    {{ $role->name }}
+                                </span>
+                            @endforeach
                         </div>
+                    @endif
+
+                    @if($user->bio)
+                        <p class="mt-4 text-sm text-gray-600 whitespace-pre-line text-left">{{ $user->bio }}</p>
+                    @endif
+                </div>
+
+                {{-- Account & Security --}}
+                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-base font-semibold text-gray-900">Account & Security</h2>
+                        <a href="{{ route('admin.settings') }}" wire:navigate
+                            class="text-xs font-medium text-indigo-600 hover:text-indigo-800">Security settings →</a>
                     </div>
-                    <div class="flex-1">
-                        <h3 class="text-2xl font-bold text-gray-900">{{ $user->name }}</h3>
-                        <p class="text-gray-600">{{ $user->email }}</p>
-                        @if($user->phone)
-                            <p class="text-gray-600">{{ $user->country_code }} {{ $user->phone }}</p>
-                        @endif
-                        @if($user->roles->count() > 0)
-                            <div class="mt-2 flex flex-wrap gap-2">
-                                @foreach($user->roles as $role)
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                        {{ $role->name }}
-                                    </span>
-                                @endforeach
+                    <dl class="space-y-3 text-sm">
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-gray-600">Email</dt>
+                            <dd>
+                                @if($user->email_verified_at)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Verified</span>
+                                @else
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Unverified</span>
+                                @endif
+                            </dd>
+                        </div>
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-gray-600">Phone</dt>
+                            <dd>
+                                @if($user->phone_verified_at)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Verified</span>
+                                @else
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Not verified</span>
+                                @endif
+                            </dd>
+                        </div>
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-gray-600">Two-factor auth</dt>
+                            <dd>
+                                @if($user->two_factor_confirmed_at)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Enabled</span>
+                                @else
+                                    <a href="{{ route('admin.settings') }}" wire:navigate
+                                        class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 hover:bg-amber-200">Off — enable</a>
+                                @endif
+                            </dd>
+                        </div>
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-gray-600">Password changed</dt>
+                            <dd class="text-gray-900">{{ local_time($user->password_set_at)?->format('M d, Y') ?? '—' }}</dd>
+                        </div>
+                        @if($user->panels->count() > 0)
+                            <div class="flex justify-between gap-4">
+                                <dt class="text-gray-600 shrink-0">Panels</dt>
+                                <dd class="flex flex-wrap justify-end gap-1">
+                                    @foreach($user->panels as $panel)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">{{ $panel->name }}</span>
+                                    @endforeach
+                                </dd>
                             </div>
                         @endif
-                        @if($user->email_verified_at)
-                            <p class="text-sm text-green-600 mt-1">✓ Email verified</p>
-                        @else
-                            <p class="text-sm text-red-600 mt-1">✗ Email not verified</p>
-                        @endif
-                        @if($user->phone_verified_at)
-                            <p class="text-sm text-green-600">✓ Phone verified</p>
-                        @else
-                            <p class="text-sm text-gray-500">Phone not verified</p>
-                        @endif
-                    </div>
-                </div>
-                @if($user->bio)
-                    <div class="mt-4">
-                        <h4 class="text-sm font-medium text-gray-900">Bio</h4>
-                        <p class="text-gray-600 mt-1">{{ $user->bio }}</p>
-                    </div>
-                @endif
-                @if($user->address)
-                    <div class="mt-4">
-                        <h4 class="text-sm font-medium text-gray-900">Address</h4>
-                        <p class="text-gray-600 mt-1">{{ $user->address }}</p>
-                    </div>
-                @endif
-                <div class="mt-4 text-sm text-gray-500">
-                    <p>Member since: {{ local_time($user->created_at)?->format('M d, Y') ?? '—' }}</p>
-                    <p>Last updated: {{ local_time($user->updated_at)?->format('M d, Y') ?? '—' }}</p>
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-gray-600">Member since</dt>
+                            <dd class="text-gray-900">{{ local_time($user->created_at)?->format('M d, Y') ?? '—' }}</dd>
+                        </div>
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-gray-600">Last updated</dt>
+                            <dd class="text-gray-900">{{ local_time($user->updated_at)?->format('M d, Y') ?? '—' }}</dd>
+                        </div>
+                    </dl>
                 </div>
             </div>
 
-            {{-- Edit Profile Form --}}
-            <div class="bg-white border border-gray-200 rounded-lg p-6">
-                <h2 class="text-xl font-semibold text-gray-900 mb-4">Edit Profile</h2>
-                <form wire:submit.prevent="updateProfile" class="space-y-6">
+            {{-- ======================== Right column ======================== --}}
+            <div class="lg:col-span-2 space-y-6">
 
-                    {{-- Name --}}
-                    <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-                        <input type="text" wire:model="name" id="name"
-                            class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                        @error('name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                {{-- Edit Profile Form --}}
+                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-semibold text-gray-900">Edit Profile</h2>
+                        <span wire:dirty class="text-xs font-medium text-amber-600">Unsaved changes</span>
                     </div>
+                    <form wire:submit.prevent="updateProfile" class="space-y-6">
 
-                    {{-- Email --}}
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                        <input type="email" wire:model="email" id="email"
-                            class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                        @error('email') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                    </div>
-
-                    {{-- Phone --}}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="country_code" class="block text-sm font-medium text-gray-700">Country Code</label>
-                            <input type="text" wire:model="country_code" id="country_code" placeholder="+88" 
-                                class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                            @error('country_code') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        {{-- Avatar --}}
+                        <div class="max-w-xs">
+                            <x-media-picker-field field="avatar_id" :value="$avatar_id" label="Profile Photo" type="image" placeholder="Select photo" />
+                            @error('avatar_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
-                        <div>
-                            <label for="phone" class="block text-sm font-medium text-gray-700">Phone</label>
-                            <input type="text" wire:model="phone" id="phone"
-                                class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                            @error('phone') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {{-- Name --}}
+                            <div>
+                                <label for="name" class="block text-sm font-medium text-gray-700">Name <span class="text-red-500">*</span></label>
+                                <input type="text" wire:model="name" id="name" autocomplete="name"
+                                    class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                @error('name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
+                            {{-- Gender --}}
+                            <div>
+                                <label for="gender" class="block text-sm font-medium text-gray-700">Gender</label>
+                                <select wire:model="gender" id="gender"
+                                    class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    <option value="">Prefer not to say</option>
+                                    @foreach($genders as $g)
+                                        <option value="{{ $g->slug }}">{{ $g->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('gender') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
                         </div>
-                    </div>
 
-                    {{-- Address --}}
-                    <div>
-                        <label for="address" class="block text-sm font-medium text-gray-700">Address</label>
-                        <textarea wire:model="address" id="address" rows="3"
-                            class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
-                        @error('address') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                    </div>
+                        {{-- Email --}}
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700">Email <span class="text-red-500">*</span></label>
+                            <input type="email" wire:model="email" id="email" autocomplete="email"
+                                class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            @error('email') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
 
-                    {{-- Bio --}}
-                    <div>
-                        <label for="bio" class="block text-sm font-medium text-gray-700">Bio</label>
-                        <textarea wire:model="bio" id="bio" rows="4"
-                            class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
-                        @error('bio') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                    </div>
+                            {{-- Shown client-side only when the email differs from the saved one --}}
+                            <div data-original="{{ strtolower($user->email) }}"
+                                x-show="($wire.email ?? '').trim().toLowerCase() !== $el.dataset.original"
+                                x-cloak
+                                class="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3">
+                                <label for="email_password" class="block text-sm font-medium text-amber-900">Current password</label>
+                                <p class="text-xs text-amber-700">Required to change your login email.</p>
+                                <input type="password" wire:model="email_password" id="email_password" autocomplete="current-password"
+                                    class="mt-2 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            </div>
+                            @error('email_password') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        </div>
 
-                    <div class="flex justify-end">
-                        <button type="submit"
-                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            Update Profile
-                        </button>
+                        {{-- Phone --}}
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label for="country_code" class="block text-sm font-medium text-gray-700">Country Code</label>
+                                <input type="text" wire:model="country_code" id="country_code" placeholder="+88"
+                                    class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                @error('country_code') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div class="col-span-2">
+                                <label for="phone" class="block text-sm font-medium text-gray-700">Phone</label>
+                                <input type="tel" wire:model="phone" id="phone" autocomplete="tel-national"
+                                    class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                @error('phone') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+
+                        {{-- Address --}}
+                        <div>
+                            <label for="address" class="block text-sm font-medium text-gray-700">Address</label>
+                            <textarea wire:model="address" id="address" rows="2" autocomplete="street-address"
+                                class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
+                            @error('address') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        </div>
+
+                        {{-- Bio --}}
+                        <div x-data="{ len: ($wire.bio ?? '').length }">
+                            <div class="flex items-center justify-between">
+                                <label for="bio" class="block text-sm font-medium text-gray-700">Bio</label>
+                                <span class="text-xs text-gray-400" :class="len > 1000 && 'text-red-600'" x-text="len + ' / 1000'"></span>
+                            </div>
+                            <textarea wire:model="bio" id="bio" rows="4" x-on:input="len = $el.value.length"
+                                class="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
+                            @error('bio') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div class="flex justify-end gap-3">
+                            <button type="button" wire:click="resetForm" wire:dirty
+                                class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                Discard
+                            </button>
+                            <button type="submit" wire:loading.attr="disabled" wire:target="updateProfile"
+                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-60">
+                                <span wire:loading.remove wire:target="updateProfile">Update Profile</span>
+                                <span wire:loading wire:target="updateProfile">Saving…</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                {{-- Recent Activity --}}
+                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-base font-semibold text-gray-900">My Recent Activity</h2>
+                        @can('activity_log.view')
+                            <a href="{{ route('admin.activity-log') }}" wire:navigate
+                                class="text-xs font-medium text-indigo-600 hover:text-indigo-800">Full log →</a>
+                        @endcan
                     </div>
-                </form>
+                    @forelse($recentActivities as $activity)
+                        @php $ua = \App\Models\ActivityLog::parseUserAgent($activity->user_agent); @endphp
+                        <div wire:key="activity-{{ $activity->id }}" class="flex items-start justify-between gap-4 py-3 border-t border-gray-100 first:border-t-0 first:pt-0">
+                            <div class="min-w-0">
+                                <p class="text-sm text-gray-900 break-words">
+                                    @if($activity->event)
+                                        <span class="inline-flex items-center px-1.5 py-0.5 mr-1 rounded text-[10px] font-semibold uppercase bg-gray-100 text-gray-700">{{ $activity->event }}</span>
+                                    @endif
+                                    {{ $activity->description }}
+                                    @if($activity->subject_type)
+                                        <span class="text-gray-500">· {{ class_basename($activity->subject_type) }} #{{ $activity->subject_id }}</span>
+                                    @endif
+                                </p>
+                                @if($activity->ip_address || $ua['browser'])
+                                    <p class="text-xs text-gray-500 mt-0.5">
+                                        {{ collect([$activity->ip_address, $ua['browser'] ? $ua['browser'] . ' on ' . $ua['os'] : null])->filter()->implode(' · ') }}
+                                    </p>
+                                @endif
+                            </div>
+                            <time class="text-xs text-gray-500 whitespace-nowrap" title="{{ local_time($activity->created_at)?->format('M d, Y h:i A') }}">
+                                {{ $activity->created_at?->diffForHumans() ?? '—' }}
+                            </time>
+                        </div>
+                    @empty
+                        <p class="text-sm text-gray-500">No activity recorded yet.</p>
+                    @endforelse
+                </div>
             </div>
-
 
         </div>
         {{-- ======================== Content End Here ======================== --}}

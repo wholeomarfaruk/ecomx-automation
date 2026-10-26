@@ -38,7 +38,7 @@
         <div x-data="{ open: false }" class="relative">
             <button @click="open = !open" @click.outside="open = false"
                 class="flex items-center gap-2 rounded-full p-1 pr-2 hover:bg-gray-100 transition focus:outline-none">
-                <img src="{{ 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) . '&background=111827&color=ffffff&bold=true' }}"
+                <img src="{{ auth()->user()->avatarUrl() }}" onerror="this.onerror=null;this.src='{{ auth()->user()->initialsAvatarUrl() }}'"
                     alt="Profile" class="w-8 h-8 rounded-full object-cover border border-gray-200">
                 <span class="hidden sm:block text-sm font-medium text-gray-700 max-w-[10rem] truncate">
                     {{ auth()->user()->name }}

@@ -146,4 +146,19 @@ class User extends Authenticatable
         return $this->getRoleNames()->first();
     }
 
+    /**
+     * Avatar thumbnail URL, falling back to a generated initials avatar.
+     * Memoized per instance so topbar + sidebar share one lookup.
+     */
+    public function avatarUrl(): string
+    {
+        return once(fn () => ($this->avatar_id ? file_path($this->avatar_id, 'thumbnail') : null)
+            ?? $this->initialsAvatarUrl());
+    }
+
+    public function initialsAvatarUrl(): string
+    {
+        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=111827&color=ffffff&bold=true';
+    }
+
 }

@@ -1205,7 +1205,7 @@
                         'justify-between': $store.sidebar.full
                     }">
                     <div class="flex items-center gap-3 overflow-hidden">
-                        <img src="{{ 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) . '&background=111827&color=ffffff&bold=true' }}"
+                        <img src="{{ auth()->user()->avatarUrl() }}" onerror="this.onerror=null;this.src='{{ auth()->user()->initialsAvatarUrl() }}'"
                             alt="Profile"
                             class="w-10 h-10 rounded-full object-cover border border-gray-700 shrink-0">
                         <div x-cloak x-show="$store.sidebar.full" x-transition class="min-w-0">

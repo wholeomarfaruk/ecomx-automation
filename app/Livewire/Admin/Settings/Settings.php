@@ -80,6 +80,7 @@ class Settings extends Component
 
         $this->user->update([
             'password' => Hash::make($this->password),
+            'password_set_at' => now(),
         ]);
 
         $this->reset(['current_password', 'password', 'password_confirmation']);
