@@ -443,8 +443,12 @@
         let productSortable = null;
 
         function initProductSortable() {
-            if (productSortable) productSortable.destroy();
             const el = document.getElementById('category-product-list');
+            // The list is added (not updated) when the modal opens, so re-check after every morph
+            // and only rebind when the <ul> element itself has changed.
+            if (productSortable && productSortable.el === el) return;
+            if (productSortable) productSortable.destroy();
+            productSortable = null;
             if (!el) return;
             productSortable = new window.Sortable(el, {
                 handle: '.drag-handle',
@@ -464,10 +468,8 @@
             if (el.id === 'category-tree-root' || el.closest?.('#category-tree-root')) {
                 initSortables();
             }
-            if (el.id === 'category-product-list' || el.closest?.('#category-product-list')) {
-                initProductSortable();
-            }
         });
+        Livewire.hook('morphed', () => initProductSortable());
     </script>
     @endscript
 
