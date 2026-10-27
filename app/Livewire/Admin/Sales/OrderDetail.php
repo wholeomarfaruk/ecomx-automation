@@ -11,6 +11,7 @@ use App\Actions\Accounts\RefundOrder;
 use App\Actions\Accounts\ReverseOrder;
 use App\Actions\Sales\DuplicateOrder;
 use App\Actions\Sales\PackOrderItem;
+use App\Actions\Sales\RecordOrderReturns;
 use App\Enums\Sales\CourierStatus;
 use App\Enums\Sales\FulfillmentStatus;
 use App\Enums\Sales\OrderPaymentType;
@@ -645,67 +646,21 @@ class OrderDetail extends Component
     public function saveReturns(): void
     {
         $order = Order::with('items')->findOrFail($this->orderId);
-        $stockService = app(StockService::class);
-        $restockOnReturn = (bool) Setting::get('restock_on_cancel_or_return', true, 'inventory');
-        $snapshot = fn (Order $o) => [
-            'returned' => $o->items->mapWithKeys(fn (OrderItem $i) => [$i->product_name => (float) $i->returned_quantity])->all(),
-            'total'    => (float) $o->total_amount,
-            'due'      => (float) $o->due_amount,
-            'payment'  => $o->payment_status->value,
-        ];
-        $before = $snapshot($order);
+        $before = RecordOrderReturns::snapshot($order);
 
-        $hasBeenCompleted = AccountsCustomerInvoice::where('order_id', $order->id)->exists();
+        app(RecordOrderReturns::class)->handle($order, $this->returnedQuantities);
 
-        DB::transaction(function () use ($order, $stockService, $restockOnReturn, $hasBeenCompleted) {
-            foreach ($order->items as $item) {
-                $value = $this->returnedQuantities[$item->id] ?? '0';
-                $qty   = min((float) $value, (float) $item->quantity);
-                $qty   = max(0, $qty);
-
-                $item->update(['returned_quantity' => $qty]);
-            }
-
-            // Compute the accounting reversal delta BEFORE restocking —
-            // PostOrderReturn derives "newly returned" from the same
-            // type='return' inventory ledger that restockReturnedItem() is
-            // about to write, so it must run first or every delta looks
-            // already-consumed.
-            if ($hasBeenCompleted) {
-                app(PostOrderReturn::class)->handle($order->fresh(['items']), now()->toDateString());
-            }
-
-            if ($restockOnReturn) {
-                foreach ($order->items as $item) {
-                    $qty = (float) $item->fresh()->returned_quantity;
-
-                    if ($qty > 0) {
-                        $stockService->restockReturnedItem($item, $qty);
-                    }
-                }
-            }
-        });
-
-        $order->syncReturnStatus();
-
-        // Returned units come off the total — e.g. 3 sent, 1 kept and paid for → nothing due.
-        $order->recalculateTotals();
         $order->refresh();
-
-        if ((float) $order->paid_amount > 0) {
-            $order->update(['payment_status' => $order->due_amount > 0 ? PaymentStatus::PARTIAL : PaymentStatus::PAID]);
-        }
-
         $this->status = $order->status->value;
         $this->paymentStatus = $order->payment_status->value;
 
-        $stockService->releaseBooking($order->fresh(['items']), 'unbooked_returned');
+        app(StockService::class)->releaseBooking($order->fresh(['items']), 'unbooked_returned');
 
         activity('sales')
             ->causedBy(auth()->user())
             ->performedOn($order)
             ->event('updated')
-            ->withProperties(['changes' => ['before' => $before, 'after' => $snapshot($order->fresh(['items']))]])
+            ->withProperties(['changes' => ['before' => $before, 'after' => RecordOrderReturns::snapshot($order->fresh(['items']))]])
             ->log("Returns recorded for Order #{$order->id}");
 
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Returns saved']);

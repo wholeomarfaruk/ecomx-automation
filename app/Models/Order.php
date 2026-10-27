@@ -299,6 +299,24 @@ class Order extends Model
         $this->save();
     }
 
+    /** Whether this order's sale has been posted to accounts — its money can't be edited freely after that. */
+    public function salePosted(): bool
+    {
+        return $this->journalEntries()->where('purpose', 'like', 'sale%')->exists();
+    }
+
+    /**
+     * A paid order's payment status follows its due (after a return or a
+     * charges correction): something still due → Partial, nothing → Paid.
+     * An order nothing was paid on keeps its status.
+     */
+    public function syncPaymentStatus(): void
+    {
+        if ((float) $this->paid_amount > 0) {
+            $this->update(['payment_status' => (float) $this->due_amount > 0 ? PaymentStatus::PARTIAL : PaymentStatus::PAID]);
+        }
+    }
+
     /**
      * A delivered order with some items coming back is the leftover of a
      * partial delivery — it stays DELIVERED with a partial fulfillment

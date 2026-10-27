@@ -307,7 +307,7 @@
                                             @if($order->status === \App\Enums\Sales\OrderStatus::RETURNING
                                                 || ($order->status === \App\Enums\Sales\OrderStatus::DELIVERED && $order->courier_status === \App\Enums\Sales\CourierStatus::RETURNING))
                                                 <button wire:click="markReturnReceived({{ $order->id }})" @click="open = false" type="button"
-                                                    wire:confirm="Parcel for Order #{{ $order->id }} is back in your hands? The order becomes Returned and its stock is put back."
+                                                    wire:confirm="Parcel for Order #{{ $order->id }} is back in your hands? Its stock is put back — if the money doesn't add up you'll get to fix it first."
                                                     class="flex items-center gap-2.5 w-full px-4 py-2 text-orange-700 hover:bg-orange-50 transition">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"/>
@@ -611,6 +611,8 @@
     {{-- Courier booking: its own component, so it doesn't re-render this whole page. --}}
     <livewire:admin.sales.courier-booking-modal />
     <livewire:admin.sales.send-order-notification-modal />
+    {{-- "Return received" whose money doesn't add up — fix items / delivery charge / discount before receiving. --}}
+    <livewire:admin.sales.receive-return-modal />
     @if ($fraudEnabled)
         <livewire:admin.sales.fraud-check-modal />
     @endif

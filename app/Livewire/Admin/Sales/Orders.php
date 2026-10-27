@@ -3,8 +3,8 @@
 namespace App\Livewire\Admin\Sales;
 
 use App\Actions\Sales\DeleteOrder;
+use App\Actions\Sales\ReceiveReturn;
 use App\Enums\Sales\CourierStatus;
-use App\Enums\Sales\FulfillmentStatus;
 use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\OrderStatus;
 use App\Enums\Sales\PaymentStatus;
@@ -18,6 +18,7 @@ use App\Models\Setting;
 use App\Services\FraudShield\FraudShield;
 use App\Services\FraudShield\FraudShieldSettings;
 use App\Services\StockService;
+use DomainException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
@@ -90,48 +91,40 @@ class Orders extends Component
     /**
      * The returned parcel is physically back with the shop — only now is the
      * order Returned and its stock put back (the courier's own "returned"
-     * update leaves it in Returning). Same path as choosing Returned in the
-     * status dropdown.
+     * update leaves it in Returning). When the money adds up (nothing paid,
+     * exactly the delivery charge paid, or a partial delivery whose kept
+     * items match what was collected) it's received straight away;
+     * otherwise the receive-return modal opens to sort out items, delivery
+     * charge and discount first (see ReceiveReturn).
      */
     public function markReturnReceived(int $orderId): void
     {
-        $order = Order::findOrFail($orderId);
+        $order = Order::with('items')->findOrFail($orderId);
 
-        // Partial delivery's leftover coming back — the order stays Delivered, only the courier status moves.
-        if ($order->status === OrderStatus::DELIVERED && $order->courier_status === CourierStatus::RETURNING) {
-            $order->forceFill([
-                'courier_status' => CourierStatus::RETURNED,
-                'courier_status_updated_at' => now(),
-            ])->save();
-
-            $this->dispatch('toast', ['type' => 'success', 'message' => 'Return received']);
+        if (! ReceiveReturn::awaiting($order)) {
+            $this->dispatch('toast', ['type' => 'error', 'message' => "Order #{$orderId} has no returned parcel waiting."]);
 
             return;
         }
 
-        if ($order->status !== OrderStatus::RETURNING) {
-            $this->dispatch('toast', ['type' => 'error', 'message' => "Order #{$orderId} isn't in Returning."]);
+        $receive = app(ReceiveReturn::class);
+        $check = $receive->assess($order);
+
+        if (! $check['clean']) {
+            $this->dispatch('open-receive-return', orderId: $orderId);
 
             return;
         }
 
-        $this->updateOrderStatus($orderId, OrderStatus::RETURNED->value);
+        try {
+            $receive->handle($order, $check['returned']);
+        } catch (DomainException|InsufficientStockException $e) {
+            $this->dispatch('toast', ['type' => 'error', 'message' => $e->getMessage()]);
 
-        $order->refresh();
-
-        if ($order->status !== OrderStatus::RETURNED) {
             return;
         }
 
-        // Nothing paid → failed; anything paid (e.g. only the delivery charge on a
-        // paid return) → paid, since a returned order has nothing left due.
-        // Fully paid stays paid — the dashboard flags it for a refund.
-        $order->forceFill([
-            'courier_status' => CourierStatus::RETURNED,
-            'courier_status_updated_at' => now(),
-            'fulfillment_status' => FulfillmentStatus::UNFULFILLED,
-            'payment_status' => (float) $order->paid_amount <= 0 ? PaymentStatus::FAILED : PaymentStatus::PAID,
-        ])->save();
+        $this->dispatch('toast', ['type' => 'success', 'message' => "Order #{$orderId}: return received"]);
     }
 
     public function updateOrderStatus(int $orderId, string $status): void
@@ -376,6 +369,12 @@ class Orders extends Component
     /** The Pack modal packed an order — re-render so its packed count / posting state update. */
     #[On('order-packed')]
     public function refreshAfterPacking(): void
+    {
+    }
+
+    /** The receive-return modal received a parcel — re-render so the row's status/money update. */
+    #[On('order-return-received')]
+    public function refreshAfterReturn(): void
     {
     }
 

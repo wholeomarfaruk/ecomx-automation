@@ -5,14 +5,12 @@ namespace App\Livewire\Admin\Sales;
 use App\Actions\Sales\PackOrderItem;
 use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\OrderStatus;
-use App\Enums\Sales\PaymentStatus;
 use App\Exceptions\Inventory\InsufficientStockException;
 use App\Exceptions\Sales\CouponNotApplicableException;
 use App\Livewire\Concerns\QuickAddsCustomer;
 use App\Models\CouponUsage;
 use App\Models\Customer;
 use App\Models\DeliveryAddress;
-use App\Models\JournalEntry;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -95,7 +93,7 @@ class OrderEditor extends Component
     public static function isEditable(Order $order): bool
     {
         return in_array($order->status, [OrderStatus::PENDING, OrderStatus::CONFIRMED, OrderStatus::PROCESSING], true)
-            && ! static::salePosted($order);
+            && ! $order->salePosted();
     }
 
     /**
@@ -106,16 +104,7 @@ class OrderEditor extends Component
      */
     public static function chargesEditable(Order $order): bool
     {
-        return ! static::salePosted($order);
-    }
-
-    protected static function salePosted(Order $order): bool
-    {
-        return JournalEntry::query()
-            ->where('source_type', Order::class)
-            ->where('source_id', $order->id)
-            ->where('purpose', 'like', 'sale%')
-            ->exists();
+        return ! $order->salePosted();
     }
 
     /** A line that's been packed from a batch, delivered or returned can't change. */
@@ -555,11 +544,7 @@ class OrderEditor extends Component
         }
 
         // A paid order's status follows the new due (e.g. delivery charge corrected to what the courier collected → Paid).
-        $order->refresh();
-
-        if ((float) $order->paid_amount > 0) {
-            $order->update(['payment_status' => $order->due_amount > 0 ? PaymentStatus::PARTIAL : PaymentStatus::PAID]);
-        }
+        $order->refresh()->syncPaymentStatus();
 
         $this->chargesModal = false;
         $this->saved($order, $message, array_filter([
