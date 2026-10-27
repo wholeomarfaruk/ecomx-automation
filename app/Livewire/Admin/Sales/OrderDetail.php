@@ -120,6 +120,12 @@ class OrderDetail extends Component
     {
         $order = Order::with('items')->findOrFail($this->orderId);
 
+        // A charges correction can flip the payment status — keep the Status card in step,
+        // or its "Update Status" would write the stale value back.
+        $this->status            = $order->status->value;
+        $this->paymentStatus     = $order->payment_status->value;
+        $this->fulfillmentStatus = $order->fulfillment_status->value;
+
         $this->returnedQuantities = [];
         $this->deliveredQuantities = [];
 
@@ -641,6 +647,13 @@ class OrderDetail extends Component
         $order = Order::with('items')->findOrFail($this->orderId);
         $stockService = app(StockService::class);
         $restockOnReturn = (bool) Setting::get('restock_on_cancel_or_return', true, 'inventory');
+        $snapshot = fn (Order $o) => [
+            'returned' => $o->items->mapWithKeys(fn (OrderItem $i) => [$i->product_name => (float) $i->returned_quantity])->all(),
+            'total'    => (float) $o->total_amount,
+            'due'      => (float) $o->due_amount,
+            'payment'  => $o->payment_status->value,
+        ];
+        $before = $snapshot($order);
 
         $hasBeenCompleted = AccountsCustomerInvoice::where('order_id', $order->id)->exists();
 
@@ -692,6 +705,7 @@ class OrderDetail extends Component
             ->causedBy(auth()->user())
             ->performedOn($order)
             ->event('updated')
+            ->withProperties(['changes' => ['before' => $before, 'after' => $snapshot($order->fresh(['items']))]])
             ->log("Returns recorded for Order #{$order->id}");
 
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Returns saved']);
@@ -708,7 +722,8 @@ class OrderDetail extends Component
     {
         $shipment = Order::findOrFail($this->orderId)->courierShipments()->with('courier.cashAccount')->findOrFail($shipmentId);
         $charge = round(max(0.0, (float) ($this->shipmentReturnCharges[$shipmentId] ?? 0)), 2);
-        $delta = round($charge - (float) $shipment->return_charge, 2);
+        $previous = (float) $shipment->return_charge;
+        $delta = round($charge - $previous, 2);
 
         if ($delta == 0.0) {
             return;
@@ -742,6 +757,7 @@ class OrderDetail extends Component
             ->causedBy(auth()->user())
             ->performedOn($shipment->order)
             ->event('updated')
+            ->withProperties(['changes' => ['before' => ['return_charge' => $previous], 'after' => ['return_charge' => $charge]]])
             ->log("Return charge {$charge} saved for {$shipment->courier?->name} parcel {$shipment->tracking_number} — Order #{$shipment->order_id}");
 
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Return charge saved']);

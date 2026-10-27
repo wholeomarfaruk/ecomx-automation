@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Sales;
 use App\Actions\Sales\PackOrderItem;
 use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\OrderStatus;
+use App\Enums\Sales\PaymentStatus;
 use App\Exceptions\Inventory\InsufficientStockException;
 use App\Exceptions\Sales\CouponNotApplicableException;
 use App\Livewire\Concerns\QuickAddsCustomer;
@@ -65,6 +66,8 @@ class OrderEditor extends Component
     public array $charges = [];
     /** Coupon (shipping-discount coupons — CouponShippingService), applied/removed immediately. */
     public string $couponCode = '';
+    /** Why charges are being corrected after shipping — required then, logged with the change. */
+    public string $adjustReason = '';
 
     // Customer & addresses
     public bool $customerModal = false;
@@ -92,11 +95,27 @@ class OrderEditor extends Component
     public static function isEditable(Order $order): bool
     {
         return in_array($order->status, [OrderStatus::PENDING, OrderStatus::CONFIRMED, OrderStatus::PROCESSING], true)
-            && ! JournalEntry::query()
-                ->where('source_type', Order::class)
-                ->where('source_id', $order->id)
-                ->where('purpose', 'like', 'sale%')
-                ->exists();
+            && ! static::salePosted($order);
+    }
+
+    /**
+     * Shipping/discount/tax/charges can still be corrected after shipping
+     * (e.g. the courier's real delivery charge differed) — until a sale is
+     * posted to accounts, since the books would no longer match. Such a
+     * correction needs a reason, which goes in the order's log.
+     */
+    public static function chargesEditable(Order $order): bool
+    {
+        return ! static::salePosted($order);
+    }
+
+    protected static function salePosted(Order $order): bool
+    {
+        return JournalEntry::query()
+            ->where('source_type', Order::class)
+            ->where('source_id', $order->id)
+            ->where('purpose', 'like', 'sale%')
+            ->exists();
     }
 
     /** A line that's been packed from a batch, delivered or returned can't change. */
@@ -122,6 +141,17 @@ class OrderEditor extends Component
         }
 
         $this->dispatch('toast', ['type' => 'error', 'message' => 'This order can no longer be edited — use returns/refunds instead.']);
+
+        return false;
+    }
+
+    protected function ensureChargesEditable(Order $order): bool
+    {
+        if (static::chargesEditable($order)) {
+            return true;
+        }
+
+        $this->dispatch('toast', ['type' => 'error', 'message' => 'This order\'s sale is already posted to accounts — charges can\'t change now; use a refund instead.']);
 
         return false;
     }
@@ -418,10 +448,11 @@ class OrderEditor extends Component
     {
         $order = $this->order();
 
-        if (! $this->ensureEditable($order)) {
+        if (! $this->ensureChargesEditable($order)) {
             return;
         }
 
+        $this->adjustReason = '';
         $this->shippingAmount = (string) (float) $order->shipping_amount;
         $this->discountType = 'fixed';
         $this->discountValue = (string) (float) $order->discount_amount;
@@ -461,7 +492,15 @@ class OrderEditor extends Component
 
         $order = $this->order();
 
-        if (! $this->ensureEditable($order)) {
+        if (! $this->ensureChargesEditable($order)) {
+            return;
+        }
+
+        $isCorrection = ! static::isEditable($order);
+
+        if ($isCorrection && trim($this->adjustReason) === '') {
+            $this->addError('adjustReason', 'Say why — this order has already shipped, so the change is logged with a reason.');
+
             return;
         }
 
@@ -505,7 +544,7 @@ class OrderEditor extends Component
 
         // Shipping may have changed — re-size (or drop) an applied coupon.
         // (One toast at a time, so a dropped coupon goes in the saved message.)
-        $message = 'charges updated';
+        $message = $isCorrection ? "charges corrected after {$order->status->label()} — " . trim($this->adjustReason) : 'charges updated';
 
         if ($order->coupon_code) {
             $warning = $this->syncCoupon($order->fresh(), $order->coupon_code);
@@ -515,8 +554,16 @@ class OrderEditor extends Component
             }
         }
 
+        // A paid order's status follows the new due (e.g. delivery charge corrected to what the courier collected → Paid).
+        $order->refresh();
+
+        if ((float) $order->paid_amount > 0) {
+            $order->update(['payment_status' => $order->due_amount > 0 ? PaymentStatus::PARTIAL : PaymentStatus::PAID]);
+        }
+
         $this->chargesModal = false;
-        $this->saved($order, $message, [
+        $this->saved($order, $message, array_filter([
+            'reason' => $isCorrection ? trim($this->adjustReason) : null,
             'before' => $before,
             'after'  => [
                 'shipping' => (float) $this->shippingAmount,
@@ -524,7 +571,8 @@ class OrderEditor extends Component
                 'tax'      => (float) $this->taxAmount,
                 'charges'  => collect($this->charges)->map(fn ($c) => [trim($c['label']) => (float) $c['amount']])->all(),
             ],
-        ]);
+        ]));
+        $this->adjustReason = '';
     }
 
     public function applyCoupon(): void
@@ -845,6 +893,7 @@ class OrderEditor extends Component
         return view('livewire.admin.sales.order-editor', [
             'order'             => $order,
             'editable'          => $editable,
+            'chargesEditable'   => static::chargesEditable($order),
             'productOptions'    => $productOptions,
             'productImages'     => $productImages,
             'variantOptions'    => $variantOptions,

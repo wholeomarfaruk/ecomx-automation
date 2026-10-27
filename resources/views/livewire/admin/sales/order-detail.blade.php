@@ -62,7 +62,7 @@
                 <h2 class="text-sm font-semibold text-gray-800 mb-4">Items</h2>
                 <div class="space-y-3">
                     @foreach($order->items as $item)
-                        <div class="rounded-lg border border-gray-200 px-4 py-3">
+                        <div wire:key="order-item-{{ $item->id }}" class="rounded-lg border border-gray-200 px-4 py-3">
                             <div class="flex items-center justify-between gap-3">
                                 <div class="flex items-center gap-3 min-w-0">
                                         @php $thumb = $item->variant?->display_image ?? $item->product?->featured_image; @endphp
@@ -388,7 +388,7 @@
                 </div>
                 <ol class="relative border-l border-gray-200 ml-2 space-y-4">
                     @foreach($timeline as $entry)
-                        <li class="ml-4" x-data="{ open: false }">
+                        <li wire:key="timeline-{{ $entry->id }}" class="ml-4" x-data="{ open: false }">
                             <span class="absolute -left-1.5 mt-1.5 w-3 h-3 rounded-full border-2 border-white {{ match ($entry->event) { 'created', 'capi_sent' => 'bg-emerald-500', 'capi_failed' => 'bg-red-500', default => 'bg-indigo-400' } }}"></span>
                             <p class="text-sm text-gray-800">{{ $entry->description }}</p>
                             <p class="text-xs text-gray-400">
@@ -547,7 +547,7 @@
                                 $statusEnum = $shipment->statusEnum();
                                 $courierCaps = $shipment->courier->capabilities ?? [];
                             @endphp
-                            <div class="rounded-xl border border-gray-200 p-4">
+                            <div wire:key="shipment-{{ $shipment->id }}" class="rounded-xl border border-gray-200 p-4">
                                 <div class="flex items-start justify-between gap-3 mb-3">
                                     <div>
                                         <p class="text-sm font-semibold text-gray-800">{{ $shipment->courier->name }}</p>
@@ -635,7 +635,7 @@
                                         <div class="mt-3 space-y-3 border-l-2 border-gray-100 pl-4">
                                             @foreach($shipment->trackingEvents->sortByDesc('event_at') as $event)
                                                 @php $eventStatus = \App\Enums\Sales\CourierStatus::tryFrom($event->status); @endphp
-                                                <div class="relative">
+                                                <div wire:key="tracking-event-{{ $event->id }}" class="relative">
                                                     <span class="absolute -left-5 top-1 w-2 h-2 rounded-full bg-indigo-400"></span>
                                                     <p class="text-xs font-medium text-gray-700">{{ $eventStatus?->label() ?? $event->status }}</p>
                                                     @if($event->message)

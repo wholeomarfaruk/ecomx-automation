@@ -11,7 +11,7 @@
         <div class="grid grid-cols-2 gap-2">
             <button type="button" wire:click="openItemsModal" @disabled(! $editable)
                 class="px-3 py-2 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition disabled:opacity-40 disabled:cursor-not-allowed">Edit Items</button>
-            <button type="button" wire:click="openChargesModal" @disabled(! $editable)
+            <button type="button" wire:click="openChargesModal" @disabled(! $chargesEditable)
                 class="px-3 py-2 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition disabled:opacity-40 disabled:cursor-not-allowed">Charges &amp; Discount</button>
             <button type="button" wire:click="openCustomerModal" @disabled(! $editable)
                 class="px-3 py-2 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition disabled:opacity-40 disabled:cursor-not-allowed">Customer &amp; Address</button>
@@ -20,7 +20,12 @@
         </div>
 
         @unless($editable)
-            <p class="text-[11px] text-gray-400 mt-3">Items, charges and customer can be edited while the order is Pending, Confirmed or Processing. After that, use returns/refunds.</p>
+            <p class="text-[11px] text-gray-400 mt-3">
+                Items and customer can be edited while the order is Pending, Confirmed or Processing. After that, use returns/refunds.
+                @if($chargesEditable)
+                    Charges &amp; discount can still be corrected (with a reason, kept in the timeline).
+                @endif
+            </p>
         @endunless
 
         @if($order->customer_note || $order->admin_note)
@@ -191,7 +196,18 @@
                     </div>
                 </div>
 
-                @if($order->offers->isNotEmpty())
+                @if(! $editable)
+                    {{-- After shipping this is a correction (e.g. the courier's real delivery charge) — reason required, logged. --}}
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Reason for correction <span class="text-red-500">*</span></label>
+                        <input wire:model="adjustReason" type="text" maxlength="255" placeholder="e.g. Narayanganj delivery charge is 120, courier collected 2,370"
+                            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                        <p class="text-[11px] text-gray-400 mt-1">Order already {{ strtolower($order->status->label()) }} — the change and this reason are kept in the timeline.</p>
+                        @error('adjustReason') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                @endif
+
+                @if($editable && $order->offers->isNotEmpty())
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1.5">Applied Offers</label>
                         <div class="space-y-2">
@@ -213,6 +229,7 @@
                     </div>
                 @endif
 
+                @if($editable)
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1.5">Coupon <span class="text-gray-400 font-normal">(shipping discount — applies to the saved shipping charge)</span></label>
                     <div class="flex gap-2">
@@ -229,6 +246,7 @@
                     @endif
                     @error('couponCode') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>
+                @endif
 
                 <div>
                     <div class="flex items-center justify-between mb-2">
