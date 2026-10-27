@@ -76,8 +76,8 @@ class OrderDetail extends Component
     /** @var array<int, string> item_id => delivered_quantity */
     public array $deliveredQuantities = [];
 
-    public string $returnCharge = '';
-    public string $returnChargeCashAccountId = '';
+    /** @var array<int, string> courier_shipment_id => return_charge (what the courier kept for bringing that parcel back) */
+    public array $shipmentReturnCharges = [];
 
     public bool $packModal = false;
     public ?int $packingItemId = null;
@@ -633,18 +633,14 @@ class OrderDetail extends Component
      * reverses that slice's Sale/COGS via PostOrderReturn (partial-aware —
      * only the delta since the last save), releases any leftover booking
      * (normally already 0 by the time an order is completed, but harmless
-     * either way), and posts a return/RTO charge if one was entered.
+     * either way). The courier's return charge is per parcel — see
+     * saveShipmentReturnCharge().
      */
     public function saveReturns(): void
     {
         $order = Order::with('items')->findOrFail($this->orderId);
         $stockService = app(StockService::class);
         $restockOnReturn = (bool) Setting::get('restock_on_cancel_or_return', true, 'inventory');
-
-        if ($this->returnCharge !== '' && $this->returnChargeCashAccountId === '') {
-            $this->addError('returnChargeCashAccountId', 'Select which account the return charge was paid from.');
-            return;
-        }
 
         $hasBeenCompleted = AccountsCustomerInvoice::where('order_id', $order->id)->exists();
 
@@ -692,20 +688,6 @@ class OrderDetail extends Component
 
         $stockService->releaseBooking($order->fresh(['items']), 'unbooked_returned');
 
-        if ($this->returnCharge !== '' && (float) $this->returnCharge > 0) {
-            app(PostRtoFee::class)->handle(
-                order: $order,
-                courierExpenseAccountId: $this->accountId('5120'),
-                paidFromAccountId: (int) $this->returnChargeCashAccountId,
-                fee: (float) $this->returnCharge,
-                entryDate: now()->toDateString(),
-                description: "Return charge — Order #{$order->id}",
-            );
-        }
-
-        $this->returnCharge = '';
-        $this->returnChargeCashAccountId = '';
-
         activity('sales')
             ->causedBy(auth()->user())
             ->performedOn($order)
@@ -713,6 +695,56 @@ class OrderDetail extends Component
             ->log("Returns recorded for Order #{$order->id}");
 
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Returns saved']);
+    }
+
+    /**
+     * What the courier kept for bringing one parcel back (RTO / return
+     * charge) — the business's own cost, never the customer's, so the
+     * order's total and due don't move. With Accounts on, only the change
+     * since the last save is posted, against that courier's cash account
+     * (the courier deducts it from what it remits).
+     */
+    public function saveShipmentReturnCharge(int $shipmentId): void
+    {
+        $shipment = Order::findOrFail($this->orderId)->courierShipments()->with('courier.cashAccount')->findOrFail($shipmentId);
+        $charge = round(max(0.0, (float) ($this->shipmentReturnCharges[$shipmentId] ?? 0)), 2);
+        $delta = round($charge - (float) $shipment->return_charge, 2);
+
+        if ($delta == 0.0) {
+            return;
+        }
+
+        if ($this->accountsEnabled() && ! $shipment->courier?->cashAccount) {
+            $this->addError("shipmentReturnCharges.{$shipmentId}", "Set {$shipment->courier?->name}'s cash account in Courier Settings first.");
+            return;
+        }
+
+        DB::transaction(function () use ($shipment, $charge, $delta) {
+            $shipment->update(['return_charge' => $charge]);
+
+            if ($this->accountsEnabled()) {
+                app(PostRtoFee::class)->handle(
+                    order: $shipment->order,
+                    courierExpenseAccountId: $this->accountId('5120'),
+                    paidFromAccountId: $shipment->courier->cashAccount->id,
+                    fee: $delta,
+                    entryDate: now()->toDateString(),
+                    description: "Return charge — Order #{$shipment->order_id} ({$shipment->tracking_number})",
+                    // One entry per save — a corrected charge posts only the difference.
+                    purpose: "rto_fee_shipment_{$shipment->id}_" . now()->format('YmdHisu'),
+                );
+            }
+        });
+
+        $this->shipmentReturnCharges[$shipmentId] = $charge > 0 ? (string) $charge : '';
+
+        activity('sales')
+            ->causedBy(auth()->user())
+            ->performedOn($shipment->order)
+            ->event('updated')
+            ->log("Return charge {$charge} saved for {$shipment->courier?->name} parcel {$shipment->tracking_number} — Order #{$shipment->order_id}");
+
+        $this->dispatch('toast', ['type' => 'success', 'message' => 'Return charge saved']);
     }
 
     /**
@@ -900,6 +932,10 @@ class OrderDetail extends Component
         $canManageCourier = auth()->user()->can('courier_configuration.manage');
         $fraudEnabled = app(FraudShieldSettings::class)->ready();
 
+        foreach ($order->courierShipments as $shipment) {
+            $this->shipmentReturnCharges[$shipment->id] ??= (float) $shipment->return_charge > 0 ? (string) (float) $shipment->return_charge : '';
+        }
+
         return view('livewire.admin.sales.order-detail', [
             'order'               => $order,
             'fraudEnabled'        => $fraudEnabled,
@@ -912,6 +948,15 @@ class OrderDetail extends Component
             'courierStatuses'     => CourierStatus::cases(),
             'canManageCourier'    => $canManageCourier,
             'accountsEnabled'     => $this->accountsEnabled(),
+            'inventoryOn'         => ! app(StockService::class)->usesOwnStock(),
+            // For the inventory-off Kept/Returned picker's live "new total" preview.
+            'returnLines'         => $order->items->map(fn (OrderItem $item) => [
+                'id'       => $item->id,
+                'qty'      => (float) $item->quantity,
+                'total'    => $item->is_gift ? 0.0 : (float) $item->total_amount,
+                'returned' => (float) $item->returned_quantity,
+            ])->values(),
+            'returnFactor'        => $order->returnDiscountFactor(),
             'paymentMethods'      => array_filter(PaymentMethod::cases(), fn ($m) => $m !== PaymentMethod::STORE_CREDIT),
             'cashAccounts'        => Account::active()->whereIn('subtype', ['cash', 'bank', 'mobile_banking'])->orderBy('code')->get(),
             'packableBatches'     => $this->packableBatchesForCurrentItem(),

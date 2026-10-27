@@ -113,6 +113,41 @@
                                 </div>
                             @endif
 
+                            @if(! $inventoryOn)
+                                {{-- Inventory off: no batches/packing — just say what came back. Writes $wire.returnedQuantities locally; saved by "Save Returns" below. --}}
+                                <div class="mt-3 pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2"
+                                    x-data="{
+                                        max: @js((float) $item->quantity),
+                                        get r() { return Math.min(Math.max(parseFloat($wire.returnedQuantities[{{ $item->id }}]) || 0, 0), this.max) },
+                                        setTo(v) { $wire.returnedQuantities[{{ $item->id }}] = String(Math.min(Math.max(v, 0), this.max)) },
+                                    }">
+                                    <span class="text-xs font-medium"
+                                        :class="r >= max ? 'text-red-500' : (r > 0 ? 'text-orange-500' : 'text-emerald-600')"
+                                        x-text="r >= max ? 'Returned' : (r > 0 ? r + ' of ' + max + ' returned' : 'Customer kept')"></span>
+                                    @if((float) $item->quantity <= 1)
+                                        <div class="inline-flex rounded-lg border border-gray-200 p-0.5 text-xs font-medium">
+                                            <button type="button" @click="setTo(0)"
+                                                class="px-3 py-1 rounded-md transition"
+                                                :class="r === 0 ? 'bg-emerald-50 text-emerald-700' : 'text-gray-500 hover:text-gray-700'">Kept</button>
+                                            <button type="button" @click="setTo(max)"
+                                                class="px-3 py-1 rounded-md transition"
+                                                :class="r >= max ? 'bg-red-50 text-red-600' : 'text-gray-500 hover:text-gray-700'">Returned</button>
+                                        </div>
+                                    @else
+                                        <div class="inline-flex items-center gap-2 text-xs">
+                                            <span class="text-gray-500">Returned</span>
+                                            <div class="inline-flex items-center rounded-lg border border-gray-200">
+                                                <button type="button" @click="setTo(r - 1)" :disabled="r <= 0"
+                                                    class="w-7 h-7 text-gray-500 hover:bg-gray-50 disabled:opacity-40 rounded-l-lg">−</button>
+                                                <span class="w-8 text-center font-medium text-gray-800" x-text="r"></span>
+                                                <button type="button" @click="setTo(r + 1)" :disabled="r >= max"
+                                                    class="w-7 h-7 text-gray-500 hover:bg-gray-50 disabled:opacity-40 rounded-r-lg">+</button>
+                                            </div>
+                                            <span class="text-gray-400">of {{ rtrim(rtrim(number_format($item->quantity, 3), '0'), '.') }}</span>
+                                        </div>
+                                    @endif
+                                </div>
+                            @else
                             <div class="mt-3 pt-3 border-t border-gray-100 flex flex-wrap items-center gap-x-6 gap-y-2">
                                 <div class="flex items-center gap-2">
                                     <label class="text-xs text-gray-500 shrink-0">Delivered Qty</label>
@@ -151,35 +186,54 @@
                                     @endforeach
                                 </div>
                             @endif
+                            @endif
                         </div>
                     @endforeach
                 </div>
 
-                <div class="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
-                    <button wire:click="saveDeliveries" type="button"
-                        class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-                        Save Deliveries
-                    </button>
-                </div>
-
-                <div class="mt-3 pt-3 border-t border-gray-100 flex flex-wrap items-end gap-3">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Return / RTO Charge</label>
-                        <input wire:model="returnCharge" type="number" step="0.01" min="0" placeholder="0.00"
-                            class="w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                @if(! $inventoryOn)
+                    {{-- wire:key changes when saved returns change, so Alpine re-reads the saved state after Save Returns. --}}
+                    <div wire:key="returns-summary-{{ md5(json_encode($returnLines)) }}"
+                        x-data="{
+                            lines: @js($returnLines),
+                            factor: @js($returnFactor),
+                            fullTotal: @js((float) $order->total_amount + $order->returnedAmount()),
+                            paid: @js((float) $order->paid_amount),
+                            qty(l) { return Math.min(Math.max(parseFloat($wire.returnedQuantities[l.id]) || 0, 0), l.qty) },
+                            get returning() { return Math.round(this.lines.reduce((s, l) => s + (l.qty > 0 ? l.total * this.qty(l) / l.qty : 0), 0) * this.factor * 100) / 100 },
+                            get dirty() { return this.lines.some(l => Math.abs(this.qty(l) - l.returned) > 0.0005) },
+                            get allBack() { return this.lines.every(l => this.qty(l) >= l.qty) },
+                            get newTotal() { return this.fullTotal - this.returning },
+                            get due() { return this.allBack ? 0 : Math.max(0, this.newTotal - this.paid) },
+                            money(v) { return v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) },
+                        }"
+                        class="mt-4 rounded-xl border px-4 py-3 flex flex-wrap items-center justify-between gap-3 transition"
+                        :class="dirty ? 'border-amber-200 bg-amber-50' : 'border-gray-100 bg-gray-50'">
+                        <p class="text-sm text-gray-500" x-show="returning <= 0">
+                            Customer sent something back? Mark it <span class="font-medium text-red-500">Returned</span> above, then save.
+                        </p>
+                        <p class="text-sm text-gray-600" x-show="returning > 0" x-cloak>
+                            Returned <span class="font-medium text-red-500" x-text="'−' + money(returning)"></span>
+                            <span class="text-gray-300 mx-1">·</span> Total <span class="font-semibold text-gray-800" x-text="money(newTotal)"></span>
+                            <span class="text-gray-300 mx-1">·</span> Due <span class="font-semibold" :class="due > 0 ? 'text-red-500' : 'text-emerald-600'" x-text="money(due)"></span>
+                        </p>
+                        <button wire:click="saveReturns" wire:loading.attr="disabled" type="button" :disabled="! dirty"
+                            class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition disabled:opacity-40 disabled:cursor-not-allowed">
+                            Save Returns
+                        </button>
                     </div>
-                    <div class="flex-1 min-w-[180px]">
-                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Paid From</label>
-                        <x-searchable-select field="returnChargeCashAccountId" :value="$returnChargeCashAccountId"
-                            :options="$cashAccounts->mapWithKeys(fn ($a) => [(string) $a->id => $a->code . ' — ' . $a->name])"
-                            placeholder="— Select account —" search-placeholder="Search accounts…" />
-                        @error('returnChargeCashAccountId') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                @else
+                    <div class="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
+                        <button wire:click="saveDeliveries" type="button"
+                            class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                            Save Deliveries
+                        </button>
+                        <button wire:click="saveReturns" type="button"
+                            class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                            Save Returns
+                        </button>
                     </div>
-                    <button wire:click="saveReturns" type="button"
-                        class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-                        Save Returns
-                    </button>
-                </div>
+                @endif
 
                 <div class="flex flex-col items-end gap-1 mt-4 pt-4 border-t border-gray-100">
                     <div class="flex items-center gap-8 text-sm">
@@ -522,6 +576,24 @@
                                         <p class="text-gray-700">{{ $shipment->created_at->format('M d, Y H:i') }}</p>
                                     </div>
                                 </div>
+
+                                @if(! in_array($statusEnum, [\App\Enums\Sales\CourierStatus::PENDING, \App\Enums\Sales\CourierStatus::CANCELLED], true))
+                                    {{-- Per parcel: what the courier kept for bringing it back. The business's cost — the order total doesn't change. --}}
+                                    <div class="mb-3">
+                                        <div class="flex items-center gap-2">
+                                            <label for="return-charge-{{ $shipment->id }}" class="text-xs text-gray-500 shrink-0">Return charge</label>
+                                            <input id="return-charge-{{ $shipment->id }}" wire:model="shipmentReturnCharges.{{ $shipment->id }}"
+                                                wire:keydown.enter="saveShipmentReturnCharge({{ $shipment->id }})"
+                                                type="number" step="0.01" min="0" placeholder="0.00"
+                                                class="w-24 rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                            <button wire:click="saveShipmentReturnCharge({{ $shipment->id }})" wire:loading.attr="disabled" type="button"
+                                                class="px-2.5 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
+                                                Save
+                                            </button>
+                                        </div>
+                                        @error("shipmentReturnCharges.{$shipment->id}") <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                    </div>
+                                @endif
 
                                 @if($trackingUrl = $shipment->trackingUrl())
                                     <div x-data="{ copied: false }" class="flex items-center gap-2 rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 mb-3 text-xs">

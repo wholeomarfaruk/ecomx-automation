@@ -248,30 +248,30 @@ class Order extends Model
     public function returnedAmount(?\Illuminate\Support\Collection $items = null): float
     {
         $items ??= $this->items;
-        $itemsTotal = 0.0;
         $returned = 0.0;
 
         foreach ($items as $item) {
-            if ($item->is_gift) {
-                continue;
-            }
-
-            $line = (float) $item->total_amount;
             $qty = (float) $item->quantity;
-            $itemsTotal += $line;
 
-            if ($qty > 0) {
-                $returned += $line * min(max(0.0, (float) $item->returned_quantity), $qty) / $qty;
+            if (! $item->is_gift && $qty > 0) {
+                $returned += (float) $item->total_amount * min(max(0.0, (float) $item->returned_quantity), $qty) / $qty;
             }
         }
 
-        if ($itemsTotal <= 0) {
-            return 0.0;
-        }
+        return round($returned * $this->returnDiscountFactor($items), 2);
+    }
 
-        $discountFactor = 1 - min((float) $this->discount_amount, $itemsTotal) / $itemsTotal;
+    /**
+     * Share of an item's line total the customer actually pays after the
+     * order discount — 1 with no discount.
+     *
+     * @param  \Illuminate\Support\Collection<int, OrderItem>|null  $items
+     */
+    public function returnDiscountFactor(?\Illuminate\Support\Collection $items = null): float
+    {
+        $itemsTotal = (float) ($items ?? $this->items)->sum(fn (OrderItem $item) => $item->is_gift ? 0 : (float) $item->total_amount);
 
-        return round($returned * $discountFactor, 2);
+        return $itemsTotal > 0 ? 1 - min((float) $this->discount_amount, $itemsTotal) / $itemsTotal : 1.0;
     }
 
     public function recalculateTotals(): void
