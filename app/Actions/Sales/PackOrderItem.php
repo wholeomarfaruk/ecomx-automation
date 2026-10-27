@@ -82,6 +82,11 @@ class PackOrderItem
             // Packing only records quantities — the order's status moves with
             // its courier shipment (ApplyCourierStatus), not with packing.
             $item->update(['delivered_quantity' => $totalPacked]);
+
+            // Packed units are physically out now — their booking is released
+            // (else they'd count twice against available stock until the sale
+            // posts); un-packed ones are booked again while the order needs them.
+            $this->stockService->syncItemBooking($item->fresh(), 'unbooked_completed');
         });
     }
 

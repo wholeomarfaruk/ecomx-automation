@@ -9,7 +9,6 @@ use App\Models\Account;
 use App\Models\AccountsCustomerInvoice;
 use App\Models\AccountsPaymentAllocation;
 use App\Models\Customer;
-use App\Models\InventoryStockMovement;
 use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
 use App\Models\Order;
@@ -71,6 +70,13 @@ class PostOrderReturn
 
             if ($invoice) {
                 $this->drawDownInvoice($invoice, $reverseAmount, $alreadyPaid, $result['return']->id);
+            }
+
+            // What's reversed now — the next call only reverses returns beyond this.
+            foreach ($order->items as $item) {
+                if ((float) $item->returned_quantity > (float) $item->return_posted_quantity) {
+                    $item->update(['return_posted_quantity' => $item->returned_quantity]);
+                }
             }
 
             if ($alreadyPaid > 0) {
@@ -312,21 +318,11 @@ class PostOrderReturn
                 continue;
             }
 
-            $returnedQty = (float) $item->returned_quantity;
-
-            if ($returnedQty <= 0) {
-                continue;
-            }
-
-            $alreadyReturned = $item->product_id
-                ? abs((float) InventoryStockMovement::query()
-                    ->where('reference_type', OrderItem::class)
-                    ->where('reference_id', $item->id)
-                    ->where('type', 'return')
-                    ->sum('quantity'))
-                : 0.0;
-
-            $newlyReturned = $returnedQty - $alreadyReturned;
+            // Returned beyond what an earlier reversal already covered — tracked
+            // on the line itself, not read off the stock ledger: a return
+            // restocked before the sale was posted would otherwise look
+            // "already reversed" and never be.
+            $newlyReturned = (float) $item->returned_quantity - (float) $item->return_posted_quantity;
 
             if ($newlyReturned <= 0) {
                 continue;
@@ -334,7 +330,13 @@ class PostOrderReturn
 
             $orderedQty = (float) $item->quantity;
             $unitPrice = $orderedQty > 0 ? (float) $item->total_amount / $orderedQty * $discountFactor : 0.0;
-            $unitCost = (float) $item->purchase_price;
+
+            // Cost it at what the shipped units cost (their batches), same as the sale's COGS.
+            $allocations = $item->batchAllocations;
+            $allocatedQty = (float) $allocations->sum('quantity');
+            $unitCost = $allocatedQty > 0
+                ? (float) $allocations->sum(fn ($a) => (float) $a->quantity * (float) $a->unit_cost) / $allocatedQty
+                : (float) $item->purchase_price;
 
             $saleAmount += round($unitPrice * $newlyReturned, 2);
             $costAmount += round($unitCost * $newlyReturned, 2);

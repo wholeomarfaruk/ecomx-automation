@@ -8,7 +8,6 @@ use App\Enums\Sales\OrderStatus;
 use App\Enums\Sales\PaymentStatus;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Services\StockService;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 
@@ -36,10 +35,7 @@ class ReceiveReturn
     /** Kept/Returned combinations tried when suggesting a split. */
     protected const MAX_COMBINATIONS = 5000;
 
-    public function __construct(
-        protected RecordOrderReturns $recordReturns,
-        protected StockService $stockService,
-    ) {}
+    public function __construct(protected RecordOrderReturns $recordReturns) {}
 
     /** Whether this order has a returned parcel waiting to be received. */
     public static function awaiting(Order $order): bool
@@ -261,19 +257,13 @@ class ReceiveReturn
             $this->recordReturns->handle($order, $returned);
             $order->refresh();
 
+            // Stock: RecordOrderReturns put the returned units back (into their
+            // batches, inventory on) and synced bookings to the final status.
             $order->forceFill([
                 'courier_status' => CourierStatus::RETURNED,
                 'courier_status_updated_at' => now(),
                 'payment_status' => $allBack && (float) $order->paid_amount <= 0 ? PaymentStatus::FAILED : $order->payment_status,
             ])->save();
-
-            // Inventory off: bring each line's own stock in step with where the
-            // order ended up (idempotent). Inventory on: the booking was already
-            // released when it went Returning, and returned units were
-            // restocked above.
-            if ($this->stockService->usesOwnStock()) {
-                $this->stockService->onStatusChange($order->fresh('items'), $fromStatus, $order->status);
-            }
         });
 
         $order->refresh()->load('items');

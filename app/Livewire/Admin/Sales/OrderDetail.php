@@ -648,13 +648,18 @@ class OrderDetail extends Component
         $order = Order::with('items')->findOrFail($this->orderId);
         $before = RecordOrderReturns::snapshot($order);
 
-        app(RecordOrderReturns::class)->handle($order, $this->returnedQuantities);
+        try {
+            app(RecordOrderReturns::class)->handle($order, $this->returnedQuantities);
+        } catch (InsufficientStockException $e) {
+            // Lowering a returned quantity books those units again — not if they've been sold since.
+            $this->dispatch('toast', ['type' => 'error', 'message' => $e->getMessage()]);
+
+            return;
+        }
 
         $order->refresh();
         $this->status = $order->status->value;
         $this->paymentStatus = $order->payment_status->value;
-
-        app(StockService::class)->releaseBooking($order->fresh(['items']), 'unbooked_returned');
 
         activity('sales')
             ->causedBy(auth()->user())

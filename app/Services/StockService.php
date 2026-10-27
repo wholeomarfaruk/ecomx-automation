@@ -77,13 +77,19 @@ class StockService
         }
 
         if (! $this->reservesOnConfirm()) {
-            return;
-        }
-
-        if (! $from->isBookable() && $to->isBookable()) {
+            // No bookings to move.
+        } elseif (! $from->isBookable() && $to->isBookable()) {
             $this->bookOrder($order);
         } elseif ($from->isBookable() && ! $to->isBookable()) {
             $this->releaseBooking($order, $to->bookingReleaseType());
+        }
+
+        // Cancelled / Returned means the goods are in the shop: whatever was
+        // packed for it goes back to its batches. Not for an order whose sale
+        // is posted — that goes through the order page, which reverses the
+        // sale with it.
+        if (in_array($to, [\App\Enums\Sales\OrderStatus::CANCELLED, \App\Enums\Sales\OrderStatus::RETURNED], true) && ! $order->salePosted()) {
+            $this->releaseOrder($order);
         }
     }
 
@@ -283,32 +289,15 @@ class StockService
             return;
         }
 
-        $stock = $this->lockOrCreateStock($item->product, $item->variant, $warehouse);
-        $before = (float) $stock->booked_quantity;
-        $toConsume = min($before, $quantity);
+        // Only this line's own booking — the stock row's booked_quantity is
+        // shared with every other order of the same product.
+        $toConsume = min($this->itemBooked($item), $quantity);
 
-        if ($toConsume <= 0) {
+        if ($toConsume <= 0.0005) {
             return;
         }
 
-        $after = $before - $toConsume;
-        $stock->update(['booked_quantity' => $after]);
-        $this->syncVariantCache($item->variant, $warehouse, (float) $stock->quantity, $after);
-
-        InventoryStockBookingMovement::create([
-            'warehouse_id' => $warehouse->id,
-            'product_id' => $item->product_id,
-            'variant_id' => $item->variant_id,
-            'type' => 'unbooked_completed',
-            'quantity' => -$toConsume,
-            'before_quantity' => $before,
-            'after_quantity' => $after,
-            'reference_type' => OrderItem::class,
-            'reference_id' => $item->id,
-            'note' => "Order #{$item->order_id} completed",
-            'created_by' => auth()->id(),
-            'created_at' => now(),
-        ]);
+        $this->adjustBooking($item, -$toConsume, 'unbooked_completed', $warehouse, "Order #{$item->order_id} completed");
     }
 
     /**
@@ -316,7 +305,10 @@ class StockService
      * bookable (confirmed) — increments booked_quantity without touching the
      * physical quantity. Throws if the reservation would exceed what's
      * physically available minus what's already booked by other orders,
-     * unless negative stock is allowed. Idempotent via orderAlreadyBooked().
+     * unless negative stock is allowed. Books only each line's shortfall
+     * (bookingNeed() less what it already holds), so it's idempotent, books
+     * again after a cancel → re-confirm, and never re-books units already
+     * packed or sold.
      *
      * @throws InsufficientStockException
      */
@@ -328,10 +320,6 @@ class StockService
             return;
         }
 
-        if ($this->orderAlreadyBooked($order)) {
-            return;
-        }
-
         $warehouse ??= Warehouse::default();
 
         DB::transaction(function () use ($order, $warehouse) {
@@ -340,7 +328,11 @@ class StockService
                     continue;
                 }
 
-                $this->adjustBooking($item, (float) $item->quantity, 'booked', $warehouse, "Order #{$order->id} confirmed");
+                $toBook = round($this->bookingNeed($item) - $this->itemBooked($item), 3);
+
+                if ($toBook > 0.0005) {
+                    $this->adjustBooking($item, $toBook, 'booked', $warehouse, "Order #{$order->id} confirmed");
+                }
             }
         });
     }
@@ -348,10 +340,10 @@ class StockService
     /**
      * Releases whatever this order still has booked — for a given release
      * $type (unbooked_completed/unbooked_cancelled/unbooked_returned).
-     * Consuming via commitOrder() already releases the completed portion
-     * directly, so this is mainly for cancel/return paths where nothing was
-     * ever physically deducted. Safe to call on an order with nothing left
-     * booked (no-op per item).
+     * Each line gives back only its own booking (net of its booking-ledger
+     * rows) — never the stock row's whole booked_quantity, which other
+     * orders of the same product share. Safe to call on an order with
+     * nothing left booked (no-op per item).
      */
     public function releaseBooking(Order $order, string $type, ?Warehouse $warehouse = null): void
     {
@@ -366,20 +358,92 @@ class StockService
 
         DB::transaction(function () use ($order, $type, $warehouse) {
             foreach ($order->items as $item) {
-                if (! $item->product_id || $this->usesOwnStock()) {
+                if (! $item->product_id) {
                     continue;
                 }
 
-                $stock = $this->lockOrCreateStock($item->product, $item->variant, $warehouse);
-                $booked = (float) $stock->booked_quantity;
+                $held = $this->itemBooked($item);
 
-                if ($booked <= 0) {
-                    continue;
+                if ($held > 0.0005) {
+                    $this->adjustBooking($item, -$held, $type, $warehouse, "Order #{$order->id} {$type}");
                 }
-
-                $this->adjustBooking($item, -$booked, $type, $warehouse, "Order #{$order->id} {$type}");
             }
         });
+    }
+
+    /**
+     * Brings every line's booking to what the order needs now — after a
+     * return or packing changes it (see syncItemBooking()). Inventory off:
+     * re-syncs the lines' own stock_quantity instead.
+     */
+    public function syncBookings(Order $order, string $releaseType = 'unbooked_cancelled'): void
+    {
+        if ($this->usesOwnStock()) {
+            $this->own()->sync($order);
+
+            return;
+        }
+
+        DB::transaction(function () use ($order, $releaseType) {
+            foreach ($order->items as $item) {
+                $this->syncItemBooking($item, $releaseType);
+            }
+        });
+    }
+
+    /**
+     * One line's booking to its target: what it still needs (bookingNeed())
+     * while the order is in the bookable group and bookings are on, else
+     * nothing. Books the shortfall or releases the surplus (as $releaseType).
+     *
+     * @throws InsufficientStockException
+     */
+    public function syncItemBooking(OrderItem $item, string $releaseType = 'unbooked_cancelled', ?Warehouse $warehouse = null): void
+    {
+        if ($this->usesOwnStock()) {
+            $this->own()->syncItem($item);
+
+            return;
+        }
+
+        if (! $item->product_id) {
+            return;
+        }
+
+        $target = $this->reservesOnConfirm() && $item->order->status->isBookable() ? $this->bookingNeed($item) : 0.0;
+        $delta = round($target - $this->itemBooked($item), 3);
+
+        if (abs($delta) < 0.0005) {
+            return;
+        }
+
+        $type = $delta > 0 ? 'booked' : $releaseType;
+
+        $this->adjustBooking($item, $delta, $type, $warehouse ?? Warehouse::default(), "Order #{$item->order_id} {$type}");
+    }
+
+    /** What this order line has booked right now — net of its own booking-ledger rows. */
+    protected function itemBooked(OrderItem $item): float
+    {
+        return max(0.0, (float) InventoryStockBookingMovement::query()
+            ->where('reference_type', OrderItem::class)
+            ->where('reference_id', $item->id)
+            ->sum('quantity'));
+    }
+
+    /** Units of this order line physically out of stock right now — packed/sold, net of what was put back. */
+    protected function itemOut(OrderItem $item): float
+    {
+        return max(0.0, -(float) InventoryStockMovement::query()
+            ->where('reference_type', OrderItem::class)
+            ->where('reference_id', $item->id)
+            ->sum('quantity'));
+    }
+
+    /** Units this line still needs reserved: ordered, less what came back and what's already physically out. */
+    protected function bookingNeed(OrderItem $item): float
+    {
+        return max(0.0, (float) $item->quantity - (float) $item->returned_quantity - $this->itemOut($item));
     }
 
     /**
@@ -465,7 +529,11 @@ class StockService
             return;
         }
 
-        $this->adjustBooking($item, (float) $item->quantity, 'booked', $warehouse ?? Warehouse::default(), $note);
+        $toBook = round($this->bookingNeed($item) - $this->itemBooked($item), 3);
+
+        if ($toBook > 0.0005) {
+            $this->adjustBooking($item, $toBook, 'booked', $warehouse ?? Warehouse::default(), $note);
+        }
     }
 
     /**
@@ -481,11 +549,15 @@ class StockService
             return;
         }
 
-        if (! $item->product_id || (float) $item->quantity <= 0) {
+        if (! $item->product_id) {
             return;
         }
 
-        $this->adjustBooking($item, -(float) $item->quantity, 'unbooked_cancelled', $warehouse ?? Warehouse::default(), $note);
+        $held = $this->itemBooked($item);
+
+        if ($held > 0.0005) {
+            $this->adjustBooking($item, -$held, 'unbooked_cancelled', $warehouse ?? Warehouse::default(), $note);
+        }
     }
 
     /**
@@ -530,19 +602,21 @@ class StockService
         }
     }
 
+    /** Whether any line of this order still holds a booking (net of its released/consumed rows). */
     protected function orderAlreadyBooked(Order $order): bool
     {
-        return InventoryStockBookingMovement::query()
-            ->where('reference_type', OrderItem::class)
-            ->whereIn('reference_id', $order->items->pluck('id'))
-            ->where('type', 'booked')
-            ->exists();
+        return $order->items->contains(fn (OrderItem $item) => $this->itemBooked($item) > 0.0005);
     }
 
     /**
-     * Restocks every item on an order that was previously committed
-     * (cancellation, return of a confirmed order). Idempotent — a no-op if
-     * the order was never committed, or has already been released.
+     * Restocks everything an order still has physically out (packed/sold,
+     * net of what was already put back — e.g. items returned earlier), into
+     * the batches it was packed from (cancellation, return), then undoes the
+     * packing that never reached a posted sale — so re-opening the order and
+     * packing it again deducts the stock again. Posted allocations stay: they
+     * are the sale's cost, reversed by PostOrderReturn. Honours Inventory →
+     * "restock on cancel/return" (off: the goods are written off). Idempotent
+     * — nothing left out means nothing to put back.
      */
     public function releaseOrder(Order $order, ?Warehouse $warehouse = null): void
     {
@@ -552,24 +626,90 @@ class StockService
             return;
         }
 
-        if (! $this->orderAlreadyCommitted($order) || $this->orderAlreadyReleased($order)) {
+        if (! (bool) Setting::get('restock_on_cancel_or_return', true, 'inventory')) {
             return;
         }
 
-        $warehouse ??= Warehouse::default();
-
-        DB::transaction(function () use ($order, $warehouse) {
+        DB::transaction(function () use ($order) {
             foreach ($order->items as $item) {
                 if (! $item->product_id) {
                     continue;
                 }
 
-                $this->increase(
-                    $item->product, $item->variant, (float) $item->quantity, 'sale_cancelled',
-                    warehouse: $warehouse, reference: $item,
-                    note: "Order #{$order->id} cancelled/returned",
-                );
+                $out = $this->itemOut($item);
+
+                if ($out > 0.0005) {
+                    $this->putBackToBatches($item, $out, 'sale_cancelled', "Order #{$order->id} cancelled/returned");
+                }
+
+                if ($item->batchAllocations()->whereNull('posted_at')->exists()) {
+                    $item->batchAllocations()->whereNull('posted_at')->delete();
+                    $item->update(['delivered_quantity' => (float) $item->batchAllocations()->sum('quantity')]);
+                }
             }
+        });
+    }
+
+    /**
+     * Puts $qty of one order line back into stock — into the batches it was
+     * packed from (whatever of each batch hasn't been put back already), so
+     * batch counts and FEFO stay true; anything beyond (never packed) goes to
+     * the aggregate balance alone. Allocations are kept: they're what was
+     * shipped, and a posted sale's cost is reversed by PostOrderReturn.
+     */
+    protected function putBackToBatches(OrderItem $item, float $qty, string $type, string $note): void
+    {
+        $packed = $item->batchAllocations()->get()
+            ->groupBy('inventory_batch_id')
+            ->map(fn ($rows) => (float) $rows->sum('quantity'))
+            ->sortKeysDesc();
+
+        // Earlier put-backs into a batch (returns/cancels carry batch_id; un-packing reduces the allocation itself instead).
+        $alreadyBack = InventoryStockMovement::query()
+            ->where('reference_type', OrderItem::class)
+            ->where('reference_id', $item->id)
+            ->whereNotNull('batch_id')
+            ->where('quantity', '>', 0)
+            ->groupBy('batch_id')
+            ->selectRaw('batch_id, SUM(quantity) AS qty')
+            ->pluck('qty', 'batch_id');
+
+        $left = $qty;
+
+        foreach ($packed as $batchId => $packedQty) {
+            $take = min($left, $packedQty - (float) ($alreadyBack[$batchId] ?? 0));
+            $batch = $take > 0.0005 ? InventoryBatch::find($batchId) : null;
+
+            if ($batch) {
+                $this->increaseToBatch($batch, $take, $type, $item, $note);
+                $left -= $take;
+            }
+
+            if ($left <= 0.0005) {
+                return;
+            }
+        }
+
+        $this->increase($item->product, $item->variant, $left, $type, reference: $item, note: $note);
+    }
+
+    /** Stock back into ONE batch — the put-back sibling of decreaseFromBatch(). */
+    public function increaseToBatch(InventoryBatch $batch, float $quantity, string $type, ?Model $reference = null, ?string $note = null): InventoryStockMovement
+    {
+        $quantity = abs($quantity);
+
+        return DB::transaction(function () use ($batch, $quantity, $type, $reference, $note) {
+            $locked = InventoryBatch::query()->whereKey($batch->id)->lockForUpdate()->firstOrFail();
+
+            $locked->increment('quantity', $quantity);
+            if ($locked->status === 'depleted') {
+                $locked->update(['status' => 'active']);
+            }
+
+            $movement = $this->applyDelta($locked->product, $locked->variant, $quantity, $type, $locked->warehouse ?? Warehouse::default(), $reference, $note);
+            $movement->update(['batch_id' => $locked->id]);
+
+            return $movement;
         });
     }
 
@@ -608,11 +748,13 @@ class StockService
             return;
         }
 
-        $this->increase(
-            $item->product, $item->variant, $delta, 'return',
-            warehouse: $warehouse, reference: $item,
-            note: "Order #{$item->order_id} — item returned",
-        );
+        // Never more than is still out for this line (e.g. part of it was
+        // already given back by a cancel).
+        $delta = min($delta, $this->itemOut($item));
+
+        if ($delta > 0.0005) {
+            $this->putBackToBatches($item, $delta, 'return', "Order #{$item->order_id} — item returned");
+        }
     }
 
     /**
@@ -704,15 +846,6 @@ class StockService
             ->where('reference_type', OrderItem::class)
             ->whereIn('reference_id', $order->items->pluck('id'))
             ->where('type', 'sale')
-            ->exists();
-    }
-
-    protected function orderAlreadyReleased(Order $order): bool
-    {
-        return InventoryStockMovement::query()
-            ->where('reference_type', OrderItem::class)
-            ->whereIn('reference_id', $order->items->pluck('id'))
-            ->where('type', 'sale_cancelled')
             ->exists();
     }
 

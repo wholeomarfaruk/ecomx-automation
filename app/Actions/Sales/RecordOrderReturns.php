@@ -37,11 +37,7 @@ class RecordOrderReturns
                 $item->update(['returned_quantity' => max(0, $qty)]);
             }
 
-            // Compute the accounting reversal delta BEFORE restocking —
-            // PostOrderReturn derives "newly returned" from the same
-            // type='return' inventory ledger that restockReturnedItem() is
-            // about to write, so it must run first or every delta looks
-            // already-consumed.
+            // Reverses only what wasn't reversed yet (order_items.return_posted_quantity).
             if ($hasBeenCompleted) {
                 app(PostOrderReturn::class)->handle($order->fresh(['items']), now()->toDateString());
             }
@@ -58,6 +54,18 @@ class RecordOrderReturns
         });
 
         $order->syncReturnStatus();
+
+        // Bookings follow: returned units no longer need reserving (and none
+        // at all once the order is Returned). Inventory off: the lines' own
+        // stock_quantity re-syncs instead.
+        $this->stockService->syncBookings($order->fresh('items'), 'unbooked_returned');
+
+        // Everything back on an order whose sale was never posted: undo its
+        // packing too (the returned units are already restocked), so it can't
+        // be costed later or re-packed without deducting again.
+        if ($order->status->isClosed() && ! $order->salePosted()) {
+            $this->stockService->releaseOrder($order->fresh('items'));
+        }
 
         // Returned units come off the total — e.g. 3 sent, 1 kept and paid for → nothing due.
         $order->recalculateTotals();

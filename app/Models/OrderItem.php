@@ -13,7 +13,7 @@ class OrderItem extends Model
         'product_name', 'variant_name', 'sku',
         'quantity', 'unit_price', 'purchase_price',
         'discount_amount', 'tax_amount', 'total_amount',
-        'returned_quantity', 'delivered_quantity', 'stock_deducted',
+        'returned_quantity', 'return_posted_quantity', 'delivered_quantity', 'stock_deducted',
     ];
 
     protected function casts(): array
@@ -27,6 +27,8 @@ class OrderItem extends Model
             'tax_amount'         => 'decimal:2',
             'total_amount'       => 'decimal:2',
             'returned_quantity'  => 'decimal:3',
+            // How much of returned_quantity PostOrderReturn has already reversed in the books.
+            'return_posted_quantity' => 'decimal:3',
             'delivered_quantity' => 'decimal:3',
             'stock_deducted'     => 'decimal:3',
         ];
