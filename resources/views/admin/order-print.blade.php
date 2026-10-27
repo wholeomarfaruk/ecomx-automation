@@ -153,6 +153,10 @@
                         @foreach($order->charges as $charge)
                             <div class="flex justify-between"><dt class="text-gray-500">{{ $charge->label }}</dt><dd>{{ $money($charge->amount) }}</dd></div>
                         @endforeach
+                        @php($returnedAmount = $order->returnedAmount())
+                        @if($returnedAmount > 0)
+                            <div class="flex justify-between"><dt class="text-gray-500">Returned items</dt><dd>−{{ $money($returnedAmount) }}</dd></div>
+                        @endif
                         <div class="flex justify-between pt-2 mt-1 border-t border-gray-200 text-base font-semibold text-gray-900"><dt>Total</dt><dd>{{ $money($order->total_amount) }}</dd></div>
                         <div class="flex justify-between"><dt class="text-gray-500">Paid</dt><dd>{{ $money($order->paid_amount) }}</dd></div>
                         <div class="flex justify-between font-semibold"><dt>Due</dt><dd>{{ $money($order->due_amount) }}</dd></div>

@@ -221,6 +221,13 @@
                             <span class="text-gray-700">+{{ number_format($charge->amount, 2) }}</span>
                         </div>
                     @endforeach
+                    @php $returnedAmount = $order->returnedAmount(); @endphp
+                    @if($returnedAmount > 0)
+                        <div class="flex items-center gap-8 text-sm">
+                            <span class="text-gray-500">Returned items</span>
+                            <span class="text-red-500">−{{ number_format($returnedAmount, 2) }}</span>
+                        </div>
+                    @endif
                     <div class="flex items-center gap-8 text-base pt-1.5 border-t border-gray-100 mt-1">
                         <span class="font-semibold text-gray-800">Total</span>
                         <span class="font-bold text-indigo-600">{{ number_format($order->total_amount, 2) }}</span>

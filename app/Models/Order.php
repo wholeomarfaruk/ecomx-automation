@@ -238,9 +238,46 @@ class Order extends Model
         return $this->morphMany(JournalEntry::class, 'source');
     }
 
+    /**
+     * Value of the units that came back (returned_quantity), net of their
+     * share of the order discount — taken off the total, since the customer
+     * no longer owes for them (e.g. a partial delivery: 3 sent, 1 kept).
+     *
+     * @param  \Illuminate\Support\Collection<int, OrderItem>|null  $items
+     */
+    public function returnedAmount(?\Illuminate\Support\Collection $items = null): float
+    {
+        $items ??= $this->items;
+        $itemsTotal = 0.0;
+        $returned = 0.0;
+
+        foreach ($items as $item) {
+            if ($item->is_gift) {
+                continue;
+            }
+
+            $line = (float) $item->total_amount;
+            $qty = (float) $item->quantity;
+            $itemsTotal += $line;
+
+            if ($qty > 0) {
+                $returned += $line * min(max(0.0, (float) $item->returned_quantity), $qty) / $qty;
+            }
+        }
+
+        if ($itemsTotal <= 0) {
+            return 0.0;
+        }
+
+        $discountFactor = 1 - min((float) $this->discount_amount, $itemsTotal) / $itemsTotal;
+
+        return round($returned * $discountFactor, 2);
+    }
+
     public function recalculateTotals(): void
     {
-        $itemsTotal = $this->items()->get()->sum(fn (OrderItem $item) => $item->is_gift ? 0 : (float) $item->total_amount);
+        $items = $this->items()->get();
+        $itemsTotal = $items->sum(fn (OrderItem $item) => $item->is_gift ? 0 : (float) $item->total_amount);
 
         // shipping_discount can never exceed shipping_amount or go negative,
         // regardless of how it was set (e.g. a stale value from before the
@@ -256,7 +293,7 @@ class Order extends Model
         $this->subtotal          = $itemsTotal;
         $this->shipping_discount = $shippingDiscount;
         $this->charges_amount    = $chargesTotal;
-        $this->total_amount      = $itemsTotal - $this->discount_amount + $netShipping + $this->tax_amount + $chargesTotal;
+        $this->total_amount      = $itemsTotal - $this->discount_amount - $this->returnedAmount($items) + $netShipping + $this->tax_amount + $chargesTotal;
         $this->paid_amount       = max(0, (float) $paidIn - (float) $paidOut);
         $this->due_amount        = max(0, $this->total_amount - $this->paid_amount);
         $this->save();

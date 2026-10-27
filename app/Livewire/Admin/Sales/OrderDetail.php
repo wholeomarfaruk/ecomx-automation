@@ -678,8 +678,17 @@ class OrderDetail extends Component
         });
 
         $order->syncReturnStatus();
+
+        // Returned units come off the total — e.g. 3 sent, 1 kept and paid for → nothing due.
+        $order->recalculateTotals();
         $order->refresh();
+
+        if ((float) $order->paid_amount > 0) {
+            $order->update(['payment_status' => $order->due_amount > 0 ? PaymentStatus::PARTIAL : PaymentStatus::PAID]);
+        }
+
         $this->status = $order->status->value;
+        $this->paymentStatus = $order->payment_status->value;
 
         $stockService->releaseBooking($order->fresh(['items']), 'unbooked_returned');
 
