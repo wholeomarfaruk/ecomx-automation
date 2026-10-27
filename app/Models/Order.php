@@ -65,6 +65,18 @@ class Order extends Model
 
     protected static function booted(): void
     {
+        // A closed order (cancelled/returned/refunded) has nothing left to
+        // collect — e.g. a paid return where the customer only paid the
+        // delivery charge would otherwise show the whole product price as due.
+        // Reopening it brings the real due back.
+        static::saving(function (Order $order) {
+            if ($order->status?->isClosed()) {
+                $order->due_amount = 0;
+            } elseif ($order->isDirty('status')) {
+                $order->due_amount = max(0, (float) $order->total_amount - (float) $order->paid_amount);
+            }
+        });
+
         // Every path into Processing (courier booking, manual tracking entry,
         // the status dropdown) texts the customer — after commit, so a
         // just-booked shipment's tracking link is already there.

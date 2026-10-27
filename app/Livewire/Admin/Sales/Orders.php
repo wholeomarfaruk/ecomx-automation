@@ -123,17 +123,14 @@ class Orders extends Component
             return;
         }
 
-        // Nothing paid → failed; only part paid (e.g. the delivery charge) → partial;
-        // fully paid stays paid — the dashboard flags it for a refund.
+        // Nothing paid → failed; anything paid (e.g. only the delivery charge on a
+        // paid return) → paid, since a returned order has nothing left due.
+        // Fully paid stays paid — the dashboard flags it for a refund.
         $order->forceFill([
             'courier_status' => CourierStatus::RETURNED,
             'courier_status_updated_at' => now(),
             'fulfillment_status' => FulfillmentStatus::UNFULFILLED,
-            'payment_status' => match (true) {
-                (float) $order->paid_amount <= 0 => PaymentStatus::FAILED,
-                (float) $order->due_amount > 0 => PaymentStatus::PARTIAL,
-                default => PaymentStatus::PAID,
-            },
+            'payment_status' => (float) $order->paid_amount <= 0 ? PaymentStatus::FAILED : PaymentStatus::PAID,
         ])->save();
     }
 
@@ -513,7 +510,8 @@ class Orders extends Component
             'courierStatuses' => CourierStatus::cases(),
             'sources'         => OrderSource::cases(),
             'totalCount'      => Order::count(),
-            'totalRevenue'    => Order::where('payment_status', PaymentStatus::PAID)->sum('total_amount'),
+            // paid_amount, not total_amount: a paid return is "paid" but only its delivery charge was collected.
+            'totalRevenue'    => Order::where('payment_status', PaymentStatus::PAID)->sum('paid_amount'),
             'pendingCount'    => Order::where('status', OrderStatus::PENDING)->count(),
             // Only money still expected: dead orders keep their full due_amount (cancel/return don't zero it).
             'dueTotal'        => Order::whereNotIn('status', [
