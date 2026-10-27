@@ -515,7 +515,12 @@ class Orders extends Component
             'totalCount'      => Order::count(),
             'totalRevenue'    => Order::where('payment_status', PaymentStatus::PAID)->sum('total_amount'),
             'pendingCount'    => Order::where('status', OrderStatus::PENDING)->count(),
-            'dueTotal'        => Order::sum('due_amount'),
+            // Only money still expected: dead orders keep their full due_amount (cancel/return don't zero it).
+            'dueTotal'        => Order::whereNotIn('status', [
+                    OrderStatus::CANCELLED, OrderStatus::RETURNING, OrderStatus::RETURNED, OrderStatus::REFUNDED,
+                ])
+                ->whereNotIn('payment_status', [PaymentStatus::FAILED, PaymentStatus::REFUNDED])
+                ->sum('due_amount'),
             'canManageCourier' => $canManageCourier,
         ])->layout('layouts.admin.admin');
     }
