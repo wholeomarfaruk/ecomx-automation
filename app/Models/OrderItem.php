@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class OrderItem extends Model
 {
     protected $fillable = [
-        'order_id', 'product_id', 'variant_id', 'combo_id', 'is_gift',
+        'order_id', 'product_id', 'variant_id', 'combo_id', 'exchange_id', 'is_gift',
         'product_name', 'variant_name', 'sku',
         'quantity', 'unit_price', 'purchase_price',
         'discount_amount', 'tax_amount', 'total_amount',
@@ -51,6 +51,12 @@ class OrderItem extends Model
     public function variant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class, 'variant_id');
+    }
+
+    /** The exchange that added this line (its new goods), if any. */
+    public function exchange(): BelongsTo
+    {
+        return $this->belongsTo(OrderExchange::class, 'exchange_id');
     }
 
     public function combo(): BelongsTo

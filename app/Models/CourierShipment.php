@@ -14,9 +14,11 @@ class CourierShipment extends Model
         'order_id',
         'courier_id',
         'courier_account_id',
+        'type',
         'shipment_id',
         'tracking_number',
         'consignment_id',
+        'merchant_ref',
         'status',
         'previous_status',
         'cod_amount',
@@ -57,6 +59,12 @@ class CourierShipment extends Model
     public function courierAccount(): BelongsTo
     {
         return $this->belongsTo(CourierAccount::class);
+    }
+
+    /** A second parcel for an exchange inside the order (see OrderExchange) — not the order's own delivery. */
+    public function isExchange(): bool
+    {
+        return $this->type === 'exchange';
     }
 
     public function trackingEvents(): HasMany

@@ -10,6 +10,7 @@ use App\Actions\Accounts\RefundCustomerAdvance;
 use App\Actions\Accounts\RefundOrder;
 use App\Actions\Accounts\ReverseOrder;
 use App\Actions\Sales\DuplicateOrder;
+use App\Actions\Sales\Exchanges\CreateExchange;
 use App\Actions\Sales\PackOrderItem;
 use App\Actions\Sales\RecordOrderReturns;
 use App\Enums\Sales\CourierStatus;
@@ -675,6 +676,20 @@ class OrderDetail extends Component
             return;
         }
 
+        // Units a running exchange is bringing back are already credited — marking
+        // them returned here too would credit them twice. They're returned when the
+        // exchange completes ("Old item received").
+        $pending = CreateExchange::pendingQuantities($order);
+        $clash = $order->items->first(fn (OrderItem $item) => isset($pending[$item->id])
+            && max(0.0, (float) ($this->returnedQuantities[$item->id] ?? 0)) + max(0.0, (float) ($this->lostQuantities[$item->id] ?? 0)) + $pending[$item->id]
+                > (float) $item->quantity + 0.0005);
+
+        if ($clash) {
+            $this->dispatch('toast', ['type' => 'error', 'message' => "{$clash->product_name}: " . rtrim(rtrim(number_format($pending[$clash->id], 3), '0'), '.') . ' is coming back through an exchange — mark it received there, not here.']);
+
+            return;
+        }
+
         try {
             // Lost units count as returned (the customer doesn't pay for them) — RecordOrderReturns keeps them out of stock.
             $returned = $order->items->mapWithKeys(fn (OrderItem $item) => [
@@ -933,6 +948,7 @@ class OrderDetail extends Component
             'items.combo.items.product',
             'items.combo.items.variant',
             'items.batchAllocations.batch',
+            'items.exchange',
             'payments',
             'charges',
             'offers',
@@ -942,6 +958,7 @@ class OrderDetail extends Component
         ])->withCount(Order::issueBadgeCounts())->findOrFail($this->orderId);
 
         $canManageCourier = auth()->user()->can('courier_configuration.manage');
+        $returnFactor = $order->returnDiscountFactor();
         $fraudEnabled = app(FraudShieldSettings::class)->ready();
 
         foreach ($order->courierShipments as $shipment) {
@@ -968,8 +985,10 @@ class OrderDetail extends Component
                 'total'    => $item->is_gift ? 0.0 : (float) $item->total_amount,
                 'returned' => (float) $item->returned_quantity - (float) $item->lost_quantity,
                 'lost'     => (float) $item->lost_quantity,
+                // A line an exchange added has no share of the order discount.
+                'factor'   => $item->exchange_id ? 1.0 : $returnFactor,
             ])->values(),
-            'returnFactor'        => $order->returnDiscountFactor(),
+            'returnFactor'        => $returnFactor,
             'paymentMethods'      => array_filter(PaymentMethod::cases(), fn ($m) => $m !== PaymentMethod::STORE_CREDIT),
             'cashAccounts'        => Account::active()->whereIn('subtype', ['cash', 'bank', 'mobile_banking'])->orderBy('code')->get(),
             'packableBatches'     => $this->packableBatchesForCurrentItem(),

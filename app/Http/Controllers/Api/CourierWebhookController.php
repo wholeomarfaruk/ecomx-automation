@@ -153,9 +153,36 @@ class CourierWebhookController extends Controller
      */
     protected function matchShipment(array $identifier): ?CourierShipment
     {
-        return match ($identifier['by']) {
-            'tracking_number' => CourierShipment::where('tracking_number', $identifier['value'])->first(),
-            'order_id' => CourierShipment::whereHas('order', fn ($q) => $q->where('id', $identifier['value']))->first(),
-        };
+        if ($identifier['by'] === 'tracking_number') {
+            // A live parcel before a cancelled one carrying the same ID (an
+            // exchange parcel removed and attached again, a re-used code).
+            return CourierShipment::where('tracking_number', $identifier['value'])
+                ->orderByRaw("status = 'cancelled'")
+                ->latest('id')
+                ->first();
+        }
+
+        $reference = (string) $identifier['value'];
+
+        // The exact reference this app sent when booking ("268", or "268-EX1"
+        // for an exchange parcel) — newest first, since a re-booked parcel
+        // reuses it.
+        $byReference = CourierShipment::where('merchant_ref', $reference)->latest('id')->first();
+
+        if ($byReference) {
+            return $byReference;
+        }
+
+        // Parcels booked before merchant_ref existed: a plain order id means
+        // that order's own delivery — never its exchange parcel. ("268-EX1"
+        // must not fall through here: MySQL would read it as 268.)
+        if (! ctype_digit($reference)) {
+            return null;
+        }
+
+        return CourierShipment::where('order_id', (int) $reference)
+            ->where('type', '!=', 'exchange')
+            ->orderBy('id')
+            ->first();
     }
 }

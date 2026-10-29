@@ -2,6 +2,7 @@
 
 namespace App\Actions\Sales;
 
+use App\Actions\Sales\Exchanges\SyncExchangeFromCourier;
 use App\Enums\Sales\CourierStatus;
 use App\Enums\Sales\FulfillmentStatus;
 use App\Enums\Sales\OrderStatus;
@@ -61,6 +62,14 @@ class ApplyCourierStatus
             'previous_status' => $shipment->status,
             'status' => $stored->value,
         ]);
+
+        // An exchange parcel moves its exchange, never the order — the order's
+        // status and courier snapshot belong to its own delivery.
+        if ($shipment->isExchange()) {
+            app(SyncExchangeFromCourier::class)->handle($shipment, $status);
+
+            return;
+        }
 
         $order = $shipment->order;
 

@@ -391,6 +391,11 @@ class Orders extends Component
             ->withCount('items')
             // Issues: open / fixed badge next to the order number.
             ->withCount(Order::issueBadgeCounts())
+            // Exchanges: running / done badge next to the order number.
+            ->withCount([
+                'exchanges as active_exchanges_count' => fn ($q) => $q->whereIn('status', \App\Enums\Sales\ExchangeStatus::activeValues()),
+                'exchanges as done_exchanges_count'   => fn ($q) => $q->where('status', \App\Enums\Sales\ExchangeStatus::COMPLETED->value),
+            ])
             // Accounts: is this order's sale in the books yet? (badge under Fulfillment)
             ->withExists(['journalEntries as sale_posted' => fn ($q) => $q->where('purpose', 'like', 'sale%')->where('status', 'posted')])
             // Inventory: packed vs packable units, for the row menu's "Pack items".

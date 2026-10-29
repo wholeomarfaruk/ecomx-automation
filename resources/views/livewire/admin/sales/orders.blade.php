@@ -172,6 +172,11 @@
                                 <span class="inline-flex items-center gap-1.5">
                                     <span class="text-sm font-medium text-gray-800">#{{ $order->id }}</span>
                                     <x-issue-badge :open="$order->open_issues_count" :resolved="$order->resolved_issues_count" :closed="$order->closed_issues_count" />
+                                    @if ($order->active_exchanges_count > 0)
+                                        <span title="Exchange running" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium ring-1 bg-indigo-50 text-indigo-600 ring-indigo-200">⇄ Exchange</span>
+                                    @elseif ($order->done_exchanges_count > 0)
+                                        <span title="Exchanged" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium ring-1 bg-gray-50 text-gray-500 ring-gray-200">⇄ Exchanged</span>
+                                    @endif
                                 </span>
                                 @php $placedAt = local_time($order->created_at); @endphp
                                 <span class="block text-xs text-gray-400 whitespace-nowrap">{{ $placedAt?->format('d M, Y h:i A') }}</span>

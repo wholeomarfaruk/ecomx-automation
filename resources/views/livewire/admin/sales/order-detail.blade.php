@@ -85,6 +85,10 @@
                                         @if($item->combo_id)
                                             <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-indigo-50 text-indigo-500">Combo</span>
                                         @endif
+                                        @if($item->exchange)
+                                            <span title="Added by exchange #{{ $item->exchange->number }} — {{ $item->exchange->status->label() }}"
+                                                class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-indigo-50 text-indigo-600">Exchange #{{ $item->exchange->number }}</span>
+                                        @endif
                                         @if((float) $item->lost_quantity > 0)
                                             <span title="Lost by the courier — not charged to the customer, not restocked"
                                                 class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-rose-50 text-rose-600">Lost{{ (float) $item->quantity > 1 ? ' × ' . rtrim(rtrim(number_format($item->lost_quantity, 3), '0'), '.') : '' }}</span>
@@ -240,7 +244,7 @@
                             back(l) { return Math.max(parseFloat($wire.returnedQuantities[l.id]) || 0, 0) },
                             lost(l) { return Math.max(parseFloat($wire.lostQuantities[l.id]) || 0, 0) },
                             qty(l) { return Math.min(this.back(l) + this.lost(l), l.qty) },
-                            get returning() { return Math.round(this.lines.reduce((s, l) => s + (l.qty > 0 ? l.total * this.qty(l) / l.qty : 0), 0) * this.factor * 100) / 100 },
+                            get returning() { return Math.round(this.lines.reduce((s, l) => s + (l.qty > 0 ? l.total * this.qty(l) / l.qty * l.factor : 0), 0) * 100) / 100 },
                             get dirty() { return this.lines.some(l => Math.abs(this.back(l) - l.returned) > 0.0005 || Math.abs(this.lost(l) - l.lost) > 0.0005) },
                             get allBack() { return this.lines.every(l => this.qty(l) >= l.qty) },
                             get newTotal() { return this.fullTotal - this.returning },
@@ -322,12 +326,22 @@
                             <span class="text-red-500">−{{ number_format($returnedAmount, 2) }}</span>
                         </div>
                     @endif
+                    @php $exchangeCredit = $order->exchangeCreditAmount(); @endphp
+                    @if($exchangeCredit > 0)
+                        <div class="flex items-center gap-8 text-sm">
+                            <span class="text-gray-500" title="Old items a running exchange is bringing back — restocked when received">Exchange credit (coming back)</span>
+                            <span class="text-red-500">−{{ number_format($exchangeCredit, 2) }}</span>
+                        </div>
+                    @endif
                     <div class="flex items-center gap-8 text-base pt-1.5 border-t border-gray-100 mt-1">
                         <span class="font-semibold text-gray-800">Total</span>
                         <span class="font-bold text-indigo-600">{{ number_format($order->total_amount, 2) }}</span>
                     </div>
                 </div>
             </div>
+
+            {{-- Exchanges inside this order — its own component (own modals, own re-renders). --}}
+            @livewire('admin.sales.order-exchanges', ['orderId' => $order->id], key('order-exchanges-' . $order->id))
 
             {{-- Payments --}}
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
@@ -595,7 +609,13 @@
                             <div wire:key="shipment-{{ $shipment->id }}" class="rounded-xl border border-gray-200 p-4">
                                 <div class="flex items-start justify-between gap-3 mb-3">
                                     <div>
-                                        <p class="text-sm font-semibold text-gray-800">{{ $shipment->courier->name }}</p>
+                                        <p class="text-sm font-semibold text-gray-800">
+                                            {{ $shipment->courier->name }}
+                                            @if($shipment->isExchange())
+                                                <span title="Exchange parcel ({{ $shipment->merchant_ref }}) — moves its exchange, not this order's status"
+                                                    class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-indigo-50 text-indigo-600">Exchange</span>
+                                            @endif
+                                        </p>
                                         <p class="text-xs text-gray-400">{{ $shipment->courierAccount->name ?? '—' }}</p>
                                     </div>
                                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium {{ $statusEnum->badgeClass() }}">

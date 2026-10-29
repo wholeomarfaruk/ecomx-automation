@@ -83,8 +83,10 @@ class CourierManager extends Manager
      */
     protected function lookupIdentifierFor(CourierShipment $shipment): string
     {
+        // merchant_ref is what was sent as the order reference ("268", or
+        // "268-EX1" for an exchange parcel); older rows don't have one.
         return $shipment->courier->driver_key === 'paperfly'
-            ? (string) $shipment->order_id
+            ? (string) ($shipment->merchant_ref ?: $shipment->order_id)
             : (string) $shipment->tracking_number;
     }
 
@@ -180,7 +182,7 @@ class CourierManager extends Manager
      * the order's flat courier_* snapshot columns and creating both a
      * courier_shipments row and its first tracking event.
      */
-    public function createShipment(Order $order, string $courierKey, ShipmentRequest $request): ShipmentResponse
+    public function createShipment(Order $order, string $courierKey, ShipmentRequest $request, string $shipmentType = 'normal'): ShipmentResponse
     {
         $courier = Courier::where('driver_key', $courierKey)->firstOrFail();
         $account = $this->resolveAccount($courierKey);
@@ -197,6 +199,10 @@ class CourierManager extends Manager
             'order_id' => $order->id,
             'courier_id' => $courier->id,
             'courier_account_id' => $account->id,
+            'type' => $shipmentType,
+            // What the courier echoes back (merchant_order_id / invoice) — lets a
+            // webhook find this exact parcel when the order has more than one.
+            'merchant_ref' => mb_substr($request->orderId, 0, 64),
             'status' => 'pending',
             'cod_amount' => $request->codAmount,
             'request_payload' => json_encode($request),
@@ -229,6 +235,12 @@ class CourierManager extends Manager
                 'event_at' => now(),
                 'raw_data' => json_encode($response->rawResponse),
             ]);
+
+            // An exchange parcel is the exchange's, not the order's delivery —
+            // the order's courier snapshot and status stay on the first parcel.
+            if ($shipment->isExchange()) {
+                return $response;
+            }
 
             // The order's own courier_charge is the total cost of shipping
             // this order — the courier's delivery fee plus the COD
@@ -287,6 +299,12 @@ class CourierManager extends Manager
                 'message' => 'Shipment cancelled.',
                 'event_at' => now(),
             ]);
+
+            if ($shipment->isExchange()) {
+                app(\App\Actions\Sales\Exchanges\SyncExchangeFromCourier::class)->handle($shipment, CourierStatus::CANCELLED);
+
+                return $response;
+            }
 
             $shipment->order->forceFill([
                 'courier_status' => CourierStatus::CANCELLED,

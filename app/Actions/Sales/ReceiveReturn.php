@@ -88,7 +88,10 @@ class ReceiveReturn
     public function totalFor(Order $order, array $returned, ?float $shipping = null, ?float $discount = null): float
     {
         $itemsTotal = 0.0;
+        // Lines an exchange added carry no share of the order discount.
+        $discountedTotal = 0.0;
         $returnedValue = 0.0;
+        $returnedExchangeValue = 0.0;
 
         foreach ($order->items as $item) {
             $qty = (float) $item->quantity;
@@ -97,16 +100,24 @@ class ReceiveReturn
                 continue;
             }
 
+            $value = (float) $item->total_amount * min(max(0.0, (float) ($returned[$item->id] ?? 0)), $qty) / $qty;
             $itemsTotal += (float) $item->total_amount;
-            $returnedValue += (float) $item->total_amount * min(max(0.0, (float) ($returned[$item->id] ?? 0)), $qty) / $qty;
+
+            if ($item->exchange_id) {
+                $returnedExchangeValue += $value;
+            } else {
+                $discountedTotal += (float) $item->total_amount;
+                $returnedValue += $value;
+            }
         }
 
-        $discount = min($discount ?? (float) $order->discount_amount, $itemsTotal);
-        $factor = $itemsTotal > 0 ? 1 - $discount / $itemsTotal : 1.0;
+        $discount = min($discount ?? (float) $order->discount_amount, $discountedTotal);
+        $factor = $discountedTotal > 0 ? 1 - $discount / $discountedTotal : 1.0;
         $shipping ??= (float) $order->shipping_amount;
         $netShipping = $shipping - max(0.0, min($shipping, (float) $order->shipping_discount));
 
-        return round($itemsTotal - $discount - $returnedValue * $factor + $netShipping + (float) $order->tax_amount + (float) $order->charges_amount, 2);
+        return round($itemsTotal - $discount - $returnedValue * $factor - $returnedExchangeValue - $order->exchangeCreditAmount()
+            + $netShipping + (float) $order->tax_amount + (float) $order->charges_amount, 2);
     }
 
     /**

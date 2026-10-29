@@ -175,6 +175,12 @@ class Order extends Model
         return $this->belongsTo(Coupon::class);
     }
 
+    /** Exchanges made inside this order (see OrderExchange). */
+    public function exchanges(): HasMany
+    {
+        return $this->hasMany(OrderExchange::class);
+    }
+
     public function courierShipments(): HasMany
     {
         return $this->hasMany(CourierShipment::class)->latest();
@@ -251,17 +257,66 @@ class Order extends Model
     public function returnedAmount(?\Illuminate\Support\Collection $items = null): float
     {
         $items ??= $this->items;
+        $factor = $this->returnDiscountFactor($items);
         $returned = 0.0;
 
         foreach ($items as $item) {
             $qty = (float) $item->quantity;
 
             if (! $item->is_gift && $qty > 0) {
-                $returned += (float) $item->total_amount * min(max(0.0, (float) $item->returned_quantity), $qty) / $qty;
+                // A line an exchange added never had a share of the order discount.
+                $returned += (float) $item->total_amount * min(max(0.0, (float) $item->returned_quantity), $qty) / $qty
+                    * ($item->exchange_id ? 1.0 : $factor);
             }
         }
 
-        return round($returned * $this->returnDiscountFactor($items), 2);
+        return round($returned, 2);
+    }
+
+    /**
+     * Credit for units still owed back by a running exchange (not yet
+     * received, so not in returned_quantity) — off the total already, so the
+     * exchange parcel collects only the difference. Moves into
+     * returnedAmount() when the exchange completes; gone if it fails.
+     *
+     * @param  \Illuminate\Support\Collection<int, OrderItem>|null  $items
+     */
+    public function exchangeCreditAmount(?\Illuminate\Support\Collection $items = null): float
+    {
+        // Exchanges start from a delivered order — checkout and everything
+        // before shipping never needs the lookup.
+        if (! $this->exists || in_array($this->status, [
+            \App\Enums\Sales\OrderStatus::PENDING, \App\Enums\Sales\OrderStatus::CONFIRMED,
+            \App\Enums\Sales\OrderStatus::PROCESSING, \App\Enums\Sales\OrderStatus::CANCELLED,
+        ], true)) {
+            return 0.0;
+        }
+
+        $pending = OrderExchangeItem::query()
+            ->join('order_exchanges', 'order_exchanges.id', '=', 'order_exchange_items.order_exchange_id')
+            ->where('order_exchanges.order_id', $this->id)
+            ->whereIn('order_exchanges.status', \App\Enums\Sales\ExchangeStatus::activeValues())
+            ->groupBy('order_exchange_items.order_item_id')
+            ->selectRaw('order_exchange_items.order_item_id, SUM(order_exchange_items.quantity) AS qty')
+            ->pluck('qty', 'order_item_id');
+
+        if ($pending->isEmpty()) {
+            return 0.0;
+        }
+
+        $items ??= $this->items;
+        $factor = $this->returnDiscountFactor($items);
+        $credit = 0.0;
+
+        foreach ($items as $item) {
+            $qty = (float) $item->quantity;
+
+            if (! $item->is_gift && $qty > 0 && isset($pending[$item->id])) {
+                $credit += (float) $item->total_amount * min((float) $pending[$item->id], $qty) / $qty * ($item->exchange_id ? 1.0 : $factor);
+            }
+        }
+
+        return round($credit, 2);
     }
 
     /**
@@ -272,7 +327,8 @@ class Order extends Model
      */
     public function returnDiscountFactor(?\Illuminate\Support\Collection $items = null): float
     {
-        $itemsTotal = (float) ($items ?? $this->items)->sum(fn (OrderItem $item) => $item->is_gift ? 0 : (float) $item->total_amount);
+        // The order discount was given on the original lines — not on lines an exchange added later.
+        $itemsTotal = (float) ($items ?? $this->items)->sum(fn (OrderItem $item) => $item->is_gift || $item->exchange_id ? 0 : (float) $item->total_amount);
 
         return $itemsTotal > 0 ? 1 - min((float) $this->discount_amount, $itemsTotal) / $itemsTotal : 1.0;
     }
@@ -296,7 +352,7 @@ class Order extends Model
         $this->subtotal          = $itemsTotal;
         $this->shipping_discount = $shippingDiscount;
         $this->charges_amount    = $chargesTotal;
-        $this->total_amount      = $itemsTotal - $this->discount_amount - $this->returnedAmount($items) + $netShipping + $this->tax_amount + $chargesTotal;
+        $this->total_amount      = $itemsTotal - $this->discount_amount - $this->returnedAmount($items) - $this->exchangeCreditAmount($items) + $netShipping + $this->tax_amount + $chargesTotal;
         $this->paid_amount       = max(0, (float) $paidIn - (float) $paidOut);
         $this->due_amount        = max(0, $this->total_amount - $this->paid_amount);
         $this->save();

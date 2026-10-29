@@ -310,7 +310,8 @@ class PostOrderReturn
         // 0 for orders completed before discounts were posted.
         $discountAccountId = Account::where('code', '4910')->value('id');
         $postedDiscount = $discountAccountId ? $this->postedAmount($order, $discountAccountId, 'sale%', 'debit') : 0.0;
-        $itemsSubtotal = (float) $order->items->sum(fn (OrderItem $item) => $item->is_gift ? 0 : (float) $item->total_amount);
+        // Lines an exchange added later never had a share of that discount.
+        $itemsSubtotal = (float) $order->items->sum(fn (OrderItem $item) => $item->is_gift || $item->exchange_id ? 0 : (float) $item->total_amount);
         $discountFactor = $itemsSubtotal > 0 ? max(0.0, 1 - $postedDiscount / $itemsSubtotal) : 1.0;
 
         foreach ($order->items as $item) {
@@ -329,7 +330,7 @@ class PostOrderReturn
             }
 
             $orderedQty = (float) $item->quantity;
-            $unitPrice = $orderedQty > 0 ? (float) $item->total_amount / $orderedQty * $discountFactor : 0.0;
+            $unitPrice = $orderedQty > 0 ? (float) $item->total_amount / $orderedQty * ($item->exchange_id ? 1.0 : $discountFactor) : 0.0;
 
             // Cost it at what the shipped units cost (their batches), same as the sale's COGS.
             $allocations = $item->batchAllocations;

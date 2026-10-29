@@ -47,7 +47,15 @@ class PostCourierCodCollected
             return;
         }
 
-        if ($order->payments()->where('type', OrderPaymentType::PAYMENT)->where('payment_method', PaymentMethod::COD)->exists()) {
+        // An exchange parcel collects on its own, after the order's delivery
+        // already did — idempotent per parcel (its tracking number on the
+        // payment) instead of per order.
+        $isExchange = $shipment->isExchange();
+        $alreadyPaid = $order->payments()->where('type', OrderPaymentType::PAYMENT)->where('payment_method', PaymentMethod::COD)
+            ->when($isExchange, fn ($q) => $q->where('transaction_id', $shipment->tracking_number ?: "shipment-{$shipment->id}"))
+            ->exists();
+
+        if ($alreadyPaid) {
             return;
         }
 
@@ -61,10 +69,15 @@ class PostCourierCodCollected
             return;
         }
 
-        $fee = min($collectedAmount, max(0.0, (float) $order->courier_charge));
+        // The order's courier_charge is its first parcel's; an exchange parcel's
+        // own cost is its delivery fee + COD fee at that courier's rate.
+        $courierCost = $isExchange
+            ? (float) $shipment->delivery_charge + round((float) $collectedAmount * ((float) $shipment->courier?->cod_fee_rate / 100), 2)
+            : (float) $order->courier_charge;
+        $fee = min($collectedAmount, max(0.0, $courierCost));
         $netAmount = round($collectedAmount - $fee, 2);
 
-        DB::transaction(function () use ($order, $shipment, $collectedAmount, $fee, $netAmount, $entryDate, $cashAccount, $when, $accountsOn) {
+        DB::transaction(function () use ($order, $shipment, $collectedAmount, $fee, $netAmount, $entryDate, $cashAccount, $when, $accountsOn, $isExchange) {
             $order->payments()->create([
                 'type'            => OrderPaymentType::PAYMENT,
                 'payment_method'  => PaymentMethod::COD,
@@ -72,7 +85,10 @@ class PostCourierCodCollected
                 'amount'          => $collectedAmount,
                 'status'          => 'paid',
                 'paid_at'         => now(),
-            ]);
+            ] + ($isExchange ? [
+                'transaction_id' => $shipment->tracking_number ?: "shipment-{$shipment->id}",
+                'note'           => 'COD on exchange parcel',
+            ] : []));
 
             $order->recalculateTotals();
             $order->update(['payment_status' => $order->due_amount > 0 ? PaymentStatus::PARTIAL : PaymentStatus::PAID]);
