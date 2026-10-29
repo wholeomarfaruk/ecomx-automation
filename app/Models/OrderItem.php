@@ -13,7 +13,7 @@ class OrderItem extends Model
         'product_name', 'variant_name', 'sku',
         'quantity', 'unit_price', 'purchase_price',
         'discount_amount', 'tax_amount', 'total_amount',
-        'returned_quantity', 'return_posted_quantity', 'delivered_quantity', 'stock_deducted',
+        'returned_quantity', 'return_posted_quantity', 'lost_quantity', 'lost_posted_quantity', 'delivered_quantity', 'stock_deducted',
     ];
 
     protected function casts(): array
@@ -29,6 +29,10 @@ class OrderItem extends Model
             'returned_quantity'  => 'decimal:3',
             // How much of returned_quantity PostOrderReturn has already reversed in the books.
             'return_posted_quantity' => 'decimal:3',
+            // Part of returned_quantity the courier lost — not owed by the customer, never restocked.
+            'lost_quantity'          => 'decimal:3',
+            // How much of lost_quantity is written off in the books (Stock Loss).
+            'lost_posted_quantity'   => 'decimal:3',
             'delivered_quantity' => 'decimal:3',
             'stock_deducted'     => 'decimal:3',
         ];

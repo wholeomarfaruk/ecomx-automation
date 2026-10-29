@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\DB;
  *  - confirmed / processing / shipped / delivered / returning
  *    / partially returned / refunded → quantity − returned_quantity is out of stock
  *  - pending / cancelled / returned → nothing is
+ *  - either way, units the courier lost (lost_quantity) stay out
  *
  * Stock given back on cancel/return honours Inventory → "restock on
  * cancel/return" (default on); with it off, the units are written off.
@@ -87,7 +88,12 @@ class OwnOrderStock
             default => false,
         };
 
-        return $keeps ? max(0.0, (float) $item->quantity - (float) $item->returned_quantity) : 0.0;
+        // Units the courier lost count as returned (the customer doesn't pay
+        // for them) but never come back — they stay out whatever the status
+        // (only a shipped order can have any).
+        $lost = min(max(0.0, (float) $item->lost_quantity), (float) $item->returned_quantity);
+
+        return $keeps ? max(0.0, (float) $item->quantity - (float) $item->returned_quantity + $lost) : $lost;
     }
 
     /**

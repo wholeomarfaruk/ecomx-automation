@@ -19,6 +19,7 @@ use App\Enums\Sales\OrderStatus;
 use App\Enums\Sales\PaymentMethod;
 use App\Enums\Sales\PaymentStatus;
 use App\Exceptions\Inventory\InsufficientStockException;
+use App\Livewire\Admin\Issues\IssuePanel;
 use App\Livewire\Admin\Sales\Concerns\SendsPurchaseToMeta;
 use App\Livewire\Concerns\BooksCourierShipments;
 use App\Models\Account;
@@ -71,8 +72,11 @@ class OrderDetail extends Component
     public bool   $refundAsStoreCredit = false;
     public string $refundNote         = '';
 
-    /** @var array<int, string> item_id => returned_quantity */
+    /** @var array<int, string> item_id => units that came back (returned_quantity less what the courier lost) */
     public array $returnedQuantities = [];
+
+    /** @var array<int, string> item_id => lost_quantity (lost by the courier — off the total, never restocked) */
+    public array $lostQuantities = [];
 
     /** @var array<int, string> item_id => delivered_quantity */
     public array $deliveredQuantities = [];
@@ -100,10 +104,7 @@ class OrderDetail extends Component
         $this->courierCharge          = $order->courier_charge !== null ? (string) $order->courier_charge : '';
         $this->courierStatus          = $order->courier_status?->value ?? '';
 
-        foreach ($order->items as $item) {
-            $this->returnedQuantities[$item->id] = (string) $item->returned_quantity;
-            $this->deliveredQuantities[$item->id] = (string) $item->delivered_quantity;
-        }
+        $this->fillItemQuantities($order);
     }
 
     /**
@@ -113,6 +114,12 @@ class OrderDetail extends Component
     /** The Fraud Check modal saved a result — re-render the Customer card. */
     #[On('fraud-checked')]
     public function refreshFraudCard(): void
+    {
+    }
+
+    /** An issue was reported from the Issues card — re-render the header's issue badge. */
+    #[On('issues-updated')]
+    public function refreshIssueBadge(): void
     {
     }
 
@@ -127,11 +134,21 @@ class OrderDetail extends Component
         $this->paymentStatus     = $order->payment_status->value;
         $this->fulfillmentStatus = $order->fulfillment_status->value;
 
+        $this->fillItemQuantities($order);
+    }
+
+    /** The per-item Returned / Lost / Delivered inputs, from what's saved. */
+    protected function fillItemQuantities(Order $order): void
+    {
         $this->returnedQuantities = [];
+        $this->lostQuantities = [];
         $this->deliveredQuantities = [];
 
         foreach ($order->items as $item) {
-            $this->returnedQuantities[$item->id] = (string) $item->returned_quantity;
+            $lost = (float) $item->lost_quantity;
+
+            $this->returnedQuantities[$item->id] = (string) max(0.0, (float) $item->returned_quantity - $lost);
+            $this->lostQuantities[$item->id] = (string) $lost;
             $this->deliveredQuantities[$item->id] = (string) $item->delivered_quantity;
         }
     }
@@ -648,8 +665,23 @@ class OrderDetail extends Component
         $order = Order::with('items')->findOrFail($this->orderId);
         $before = RecordOrderReturns::snapshot($order);
 
+        // Came back + lost can't be more than was sent — RecordOrderReturns would silently cap it.
+        $over = $order->items->first(fn (OrderItem $item) => max(0.0, (float) ($this->returnedQuantities[$item->id] ?? 0))
+            + max(0.0, (float) ($this->lostQuantities[$item->id] ?? 0)) > (float) $item->quantity + 0.0005);
+
+        if ($over) {
+            $this->dispatch('toast', ['type' => 'error', 'message' => "{$over->product_name}: returned + lost is more than the " . rtrim(rtrim(number_format((float) $over->quantity, 3), '0'), '.') . ' ordered.']);
+
+            return;
+        }
+
         try {
-            app(RecordOrderReturns::class)->handle($order, $this->returnedQuantities);
+            // Lost units count as returned (the customer doesn't pay for them) — RecordOrderReturns keeps them out of stock.
+            $returned = $order->items->mapWithKeys(fn (OrderItem $item) => [
+                $item->id => max(0.0, (float) ($this->returnedQuantities[$item->id] ?? 0)) + max(0.0, (float) ($this->lostQuantities[$item->id] ?? 0)),
+            ])->all();
+
+            app(RecordOrderReturns::class)->handle($order, $returned, $this->lostQuantities);
         } catch (InsufficientStockException $e) {
             // Lowering a returned quantity books those units again — not if they've been sold since.
             $this->dispatch('toast', ['type' => 'error', 'message' => $e->getMessage()]);
@@ -660,6 +692,7 @@ class OrderDetail extends Component
         $order->refresh();
         $this->status = $order->status->value;
         $this->paymentStatus = $order->payment_status->value;
+        $this->fillItemQuantities($order->load('items'));
 
         activity('sales')
             ->causedBy(auth()->user())
@@ -668,6 +701,9 @@ class OrderDetail extends Component
             ->withProperties(['changes' => ['before' => $before, 'after' => RecordOrderReturns::snapshot($order->fresh(['items']))]])
             ->log("Returns recorded for Order #{$order->id}");
 
+        // Marking something lost opens/updates a "Lost by courier" issue — refresh the Issues
+        // card (this page re-renders anyway, so not back to itself).
+        $this->dispatch('issues-updated')->to(IssuePanel::class);
         $this->dispatch('toast', ['type' => 'success', 'message' => 'Returns saved']);
     }
 
@@ -903,7 +939,7 @@ class OrderDetail extends Component
             'courierShipments.courier',
             'courierShipments.courierAccount',
             'courierShipments.trackingEvents',
-        ])->findOrFail($this->orderId);
+        ])->withCount(Order::issueBadgeCounts())->findOrFail($this->orderId);
 
         $canManageCourier = auth()->user()->can('courier_configuration.manage');
         $fraudEnabled = app(FraudShieldSettings::class)->ready();
@@ -930,7 +966,8 @@ class OrderDetail extends Component
                 'id'       => $item->id,
                 'qty'      => (float) $item->quantity,
                 'total'    => $item->is_gift ? 0.0 : (float) $item->total_amount,
-                'returned' => (float) $item->returned_quantity,
+                'returned' => (float) $item->returned_quantity - (float) $item->lost_quantity,
+                'lost'     => (float) $item->lost_quantity,
             ])->values(),
             'returnFactor'        => $order->returnDiscountFactor(),
             'paymentMethods'      => array_filter(PaymentMethod::cases(), fn ($m) => $m !== PaymentMethod::STORE_CREDIT),

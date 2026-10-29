@@ -177,6 +177,12 @@ Route::prefix('sales')->name('sales.')->group(function () {
     });
 });
 
+// Issues — lost parcels, damaged goods, complaints, claims (any record can carry them; see HasIssues)
+Route::prefix('issues')->name('issues.')->group(function () {
+    Route::get('/', App\Livewire\Admin\Issues\Issues::class)->name('index');
+    Route::get('/{id}', App\Livewire\Admin\Issues\IssueDetail::class)->whereNumber('id')->name('show');
+});
+
 Route::prefix('marketing')->name('marketing.')->group(function () {
     Route::get('/', App\Livewire\Admin\Marketing\Dashboard::class)->name('dashboard');
 

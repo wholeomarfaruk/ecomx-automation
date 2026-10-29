@@ -440,10 +440,17 @@ class StockService
             ->sum('quantity'));
     }
 
-    /** Units this line still needs reserved: ordered, less what came back and what's already physically out. */
+    /**
+     * Units this line still needs reserved: ordered, less what came back and
+     * what's already physically out. Lost units are both "returned" and still
+     * out — count them once, or the line would under-book what's left to ship.
+     */
     protected function bookingNeed(OrderItem $item): float
     {
-        return max(0.0, (float) $item->quantity - (float) $item->returned_quantity - $this->itemOut($item));
+        $lost = min((float) $item->lost_quantity, (float) $item->returned_quantity);
+        $outForCustomer = max(0.0, $this->itemOut($item) - $lost);
+
+        return max(0.0, (float) $item->quantity - (float) $item->returned_quantity - $outForCustomer);
     }
 
     /**
@@ -636,7 +643,8 @@ class StockService
                     continue;
                 }
 
-                $out = $this->itemOut($item);
+                // Units the courier lost never come back — they stay out.
+                $out = $this->itemOut($item) - min((float) $item->lost_quantity, (float) $item->returned_quantity);
 
                 if ($out > 0.0005) {
                     $this->putBackToBatches($item, $out, 'sale_cancelled', "Order #{$order->id} cancelled/returned");
@@ -743,6 +751,27 @@ class StockService
             ->sum('quantity');
 
         $delta = $returnedQuantity - $alreadyRestocked;
+
+        // Restocked earlier, now found to be lost by the courier (the caller
+        // passes only what physically came back) — take those units back out.
+        // Only up to what's lost and not taken back already: a plain "returned"
+        // lowered again is left to syncBookings(), which books those units
+        // back, as before.
+        if ($delta < -0.0005 && (float) $item->lost_quantity > 0) {
+            $alreadyTakenBack = -(float) InventoryStockMovement::query()
+                ->where('reference_type', OrderItem::class)
+                ->where('reference_id', $item->id)
+                ->where('type', 'return')
+                ->where('quantity', '<', 0)
+                ->sum('quantity');
+            $takeBack = min(-$delta, (float) $item->lost_quantity - $alreadyTakenBack);
+
+            if ($takeBack > 0.0005) {
+                $this->decreaseFefo($item->product, $item->variant, $takeBack, 'return', $warehouse, $item, "Order #{$item->order_id} — item lost by courier");
+            }
+
+            return;
+        }
 
         if ($delta <= 0) {
             return;

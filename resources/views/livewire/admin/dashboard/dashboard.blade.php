@@ -134,6 +134,42 @@
         </div>
     </div>
 
+    {{-- Open Issues — lost parcels, complaints, claims; always-current like the alerts --}}
+    @if ($openIssues !== null && $openIssues->isNotEmpty())
+        <div class="bg-white rounded-lg shadow-sm border border-red-200 overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                <h2 class="text-sm font-semibold text-gray-900 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                    Open Issues
+                    <span class="text-xs font-normal text-gray-400">
+                        {{ number_format((int) $issueTotals->total) }} open
+                        @if ((float) $issueTotals->outstanding > 0)
+                            · ৳{{ number_format((float) $issueTotals->outstanding, 2) }} to recover
+                        @endif
+                    </span>
+                </h2>
+                <a href="{{ route('admin.issues.index') }}" class="text-xs text-indigo-600 hover:text-indigo-700 font-medium">View all →</a>
+            </div>
+            <div class="divide-y divide-gray-100">
+                @foreach ($openIssues as $issue)
+                    <a href="{{ route('admin.issues.show', $issue->id) }}" class="flex flex-wrap items-center justify-between gap-2 px-4 py-2 hover:bg-gray-50">
+                        <div class="min-w-0">
+                            <div class="text-sm text-gray-900 truncate">{{ $issue->title }}</div>
+                            <div class="flex flex-wrap items-center gap-1.5 text-xs text-gray-400 mt-0.5">
+                                <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium {{ $issue->type->badgeClass() }}">{{ $issue->type->label() }}</span>
+                                <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium {{ $issue->priority->badgeClass() }}">{{ $issue->priority->label() }}</span>
+                                <span>#{{ $issue->id }} · {{ $issue->created_at->diffForHumans() }}</span>
+                            </div>
+                        </div>
+                        @if ($issue->outstandingClaim() > 0)
+                            <span class="text-sm font-semibold text-gray-900">৳{{ number_format($issue->outstandingClaim(), 2) }}</span>
+                        @endif
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     {{-- Recent Orders --}}
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">

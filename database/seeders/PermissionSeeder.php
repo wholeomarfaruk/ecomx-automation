@@ -311,6 +311,10 @@ class PermissionSeeder extends Seeder
             //fraud checker
             ['id' => 201, 'name' => 'fraud_checker.manage'],
 
+            //issues
+            ['id' => 202, 'name' => 'issue.view'],
+            ['id' => 203, 'name' => 'issue.manage'],
+
         ];
         foreach ($permissions as $permission) {
             // Permission::create(['name' => $permission]);

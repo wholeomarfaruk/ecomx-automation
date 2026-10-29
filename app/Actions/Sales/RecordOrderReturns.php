@@ -2,6 +2,7 @@
 
 namespace App\Actions\Sales;
 
+use App\Actions\Accounts\PostLostStock;
 use App\Actions\Accounts\PostOrderReturn;
 use App\Models\AccountsCustomerInvoice;
 use App\Models\Order;
@@ -18,23 +19,35 @@ use Illuminate\Support\Facades\DB;
  * it, moves the status (all back → Returned; part back on a delivered
  * order → partial fulfillment), takes the returned units off the total
  * and lets a paid order's payment status follow the new due.
+ *
+ * Lost by courier: lost_quantity is the part of returned_quantity that
+ * never came back — off the customer's total like any return, but not
+ * restocked; written off at cost (PostLostStock) and claimed from the
+ * courier through a "Lost by courier" Issue (ReportCourierLoss).
  */
 class RecordOrderReturns
 {
     public function __construct(protected StockService $stockService) {}
 
-    /** @param  array<int, float|string>  $returnedQuantities  item id => returned quantity (missing items → 0) */
-    public function handle(Order $order, array $returnedQuantities): void
+    /**
+     * @param  array<int, float|string>  $returnedQuantities  item id => returned quantity, lost units included (missing items → 0)
+     * @param  array<int, float|string>|null  $lostQuantities  item id => how much of that the courier lost; null keeps what's saved
+     */
+    public function handle(Order $order, array $returnedQuantities, ?array $lostQuantities = null): void
     {
         $order->loadMissing('items');
         $restockOnReturn = (bool) Setting::get('restock_on_cancel_or_return', true, 'inventory');
         $hasBeenCompleted = AccountsCustomerInvoice::where('order_id', $order->id)->exists();
+        $lostChanged = false;
 
-        DB::transaction(function () use ($order, $returnedQuantities, $restockOnReturn, $hasBeenCompleted) {
+        DB::transaction(function () use ($order, $returnedQuantities, $lostQuantities, $restockOnReturn, $hasBeenCompleted, &$lostChanged) {
             foreach ($order->items as $item) {
-                $qty = min((float) ($returnedQuantities[$item->id] ?? 0), (float) $item->quantity);
+                $qty = max(0.0, min((float) ($returnedQuantities[$item->id] ?? 0), (float) $item->quantity));
+                $lost = max(0.0, min((float) ($lostQuantities === null ? $item->lost_quantity : ($lostQuantities[$item->id] ?? 0)), $qty));
 
-                $item->update(['returned_quantity' => max(0, $qty)]);
+                $lostChanged = $lostChanged || abs($lost - (float) $item->lost_quantity) > 0.0005;
+
+                $item->update(['returned_quantity' => $qty, 'lost_quantity' => $lost]);
             }
 
             // Reverses only what wasn't reversed yet (order_items.return_posted_quantity).
@@ -44,14 +57,23 @@ class RecordOrderReturns
 
             if ($restockOnReturn) {
                 foreach ($order->items as $item) {
-                    $qty = (float) $item->fresh()->returned_quantity;
+                    $fresh = $item->fresh();
 
-                    if ($qty > 0) {
-                        $this->stockService->restockReturnedItem($item, $qty);
+                    if ((float) $fresh->returned_quantity > 0) {
+                        // Only what physically came back — lost units stay out.
+                        $this->stockService->restockReturnedItem($item, (float) $fresh->returned_quantity - (float) $fresh->lost_quantity);
                     }
                 }
             }
+
+            if ($lostChanged && (bool) Setting::get('accounts_enabled', false, 'modules')) {
+                app(PostLostStock::class)->handle($order->fresh(['items.batchAllocations']), now()->toDateString());
+            }
         });
+
+        if ($lostChanged) {
+            app(ReportCourierLoss::class)->handle($order->fresh(['items', 'courierShipments.courier']));
+        }
 
         $order->syncReturnStatus();
 
@@ -77,6 +99,7 @@ class RecordOrderReturns
     {
         return [
             'returned' => $order->items->mapWithKeys(fn (OrderItem $i) => [$i->product_name => (float) $i->returned_quantity])->all(),
+            'lost'     => $order->items->filter(fn (OrderItem $i) => (float) $i->lost_quantity > 0)->mapWithKeys(fn (OrderItem $i) => [$i->product_name => (float) $i->lost_quantity])->all(),
             'shipping' => (float) $order->shipping_amount,
             'discount' => (float) $order->discount_amount,
             'total'    => (float) $order->total_amount,

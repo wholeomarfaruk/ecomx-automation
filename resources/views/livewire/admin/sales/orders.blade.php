@@ -169,7 +169,10 @@
                         <tr class="hover:bg-gray-50/50 transition group">
                             <td class="pl-5 pr-2 py-3 text-sm text-gray-400 tabular-nums">{{ $orders->firstItem() + $loop->index }}</td>
                             <td class="px-5 py-3 cursor-pointer" onclick="window.location.href='{{ route('admin.sales.orders.show', $order->id) }}'">
-                                <span class="text-sm font-medium text-gray-800">#{{ $order->id }}</span>
+                                <span class="inline-flex items-center gap-1.5">
+                                    <span class="text-sm font-medium text-gray-800">#{{ $order->id }}</span>
+                                    <x-issue-badge :open="$order->open_issues_count" :resolved="$order->resolved_issues_count" :closed="$order->closed_issues_count" />
+                                </span>
                                 @php $placedAt = local_time($order->created_at); @endphp
                                 <span class="block text-xs text-gray-400 whitespace-nowrap">{{ $placedAt?->format('d M, Y h:i A') }}</span>
                                 @if ($placedAt && $placedAt->isToday())

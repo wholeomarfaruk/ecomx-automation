@@ -9,6 +9,7 @@ use App\Enums\Sales\OrderPaymentType;
 use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\OrderStatus;
 use App\Enums\Sales\PaymentStatus;
+use App\Models\Concerns\HasIssues;
 use App\Support\PhoneNumber;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,8 @@ use Illuminate\Support\Facades\Route;
 
 class Order extends Model
 {
+    use HasIssues;
+
     protected $fillable = [
         'customer_id', 'source',
         'status', 'payment_status', 'fulfillment_status',
@@ -297,6 +300,17 @@ class Order extends Model
         $this->paid_amount       = max(0, (float) $paidIn - (float) $paidOut);
         $this->due_amount        = max(0, $this->total_amount - $this->paid_amount);
         $this->save();
+    }
+
+    /**
+     * Who an Issue about this order can be raised against — the couriers
+     * that carried it (see ReportIssueModal).
+     *
+     * @return \Illuminate\Support\Collection<int, Courier>
+     */
+    public function issueParties(): \Illuminate\Support\Collection
+    {
+        return $this->courierShipments()->with('courier')->latest('id')->get()->pluck('courier')->filter()->unique('id')->values();
     }
 
     /** Whether this order's sale has been posted to accounts — its money can't be edited freely after that. */

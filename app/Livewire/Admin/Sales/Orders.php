@@ -389,6 +389,8 @@ class Orders extends Component
         $orders = $this->filteredOrders()
             ->with('customer', 'shippingAddress')
             ->withCount('items')
+            // Issues: open / fixed badge next to the order number.
+            ->withCount(Order::issueBadgeCounts())
             // Accounts: is this order's sale in the books yet? (badge under Fulfillment)
             ->withExists(['journalEntries as sale_posted' => fn ($q) => $q->where('purpose', 'like', 'sale%')->where('status', 'posted')])
             // Inventory: packed vs packable units, for the row menu's "Pack items".

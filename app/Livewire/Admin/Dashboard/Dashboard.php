@@ -11,6 +11,7 @@ use App\Models\Courier;
 use App\Models\CourierShipment;
 use App\Models\Customer;
 use App\Models\InventoryStock;
+use App\Models\Issue;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderPayment;
@@ -219,7 +220,21 @@ class Dashboard extends Component
             ->groupBy('status')
             ->get();
 
+        // Open issues (lost parcels, complaints, claims) — always-current like the alerts.
+        $user = auth()->user();
+        $openIssues = $user?->hasRole('superadmin') || $user?->can('issue.view') || $user?->can('issue.manage')
+            ? Issue::active()
+                ->orderByRaw("FIELD(priority, 'urgent', 'high', 'normal', 'low')")
+                ->latest('id')
+                ->limit(5)
+                ->get()
+            : null;
+
         return view('livewire.admin.dashboard.dashboard', [
+            'openIssues' => $openIssues,
+            'issueTotals' => $openIssues === null ? null : Issue::active()
+                ->selectRaw('COUNT(*) AS total, SUM(GREATEST(COALESCE(claim_amount, 0) - recovered_amount, 0)) AS outstanding')
+                ->first(),
             'kpis' => $kpis,
             'previousKpis' => $previousKpis,
             'orderStatusBreakdown' => $orderStatusBreakdown,

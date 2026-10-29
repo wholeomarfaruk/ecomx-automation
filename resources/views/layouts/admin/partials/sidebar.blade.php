@@ -751,6 +751,24 @@
                 </div>
                 @endif
 
+                @if ($canSee('issue.view', 'issue.manage'))
+                @php $activeIssueCount = \App\Models\Issue::active()->count(); @endphp
+                <a href="{{ route('admin.issues.index') }}" x-data="tooltip" x-on:mouseover="show = true"
+                    x-on:mouseleave="show = false"
+                    class="relative flex items-center hover:text-gray-200 hover:bg-gray-800 space-x-2 rounded-md p-2 cursor-pointer justify-start text-gray-400
+                    {{ str_starts_with(Route::currentRouteName(), 'admin.issues.') ? 'text-gray-200 bg-gray-800' : '' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                    </svg>
+                    <h1 x-cloak x-bind:class="!$store.sidebar.full && show ? visibleClass : '' || !$store.sidebar.full ? 'sm:hidden' : ''">
+                        Issues</h1>
+                    @if ($activeIssueCount > 0)
+                        <span x-cloak x-show="$store.sidebar.full"
+                            class="ml-auto inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-semibold">{{ $activeIssueCount }}</span>
+                    @endif
+                </a>
+                @endif
+
                 @if ($canSee('marketing_attribution.view', 'marketing_audience.view', 'marketing_campaign.view', 'marketing_customer.view', 'marketing_dashboard.view', 'marketing_event.view', 'marketing_journey.view', 'marketing_product.view', 'marketing_report.view', 'marketing_settings.manage', 'marketing_source.view'))
                 @php
                     $marketingActive = str_starts_with(Route::currentRouteName(), 'admin.marketing.');
