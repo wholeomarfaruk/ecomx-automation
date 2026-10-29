@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Setting;
+use App\Models\Supplier;
 use Illuminate\Support\Str;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -64,6 +65,12 @@ class ProductEdit extends Component
     public string $height = '';
 
     // SEO
+    // Supplier (all optional, admin-only)
+    public string $supplierId          = '';
+    public string $supplierProductName = '';
+    public $supplierImageId            = null;
+    public string $supplierLink        = '';
+
     public $metaImageId          = null;
     public string $metaTitle       = '';
     public string $metaDescription = '';
@@ -117,6 +124,11 @@ class ProductEdit extends Component
         $this->length = $product->length !== null ? (string) $product->length : '';
         $this->width  = $product->width !== null ? (string) $product->width : '';
         $this->height = $product->height !== null ? (string) $product->height : '';
+
+        $this->supplierId          = (string) ($product->supplier_id ?? '');
+        $this->supplierProductName = (string) ($product->supplier_product_name ?? '');
+        $this->supplierImageId     = $product->supplier_image_id;
+        $this->supplierLink        = (string) ($product->supplier_link ?? '');
 
         $this->metaImageId     = $product->meta_image_id;
         $this->metaTitle       = $product->meta_title ?? '';
@@ -180,6 +192,11 @@ class ProductEdit extends Component
             'length' => 'nullable|numeric|min:0',
             'width'  => 'nullable|numeric|min:0',
             'height' => 'nullable|numeric|min:0',
+
+            'supplierId'          => 'nullable|integer|exists:suppliers,id',
+            'supplierProductName' => 'nullable|string|max:255',
+            'supplierImageId'     => 'nullable|integer|exists:files,id',
+            'supplierLink'        => 'nullable|url|max:1000',
 
             'metaTitle'       => 'nullable|string|max:255',
             'metaDescription' => 'nullable|string',
@@ -332,6 +349,11 @@ class ProductEdit extends Component
             'width'  => $this->width !== '' ? $this->width : null,
             'height' => $this->height !== '' ? $this->height : null,
 
+            'supplier_id'           => $this->supplierId !== '' ? (int) $this->supplierId : null,
+            'supplier_product_name' => trim($this->supplierProductName) ?: null,
+            'supplier_image_id'     => $this->supplierImageId ?: null,
+            'supplier_link'         => trim($this->supplierLink) ?: null,
+
             'meta_image_id'     => $this->metaImageId ?: null,
             'meta_title'        => $this->metaTitle ?: null,
             'meta_description'  => $this->metaDescription ?: null,
@@ -421,6 +443,12 @@ class ProductEdit extends Component
             'comboVariantOptions'  => $comboVariantOptions,
             'giftProductOptions'   => $giftProductOptions,
             'inventoryEnabled'     => Setting::get('inventory_enabled', false, 'modules'),
+            // Supplier tab — the list only while it's open.
+            'supplierOptions'      => $this->activeTab === 'supplier'
+                ? Supplier::orderBy('name')->get(['id', 'name', 'company_name', 'phone'])
+                    ->mapWithKeys(fn (Supplier $s) => [(string) $s->id => $s->name . ($s->company_name ? " ({$s->company_name})" : '') . ($s->phone ? " — {$s->phone}" : '')])
+                : collect(),
+            'purchaseEnabled'      => (bool) Setting::get('purchase_enabled', false, 'modules'),
         ])->layout('layouts.admin.admin');
     }
 }

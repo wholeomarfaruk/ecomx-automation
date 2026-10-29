@@ -19,9 +19,13 @@ class Product extends Model
 {
     use SoftDeletes;
 
+    /** Sourcing details stay out of the product's JSON (storefront, APIs). */
+    protected $hidden = ['supplier_id', 'supplier_product_name', 'supplier_image_id', 'supplier_link'];
+
     protected $fillable = [
         'code', 'name', 'slug', 'short_description', 'description', 'size_guide',
         'brand_id', 'status', 'featured', 'stock_status',
+        'supplier_id', 'supplier_product_name', 'supplier_image_id', 'supplier_link',
         'product_type', 'combo_allowed', 'gift_allowed',
         'price', 'sale_price', 'purchase_price', 'combo_price', 'stock_quantity',
         'featured_image_id', 'image_ids', 'video_ids',
@@ -72,6 +76,18 @@ class Product extends Model
     public function getFeaturedImageAttribute(): ?string
     {
         return $this->featured_image_id ? file_path($this->featured_image_id) : null;
+    }
+
+    /** Where it's bought from (optional, admin-only). */
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
+    /** The supplier's own photo of it (optional, admin-only). */
+    public function supplierImage(): BelongsTo
+    {
+        return $this->belongsTo(File::class, 'supplier_image_id');
     }
 
     public function metaImage(): BelongsTo
