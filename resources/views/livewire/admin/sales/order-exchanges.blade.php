@@ -55,7 +55,7 @@
                             <span>Credit <span class="text-red-500">−{{ number_format($exchange->creditAmount($order), 2) }}</span></span>
                             <span>New <span class="text-gray-800">{{ number_format($exchange->newAmount(), 2) }}</span></span>
                             @if((float) $exchange->charge_amount > 0)
-                                <span>Charge <span class="text-gray-800">+{{ number_format((float) $exchange->charge_amount, 2) }}</span></span>
+                                <span title="{{ $exchange->charges->map(fn ($c) => $c->label . ': ' . number_format((float) $c->amount, 2))->implode(' · ') }}">Charges <span class="text-gray-800">+{{ number_format((float) $exchange->charge_amount, 2) }}</span></span>
                             @endif
                             <span class="font-medium {{ $balance >= 0 ? 'text-gray-800' : 'text-amber-700' }}">
                                 {{ $balance >= 0 ? 'Customer pays' : 'Refund to customer' }} {{ number_format(abs($balance), 2) }}
@@ -199,12 +199,40 @@
                     </div>
                 </div>
 
+                <div>
+                    <div class="flex items-center justify-between">
+                        <p class="text-xs font-semibold text-gray-600">Extra charges <span class="font-normal text-gray-400">(customer pays: packaging, alteration, ...)</span></p>
+                        <button type="button" wire:click="addExtraCharge" class="text-xs font-medium text-indigo-600 hover:text-indigo-700">+ Add charge</button>
+                    </div>
+                    <div class="space-y-2 mt-2">
+                        @foreach($extraCharges as $i => $extra)
+                            <div wire:key="exchange-extra-charge-{{ $i }}">
+                                <div class="flex items-center gap-2">
+                                    <input wire:model.live.debounce.300ms="extraCharges.{{ $i }}.label" type="text" placeholder="Charge name"
+                                        class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                    <input wire:model.live.debounce.300ms="extraCharges.{{ $i }}.amount" type="number" step="0.01" min="0" placeholder="0.00"
+                                        class="w-28 rounded-lg border border-gray-300 px-3 py-2 text-sm text-right focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                    <button type="button" wire:click="removeExtraCharge({{ $i }})" title="Remove"
+                                        class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
+                                @error("extraCharges.{$i}.label") <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                @error("extraCharges.{$i}.amount") <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            </div>
+                        @endforeach
+                        @if($extraCharges === [])
+                            <p class="text-[11px] text-gray-400">None.</p>
+                        @endif
+                    </div>
+                </div>
+
                 @if($preview)
                     <div class="rounded-xl border px-4 py-3 text-sm {{ $preview['balance'] >= 0 ? 'border-indigo-100 bg-indigo-50/50' : 'border-amber-200 bg-amber-50' }}">
                         <div class="flex flex-wrap gap-x-5 gap-y-1 text-gray-600">
                             <span>Credit <span class="text-red-500">−{{ number_format($preview['credit'], 2) }}</span></span>
                             <span>New <span class="text-gray-800">{{ number_format($preview['new'], 2) }}</span></span>
-                            <span>Charge <span class="text-gray-800">+{{ number_format($preview['charge'], 2) }}</span></span>
+                            <span>Charges <span class="text-gray-800">+{{ number_format($preview['charge'], 2) }}</span></span>
                         </div>
                         <p class="mt-1 font-semibold {{ $preview['balance'] >= 0 ? 'text-indigo-700' : 'text-amber-800' }}">
                             @if($preview['balance'] >= 0)
@@ -327,7 +355,7 @@
             <form wire:submit.prevent="markFailed" class="px-6 py-5 space-y-4">
                 <label class="inline-flex items-center gap-2 cursor-pointer">
                     <input wire:model="failKeepCharge" type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                    <span class="text-sm text-gray-700">Customer still pays the exchange delivery charge</span>
+                    <span class="text-sm text-gray-700">Customer still pays the exchange charges (delivery + extras)</span>
                 </label>
                 <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
                     <button @click="open = false" type="button" class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Back</button>

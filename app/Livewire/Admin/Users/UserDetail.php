@@ -2,10 +2,12 @@
 
 namespace App\Livewire\Admin\Users;
 
+use App\Actions\Customers\SaveDeliveryAddress;
 use App\Models\ActivityLog;
 use App\Models\Block;
 use App\Models\Customer;
 use App\Models\CustomerGroup;
+use App\Models\DeliveryAddress;
 use App\Models\Device;
 use App\Models\DeviceIpAddress;
 use App\Models\DeviceVisit;
@@ -93,6 +95,17 @@ class UserDetail extends Component
     public string $blockScope      = Block::SCOPE_FULL_SITE;
     public string $blockReason     = '';
     public string $blockExpiresAt  = '';
+
+    // Addresses tab: add / edit one address
+    public bool   $addressModal           = false;
+    public ?int   $addressEditId          = null;
+    public string $addressName            = '';
+    public string $addressPhone           = '';
+    public string $addressAltPhone        = '';
+    public string $addressFull            = '';
+    public string $addressNote            = '';
+    public bool   $addressDefaultBilling  = false;
+    public bool   $addressDefaultShipping = false;
 
     public function mount(): void
     {
@@ -464,6 +477,108 @@ class UserDetail extends Component
             ->with(['blockable', 'blockedBy'])
             ->orderByDesc('id')
             ->get();
+    }
+
+    // ── Addresses ────────────────────────────────────────────────────────
+
+    protected function canEditAddresses(): bool
+    {
+        $user = auth()->user();
+
+        return (bool) ($user?->hasRole('superadmin') || $user?->can('customer.edit'));
+    }
+
+    /** Add (no id) or edit one of this customer's addresses. */
+    public function openAddressModal(?int $addressId = null): void
+    {
+        abort_unless($this->canEditAddresses() && $this->customerId, 403);
+
+        $customer = Customer::findOrFail($this->customerId);
+        $address = $addressId ? $customer->deliveryAddresses()->findOrFail($addressId) : null;
+
+        $this->resetValidation();
+        $this->addressEditId = $address?->id;
+        $this->addressName = (string) ($address?->name ?? $customer->full_name);
+        $this->addressPhone = (string) ($address?->phone ?? $customer->phone);
+        $this->addressAltPhone = (string) ($address?->alternative_phone ?? '');
+        $this->addressFull = (string) ($address?->full_address ?? '');
+        $this->addressNote = (string) ($address?->delivery_note ?? '');
+        $this->addressDefaultBilling = (bool) ($address?->is_default_billing ?? ! $customer->deliveryAddresses()->where('is_default_billing', true)->exists());
+        $this->addressDefaultShipping = (bool) ($address?->is_default_shipping ?? ! $customer->deliveryAddresses()->where('is_default_shipping', true)->exists());
+        $this->addressModal = true;
+    }
+
+    /**
+     * Saves through SaveDeliveryAddress: an address a shipped order shows is
+     * saved as a new one (that order keeps the old), orders not shipped yet
+     * get the corrected one.
+     */
+    public function saveAddress(): void
+    {
+        abort_unless($this->canEditAddresses() && $this->customerId, 403);
+
+        $this->validate([
+            'addressName'     => 'required|string|max:255',
+            'addressPhone'    => 'required|string|max:20',
+            'addressAltPhone' => 'nullable|string|max:20',
+            'addressFull'     => 'required|string|max:1000',
+            'addressNote'     => 'nullable|string|max:500',
+        ], [], [
+            'addressName' => 'name', 'addressPhone' => 'phone', 'addressAltPhone' => 'alternative phone',
+            'addressFull' => 'address', 'addressNote' => 'delivery note',
+        ]);
+
+        $customer = Customer::findOrFail($this->customerId);
+        $old = $this->addressEditId ? $customer->deliveryAddresses()->findOrFail($this->addressEditId) : null;
+        $before = $old?->only(['name', 'phone', 'alternative_phone', 'full_address', 'delivery_note']);
+
+        [$address, $copied] = app(SaveDeliveryAddress::class)->handle($customer, $old, [
+            'name'              => $this->addressName,
+            'phone'             => $this->addressPhone,
+            'alternative_phone' => $this->addressAltPhone,
+            'full_address'      => $this->addressFull,
+            'delivery_note'     => $this->addressNote,
+        ]);
+
+        $this->applyAddressDefaults($customer, $address, $this->addressDefaultBilling, $this->addressDefaultShipping);
+
+        activity('customers')->causedBy(auth()->user())->performedOn($customer)->event('updated')
+            ->withProperties(['changes' => ['before' => $before, 'after' => $address->only(['name', 'phone', 'alternative_phone', 'full_address', 'delivery_note'])]])
+            ->log(match (true) {
+                ! $old  => "Address added for \"{$customer->full_name}\"",
+                $copied => "Address edited for \"{$customer->full_name}\" (saved as a new address — shipped orders keep the old one)",
+                default => "Address edited for \"{$customer->full_name}\"",
+            });
+
+        $this->addressModal = false;
+        $this->dispatch('toast', ['type' => 'success', 'message' => $copied
+            ? 'Address saved as a new one — shipped orders keep the old address'
+            : 'Address saved']);
+    }
+
+    /** Makes one address the customer's default billing or shipping address. */
+    public function makeDefaultAddress(int $addressId, string $kind): void
+    {
+        abort_unless($this->canEditAddresses() && $this->customerId, 403);
+
+        $customer = Customer::findOrFail($this->customerId);
+        $address = $customer->deliveryAddresses()->where('is_active', true)->findOrFail($addressId);
+
+        $this->applyAddressDefaults($customer, $address, $kind === 'billing' ? true : null, $kind === 'shipping' ? true : null);
+        $this->dispatch('toast', ['type' => 'success', 'message' => 'Default ' . ($kind === 'billing' ? 'billing' : 'shipping') . ' address set']);
+    }
+
+    /** true = make it the default (others lose it), false = not the default, null = leave as is. */
+    protected function applyAddressDefaults(Customer $customer, DeliveryAddress $address, ?bool $billing, ?bool $shipping): void
+    {
+        foreach (['is_default_billing' => $billing, 'is_default_shipping' => $shipping] as $column => $value) {
+            if ($value === true) {
+                $customer->deliveryAddresses()->whereKeyNot($address->id)->where($column, true)->update([$column => false]);
+                $address->update([$column => true]);
+            } elseif ($value === false && $address->{$column}) {
+                $address->update([$column => false]);
+            }
+        }
     }
 
     public function render(): mixed

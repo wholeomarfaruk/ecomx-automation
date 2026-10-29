@@ -311,24 +311,87 @@
                     @error('customerId') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>
 
-                @if($customerId)
+                @if($customerId && $addressEditing)
+                    {{-- Address editor: an address other orders use is saved as a new one (see OrderEditor::saveAddress()). --}}
+                    <div class="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <p class="text-xs font-semibold text-gray-700">{{ $addressEditId ? 'Edit' : 'New' }} {{ $addressFor }} address</p>
+                            @if($addressEditId && $addressUsedElsewhere > 0)
+                                <span class="text-[11px] text-amber-700">On {{ $addressUsedElsewhere }} shipped order{{ $addressUsedElsewhere > 1 ? 's' : '' }} — saved as a new address, they keep the old one</span>
+                            @endif
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Name <span class="text-red-500">*</span></label>
+                                <input wire:model="addressName" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                @error('addressName') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Phone <span class="text-red-500">*</span></label>
+                                <input wire:model="addressPhone" type="text" inputmode="tel" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                @error('addressPhone') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Full address <span class="text-red-500">*</span></label>
+                            <textarea wire:model="addressFull" rows="3" placeholder="House, road, area, thana, district"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"></textarea>
+                            @error('addressFull') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Alternative phone</label>
+                                <input wire:model="addressAltPhone" type="text" inputmode="tel" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                @error('addressAltPhone') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Delivery note</label>
+                                <input wire:model="addressNote" type="text" placeholder="e.g. Call before coming" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            </div>
+                        </div>
+                        @if($hasLiveParcel)
+                            <p class="text-[11px] text-amber-700">A courier parcel is already booked — this doesn't change it; update the address on the courier's panel too.</p>
+                        @endif
+                        <div class="flex items-center justify-end gap-2">
+                            <button type="button" wire:click="cancelAddressEdit" class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Back</button>
+                            <button type="button" wire:click="saveAddress" wire:loading.attr="disabled" wire:target="saveAddress"
+                                class="px-4 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition disabled:opacity-60">Save address</button>
+                        </div>
+                    </div>
+                @elseif($customerId)
                     <div class="grid grid-cols-1 gap-4">
                         <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Billing Address</label>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="block text-xs font-medium text-gray-600">Billing Address</label>
+                                <span class="flex items-center gap-3 text-xs">
+                                    @if($billingAddressId)
+                                        <button type="button" wire:click="editAddress('billing')" class="font-medium text-indigo-600 hover:text-indigo-700">Edit</button>
+                                    @endif
+                                    <button type="button" wire:click="editAddress('billing', true)" class="font-medium text-indigo-600 hover:text-indigo-700">+ New</button>
+                                </span>
+                            </div>
                             <select wire:model="billingAddressId" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
                                 <option value="">— None —</option>
                                 @foreach($customerAddresses as $address)
-                                    <option value="{{ $address->id }}">{{ $address->name }} — {{ Str::limit($address->full_address, 50) }}</option>
+                                    <option value="{{ $address->id }}">{{ $address->name }}{{ $address->phone ? ' (' . $address->phone . ')' : '' }} — {{ Str::limit($address->full_address, 50) }}</option>
                                 @endforeach
                             </select>
                             @error('billingAddressId') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Shipping Address</label>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="block text-xs font-medium text-gray-600">Shipping Address</label>
+                                <span class="flex items-center gap-3 text-xs">
+                                    @if($shippingAddressId)
+                                        <button type="button" wire:click="editAddress('shipping')" class="font-medium text-indigo-600 hover:text-indigo-700">Edit</button>
+                                    @endif
+                                    <button type="button" wire:click="editAddress('shipping', true)" class="font-medium text-indigo-600 hover:text-indigo-700">+ New</button>
+                                </span>
+                            </div>
                             <select wire:model="shippingAddressId" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
                                 <option value="">— None —</option>
                                 @foreach($customerAddresses as $address)
-                                    <option value="{{ $address->id }}">{{ $address->name }} — {{ Str::limit($address->full_address, 50) }}</option>
+                                    <option value="{{ $address->id }}">{{ $address->name }}{{ $address->phone ? ' (' . $address->phone . ')' : '' }} — {{ Str::limit($address->full_address, 50) }}</option>
                                 @endforeach
                             </select>
                             @error('shippingAddressId') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
@@ -336,10 +399,12 @@
                     </div>
                 @endif
 
+                @unless($addressEditing)
                 <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
                     <button @click="open = false" type="button" class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
                     <button type="submit" wire:loading.attr="disabled" wire:target="saveCustomer" class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition disabled:opacity-60">Save</button>
                 </div>
+                @endunless
             </form>
         </div>
     </div>

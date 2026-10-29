@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Sales;
 
+use App\Actions\Customers\SaveDeliveryAddress;
 use App\Actions\Sales\PackOrderItem;
 use App\Enums\Sales\OrderSource;
 use App\Enums\Sales\OrderStatus;
@@ -72,6 +73,18 @@ class OrderEditor extends Component
     public string $customerId = '';
     public string $billingAddressId = '';
     public string $shippingAddressId = '';
+
+    // Address editor inside the Customer & Address modal.
+    public bool $addressEditing = false;
+    /** The address being edited; null = adding a new one. */
+    public ?int $addressEditId = null;
+    /** Which field the edited/new address goes into: 'shipping' | 'billing'. */
+    public string $addressFor = 'shipping';
+    public string $addressName = '';
+    public string $addressPhone = '';
+    public string $addressAltPhone = '';
+    public string $addressFull = '';
+    public string $addressNote = '';
 
     // Source & notes (informational — editable at any status)
     public bool $notesModal = false;
@@ -446,7 +459,8 @@ class OrderEditor extends Component
         $this->discountType = 'fixed';
         $this->discountValue = (string) (float) $order->discount_amount;
         $this->taxAmount = (string) (float) $order->tax_amount;
-        $this->charges = $order->charges->map(fn ($c) => ['label' => $c->label, 'amount' => (string) (float) $c->amount])->values()->all();
+        // An exchange's own charges are managed on its card, not here.
+        $this->charges = $order->charges->whereNull('exchange_id')->map(fn ($c) => ['label' => $c->label, 'amount' => (string) (float) $c->amount])->values()->all();
         $this->couponCode = $order->coupon_code ?? '';
 
         $this->resetValidation();
@@ -509,7 +523,7 @@ class OrderEditor extends Component
             'shipping' => (float) $order->shipping_amount,
             'discount' => (float) $order->discount_amount,
             'tax'      => (float) $order->tax_amount,
-            'charges'  => $order->charges->map(fn ($c) => [$c->label => (float) $c->amount])->all(),
+            'charges'  => $order->charges->whereNull('exchange_id')->map(fn ($c) => [$c->label => (float) $c->amount])->all(),
         ];
 
         DB::transaction(function () use ($order, $discount) {
@@ -519,7 +533,8 @@ class OrderEditor extends Component
                 'tax_amount'      => (float) $this->taxAmount,
             ]);
 
-            $order->charges()->delete();
+            // Only the order's own charges — an exchange's stay with it.
+            $order->charges()->whereNull('exchange_id')->delete();
 
             foreach ($this->charges as $charge) {
                 $order->charges()->create([
@@ -724,13 +739,131 @@ class OrderEditor extends Component
         $this->customerId = (string) ($order->customer_id ?? '');
         $this->billingAddressId = (string) ($order->billing_address_id ?? '');
         $this->shippingAddressId = (string) ($order->shipping_address_id ?? '');
+        $this->addressEditing = false;
 
         $this->resetValidation();
         $this->customerModal = true;
     }
 
+    /** Opens the address editor for the address picked in $for ('shipping' | 'billing'), or a blank one with $new. */
+    public function editAddress(string $for, bool $new = false): void
+    {
+        $for = $for === 'billing' ? 'billing' : 'shipping';
+        $address = ! $new && $this->{$for . 'AddressId'} !== ''
+            ? DeliveryAddress::where('customer_id', $this->customerId ?: 0)->find((int) $this->{$for . 'AddressId'})
+            : null;
+        $customer = $address ? null : Customer::find((int) $this->customerId);
+
+        $this->resetValidation();
+        $this->addressFor = $for;
+        $this->addressEditId = $address?->id;
+        $this->addressName = (string) ($address?->name ?? $customer?->full_name ?? '');
+        $this->addressPhone = (string) ($address?->phone ?? $customer?->phone ?? '');
+        $this->addressAltPhone = (string) ($address?->alternative_phone ?? '');
+        $this->addressFull = (string) ($address?->full_address ?? '');
+        $this->addressNote = (string) ($address?->delivery_note ?? '');
+        $this->addressEditing = true;
+    }
+
+    public function cancelAddressEdit(): void
+    {
+        $this->addressEditing = false;
+        $this->resetValidation();
+    }
+
+    /**
+     * Saves the edited / new address and puts it on this order — through
+     * SaveDeliveryAddress, so an address an already-shipped order shows is
+     * saved as a new one instead of rewriting that order.
+     */
+    public function saveAddress(): void
+    {
+        $this->validate([
+            'addressName'     => 'required|string|max:255',
+            'addressPhone'    => 'required|string|max:20',
+            'addressAltPhone' => 'nullable|string|max:20',
+            'addressFull'     => 'required|string|max:1000',
+            'addressNote'     => 'nullable|string|max:500',
+        ], [], [
+            'addressName' => 'name', 'addressPhone' => 'phone', 'addressAltPhone' => 'alternative phone',
+            'addressFull' => 'address', 'addressNote' => 'delivery note',
+        ]);
+
+        $order = $this->order();
+
+        if (! $this->ensureEditable($order)) {
+            return;
+        }
+
+        $customer = $this->customerId ? Customer::find((int) $this->customerId) : null;
+
+        if (! $customer) {
+            $this->addError('addressFull', 'Pick a customer first — an address belongs to a customer.');
+
+            return;
+        }
+
+        $old = $this->addressEditId ? $customer->deliveryAddresses()->find($this->addressEditId) : null;
+
+        if ($this->addressEditId && ! $old) {
+            $this->addError('addressFull', 'That address no longer belongs to this customer.');
+
+            return;
+        }
+
+        $before = $old?->only(['name', 'phone', 'alternative_phone', 'full_address', 'delivery_note']);
+
+        [$address, $copied] = app(SaveDeliveryAddress::class)->handle($customer, $old, [
+            'name'              => $this->addressName,
+            'phone'             => $this->addressPhone,
+            'alternative_phone' => $this->addressAltPhone,
+            'full_address'      => $this->addressFull,
+            'delivery_note'     => $this->addressNote,
+        ]);
+
+        // Wherever the old address was picked here (billing and/or shipping), use the new one.
+        if ($old && $copied) {
+            foreach (['billingAddressId', 'shippingAddressId'] as $field) {
+                if ((int) $this->{$field} === $old->id) {
+                    $this->{$field} = (string) $address->id;
+                }
+            }
+        }
+
+        $this->{$this->addressFor . 'AddressId'} = (string) $address->id;
+        $this->addressEditing = false;
+
+        // Same customer as the order — put it on the order right away, not only after "Save".
+        if ((int) $order->customer_id === (int) $customer->id) {
+            $ids = ['billing_address_id' => $order->billing_address_id, 'shipping_address_id' => $order->shipping_address_id];
+
+            $order->update([
+                'billing_address_id'  => $this->billingAddressId ?: null,
+                'shipping_address_id' => $this->shippingAddressId ?: null,
+            ]);
+
+            $what = match (true) {
+                ! $old  => 'new address added',
+                $copied => 'address edited (saved as a new address — shipped orders keep the old one)',
+                default => 'address edited',
+            };
+
+            $this->saved($order, $what, [
+                'before' => $ids + ['address' => $before],
+                'after'  => ['billing_address_id' => $order->billing_address_id, 'shipping_address_id' => $order->shipping_address_id,
+                    'address' => $address->only(['name', 'phone', 'alternative_phone', 'full_address', 'delivery_note'])],
+            ]);
+
+            return;
+        }
+
+        $this->dispatch('toast', ['type' => 'success', 'message' => 'Address saved — click Save to use it for this order']);
+    }
+
     public function updatedCustomerId(): void
     {
+        $this->addressEditing = false;
+
         // Default to the new customer's default addresses (if any).
         $addresses = $this->customerId ? DeliveryAddress::where('customer_id', $this->customerId)->get() : collect();
 
@@ -748,6 +881,13 @@ class OrderEditor extends Component
 
     public function saveCustomer(): void
     {
+        // Enter pressed inside the address editor submits the modal's form — save the address, not the order.
+        if ($this->addressEditing) {
+            $this->saveAddress();
+
+            return;
+        }
+
         $this->validate([
             'customerId'        => 'nullable|integer|exists:customers,id',
             'billingAddressId'  => 'nullable|integer|exists:delivery_addresses,id',
@@ -869,8 +1009,11 @@ class OrderEditor extends Component
                 ->mapWithKeys(fn ($c) => [$c->id => $c->phone ? "{$c->full_name} — {$c->phone}" : $c->full_name])
             : collect();
 
+        // Retired addresses (replaced by an edit) stay hidden unless still picked here.
         $customerAddresses = $this->customerModal && $this->customerId
-            ? DeliveryAddress::where('customer_id', $this->customerId)->get()
+            ? DeliveryAddress::where('customer_id', $this->customerId)
+                ->where(fn ($q) => $q->where('is_active', true)->orWhereIn('id', array_filter([(int) $this->billingAddressId, (int) $this->shippingAddressId])))
+                ->get()
             : collect();
 
         $editItemsTotal = collect($this->editItems)->sum(fn ($l) => $l['is_gift'] ? 0 : (float) $l['quantity'] * (float) $l['unit_price']);
@@ -885,6 +1028,12 @@ class OrderEditor extends Component
             'customerOptions'   => $customerOptions,
             'customerAddresses' => $customerAddresses,
             'editItemsTotal'    => $editItemsTotal,
+            // Address editor: shipped orders showing the address being edited (> 0 → saved as a new one).
+            'addressUsedElsewhere' => $this->customerModal && $this->addressEditing && $this->addressEditId && ($editing = DeliveryAddress::find($this->addressEditId))
+                ? SaveDeliveryAddress::shippedOrdersUsing($editing)
+                : 0,
+            'hasLiveParcel'     => $this->customerModal && $this->addressEditing
+                && $order->courierShipments()->whereNotIn('status', ['cancelled'])->exists(),
             'sources'           => OrderSource::cases(),
         ]);
     }

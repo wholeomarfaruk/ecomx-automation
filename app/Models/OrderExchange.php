@@ -53,9 +53,25 @@ class OrderExchange extends Model
         return $this->belongsTo(CourierShipment::class, 'courier_shipment_id');
     }
 
+    /** Its delivery charge row (the first of its charges()). */
     public function charge(): BelongsTo
     {
         return $this->belongsTo(OrderCharge::class, 'order_charge_id');
+    }
+
+    /** Every order charge this exchange added — delivery charge and extras. charge_amount is their total. */
+    public function charges(): HasMany
+    {
+        return $this->hasMany(OrderCharge::class, 'exchange_id');
+    }
+
+    /** Drops this exchange's charges from the order (it failed without them / was cancelled). */
+    public function removeCharges(): void
+    {
+        OrderCharge::query()
+            ->where('order_id', $this->order_id)
+            ->where(fn ($q) => $q->where('exchange_id', $this->id)->when($this->order_charge_id, fn ($qq) => $qq->orWhere('id', $this->order_charge_id)))
+            ->delete();
     }
 
     public function creator(): BelongsTo

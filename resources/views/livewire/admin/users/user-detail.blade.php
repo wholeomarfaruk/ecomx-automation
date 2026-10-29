@@ -629,7 +629,18 @@
 
             @if($tab === 'addresses')
                 @if($customer)
+                @php $canEditAddresses = auth()->user()?->hasRole('superadmin') || auth()->user()?->can('customer.edit'); @endphp
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                    @if($canEditAddresses)
+                        <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+                            <p class="text-xs text-gray-400">Editing an address a shipped order shows saves it as a new one — that order keeps the old address.</p>
+                            <button type="button" wire:click="openAddressModal"
+                                class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                                Add address
+                            </button>
+                        </div>
+                    @endif
                     <div class="overflow-x-auto">
                         <table class="min-w-full">
                             <thead>
@@ -638,24 +649,51 @@
                                     <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Name / Phone</th>
                                     <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Address</th>
                                     <th class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Default</th>
+                                    @if($canEditAddresses)
+                                        <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
                                 @forelse($addresses as $address)
-                                    <tr class="hover:bg-gray-50/50 transition">
-                                        <td class="px-5 py-3 text-sm text-gray-600 capitalize">{{ $address->address_type }}</td>
+                                    <tr wire:key="customer-address-{{ $address->id }}" class="hover:bg-gray-50/50 transition {{ $address->is_active ? '' : 'opacity-60' }}">
+                                        <td class="px-5 py-3 text-sm text-gray-600 capitalize">
+                                            {{ $address->address_type }}
+                                            @unless($address->is_active)
+                                                <span title="Replaced by an edit — kept because shipped orders show it" class="block text-[10px] font-medium uppercase tracking-wide text-gray-400">Replaced</span>
+                                            @endunless
+                                        </td>
                                         <td class="px-5 py-3">
                                             <span class="block text-sm text-gray-800">{{ $address->name }}</span>
-                                            <span class="block text-xs text-gray-400">{{ $address->phone }}</span>
+                                            <span class="block text-xs text-gray-400">{{ $address->phone }}@if($address->alternative_phone) · {{ $address->alternative_phone }}@endif</span>
                                         </td>
-                                        <td class="px-5 py-3 text-sm text-gray-600 max-w-sm">{{ $address->full_address }}</td>
+                                        <td class="px-5 py-3 text-sm text-gray-600 max-w-sm">
+                                            {{ $address->full_address }}
+                                            @if($address->delivery_note)<span class="block text-xs text-gray-400">{{ $address->delivery_note }}</span>@endif
+                                        </td>
                                         <td class="px-5 py-3 text-center">
                                             @if($address->is_default_billing)<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-600 mr-1">Billing</span>@endif
                                             @if($address->is_default_shipping)<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-600">Shipping</span>@endif
                                         </td>
+                                        @if($canEditAddresses)
+                                            <td class="px-5 py-3 text-right whitespace-nowrap">
+                                                @if($address->is_active)
+                                                    <button type="button" wire:click="openAddressModal({{ $address->id }})"
+                                                        class="px-2.5 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">Edit</button>
+                                                    @unless($address->is_default_shipping)
+                                                        <button type="button" wire:click="makeDefaultAddress({{ $address->id }}, 'shipping')"
+                                                            class="px-2.5 py-1 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">Default shipping</button>
+                                                    @endunless
+                                                    @unless($address->is_default_billing)
+                                                        <button type="button" wire:click="makeDefaultAddress({{ $address->id }}, 'billing')"
+                                                            class="px-2.5 py-1 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">Default billing</button>
+                                                    @endunless
+                                                @endif
+                                            </td>
+                                        @endif
                                     </tr>
                                 @empty
-                                    <tr><td colspan="4" class="px-5 py-16 text-center text-sm text-gray-500">No addresses found.</td></tr>
+                                    <tr><td colspan="{{ $canEditAddresses ? 5 : 4 }}" class="px-5 py-16 text-center text-sm text-gray-500">No addresses found.</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -988,6 +1026,70 @@
                 <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
                     <button @click="open = false" type="button" class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
                     <button type="submit" class="px-5 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition">Create Block</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    @endif
+
+    {{-- Address Modal (Addresses tab) --}}
+    @if($customer)
+    <div x-cloak x-data="{ open: @entangle('addressModal') }" x-show="open" x-transition
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog">
+        <div class="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col" @click.outside="open = false">
+            <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100 shrink-0">
+                <div class="flex-1">
+                    <h2 class="text-base font-semibold text-gray-900">{{ $addressEditId ? 'Edit Address' : 'Add Address' }}</h2>
+                    <p class="text-xs text-gray-400 mt-0.5">{{ $customer->full_name }}</p>
+                </div>
+                <button @click="open = false" type="button" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <form wire:submit.prevent="saveAddress" class="overflow-y-auto px-6 py-5 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Name <span class="text-red-500">*</span></label>
+                        <input wire:model="addressName" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                        @error('addressName') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Phone <span class="text-red-500">*</span></label>
+                        <input wire:model="addressPhone" type="text" inputmode="tel" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                        @error('addressPhone') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Full address <span class="text-red-500">*</span></label>
+                    <textarea wire:model="addressFull" rows="3" placeholder="House, road, area, thana, district"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"></textarea>
+                    @error('addressFull') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Alternative phone</label>
+                        <input wire:model="addressAltPhone" type="text" inputmode="tel" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                        @error('addressAltPhone') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Delivery note</label>
+                        <input wire:model="addressNote" type="text" placeholder="e.g. Call before coming" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-4">
+                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                        <input wire:model="addressDefaultShipping" type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-sm text-gray-700">Default shipping</span>
+                    </label>
+                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                        <input wire:model="addressDefaultBilling" type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-sm text-gray-700">Default billing</span>
+                    </label>
+                </div>
+                <p class="text-[11px] text-gray-400">Orders not shipped yet that use this address get the change. A shipped order keeps the address it went out with — the edit is saved as a new address.</p>
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+                    <button @click="open = false" type="button" class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
+                    <button type="submit" wire:loading.attr="disabled" wire:target="saveAddress" class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition disabled:opacity-60">Save address</button>
                 </div>
             </form>
         </div>

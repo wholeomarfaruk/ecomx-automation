@@ -74,7 +74,7 @@ class CloseExchange
             $exchange->update(['status' => ExchangeStatus::FAILED, 'failed_at' => now()]);
 
             if (! $keepCharge) {
-                $exchange->charge?->delete();
+                $exchange->removeCharges();
             }
 
             app(RecordOrderReturns::class)->handle($order, $this->returnedWith($order, $newBack->all()));
@@ -107,7 +107,7 @@ class CloseExchange
                 $item->delete();
             }
 
-            $exchange->charge?->delete();
+            $exchange->removeCharges();
             $exchange->update(['status' => ExchangeStatus::CANCELLED, 'cancelled_at' => now()]);
 
             $order = $exchange->order()->firstOrFail();

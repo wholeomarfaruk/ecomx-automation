@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OrderCharge extends Model
 {
-    protected $fillable = ['order_id', 'label', 'amount'];
+    protected $fillable = ['order_id', 'exchange_id', 'label', 'amount'];
 
     protected function casts(): array
     {

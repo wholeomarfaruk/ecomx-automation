@@ -41,6 +41,8 @@ class OrderExchanges extends Component
     public array $newLines = [];
     public string $productPickerId = '';
     public string $charge = '';
+    /** @var list<array{label: string, amount: string}> charges besides delivery (packaging, alteration, ...) */
+    public array $extraCharges = [];
     public string $reason = '';
 
     // Parcel
@@ -107,7 +109,7 @@ class OrderExchanges extends Component
         abort_unless($this->canEdit(), 403);
 
         $this->resetValidation();
-        $this->reset(['back', 'newLines', 'productPickerId', 'reason']);
+        $this->reset(['back', 'newLines', 'productPickerId', 'reason', 'extraCharges']);
         $this->charge = (string) (float) $this->order()->shipping_amount;
         $this->createModal = true;
     }
@@ -146,6 +148,17 @@ class OrderExchanges extends Component
         }
     }
 
+    public function addExtraCharge(): void
+    {
+        $this->extraCharges[] = ['label' => '', 'amount' => ''];
+    }
+
+    public function removeExtraCharge(int $index): void
+    {
+        unset($this->extraCharges[$index]);
+        $this->extraCharges = array_values($this->extraCharges);
+    }
+
     public function removeNewLine(int $index): void
     {
         unset($this->newLines[$index]);
@@ -164,9 +177,13 @@ class OrderExchanges extends Component
             'newLines.*.quantity'   => 'required|numeric|min:0.001',
             'newLines.*.unit_price' => 'required|numeric|min:0',
             'charge'                => 'nullable|numeric|min:0',
+            'extraCharges'          => 'array',
+            'extraCharges.*.label'  => 'required|string|max:60',
+            'extraCharges.*.amount' => 'required|numeric|min:0.01',
             'reason'                => 'nullable|string|max:255',
         ], [], [
             'newLines' => 'new items', 'newLines.*.quantity' => 'quantity', 'newLines.*.unit_price' => 'price',
+            'extraCharges.*.label' => 'charge name', 'extraCharges.*.amount' => 'charge amount',
         ]);
 
         // A product with variants needs one picked.
@@ -179,7 +196,7 @@ class OrderExchanges extends Component
         }
 
         try {
-            $exchange = $createExchange->handle($this->order(), $this->back, $this->newLines, (float) $this->charge, $this->reason);
+            $exchange = $createExchange->handle($this->order(), $this->back, $this->newLines, (float) $this->charge, $this->reason, null, $this->extraCharges);
         } catch (DomainException|InsufficientStockException $e) {
             $this->toastError($e->getMessage());
 
@@ -338,7 +355,7 @@ class OrderExchanges extends Component
     public function render(): mixed
     {
         $order = $this->order();
-        $exchanges = $order->exchanges()->with(['returnItems.orderItem', 'newItems', 'shipment.courier'])->orderBy('number')->get();
+        $exchanges = $order->exchanges()->with(['returnItems.orderItem', 'newItems', 'shipment.courier', 'charges'])->orderBy('number')->get();
 
         $exchangeable = collect();
         $productOptions = collect();
@@ -363,7 +380,8 @@ class OrderExchanges extends Component
                 return $item->is_gift || (float) $item->quantity <= 0 ? 0 : (float) $item->total_amount / (float) $item->quantity * $qty * ($item->exchange_id ? 1.0 : $factor);
             });
             $new = collect($this->newLines)->sum(fn ($l) => (float) $l['quantity'] * (float) $l['unit_price']);
-            $preview = ['credit' => round($credit, 2), 'new' => round($new, 2), 'charge' => round((float) $this->charge, 2)];
+            $extras = collect($this->extraCharges)->sum(fn ($c) => max(0.0, (float) ($c['amount'] ?? 0)));
+            $preview = ['credit' => round($credit, 2), 'new' => round($new, 2), 'charge' => round(max(0.0, (float) $this->charge) + $extras, 2)];
             $preview['balance'] = round($preview['new'] + $preview['charge'] - $preview['credit'], 2);
         }
 

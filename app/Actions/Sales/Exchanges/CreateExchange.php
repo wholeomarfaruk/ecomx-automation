@@ -32,10 +32,11 @@ class CreateExchange
     /**
      * @param  array<int, float|string>  $returns  order item id => quantity coming back
      * @param  list<array{product_id: int|string, variant_id?: int|string|null, quantity: float|string, unit_price: float|string}>  $newLines
+     * @param  list<array{label: string, amount: float|string}>  $extraCharges  besides the delivery charge (packaging, alteration, ...)
      *
      * @throws DomainException|\App\Exceptions\Inventory\InsufficientStockException
      */
-    public function handle(Order $order, array $returns, array $newLines, float $charge, ?string $reason = null, ?string $note = null): OrderExchange
+    public function handle(Order $order, array $returns, array $newLines, float $charge, ?string $reason = null, ?string $note = null, array $extraCharges = []): OrderExchange
     {
         if ($order->status !== OrderStatus::DELIVERED) {
             throw new DomainException('An exchange can only be made on a delivered order.');
@@ -75,7 +76,13 @@ class CreateExchange
             throw new DomainException('Add what the customer gets instead.');
         }
 
-        return DB::transaction(function () use ($order, $returns, $newLines, $charge, $reason, $note) {
+        $extraCharges = collect($extraCharges)
+            ->map(fn ($c) => ['label' => trim((string) ($c['label'] ?? '')), 'amount' => round(max(0.0, (float) ($c['amount'] ?? 0)), 2)])
+            ->filter(fn ($c) => $c['label'] !== '' && $c['amount'] > 0)
+            ->values();
+        $charge = round(max(0.0, $charge), 2);
+
+        return DB::transaction(function () use ($order, $returns, $newLines, $charge, $reason, $note, $extraCharges) {
             $number = (int) OrderExchange::where('order_id', $order->id)->lockForUpdate()->max('number') + 1;
 
             $exchange = OrderExchange::create([
@@ -84,7 +91,8 @@ class CreateExchange
                 'status'        => ExchangeStatus::REQUESTED,
                 'reason'        => $reason ?: null,
                 'note'          => $note ?: null,
-                'charge_amount' => round(max(0.0, $charge), 2),
+                // Delivery charge + extras — everything the exchange adds to the order.
+                'charge_amount' => round($charge + $extraCharges->sum('amount'), 2),
                 'created_by'    => auth()->id(),
             ]);
 
@@ -120,9 +128,13 @@ class CreateExchange
                 $added[] = "{$quantity} × {$product->name}" . ($variant ? " ({$variant->sku})" : '');
             }
 
-            if ($exchange->charge_amount > 0) {
-                $chargeRow = $order->charges()->create(['label' => "Exchange #{$number} delivery", 'amount' => $exchange->charge_amount]);
+            if ($charge > 0) {
+                $chargeRow = $order->charges()->create(['exchange_id' => $exchange->id, 'label' => "Exchange #{$number} delivery", 'amount' => $charge]);
                 $exchange->update(['order_charge_id' => $chargeRow->id]);
+            }
+
+            foreach ($extraCharges as $extra) {
+                $order->charges()->create(['exchange_id' => $exchange->id, 'label' => "Exchange #{$number} — {$extra['label']}", 'amount' => $extra['amount']]);
             }
 
             $order->recalculateTotals();
@@ -131,7 +143,7 @@ class CreateExchange
             $back = $returns->map(fn ($qty, $id) => rtrim(rtrim(number_format($qty, 3), '0'), '.') . ' × ' . $order->items->firstWhere('id', $id)?->product_name)->implode(', ');
 
             activity('sales')->causedBy(auth()->user())->performedOn($order)->event('updated')
-                ->withProperties(['changes' => ['exchange' => $number, 'back' => $back, 'new' => $added, 'charge' => (float) $exchange->charge_amount, 'reason' => $reason]])
+                ->withProperties(['changes' => ['exchange' => $number, 'back' => $back, 'new' => $added, 'delivery_charge' => $charge, 'extra_charges' => $extraCharges->all(), 'reason' => $reason]])
                 ->log("Exchange #{$number} opened for Order #{$order->id}: {$back} → " . implode(', ', $added));
 
             return $exchange;
