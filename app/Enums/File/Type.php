@@ -12,7 +12,7 @@ enum Type: string
     public static function fromExtension(string $ext): ?self
     {
         return match (strtolower($ext)) {
-            'jpg','jpeg','png','gif','ico','tiff','webp' => self::IMAGE,
+            'jpg','jpeg','png','gif','ico','tiff','webp','avif' => self::IMAGE,
             'mp4','mov','avi','mkv' => self::VIDEO,
             'pdf','doc','docx','xls','xlsx','csv','txt','zip' => self::DOCUMENT,
             default => null,

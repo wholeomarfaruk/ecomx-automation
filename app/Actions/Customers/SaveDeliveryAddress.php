@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\DB;
 class SaveDeliveryAddress
 {
     /** Orders still editable — they follow an address correction. */
-    public const OPEN_STATUSES = [OrderStatus::PENDING, OrderStatus::CONFIRMED, OrderStatus::PROCESSING];
+    public const OPEN_STATUSES = [OrderStatus::PENDING, OrderStatus::HOLD, OrderStatus::CONFIRMED, OrderStatus::PROCESSING];
 
     /**
      * @param  array{name: string, phone: string, alternative_phone?: ?string, full_address: string, delivery_note?: ?string}  $input

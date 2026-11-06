@@ -214,7 +214,7 @@ class Orders extends Component
     }
 
     /** Statuses that count as a "new" order — not shipped yet. */
-    private const NEW_ORDER_STATUSES = [OrderStatus::PENDING, OrderStatus::CONFIRMED, OrderStatus::PROCESSING];
+    private const NEW_ORDER_STATUSES = [OrderStatus::PENDING, OrderStatus::HOLD, OrderStatus::CONFIRMED, OrderStatus::PROCESSING];
 
     /** Customer filter options — only customers who have ordered, "Name — phone". */
     #[Computed]
@@ -456,7 +456,7 @@ class Orders extends Component
                 ->selectRaw("{$packableSql} as packable_qty")
                 ->with('customer')
                 ->whereIn('status', [
-                    OrderStatus::PENDING, OrderStatus::CONFIRMED, OrderStatus::PROCESSING,
+                    OrderStatus::PENDING, OrderStatus::HOLD, OrderStatus::CONFIRMED, OrderStatus::PROCESSING,
                     OrderStatus::SHIPPED, OrderStatus::DELIVERED,
                 ])
                 ->whereRaw("{$packedSql} > 0")

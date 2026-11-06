@@ -286,7 +286,8 @@ class Order extends Model
         // Exchanges start from a delivered order — checkout and everything
         // before shipping never needs the lookup.
         if (! $this->exists || in_array($this->status, [
-            \App\Enums\Sales\OrderStatus::PENDING, \App\Enums\Sales\OrderStatus::CONFIRMED,
+            \App\Enums\Sales\OrderStatus::PENDING, \App\Enums\Sales\OrderStatus::HOLD,
+            \App\Enums\Sales\OrderStatus::CONFIRMED,
             \App\Enums\Sales\OrderStatus::PROCESSING, \App\Enums\Sales\OrderStatus::CANCELLED,
         ], true)) {
             return 0.0;

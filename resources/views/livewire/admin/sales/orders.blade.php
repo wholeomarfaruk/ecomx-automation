@@ -206,7 +206,7 @@
                                         // on orders still being worked on. Older results are refreshed
                                         // from the modal ("Re-check now"), never automatically.
                                         $fraudPending = $fraudAutoCheck && ! $fc
-                                            && in_array($order->status, [\App\Enums\Sales\OrderStatus::PENDING, \App\Enums\Sales\OrderStatus::CONFIRMED, \App\Enums\Sales\OrderStatus::PROCESSING], true);
+                                            && in_array($order->status, [\App\Enums\Sales\OrderStatus::PENDING, \App\Enums\Sales\OrderStatus::HOLD, \App\Enums\Sales\OrderStatus::CONFIRMED, \App\Enums\Sales\OrderStatus::PROCESSING], true);
                                     @endphp
                                     <span class="block mt-1" data-fraud-order="{{ $order->id }}" @if($fraudPending) data-fraud-pending @endif>
                                         @if ($fc)

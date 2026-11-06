@@ -105,7 +105,7 @@ class OrderEditor extends Component
     /** Items/charges/customer are editable only before shipping and before any sale is posted. */
     public static function isEditable(Order $order): bool
     {
-        return in_array($order->status, [OrderStatus::PENDING, OrderStatus::CONFIRMED, OrderStatus::PROCESSING], true)
+        return in_array($order->status, [OrderStatus::PENDING, OrderStatus::HOLD, OrderStatus::CONFIRMED, OrderStatus::PROCESSING], true)
             && ! $order->salePosted();
     }
 

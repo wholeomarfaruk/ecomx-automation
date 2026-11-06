@@ -17,6 +17,7 @@ namespace App\Enums\Sales;
 enum OrderStatus: string
 {
     case PENDING             = 'pending';
+    case HOLD                = 'hold';
     case CONFIRMED           = 'confirmed';
     case PROCESSING          = 'processing';
     case SHIPPED              = 'shipped';
@@ -31,6 +32,7 @@ enum OrderStatus: string
     {
         return match ($this) {
             self::PENDING             => 'Pending',
+            self::HOLD                => 'Hold',
             self::CONFIRMED           => 'Confirmed',
             self::PROCESSING          => 'Processing',
             self::SHIPPED              => 'Shipped',
@@ -47,6 +49,7 @@ enum OrderStatus: string
     {
         return match ($this) {
             self::PENDING             => 'bg-amber-50 text-amber-600',
+            self::HOLD                => 'bg-yellow-100 text-yellow-700',
             self::CONFIRMED           => 'bg-blue-50 text-blue-600',
             self::PROCESSING          => 'bg-indigo-50 text-indigo-600',
             self::SHIPPED              => 'bg-purple-50 text-purple-600',
