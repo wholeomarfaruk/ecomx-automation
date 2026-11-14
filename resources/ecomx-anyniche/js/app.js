@@ -730,6 +730,62 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
+    // Floating Add to cart / Buy now bar on the product page
+    // (product-gallery-buy-box.blade.php). Shown only while the main buy
+    // buttons ([data-pdp-buy]) are mostly off screen — hidden once at least
+    // half of them is visible. Sits above the mobile .bottom-nav when there
+    // is one (its height goes to --buybar-offset), and toggles
+    // body.has-buybar so the page can reserve room for it.
+    Alpine.data('stickyBuyBar', () => {
+        let frame = null;
+        let onChange = null;
+
+        return {
+            show: false,
+            init() {
+                onChange = () => {
+                    if (frame) return;
+                    frame = requestAnimationFrame(() => {
+                        frame = null;
+                        this.update();
+                    });
+                };
+                window.addEventListener('scroll', onChange, { passive: true });
+                window.addEventListener('resize', onChange, { passive: true });
+                this.$watch('show', (on) => document.body.classList.toggle('has-buybar', on));
+                this.update();
+            },
+            destroy() {
+                window.removeEventListener('scroll', onChange);
+                window.removeEventListener('resize', onChange);
+                if (frame) cancelAnimationFrame(frame);
+                document.body.classList.remove('has-buybar');
+            },
+            update() {
+                const nav = document.querySelector('.bottom-nav');
+                const navH = nav ? nav.getBoundingClientRect().height : 0;
+                document.documentElement.style.setProperty('--buybar-offset', navH + 'px');
+
+                const target = document.querySelector('[data-pdp-buy]');
+                if (!target) {
+                    this.show = false;
+                    return;
+                }
+                const r = target.getBoundingClientRect();
+                const visible = Math.min(r.bottom, window.innerHeight - navH) - Math.max(r.top, 0);
+                this.show = visible < r.height / 2;
+            },
+            // A size still has to be picked — cartAction asks the buy box for
+            // its size prompt; bring the size picker into view so it's seen.
+            revealSizes(el) {
+                let needsSize = false;
+                try { needsSize = JSON.parse(el.dataset.cart).needsSize; } catch (e) { return; }
+                if (!needsSize) return;
+                document.querySelector('[data-pdp-sizes]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            },
+        };
+    });
+
     // Countdown timer for the flash-sale band. Always counts down to
     // 23:59:59 Bangladesh time (Asia/Dhaka, UTC+6, no DST) *today*, so it
     // reads the same real end-of-day target on every refresh instead of

@@ -289,3 +289,62 @@
   &--out-of-stock { color: #C92A2A; }
 }
 .jtc-stock-line--backorder { color: #1971C2; }
+
+// ---- floating buy bar ---------------------------------------------------------
+// product-gallery-buy-box.blade.php + stickyBuyBar (app.js): shown only while
+// the main buy buttons are off screen. z-index sits under the header search
+// scrim (74), drawers and modals, so those still cover it. While it's shown,
+// body.has-buybar reserves room for it and lifts the support FAB above it.
+
+.jtc-buybar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 70;
+  background: #fff; border-top: 1px solid $line;
+  box-shadow: 0 -12px 30px -14px rgba(20, 32, 28, 0.22);
+  padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
+  transition: transform .25s ease, opacity .25s ease;
+
+  &--off { transform: translateY(100%); opacity: 0; }
+
+  &__inner { @include container; display: flex; align-items: center; gap: 16px; }
+  &__prod { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
+  &__thumb { width: 48px; height: 48px; border-radius: $radius; object-fit: cover; flex: none; background: $img-bg; border: 1px solid $line; }
+  &__meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  &__name { font-size: 0.88rem; font-weight: 600; color: $ink; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  &__price { display: flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+  &__now { font-family: $font-display; font-weight: 700; font-size: 1.05rem; color: $ink; }
+  &__sub { display: inline-flex; align-items: baseline; gap: 8px; }
+  &__was { font-size: 0.8rem; color: $muted; text-decoration: line-through; }
+  &__qty { font-size: 0.8rem; font-weight: 600; color: $blue; }
+
+  &__actions { display: flex; gap: 10px; flex: none; }
+  &__btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    min-width: 150px; padding: 13px 20px; border-radius: $radius;
+    font-weight: 600; font-size: 0.92rem; white-space: nowrap; cursor: pointer;
+    &--cart { background: $blue-light; color: $blue-dark; border: 1.5px solid $blue; }
+    &--buy { background: $blue; color: #fff; border: 1.5px solid $blue; &:hover { background: $blue-dark; border-color: $blue-dark; } }
+  }
+}
+body.has-buybar { padding-bottom: 76px; }
+.jtc-fab { transition: bottom .25s ease; }
+body.has-buybar .jtc-fab { bottom: calc(92px + env(safe-area-inset-bottom)); }
+
+@media (max-width: 600px) {
+  .jtc-buybar {
+    padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+    &__inner { gap: 10px; padding-inline: 12px; }
+    &__prod { flex: none; }
+    &__name { display: none; }
+    &__thumb { width: 40px; height: 40px; }
+    &__price { flex-direction: column; align-items: flex-start; gap: 0; line-height: 1.25; }
+    &__now { font-size: 0.95rem; }
+    &__sub { gap: 6px; }
+    &__actions { flex: 1; gap: 8px; }
+    &__btn { flex: 1; min-width: 0; padding: 12px 8px; font-size: 0.85rem; }
+  }
+  body.has-buybar { padding-bottom: 64px; }
+  body.has-buybar .jtc-fab { bottom: calc(76px + env(safe-area-inset-bottom)); }
+}
+@media (max-width: 380px) {
+  .jtc-buybar__thumb { display: none; }
+}

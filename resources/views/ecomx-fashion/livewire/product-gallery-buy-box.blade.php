@@ -86,7 +86,7 @@
 
         @if($hasSizes)
         {{-- Sizes with tutorial spotlight --}}
-        <div class="{{ $showSizePrompt ? 'size-box--spot' : '' }}" style="position:relative">
+        <div class="{{ $showSizePrompt ? 'size-box--spot' : '' }}" style="position:relative" data-pdp-sizes>
             @if($showSizePrompt)
                 <div style="position:absolute;top:-38px;left:0;background:var(--ac);color:#fff;font-size:12px;font-weight:600;padding:8px 14px;border-radius:999px;animation:floaty 1.2s ease-in-out infinite;white-space:nowrap">👇 Choose your size first</div>
             @endif
@@ -123,7 +123,7 @@
         @php
             $cartPick = ['productId' => $productId, 'variantId' => $this->selectedVariantId, 'needsSize' => $hasSizes && ! $selectedSize];
         @endphp
-        <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;flex-direction:column;gap:10px" data-pdp-buy>
             <div style="display:flex;gap:10px">
                 <button type="button" class="btn btn--primary" style="flex:1" x-data="cartAction" data-cart="{{ json_encode($cartPick) }}" wire:loading.attr="data-picking" wire:target="selectColor,selectSize" @click="send($el, false)" @disabled($soldOut)>
                     @if($soldOut)
@@ -237,4 +237,43 @@
         </div>
     @endif
 </div>
+
+{{-- Floating buy bar — stickyBuyBar (app.js) shows it only while the main --}}
+{{-- buy buttons ([data-pdp-buy]) are off screen. Kept outside .pdp__info: --}}
+{{-- its fadeUp animation leaves a transform that would break position:fixed. --}}
+{{-- wire:ignore.self so re-renders (colour/size picks) update the price/pick --}}
+{{-- inside but never reset the bar's own shown/hidden state. --}}
+@unless($soldOut)
+    @php $buybarThumb = collect($media)->firstWhere('video', false)['img'] ?? null; @endphp
+    <div class="buybar" wire:key="buybar-{{ $productId }}" wire:ignore.self x-data="stickyBuyBar" x-show="show" x-cloak
+        x-transition:enter-start="buybar--off" x-transition:leave-end="buybar--off" role="region" aria-label="Quick buy">
+        <div class="container buybar__inner">
+            <div class="buybar__prod">
+                @if($buybarThumb)
+                    <img class="buybar__thumb" src="{{ $buybarThumb }}" alt="">
+                @endif
+                <div class="buybar__meta">
+                    <span class="buybar__name">{{ $product['name'] }}</span>
+                    <span class="buybar__price">
+                        ৳{{ number_format($this->currentPrice) }}
+                        @if($this->currentComparePrice !== null)
+                            <span class="price--old">৳{{ number_format($this->currentComparePrice) }}</span>
+                        @endif
+                    </span>
+                </div>
+            </div>
+            <div class="buybar__actions">
+                <button type="button" class="btn btn--primary buybar__btn" x-data="cartAction" data-cart="{{ json_encode($cartPick) }}" wire:loading.attr="data-picking" wire:target="selectColor,selectSize" @click="revealSizes($el); send($el, false)">
+                    <span x-show="busy" x-cloak><span class="spinner" style="border-color:currentColor;border-top-color:transparent;vertical-align:-2px"></span></span>
+                    <span x-show="!busy && added" x-cloak>Added ✓</span>
+                    <span x-show="!busy && !added">Add to Cart</span>
+                </button>
+                <button type="button" class="btn btn--outline buybar__btn buybar__btn--buy" x-data="cartAction" data-cart="{{ json_encode($cartPick) }}" wire:loading.attr="data-picking" wire:target="selectColor,selectSize" @click="revealSizes($el); send($el, true)">
+                    <span x-show="busy" x-cloak><span class="spinner" style="border-color:currentColor;border-top-color:transparent;vertical-align:-2px"></span></span>
+                    <span x-show="!busy">Buy Now</span>
+                </button>
+            </div>
+        </div>
+    </div>
+@endunless
 </div>

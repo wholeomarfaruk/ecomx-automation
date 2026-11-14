@@ -87,7 +87,7 @@
 
         @if($hasSizes)
             {{-- Sizes --}}
-            <div class="jtc-pd-sizes {{ $showSizePrompt ? 'is-prompt' : '' }}">
+            <div class="jtc-pd-sizes {{ $showSizePrompt ? 'is-prompt' : '' }}" data-pdp-sizes>
                 @if($showSizePrompt)
                     <div class="jtc-pd-sizes__prompt" x-init="$el.closest('.jtc-pd-sizes').scrollIntoView({ behavior: 'smooth', block: 'center' })">👇 Choose your size first</div>
                 @endif
@@ -127,7 +127,7 @@
         @php
             $cartPick = ['productId' => $productId, 'variantId' => $this->selectedVariantId, 'needsSize' => $hasSizes && ! $selectedSize];
         @endphp
-        <div class="jtc-pd-info__buyrow" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="jtc-pd-info__buyrow" style="display:grid;grid-template-columns:1fr 1fr;gap:10px" data-pdp-buy>
             <button type="button" class="jtc-pd-actions__buy" x-data="cartAction" data-cart="{{ json_encode($cartPick) }}" wire:loading.attr="data-picking" wire:target="selectColor,selectSize" @click="send($el, true, qty)" @disabled($soldOut)>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M13 2 3 14h7v8l10-12h-7z"></path></svg>
                 <span x-show="busy" x-cloak><span class="spinner" style="border-color:currentColor;border-top-color:transparent;vertical-align:-2px;margin-right:6px"></span>Adding…</span>
@@ -257,4 +257,45 @@
             </div>
         </div>
     </div>
+
+    {{-- Floating buy bar — stickyBuyBar (app.js) shows it only while the main --}}
+    {{-- buy buttons ([data-pdp-buy]) are off screen. Uses the same qty as the --}}
+    {{-- main buttons (root x-data). wire:ignore.self so re-renders (colour/size --}}
+    {{-- picks) update the price/pick inside but never reset its shown state. --}}
+    @unless($soldOut)
+        @php $buybarThumb = collect($media)->firstWhere('video', false)['img'] ?? null; @endphp
+        <div class="jtc-buybar" wire:key="buybar-{{ $productId }}" wire:ignore.self x-data="stickyBuyBar" x-show="show" x-cloak
+            x-transition:enter-start="jtc-buybar--off" x-transition:leave-end="jtc-buybar--off" role="region" aria-label="Quick buy">
+            <div class="jtc-buybar__inner">
+                <div class="jtc-buybar__prod">
+                    @if($buybarThumb)
+                        <img class="jtc-buybar__thumb" src="{{ $buybarThumb }}" alt="">
+                    @endif
+                    <div class="jtc-buybar__meta">
+                        <span class="jtc-buybar__name">{{ $product['name'] }}</span>
+                        <span class="jtc-buybar__price">
+                            <span class="jtc-buybar__now">৳{{ number_format($this->currentPrice) }}</span>
+                            <span class="jtc-buybar__sub">
+                                @if($this->currentComparePrice !== null)
+                                    <span class="jtc-buybar__was">৳{{ number_format($this->currentComparePrice) }}</span>
+                                @endif
+                                <span class="jtc-buybar__qty" x-show="qty > 1" x-text="'× ' + qty"></span>
+                            </span>
+                        </span>
+                    </div>
+                </div>
+                <div class="jtc-buybar__actions">
+                    <button type="button" class="jtc-buybar__btn jtc-buybar__btn--cart" x-data="cartAction" data-cart="{{ json_encode($cartPick) }}" wire:loading.attr="data-picking" wire:target="selectColor,selectSize" @click="revealSizes($el); send($el, false, qty)">
+                        <span x-show="busy" x-cloak><span class="spinner" style="border-color:currentColor;border-top-color:transparent;vertical-align:-2px"></span></span>
+                        <span x-show="!busy && added" x-cloak>Added ✓</span>
+                        <span x-show="!busy && !added">Add to cart</span>
+                    </button>
+                    <button type="button" class="jtc-buybar__btn jtc-buybar__btn--buy" x-data="cartAction" data-cart="{{ json_encode($cartPick) }}" wire:loading.attr="data-picking" wire:target="selectColor,selectSize" @click="revealSizes($el); send($el, true, qty)">
+                        <span x-show="busy" x-cloak><span class="spinner" style="border-color:currentColor;border-top-color:transparent;vertical-align:-2px"></span></span>
+                        <span x-show="!busy">Buy now</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endunless
 </div>
